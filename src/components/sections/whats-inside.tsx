@@ -112,9 +112,9 @@ export function WhatsInside() {
             {showAll ? "Show fewer" : "Show all fourteen"}
           </Button>
           <p className="text-xs text-ink-soft/70">
-            Contents rotate based on availability, preferences, and our category
-            standards. Multi-piece packs count as one snack — never four. Everything
-            ships sealed in its original packaging.
+            This is the Summer &rsquo;26 edit — snacks evolve with the seasons and your
+            feedback; the categories and standards stay put. Multi-piece packs count as
+            one snack. Everything ships sealed in its original packaging.
           </p>
         </div>
       </div>

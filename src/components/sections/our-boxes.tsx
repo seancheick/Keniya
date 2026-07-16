@@ -36,6 +36,9 @@ function BoxPhotoPlaceholder({ box }: { box: Box }) {
           </p>
         </div>
       </div>
+      <span className="absolute bottom-4 right-4 rounded-full bg-sage-deep px-3 py-1.5 text-[0.65rem] font-medium tracking-[0.14em] text-cream">
+        SUMMER &rsquo;26 EDIT
+      </span>
     </div>
   );
 }
@@ -58,7 +61,9 @@ export function OurBoxes() {
         </p>
         <p className="mt-3 max-w-[54ch] text-sm text-ink-soft/80" data-reveal>
           Honest counting, always: a pack of chews or a pair of tea bags counts as one
-          snack — never four. At least eight are substantial single servings.
+          snack — never four. At least eight are substantial single servings. And boxes
+          are never frozen in time — snacks rotate with the seasons, your feedback, and
+          new clean-ingredient finds, while the categories and the standard stay put.
         </p>
 
         <div className="mt-14 space-y-16 lg:space-y-24">

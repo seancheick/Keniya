@@ -25,7 +25,7 @@ export const faqs = [
   },
   {
     q: "What's actually in a box — and how do you count?",
-    a: "Fourteen distinct snacks across five categories — at least eight of them substantial single servings, with smaller discovery items for variety. We count honestly: a pouch of ginger chews or a pair of tea bags is one snack, never four, and little extras aren't counted toward the total at all. Contents rotate based on availability, your preferences, and our category standards — deliberately composed, never random.",
+    a: "Fourteen distinct snacks across five categories — at least eight of them substantial single servings, with smaller discovery items for variety. We count honestly: a pouch of ginger chews or a pair of tea bags is one snack, never four, and little extras aren't counted toward the total at all. And no two seasons are identical — boxes evolve winter through fall as your feedback and new clean-ingredient finds come in. Same categories, same standards, fresh picks.",
   },
   {
     q: "Is it a subscription?",

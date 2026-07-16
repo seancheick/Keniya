@@ -7,6 +7,7 @@ export const site = {
   email: "hello@kaniyahealth.com",
   preorderPriceUSD: 47,
   snackCount: 14,
+  currentEdit: "Summer '26",
   firstRunPerBox: 50,
   shipWindow: "August 3–14, 2026",
 } as const;

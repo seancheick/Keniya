@@ -46,6 +46,34 @@ export function Standards() {
             individualized medical advice: your healthcare provider always comes first.
           </p>
         </div>
+
+        <p className="eyebrow mt-14" data-reveal>
+          Boxes that breathe
+        </p>
+        <div className="mt-6 grid gap-8 sm:grid-cols-3" data-reveal-group>
+          <div data-reveal-item>
+            <h3 className="font-display text-lg text-ink">Seasonal edits</h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+              Winter, spring, summer, fall — every release refreshes the picks.
+              You&rsquo;re looking at the Summer &rsquo;26 edit.
+            </p>
+          </div>
+          <div data-reveal-item>
+            <h3 className="font-display text-lg text-ink">Fed by feedback</h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+              The loved-it / send-again page in every guide shapes the next batch.
+              Favorites come back on purpose — reruns never happen by accident.
+            </p>
+          </div>
+          <div data-reveal-item>
+            <h3 className="font-display text-lg text-ink">New finds earn in</h3>
+            <p className="mt-2 text-sm leading-relaxed text-ink-soft">
+              When we discover something delicious with clean ingredients for your
+              situation, it competes for a spot. The standard doesn&rsquo;t move; the
+              snacks do.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );

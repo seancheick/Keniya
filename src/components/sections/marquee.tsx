@@ -3,6 +3,7 @@ const words = [
   "Three boxes, one standard",
   "Only 50 of each box",
   "No sample-count tricks",
+  "New finds every season",
   "Packed by hand",
   "kɛnɛya · health",
 ];

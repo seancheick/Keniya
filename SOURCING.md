@@ -10,6 +10,20 @@ Ops doc for packing runs. Rule: **every box = 14 distinct snack selections (~16�
 - A multi-piece pack (chews pouch, 2 tea bags, 2-cup chocolate) = **one selection, never several.** The site says "no sample-count tricks" — packing must honor it.
 - Max 2 tea/drink selections per box. Minimum 90 days shelf life at pack time. No crushed packages; chocolate gets heat protocol (hold or cold-pack in heat waves); track batch + expiration per run.
 
+## Seasonal rotation — boxes breathe
+
+- **Four edits per year:** Winter, Spring, Summer, Fall. Each edit refreshes roughly
+  30–50% of picks per box; categories, counts, and the 9-point standard never change.
+- **Seasonal logic:** summer → hydration-heavy, melt-safe treats; winter → warm teas,
+  cozy comfort; spring/fall → transitional mixes. Chocolate follows the heat protocol
+  regardless of season.
+- **Feedback loop:** review QR loved-it / send-again data before finalizing each edit.
+  Favorites return ON PURPOSE. Track items sent per customer (spreadsheet now, database
+  when reorders exist) so repeat buyers never get accidental reruns — the #1 long-term
+  churn complaint against box subscriptions.
+- **New finds:** any new item must pass the 9-point standard before it enters a pool.
+  "New and delicious" is not a pass by itself.
+
 ## Per-box category composition (14 selections)
 
 - **Pregnancy Comfort:** 4 comfort · 3 protein · 2 hydration · 3 sweet · 2 savory
