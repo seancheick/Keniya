@@ -5,7 +5,7 @@ const quotes = [
   },
   {
     text: "I wanted snacks that feel like a gift, not a prescription. That's the bar for every box we pack.",
-    name: "Kaniya's first customer — and co-founder",
+    name: "Keniya's first customer — and co-founder",
   },
 ];
 

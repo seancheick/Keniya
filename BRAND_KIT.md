@@ -1,6 +1,6 @@
-# Kaniya — Brand Kit
+# Keniya — Brand Kit
 
-The single source of truth for how Kaniya looks, sounds, and moves.
+The single source of truth for how Keniya looks, sounds, and moves.
 Code mirror: every value here lives in [`src/app/globals.css`](src/app/globals.css) (`@theme`) and [`src/lib/tokens.ts`](src/lib/tokens.ts).
 
 ---
@@ -9,7 +9,7 @@ Code mirror: every value here lives in [`src/app/globals.css`](src/app/globals.c
 
 | | |
 |---|---|
-| **Name** | Kaniya — from *kɛnɛya*, "health" in Dioula (West Africa) |
+| **Name** | Keniya — from *kɛnɛya*, "health" in Dioula (West Africa) |
 | **One-liner** | Condition-aware snack boxes. Comfort, curated with a why. |
 | **Feel** | Warm editorial pantry — calm, premium, nurturing. Never clinical, never "medical device". |
 | **Emotional promise** | "Someone thought this through for you." |
@@ -17,7 +17,7 @@ Code mirror: every value here lives in [`src/app/globals.css`](src/app/globals.c
 
 ## 2. Wordmark
 
-- Text wordmark only (for now): **Kaniya** set in Fraunces, normal weight, tight tracking, followed by a terracotta period → `Kaniya.`
+- Text wordmark only (for now): **Keniya** set in Fraunces, normal weight, tight tracking, followed by a terracotta period → `Keniya.`
 - The period is the brand mark: always terracotta `#C2704E`, never another color.
 - Never set the wordmark in Figtree, all-caps, or bold.
 - Clear space: at least the height of the "K" on all sides.

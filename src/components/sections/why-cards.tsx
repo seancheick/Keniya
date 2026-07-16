@@ -37,7 +37,7 @@ export function WhyCards() {
             work</em>.
           </h2>
           <p className="mt-6 max-w-[48ch] leading-relaxed text-ink-soft" data-reveal>
-            Anyone can fill a box with snacks. Kaniya ships the reasoning: one folded
+            Anyone can fill a box with snacks. Keniya ships the reasoning: one folded
             &ldquo;Packed for You&rdquo; guide with your name, your preferences, and a
             one-line why for all fourteen snacks — plus a QR code to full labels,
             ingredients, and a tell-us-what-you-loved page. The research you didn&rsquo;t

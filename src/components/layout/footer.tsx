@@ -10,7 +10,7 @@ export function Footer() {
         <div className="mt-10 flex flex-col justify-between gap-8 sm:flex-row sm:items-end">
           <div>
             <p className="font-display text-xl text-ink">
-              Kaniya<span className="text-terracotta">.</span>
+              Keniya<span className="text-terracotta">.</span>
             </p>
             <p className="mt-2 max-w-[44ch] text-sm text-ink-soft">
               From <em>kɛnɛya</em> — &ldquo;health&rdquo; in Dioula. Curated with
@@ -39,7 +39,7 @@ export function Footer() {
           </nav>
         </div>
         <p className="mt-10 max-w-3xl text-xs leading-relaxed text-ink-soft/80">
-          Kaniya curates packaged snacks for comfort and enjoyment through pregnancy and
+          Keniya curates packaged snacks for comfort and enjoyment through pregnancy and
           other life stages. These statements have not been evaluated by the Food and Drug
           Administration. Our boxes are not intended to diagnose, treat, cure, or prevent
           any disease or condition, and nothing here is medical or nutritional advice —
@@ -48,7 +48,7 @@ export function Footer() {
           labels for allergens.
         </p>
         <p className="mt-6 text-xs text-ink-soft/70">
-          © 2026 Kaniya. All rights reserved.
+          © 2026 Keniya. All rights reserved.
         </p>
       </div>
     </footer>

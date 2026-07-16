@@ -17,7 +17,7 @@ export function Header() {
           href="/"
           className="font-display text-[1.55rem] leading-none tracking-tight text-ink"
         >
-          Kaniya<span className="text-terracotta">.</span>
+          Keniya<span className="text-terracotta">.</span>
         </Link>
         <nav className="hidden items-center gap-8 sm:flex" aria-label="Main">
           {nav.map((item) => (

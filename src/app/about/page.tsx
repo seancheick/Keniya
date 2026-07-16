@@ -1,7 +1,7 @@
 export const metadata = {
   title: "Our story",
   description:
-    "Kaniya started in the middle of a first trimester — one couple, a snack aisle, and too many labels. Here's why we pack every box with the why.",
+    "Keniya started in the middle of a first trimester — one couple, a snack aisle, and too many labels. Here's why we pack every box with the why.",
 };
 
 export default function AboutPage() {
@@ -16,7 +16,7 @@ export default function AboutPage() {
 
       <div className="mt-10 space-y-6 text-lg leading-relaxed text-ink-soft">
         <p data-reveal>
-          Kaniya started in a grocery aisle at 9pm. My wife was newly pregnant, craving
+          Keniya started in a grocery aisle at 9pm. My wife was newly pregnant, craving
           something — anything — that would actually sit right, and every option meant
           reading another label, searching another ingredient, second-guessing another
           choice. The snack run had turned into a research project, and she was the one
@@ -37,7 +37,7 @@ export default function AboutPage() {
           I also live with type 1 diabetes, which means I&rsquo;ve read nutrition labels
           my whole life. That obsession became PharmaGuide, the ingredient-intelligence
           platform I build by day — and it&rsquo;s the same engine of care behind how
-          Kaniya curates: every item screened for its ingredient story, not just its
+          Keniya curates: every item screened for its ingredient story, not just its
           marketing.
         </p>
         <p data-reveal>
@@ -54,7 +54,7 @@ export default function AboutPage() {
           <span className="text-terracotta">.</span>
         </p>
         <p className="mt-2 text-sm text-ink-soft">
-          Co-founders, Kaniya · Curated with PharmaGuide ingredient intelligence
+          Co-founders, Keniya · Curated with PharmaGuide ingredient intelligence
         </p>
       </div>
     </div>

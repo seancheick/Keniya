@@ -1,4 +1,4 @@
-# Kaniya — Sourcing Playbook
+# Keniya — Sourcing Playbook
 
 Ops doc for packing runs. Rule: **every box = 14 distinct snack selections (~16–18 physical pieces)**. Rotate items within each category so a second box never feels like a rerun. Allergy answers from the quiz swap items 1:1 within the same category. Keep ALL items sealed in manufacturer packaging (allergen labels must stay visible). Generic names on the website; brand names live here only.
 

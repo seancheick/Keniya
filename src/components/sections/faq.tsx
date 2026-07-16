@@ -8,12 +8,12 @@ import { site } from "@/lib/site";
 
 export const faqs = [
   {
-    q: "Is Kaniya medical or nutritional advice?",
+    q: "Is Keniya medical or nutritional advice?",
     a: "No. We curate packaged snacks for comfort and enjoyment — we don't diagnose, treat, or manage any condition. Every item ships sealed in its original packaging with the manufacturer's full label, and your healthcare provider is always the right call for what's best for you.",
   },
   {
     q: "How do you handle allergies?",
-    a: "The quiz asks about nuts, gluten, and dairy, and we use your answers to guide selection and steer around stated ingredients where possible. Kaniya isn't an allergen-free facility and we can't guarantee against manufacturer cross-contact — so please always check each item's sealed label. If you live with a severe allergy, we'd honestly rather you wait for our dedicated lines than risk a bad box.",
+    a: "The quiz asks about nuts, gluten, and dairy, and we use your answers to guide selection and steer around stated ingredients where possible. Keniya isn't an allergen-free facility and we can't guarantee against manufacturer cross-contact — so please always check each item's sealed label. If you live with a severe allergy, we'd honestly rather you wait for our dedicated lines than risk a bad box.",
   },
   {
     q: "When and where do boxes ship?",
@@ -21,7 +21,7 @@ export const faqs = [
   },
   {
     q: "What's the refund and substitution policy?",
-    a: "Preorders are fully refundable any time before your box ships — one email to hello@kaniyahealth.com does it. If an item goes out of stock, we substitute within the same category and the same standards, and the card in your box notes the swap.",
+    a: "Preorders are fully refundable any time before your box ships — one email to hello@keniyahealth.com does it. If an item goes out of stock, we substitute within the same category and the same standards, and the card in your box notes the swap.",
   },
   {
     q: "What's actually in a box — and how do you count?",

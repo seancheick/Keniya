@@ -83,7 +83,7 @@ export function BoxOpen() {
             <div className="open-lid absolute -top-12 left-0 h-12 w-80 origin-bottom rounded-t-2xl border border-border bg-blush" />
             <div className="relative flex h-48 w-80 items-center justify-center rounded-b-2xl border border-border bg-cream-card">
               <p className="font-display text-2xl text-ink">
-                Kaniya<span className="text-terracotta">.</span>
+                Keniya<span className="text-terracotta">.</span>
               </p>
             </div>
             <div className="absolute left-1/2 top-1/3">

@@ -1,4 +1,4 @@
-# Kaniya — Launch Plan: Validation Sprint + Website Build
+# Keniya — Launch Plan: Validation Sprint + Website Build
 
 > **Status:** plan finalized and saved (2026-07-15). Execution deferred — build starts when Sean says go.
 
@@ -7,12 +7,12 @@
 Sean's wife is pregnant and can't figure out what snacks are safe/tolerable — the classic founder-market-fit moment. The ChatGPT conversation landed on a sound thesis: **condition-aware curated snack boxes** (pregnancy first, blood sugar second), where the box is the first delivery mechanism for an ingredient-intelligence brand that later connects to PharmaGuide. Research (July 2026) confirms the white space: **no pregnancy-snack-specific or gestational-diabetes-specific box exists**; Bump Boxes is alive but bleeding trust (Trustpilot complaints); GD prevalence is 8.3% and up 36% since 2016; 3.63M US births/yr. It also confirms the danger: food boxes are the worst-churning subscription category (12–18%/mo) and food/bev paid CAC averages $47.50 — so we validate with **one-time preorders + organic content**, not subscriptions + ads.
 
 **Decisions made (user-confirmed):**
-- **Brand:** Kaniya (from *kɛnɛya*, "health" in Dioula) — domain **kaniyahealth.com** ($11.25, available via Vercel; also grab kaniyabox.com defensively). No trademark conflicts found; formal USPTO knockout search before LLC/trademark filing.
+- **Brand:** Keniya (from *kɛnɛya*, "health" in Dioula) — domain **keniyahealth.com** ($11.25, available via Vercel; also grab keniyabox.com defensively). No trademark conflicts found; formal USPTO knockout search before LLC/trademark filing.
 - **Scope:** Preorder MVP — animated marketing site showing the full 3-box line (Pregnancy Comfort · Balanced Blood Sugar · Heart Wellness). **Sell one, show three:** Pregnancy Comfort is purchasable (one-time preorder via Stripe Checkout); Blood Sugar + Heart are "coming soon" with per-box waitlists. Whichever waitlist grows faster becomes box #2 (~2–3 weeks later — flipping it on just means adding a Stripe price). Single-SKU ops for the first batch, full platform vision on the site.
 - **PharmaGuide:** subtle trust line only ("Curated with PharmaGuide ingredient intelligence" on About + why-cards). No co-branding yet.
 - **Box format:** 12 items · $47 · **one-time purchase only at launch**. Category structure (constant across all boxes, items rotate per condition): 3 comfort/gentle · 3 protein/fiber · 2 hydration · 2 sweet · 2 savory. Validation-batch COGS at retail (~$22–28 items + ~$5 packaging + ~$9–12 shipping) ≈ break-even at $47 — acceptable, first 50 boxes are paid market research; Faire wholesale later cuts item cost 30–50%. Tiers later, not at launch: Mini 8 items ($29–32), Deluxe 16–18 items ($69–79). Subscriptions deferred (food boxes churn 12–18%/mo): add "Subscribe & save" ($39–44/mo, trimester-adaptive contents) only when ≥30% of first-batch buyers reorder or request it — the post-purchase survey collects that signal from day one.
 
-- **Box roadmap filter:** a new box qualifies only if (1) eating is genuinely confusing or scary for that condition, (2) there's a diagnosis-moment or life-stage urgency, (3) the niche is underserved, and (4) ingredient intelligence adds real value. Passing candidates for later: **Gestational Diabetes variant, GLP-1 companion box (Ozempic/Wegovy users — tiny appetite, protein-dense small portions, nausea; same psychology as T1 pregnancy and a wide-open niche), Menopause, Postpartum Recovery, PCOS, TTC.** Rejected: protein/workout-recovery boxes — the most saturated snack category alive, no confusion/urgency, Amazon variety packs own it on price, and every Kaniya box already carries 3 protein/fiber items. Mechanic: every future box appears first as a coming-soon waitlist tile (zero inventory); waitlist size decides what goes live; max one new live box per month.
+- **Box roadmap filter:** a new box qualifies only if (1) eating is genuinely confusing or scary for that condition, (2) there's a diagnosis-moment or life-stage urgency, (3) the niche is underserved, and (4) ingredient intelligence adds real value. Passing candidates for later: **Gestational Diabetes variant, GLP-1 companion box (Ozempic/Wegovy users — tiny appetite, protein-dense small portions, nausea; same psychology as T1 pregnancy and a wide-open niche), Menopause, Postpartum Recovery, PCOS, TTC.** Rejected: protein/workout-recovery boxes — the most saturated snack category alive, no confusion/urgency, Amazon variety packs own it on price, and every Keniya box already carries 3 protein/fiber items. Mechanic: every future box appears first as a coming-soon waitlist tile (zero inventory); waitlist size decides what goes live; max one new live box per month.
 
 **Goal:** preorders live in ~2 weeks; 25 preorders in the first 14 days = go signal.
 
@@ -24,7 +24,7 @@ Sean's wife is pregnant and can't figure out what snacks are safe/tolerable — 
 
 | # | Task | Owner | Notes |
 |---|------|-------|-------|
-| 1 | Buy kaniyahealth.com + kaniyabox.com (~$23) | Sean | Via Vercel domains. Also claim @kaniyahealth on IG/TikTok (manual). |
+| 1 | Buy keniyahealth.com + keniyabox.com (~$23) | Sean | Via Vercel domains. Also claim @keniyahealth on IG/TikTok (manual). |
 | 2 | LLC filing + EIN (async, don't block launch) | Sean | Separate entity from PharmaGuide. |
 | 3 | State sales-tax permit → resale certificate | Sean | Needed to buy inventory tax-free later; Stripe Tax handles collection. |
 | 4 | Food liability insurance | Sean | FLIP ~$299/yr or similar ($25–45/mo). Reseller of sealed goods = low end. |
@@ -97,7 +97,7 @@ Env: `NEXT_PUBLIC_SITE_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, STRIPE_SECR
 - `api/stripe/webhook/route.ts`: raw body → `constructEvent` signature check → on `checkout.session.completed`, insert preorder with `onConflict('stripe_event_id').ignoreDuplicates()`; send thank-you email **only on fresh insert**; email failure logged, never 500s the webhook. **Fulfillment ONLY here** — `/thanks` is display-only.
 
 ### Emails (Resend)
-Verify kaniyahealth.com (SPF/DKIM/DMARC); from `Kaniya <hello@kaniyahealth.com>`. `WaitlistConfirmEmail` (echoes quiz answers) + `PreorderThanksEmail` (order summary, ship window, why-cards teaser). Supabase = source of truth; Resend Audience sync deferred.
+Verify keniyahealth.com (SPF/DKIM/DMARC); from `Keniya <hello@keniyahealth.com>`. `WaitlistConfirmEmail` (echoes quiz answers) + `PreorderThanksEmail` (order summary, ship window, why-cards teaser). Supabase = source of truth; Resend Audience sync deferred.
 
 ### SEO/analytics
 Metadata + OG image (box on cream, serif wordmark), JSON-LD `Product` (`availability: PreOrder`) + `Organization` + `FAQPage`, sitemap/robots, security headers, Vercel Analytics. Meta/TikTok pixels: stub component with TODO — wire only when paid ads start.

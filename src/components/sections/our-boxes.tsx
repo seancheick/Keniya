@@ -29,7 +29,7 @@ function BoxPhotoPlaceholder({ box }: { box: Box }) {
       <div className="absolute inset-0 grid place-items-center">
         <div className="rounded-2xl border border-dashed border-ink-soft/30 bg-cream/70 px-6 py-4 text-center backdrop-blur-sm">
           <p className="font-display text-lg text-ink">
-            Kaniya<span className="text-terracotta">.</span>
+            Keniya<span className="text-terracotta">.</span>
           </p>
           <p className="mt-1 text-xs text-ink-soft">
             Box photography — first prototype run

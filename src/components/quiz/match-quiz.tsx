@@ -260,7 +260,7 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
                 {current.title}
               </DialogTitle>
               <DialogDescription className="sr-only">
-                A few quick questions to match you with a Kaniya box.
+                A few quick questions to match you with a Keniya box.
               </DialogDescription>
             </DialogHeader>
             <div className="pt-2">{current.content}</div>
@@ -299,7 +299,7 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
                     {" "}
                     You flagged {realAllergies.join(" and ").toLowerCase()} — we use your
                     answers to guide selection and steer around stated ingredients where
-                    possible. Kaniya isn&rsquo;t an allergen-free facility, so please
+                    possible. Keniya isn&rsquo;t an allergen-free facility, so please
                     always check each sealed label.
                   </>
                 )}

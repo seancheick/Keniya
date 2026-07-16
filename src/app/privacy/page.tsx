@@ -8,7 +8,7 @@ export default function PrivacyPage() {
         The full policy publishes before preorders open. The short version we hold
         ourselves to: we collect only what an order or waitlist needs — your email, the
         answers you choose to share, and shipping details. We never sell your data, and
-        you can ask us to delete it anytime at hello@kaniyahealth.com.
+        you can ask us to delete it anytime at hello@keniyahealth.com.
       </p>
     </div>
   );
