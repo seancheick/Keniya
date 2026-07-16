@@ -1,17 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { pregnancyBoxItems, type BoxItem } from "@/lib/box";
 
 const categories = ["Comfort ×3", "Protein ×3", "Hydration ×2", "Sweet ×2", "Savory ×2"];
 
-function FlipTile({ item, index }: { item: BoxItem; index: number }) {
+function FlipTile({
+  item,
+  index,
+  reveal,
+}: {
+  item: BoxItem;
+  index: number;
+  reveal: boolean;
+}) {
   const [flipped, setFlipped] = useState(false);
 
   return (
     <button
       type="button"
-      data-reveal-item
+      {...(reveal ? { "data-reveal-item": "" } : {})}
       aria-pressed={flipped}
       aria-label={`${item.name} — ${flipped ? "hide" : "show"} why it's in the box`}
       onClick={() => setFlipped((f) => !f)}
@@ -50,20 +59,29 @@ function FlipTile({ item, index }: { item: BoxItem; index: number }) {
 }
 
 export function WhatsInside() {
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? pregnancyBoxItems : pregnancyBoxItems.slice(0, 6);
+
   return (
     <section id="inside">
       <div className="mx-auto max-w-6xl px-6 py-16 lg:py-24">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="eyebrow" data-reveal>
-              What&rsquo;s inside
+              What arrives
             </p>
             <h2
               className="font-display text-headline mt-4 max-w-[22ch] text-ink"
               data-reveal
             >
-              Twelve items. <em className="text-terracotta-deep">Zero</em> label anxiety.
+              Twelve items. <em className="text-terracotta-deep">Less</em> label anxiety.
             </h2>
+            <p className="mt-4 max-w-[52ch] text-sm text-ink-soft" data-reveal>
+              The Pregnancy Comfort sample dozen, card by card. Balanced Blood Sugar and
+              Heart Wellness follow the same standard with their own item pools — we do
+              the first round of label reading, you still get the full label on every
+              sealed item.
+            </p>
           </div>
           <ul className="flex flex-wrap gap-2" data-reveal>
             {categories.map((c) => (
@@ -80,15 +98,23 @@ export function WhatsInside() {
           className="mt-10 grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4"
           data-reveal-group
         >
-          {pregnancyBoxItems.map((item, i) => (
-            <FlipTile key={item.name} item={item} index={i} />
+          {visible.map((item, i) => (
+            <FlipTile key={item.name} item={item} index={i} reveal={i < 6} />
           ))}
         </div>
-        <p className="mt-6 text-xs text-ink-soft/70" data-reveal>
-          A sample dozen from the first run — your box flexes to your quiz answers, and
-          contents rotate batch to batch. Everything ships sealed in its original
-          packaging.
-        </p>
+        <div className="mt-8 flex flex-wrap items-center gap-5">
+          <Button
+            variant="outline"
+            className="rounded-full px-6"
+            onClick={() => setShowAll((s) => !s)}
+          >
+            {showAll ? "Show fewer" : "Show the full dozen"}
+          </Button>
+          <p className="text-xs text-ink-soft/70">
+            Contents rotate based on availability, preferences, and our category
+            standards. Everything ships sealed in its original packaging.
+          </p>
+        </div>
       </div>
     </section>
   );

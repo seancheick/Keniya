@@ -11,11 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { WaitlistForm } from "@/components/waitlist-form";
-import { castVote, type VoteSlug } from "@/actions/waitlist";
 
 const WHO_OPTIONS = [
-  "First trimester",
-  "Second or third trimester",
+  "Pregnancy",
   "Postpartum",
   "Blood sugar",
   "Heart health",
@@ -38,67 +36,76 @@ const CRAVING_OPTIONS = ["Sweet", "Salty & crunchy", "Surprise me"];
 
 type Match = {
   box: string;
-  status: "preorder" | "ballot";
-  slug?: VoteSlug;
+  status: "preorder" | "development";
   boxInterest: string;
   note: string;
 };
 
-function matchBox(condition: string, craving: string | null): Match {
-  const tuckIn =
-    craving === "Sweet"
-      ? "freeze-dried strawberries and dark chocolate almonds"
+function tuckInFor(boxInterest: string, craving: string | null): string {
+  if (boxInterest === "blood_sugar") {
+    return craving === "Sweet"
+      ? "lower-sugar dark chocolate and freeze-dried berries"
       : craving === "Salty & crunchy"
-        ? "roasted chickpeas and sea-salt popcorn"
-        : "a balance of sweet and salty, plus one small wildcard";
+        ? "cheese crisps and roasted chickpeas"
+        : "protein-forward crunch and lower-sugar treats";
+  }
+  if (boxInterest === "heart") {
+    return craving === "Sweet"
+      ? "70% dark chocolate and dried apricots"
+      : craving === "Salty & crunchy"
+        ? "unsalted pistachios and air-popped popcorn"
+        : "good fats, whole grains, and better sweets";
+  }
+  return craving === "Sweet"
+    ? "freeze-dried strawberries and dark chocolate almonds"
+    : craving === "Salty & crunchy"
+      ? "roasted chickpeas and sea-salt popcorn"
+      : "a balance of sweet and salty, plus one small wildcard";
+}
 
+function matchBox(condition: string, craving: string | null): Match {
   switch (condition) {
     case "Blood sugar":
       return {
         box: "Balanced Blood Sugar Box",
-        status: "ballot",
-        slug: "blood_sugar",
+        status: "preorder",
         boxInterest: "blood_sugar",
-        note: "It's on the ballot — your email below joins its list and counts as a vote.",
+        note: `We'd tuck in ${tuckInFor("blood_sugar", craving)}.`,
       };
     case "Heart health":
       return {
         box: "Heart Wellness Box",
-        status: "ballot",
-        slug: "heart",
+        status: "preorder",
         boxInterest: "heart",
-        note: "It's on the ballot — your email below joins its list and counts as a vote.",
+        note: `We'd tuck in ${tuckInFor("heart", craving)}.`,
       };
     case "GLP-1 journey":
       return {
         box: "GLP-1 Companion Box",
-        status: "ballot",
-        slug: "glp1",
+        status: "development",
         boxInterest: "glp1",
-        note: "It's on the ballot — your email below joins its list and counts as a vote.",
+        note: "This one's in development — small, protein-dense portions for shrunken appetites. Your email tells us the demand is real and gets you first access.",
       };
     case "Menopause":
       return {
         box: "Menopause Comfort Box",
-        status: "ballot",
-        slug: "menopause",
+        status: "development",
         boxInterest: "menopause",
-        note: "It's on the ballot — your email below joins its list and counts as a vote.",
+        note: "This one's in development. Your email tells us the demand is real and gets you first access.",
       };
     case "Postpartum":
       return {
         box: "Postpartum Recovery Box",
-        status: "ballot",
-        slug: "postpartum",
+        status: "development",
         boxInterest: "postpartum",
-        note: "It's on the ballot — your email votes for it. Meanwhile, the Pregnancy Comfort Box ships now and travels well into the fourth trimester.",
+        note: "This one's in development — meanwhile, the Pregnancy Comfort Box ships now and travels well into the fourth trimester.",
       };
     default:
       return {
         box: "Pregnancy Comfort Box",
         status: "preorder",
         boxInterest: "pregnancy_comfort",
-        note: `We'd tuck in ${tuckIn}.`,
+        note: `We'd tuck in ${tuckInFor("pregnancy_comfort", craving)}.`,
       };
   }
 }
@@ -134,15 +141,11 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
   const [recipient, setRecipient] = useState<string | null>(null);
   const [allergies, setAllergies] = useState<string[]>([]);
   const [craving, setCraving] = useState<string | null>(null);
-  const [voteCast, setVoteCast] = useState(false);
 
   const isGift = who === "It's a gift";
-  const condition = isGift ? (recipient === "Pregnancy" ? "pregnancy" : recipient) : who;
+  const condition = isGift ? recipient : who;
 
-  const result = useMemo(
-    () => matchBox(condition ?? "", craving),
-    [condition, craving],
-  );
+  const result = useMemo(() => matchBox(condition ?? "", craving), [condition, craving]);
   const realAllergies = allergies.filter((a) => a !== "None of these");
 
   const toggleAllergy = (a: string) => {
@@ -159,7 +162,6 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
     setRecipient(null);
     setAllergies([]);
     setCraving(null);
-    setVoteCast(false);
   };
 
   const steps = [
@@ -266,7 +268,7 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={() => setStep((s) => Math.max(0, s - 1))}
-                className={`text-sm text-ink-soft transition-colors hover:text-ink ${
+                className={`text-sm text-ink-soft transition-opacity hover:text-ink ${
                   step === 0 ? "pointer-events-none opacity-0" : ""
                 }`}
               >
@@ -285,7 +287,7 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
           <>
             <DialogHeader className="text-left">
               <p className="eyebrow">
-                {result.status === "preorder" ? "Your match — shipping first" : "Your match — on the ballot"}
+                {result.status === "preorder" ? "Your match — preordering now" : "Your match — in development"}
               </p>
               <DialogTitle className="font-display pt-2 text-3xl font-normal text-ink">
                 {result.box}
@@ -295,48 +297,40 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
                 {realAllergies.length > 0 && (
                   <>
                     {" "}
-                    You flagged {realAllergies.join(" and ").toLowerCase()} — affected
-                    items get swapped by hand before any box is packed.
+                    You flagged {realAllergies.join(" and ").toLowerCase()} — we use your
+                    answers to guide selection and steer around stated ingredients where
+                    possible. Kaniya isn&rsquo;t an allergen-free facility, so please
+                    always check each sealed label.
                   </>
                 )}
               </DialogDescription>
             </DialogHeader>
             <div className="pt-5">
               <WaitlistForm
-                compact
                 boxInterest={result.boxInterest}
                 source="quiz"
-                cta={result.status === "preorder" ? "Get launch-day access" : "List me + count my vote"}
+                cta={result.status === "preorder" ? "Reserve yours" : "Get first access"}
                 quiz={{
-                  quizWho: (isGift ? `gift:${recipient}` : who) ?? undefined,
-                  quizAllergies: realAllergies.length ? realAllergies : undefined,
+                  quizWho: condition ?? undefined,
+                  quizAllergies: allergies,
                   quizCraving: craving ?? undefined,
                 }}
-                onJoined={() => {
-                  if (result.slug && !voteCast) {
-                    setVoteCast(true);
-                    localStorage.setItem(`kaniya_vote_${result.slug}`, "1");
-                    castVote(result.slug);
-                  }
-                }}
+                compact
               />
             </div>
             <div className="flex items-center justify-between pt-4">
+              <p className="text-xs text-ink-soft/70">
+                {result.status === "preorder"
+                  ? `$47 · 12 items · first release of 50 · checkout opens this week.`
+                  : "We build the next box where the need is loudest."}
+              </p>
               <button
                 type="button"
                 onClick={reset}
-                className="text-sm text-ink-soft transition-colors hover:text-ink"
+                className="shrink-0 text-sm text-ink-soft transition-colors hover:text-ink"
               >
                 Start over
               </button>
-              {result.status === "ballot" && (
-                <a
-                  href="/#vote"
-                  className="text-sm font-medium text-sage-deep hover:text-ink"
-                >
-                  See the live ballot →
-                </a>
-              )}
             </div>
           </>
         )}

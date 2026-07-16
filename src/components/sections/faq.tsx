@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { site } from "@/lib/site";
 
 export const faqs = [
   {
@@ -11,24 +12,28 @@ export const faqs = [
     a: "No. We curate packaged snacks for comfort and enjoyment — we don't diagnose, treat, or manage any condition. Every item ships sealed in its original packaging with the manufacturer's full label, and your healthcare provider is always the right call for what's best for you.",
   },
   {
-    q: "What about my allergies?",
-    a: "The match quiz asks about nuts, gluten, and dairy, and we swap items by hand before packing your box. Always double-check the manufacturer's label on each item — they're shipped sealed so you can.",
+    q: "How do you handle allergies?",
+    a: "The quiz asks about nuts, gluten, and dairy, and we use your answers to guide selection and steer around stated ingredients where possible. Kaniya isn't an allergen-free facility and we can't guarantee against manufacturer cross-contact — so please always check each item's sealed label. If you live with a severe allergy, we'd honestly rather you wait for our dedicated lines than risk a bad box.",
   },
   {
-    q: "When do the first boxes ship?",
-    a: "The first Pregnancy Comfort run ships in early August 2026, capped at 50 boxes. Preorders are refundable any time before your box ships.",
+    q: "When and where do boxes ship?",
+    a: `The first release ships in an estimated window of ${site.shipWindow}, to US addresses. In serious summer heat we may hold chocolate-containing boxes a few days or pack accordingly — we'll email you either way. If timing slips, you'll hear from us before you have to ask.`,
   },
   {
-    q: "What's actually in the box?",
-    a: "Twelve items balanced across five categories: three comfort, three protein, two hydration, two sweet, two savory. The lineup rotates batch to batch so a second box never feels like a rerun.",
+    q: "What's the refund and substitution policy?",
+    a: "Preorders are fully refundable any time before your box ships — one email to hello@kaniyahealth.com does it. If an item goes out of stock, we substitute within the same category and the same standards, and the card in your box notes the swap.",
+  },
+  {
+    q: "What's actually in a box?",
+    a: "Twelve items balanced across five categories: three comfort, three protein, two hydration, two sweet, two savory. Contents rotate based on availability, your preferences, and our category standards — deliberately composed, never random. Specific brands may vary batch to batch.",
   },
   {
     q: "Is it a subscription?",
-    a: "No — the first boxes are one-time purchases. If enough of our first customers ask for a monthly option, we'll build a subscribe-and-save tier with contents that adapt as your stage changes.",
+    a: "No — first-release boxes are one-time purchases. If enough early customers ask for a monthly option, we'll build a subscribe-and-save tier that adapts as your needs change.",
   },
   {
     q: "Can I send it as a gift?",
-    a: "Absolutely — boxes ship anywhere in the US, and you'll be able to add a gift note at checkout. It's the care package that does the reading for you.",
+    a: "Absolutely — the quiz has a gift path that asks what the recipient is navigating, and you'll be able to add a gift note at checkout. It's the care package that does the reading for you.",
   },
 ];
 

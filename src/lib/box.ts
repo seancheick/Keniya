@@ -4,13 +4,14 @@ export type BoxItem = {
   why: string;
 };
 
-// First-run Pregnancy Comfort Box: 3 comfort / 3 protein / 2 hydration / 2 sweet / 2 savory.
+// Pregnancy Comfort sample dozen: 3 comfort / 3 protein / 2 hydration / 2 sweet / 2 savory.
 // Generic item names on purpose — no third-party brand names on-site.
+// Why-copy rule: selection rationale + consumer experience, never physiological claims.
 export const pregnancyBoxItems: BoxItem[] = [
   {
     name: "Ginger chews",
     category: "Comfort",
-    why: "So many women reach for ginger through the early weeks — warm, gentle, and easy to keep on the nightstand.",
+    why: "So many women keep ginger close through the early weeks — warm, familiar, and easy to keep on the nightstand.",
   },
   {
     name: "Almond-flour crackers",
@@ -20,17 +21,17 @@ export const pregnancyBoxItems: BoxItem[] = [
   {
     name: "Applesauce pouch",
     category: "Comfort",
-    why: "Cool, soft, and zero-effort — made for days when solid food feels ambitious.",
+    why: "Cool, soft, and zero-effort — chosen pasteurized and unsweetened, for days when solid food feels ambitious.",
   },
   {
     name: "Protein bar",
     category: "Protein",
-    why: "Steady energy between meals, picked for short ingredient lists and gentle flavors.",
+    why: "Picked SKU by SKU for short ingredient lists and real protein — the grams go on its card.",
   },
   {
     name: "Almond butter packet",
     category: "Protein",
-    why: "A one-handed protein boost that lives happily in a nightstand or a tote.",
+    why: "One-handed and genuinely useful when appetite comes in waves. Protein noted on the card.",
   },
   {
     name: "Roasted chickpeas",
@@ -40,12 +41,12 @@ export const pregnancyBoxItems: BoxItem[] = [
   {
     name: "Electrolyte packets",
     category: "Hydration",
-    why: "For the days plain water is a hard sell — stir into something cold and sip slow.",
+    why: "For the days plain water is a hard sell. Always caffeine-free, sodium disclosed on the card.",
   },
   {
     name: "Ginger tea",
     category: "Hydration",
-    why: "A warm, caffeine-free wind-down that's kind to an unsettled stomach.",
+    why: "A warm, caffeine-free cup many people find comforting when nothing else sounds good. Simple-ingredient formulas only.",
   },
   {
     name: "Freeze-dried strawberries",
@@ -55,12 +56,12 @@ export const pregnancyBoxItems: BoxItem[] = [
   {
     name: "Dark chocolate almonds",
     category: "Sweet",
-    why: "Because this box is about comfort, not restriction. You still get treats.",
+    why: "Because this box is about comfort, not restriction. Caffeine and allergens noted on the card.",
   },
   {
     name: "Sea-salt popcorn",
     category: "Savory",
-    why: "The classic salty craving, aired out and easy on a full-feeling stomach.",
+    why: "The classic salty craving, aired-out and light.",
   },
   {
     name: "Mini pretzels",
@@ -69,32 +70,79 @@ export const pregnancyBoxItems: BoxItem[] = [
   },
 ];
 
-export type BoxStatus = "preorder" | "waitlist";
-
-export const lineup: {
+export type Box = {
+  slug: "pregnancy_comfort" | "blood_sugar" | "heart";
   name: string;
-  status: BoxStatus;
-  statusLabel: string;
-  blurb: string;
-}[] = [
+  shortName: string;
+  forWho: string;
+  why: string;
+  principles: string[];
+  sample: string[];
+  tint: "blush" | "sage" | "cream";
+};
+
+export const boxes: Box[] = [
   {
+    slug: "pregnancy_comfort",
     name: "Pregnancy Comfort Box",
-    status: "preorder",
-    statusLabel: "Preordering soon",
-    blurb:
-      "Twelve gentle snacks for rough mornings, random cravings, and everything in between.",
+    shortName: "Pregnancy Comfort",
+    forWho: "For pregnancy, first weeks through postpartum — and the partners buying for them.",
+    why: "Born when our own snack runs turned into research projects. Gentle options for rough mornings, real treats for real cravings — chosen so she doesn't have to do the reading.",
+    principles: [
+      "Gentle, low-effort options",
+      "Protein-smart picks",
+      "Caffeine noted on every card",
+      "Hydration always included",
+    ],
+    sample: [
+      "Ginger chews",
+      "Almond-flour crackers",
+      "Electrolyte packets",
+      "Freeze-dried strawberries",
+      "Dark chocolate almonds",
+    ],
+    tint: "blush",
   },
   {
+    slug: "blood_sugar",
     name: "Balanced Blood Sugar Box",
-    status: "waitlist",
-    statusLabel: "On the ballot",
-    blurb:
-      "Protein-forward, fiber-rich, lower-added-sugar picks that still feel like treats.",
+    shortName: "Balanced Blood Sugar",
+    forWho: "For anyone minding carbohydrate intake — type 1, type 2, prediabetes, gestational.",
+    why: "Built on a founder's lifetime of label-reading with type 1 diabetes. Protein-forward, fiber-rich, lower added sugar — and still genuinely fun to open.",
+    principles: [
+      "Protein + fiber forward",
+      "Lower added sugar",
+      "Added sugars on every card",
+      "Portion-clear packs",
+    ],
+    sample: [
+      "Roasted chickpeas",
+      "Cheese crisps",
+      "Unsalted almonds",
+      "Lower-sugar dark chocolate",
+      "Sea-salt popcorn",
+    ],
+    tint: "sage",
   },
   {
+    slug: "heart",
     name: "Heart Wellness Box",
-    status: "waitlist",
-    statusLabel: "On the ballot",
-    blurb: "Lower-sodium crunch, good fats, and better sweets — chosen with care.",
+    shortName: "Heart Wellness",
+    forWho: "For sodium-aware, heart-conscious snacking — and the households eating alongside.",
+    why: "Because “watch your sodium” shouldn't mean joyless snacking. Good fats, whole grains, and better sweets that hold their own.",
+    principles: [
+      "Sodium disclosed per item",
+      "Good fats + whole grains",
+      "70%+ dark chocolate treats",
+      "Caffeine-free teas",
+    ],
+    sample: [
+      "Unsalted pistachios",
+      "Roasted pumpkin seeds",
+      "Whole-grain crackers",
+      "Air-popped popcorn",
+      "Dried apricots",
+    ],
+    tint: "cream",
   },
 ];

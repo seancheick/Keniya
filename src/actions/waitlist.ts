@@ -40,23 +40,5 @@ export async function joinWaitlist(
   return { ok: true, message: "You're on the list — you'll hear from us first." };
 }
 
-export const VOTE_SLUGS = [
-  "blood_sugar",
-  "heart",
-  "glp1",
-  "menopause",
-  "postpartum",
-] as const;
-export type VoteSlug = (typeof VOTE_SLUGS)[number];
-
-// ponytail: no server-side dedupe — localStorage guards double votes client-side.
-// Add IP rate limiting (Upstash) before running any paid traffic.
-export async function castVote(slug: VoteSlug): Promise<{ ok: boolean }> {
-  if (!VOTE_SLUGS.includes(slug)) return { ok: false };
-  const { error } = await supabase.from("votes").insert({ box_slug: slug });
-  if (error) {
-    console.error("vote insert failed", error.code, error.message);
-    return { ok: false };
-  }
-  return { ok: true };
-}
+// Voting moved to social media — the votes table stays in Supabase for later
+// polls, but the site no longer writes to it. (Removed castVote; see git history.)

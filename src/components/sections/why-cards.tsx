@@ -42,6 +42,10 @@ export function WhyCards() {
           <p className="mt-6 text-sm text-sage-deep" data-reveal>
             Curated with PharmaGuide ingredient intelligence.
           </p>
+          <p className="mt-2 max-w-[52ch] text-xs leading-relaxed text-ink-soft/70" data-reveal>
+            PharmaGuide supports our label review — ingredients, allergens, caffeine,
+            added sugars, sodium. It doesn&rsquo;t replace individualized medical advice.
+          </p>
         </div>
       </div>
     </section>

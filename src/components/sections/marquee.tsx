@@ -1,9 +1,9 @@
 const words = [
-  "Pregnancy-conscious",
-  "Protein-smart",
-  "Gift-ready",
-  "Packed by hand",
   "The why in every box",
+  "Three boxes, one standard",
+  "First release · 50 per box",
+  "Packed by hand",
+  "Gift-ready",
   "kɛnɛya · health",
 ];
 
