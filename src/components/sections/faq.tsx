@@ -24,12 +24,12 @@ export const faqs = [
     a: "Preorders are fully refundable any time before your box ships — one email to hello@kaniyahealth.com does it. If an item goes out of stock, we substitute within the same category and the same standards, and the card in your box notes the swap.",
   },
   {
-    q: "What's actually in a box?",
-    a: "Twelve items balanced across five categories: three comfort, three protein, two hydration, two sweet, two savory. Contents rotate based on availability, your preferences, and our category standards — deliberately composed, never random. Specific brands may vary batch to batch.",
+    q: "What's actually in a box — and how do you count?",
+    a: "Fourteen distinct snacks across five categories — at least eight of them substantial single servings, with smaller discovery items for variety. We count honestly: a pouch of ginger chews or a pair of tea bags is one snack, never four, and little extras aren't counted toward the total at all. Contents rotate based on availability, your preferences, and our category standards — deliberately composed, never random.",
   },
   {
     q: "Is it a subscription?",
-    a: "No — first-release boxes are one-time purchases. If enough early customers ask for a monthly option, we'll build a subscribe-and-save tier that adapts as your needs change.",
+    a: "No — founding-release boxes are one-time purchases. No subscription, no hidden renewal, no cancellation maze. If enough early customers ask for a monthly option, we'll build a subscribe-and-save tier that adapts as your needs change.",
   },
   {
     q: "Can I send it as a gift?",

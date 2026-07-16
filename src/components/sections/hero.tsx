@@ -89,7 +89,7 @@ export function Hero() {
           </h1>
           <p className="hero-sub mt-6 max-w-[48ch] text-lg leading-relaxed text-ink-soft">
             Thoughtfully curated boxes for pregnancy, balanced blood sugar, and heart
-            wellness — twelve items each, with the reason behind every single one.
+            wellness — fourteen real snacks each, with the reason behind every single one.
           </p>
           <div className="hero-actions mt-9 flex flex-wrap items-center gap-6">
             <Button asChild size="lg" className="rounded-full px-7 text-base">
@@ -105,8 +105,8 @@ export function Hero() {
             </MatchQuiz>
           </div>
           <p className="hero-meta mt-6 text-sm text-ink-soft/80">
-            First release — {site.firstRunPerBox} boxes per line · ${site.preorderPriceUSD}{" "}
-            · Ships {site.shipWindow} (est.)
+            Founding release — only {site.firstRunPerBox} of each box ·{" "}
+            ${site.preorderPriceUSD} · Ships {site.shipWindow} (est.)
           </p>
         </div>
 
@@ -117,7 +117,7 @@ export function Hero() {
               className="absolute right-6 top-6 grid size-24 place-items-center rounded-full border border-blush-ink/25 text-center"
             >
               <p className="text-[0.65rem] font-medium leading-tight tracking-[0.14em] text-blush-ink">
-                12 ITEMS
+                14 SNACKS
                 <br />· ${site.preorderPriceUSD} ·
               </p>
             </div>
@@ -129,7 +129,9 @@ export function Hero() {
                   So many women keep ginger close through the early weeks — warm,
                   familiar, and easy to keep on the nightstand.
                 </p>
-                <p className="mt-4 text-xs tracking-[0.18em] text-blush-ink">Card 03 · 12</p>
+                <p className="mt-4 text-xs tracking-[0.18em] text-blush-ink">
+                  From your guide · 03 of 14
+                </p>
               </div>
             </div>
           </div>

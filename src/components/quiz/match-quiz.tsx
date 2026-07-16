@@ -321,7 +321,7 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
             <div className="flex items-center justify-between pt-4">
               <p className="text-xs text-ink-soft/70">
                 {result.status === "preorder"
-                  ? `$47 · 12 items · first release of 50 · checkout opens this week.`
+                  ? `$47 · 14 snacks · only 50 in the founding release · checkout opens this week.`
                   : "We build the next box where the need is loudest."}
               </p>
               <button

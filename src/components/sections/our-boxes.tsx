@@ -51,9 +51,14 @@ export function OurBoxes() {
           Three boxes. <em className="text-terracotta-deep">One standard.</em>
         </h2>
         <p className="mt-5 max-w-[54ch] text-ink-soft" data-reveal>
-          Every box: twelve items across five categories, a &ldquo;why it&rsquo;s in your
-          box&rdquo; card for each, and a first release capped at {site.firstRunPerBox}.
-          Same care, different life moments.
+          Every box: fourteen real snacks across five categories, and one
+          &ldquo;Packed for You&rdquo; guide explaining why each one made the cut. Only{" "}
+          {site.firstRunPerBox} of each box in the founding release. Same care, different
+          life moments.
+        </p>
+        <p className="mt-3 max-w-[54ch] text-sm text-ink-soft/80" data-reveal>
+          Honest counting, always: a pack of chews or a pair of tea bags counts as one
+          snack — never four. At least eight are substantial single servings.
         </p>
 
         <div className="mt-14 space-y-16 lg:space-y-24">
@@ -81,12 +86,12 @@ export function OurBoxes() {
                   ))}
                 </ul>
                 <p className="mt-5 text-sm text-ink-soft">
-                  Inside: {box.sample.join(", ").toLowerCase()} + 7 more.
+                  Inside: {box.sample.join(", ").toLowerCase()} + 9 more.
                 </p>
                 <p className="mt-5 font-display text-lg text-ink">
-                  ${site.preorderPriceUSD} · 12 items ·{" "}
+                  ${site.preorderPriceUSD} · {site.snackCount} snacks ·{" "}
                   <span className="text-terracotta-deep">
-                    First release: {site.firstRunPerBox} boxes
+                    Only {site.firstRunPerBox} in the founding release
                   </span>
                 </p>
                 <div className="mt-4">
@@ -97,8 +102,9 @@ export function OurBoxes() {
                     compact
                   />
                   <p className="mt-2 text-xs text-ink-soft/80">
-                    Checkout opens this week — your email holds a spot in the first{" "}
-                    {site.firstRunPerBox}. Refundable any time before shipping.
+                    Checkout opens this week — your email holds one of the{" "}
+                    {site.firstRunPerBox}. One-time purchase, refundable any time before
+                    shipping. No subscription, no hidden renewal.
                   </p>
                 </div>
               </div>

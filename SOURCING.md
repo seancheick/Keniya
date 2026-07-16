@@ -1,6 +1,24 @@
 # Kaniya — Sourcing Playbook
 
-Ops doc for packing runs. Rule: **every box = 3 comfort/gentle · 3 protein/fiber · 2 hydration · 2 sweet · 2 savory (12 items)**. Rotate items within each category so a second box never feels like a rerun. Allergy answers from the quiz swap items 1:1 within the same category. Keep ALL items sealed in manufacturer packaging (allergen labels must stay visible). Generic names on the website; brand names live here only.
+Ops doc for packing runs. Rule: **every box = 14 distinct snack selections (~16–18 physical pieces)**. Rotate items within each category so a second box never feels like a rerun. Allergy answers from the quiz swap items 1:1 within the same category. Keep ALL items sealed in manufacturer packaging (allergen labels must stay visible). Generic names on the website; brand names live here only.
+
+## Counting + size standards (customer-facing trust promise)
+
+- **Full snack (≥8 per box, target 9):** ≥1.25 oz crunchy pouch, full bar, full pouch, or a real single-serving treat — something that reads as one complete snack occasion.
+- **Mini snack (≤4 per box):** under 1 oz, one candy pack, one tea selection, one drink stick.
+- **Accent (never counted):** loose mint, single chew, sticker, sample packet.
+- A multi-piece pack (chews pouch, 2 tea bags, 2-cup chocolate) = **one selection, never several.** The site says "no sample-count tricks" — packing must honor it.
+- Max 2 tea/drink selections per box. Minimum 90 days shelf life at pack time. No crushed packages; chocolate gets heat protocol (hold or cold-pack in heat waves); track batch + expiration per run.
+
+## Per-box category composition (14 selections)
+
+- **Pregnancy Comfort:** 4 comfort · 3 protein · 2 hydration · 3 sweet · 2 savory
+- **Balanced Blood Sugar:** protein-forward — 9 substantial (nuts, edamame, chickpeas, cheese crisps, meat stick, lower-sugar bar, popcorn, seed crackers) + 5 smaller (dark chocolate portion, nut butter, freeze-dried berries, sugar-free hydration, seed pack)
+- **Heart Wellness:** 9 substantial (walnuts, pistachios, almonds, pumpkin seeds, low-sodium popcorn, chickpeas, whole-grain crackers, fruit-nut bar, dark chocolate) + 5 smaller (apricots, freeze-dried fruit, nut butter, caffeine-free tea, flax/chia snack). Hard sodium standard on everything savory.
+
+## The insert: "Packed for You" (replaces 12 individual cards)
+
+One folded 5×7, four panels: (1) welcome note · (2) personalized block — packed for {name}, box, preferences, packed by, "Founding Release 01" · (3) all 14 items in a grid with one-line whys + category structure · (4) founder note + signature + QR. QR → digital page: full labels/ingredients/allergens, substitutions, loved-it/send-again feedback, reorder. Print: Sticker Mule/Canva, thick matte cream stock. Update the digital page, not the print, when an item substitutes.
 
 ## Stores (in order for MVP)
 1. **Trader Joe's** — best value/feel for curation runs
@@ -48,4 +66,4 @@ Unsalted mixed nuts · pistachios · walnuts · freeze-dried banana · dried apr
 Roasted chickpeas · unsalted almonds · pistachios · pumpkin seeds · Simple Mills crackers · freeze-dried strawberries · nut butter packets · popcorn · electrolyte packets (variant per condition) · dark chocolate almonds (portion-controlled for blood sugar).
 
 ## Pricing guardrails
-12-item box at $47 → target item COGS ≤ $28 retail-sourced (validation batches run thin — that's paid research), ≤ $18 once wholesale. Tiers later: Mini 8 items $29–32 · Deluxe 16–18 items $69–79.
+14-selection box at $47 → target snacks $15–18 wholesale-sourced (validation batches retail-sourced run ~$28–32 — thin/negative, that's paid research). Full stack per box: snacks + box/insert $3–5 + packing materials $1–2 + payment fees ~$2 + labor $3–5 + shipping $7–12. If margins pinch, charge transparent flat shipping rather than shrinking items. Tiers later: Mini 8 selections $29–32 · Deluxe 18 selections $69–79.

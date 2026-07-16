@@ -99,7 +99,8 @@ export function BoxOpen() {
           </div>
 
           <p className="open-note mt-24 max-w-md text-center text-sm text-ink-soft">
-            Twelve items, five categories, one card each — guided by your quiz answers.
+            Fourteen snacks, five categories, one guide that explains them all — shaped
+            by your quiz answers.
           </p>
         </div>
       </section>

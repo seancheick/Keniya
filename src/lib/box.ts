@@ -4,7 +4,8 @@ export type BoxItem = {
   why: string;
 };
 
-// Pregnancy Comfort sample dozen: 3 comfort / 3 protein / 2 hydration / 2 sweet / 2 savory.
+// Pregnancy Comfort sample fourteen: 4 comfort / 3 protein / 2 hydration / 3 sweet / 2 savory.
+// Counting rule: a multi-piece pack (chews, tea bags) = ONE selection, never several.
 // Generic item names on purpose — no third-party brand names on-site.
 // Why-copy rule: selection rationale + consumer experience, never physiological claims.
 export const pregnancyBoxItems: BoxItem[] = [
@@ -24,14 +25,19 @@ export const pregnancyBoxItems: BoxItem[] = [
     why: "Cool, soft, and zero-effort — chosen pasteurized and unsweetened, for days when solid food feels ambitious.",
   },
   {
+    name: "Sour fruit drops",
+    category: "Comfort",
+    why: "Sharp, bright, and pocket-sized — the car-ride classic so many swear by in the early weeks.",
+  },
+  {
     name: "Protein bar",
     category: "Protein",
-    why: "Picked SKU by SKU for short ingredient lists and real protein — the grams go on its card.",
+    why: "Picked SKU by SKU for short ingredient lists and real protein — the grams go in your guide.",
   },
   {
     name: "Almond butter packet",
     category: "Protein",
-    why: "One-handed and genuinely useful when appetite comes in waves. Protein noted on the card.",
+    why: "One-handed and genuinely useful when appetite comes in waves. Protein noted in your guide.",
   },
   {
     name: "Roasted chickpeas",
@@ -41,7 +47,7 @@ export const pregnancyBoxItems: BoxItem[] = [
   {
     name: "Electrolyte packets",
     category: "Hydration",
-    why: "For the days plain water is a hard sell. Always caffeine-free, sodium disclosed on the card.",
+    why: "For the days plain water is a hard sell. Always caffeine-free, sodium disclosed in your guide.",
   },
   {
     name: "Ginger tea",
@@ -56,7 +62,12 @@ export const pregnancyBoxItems: BoxItem[] = [
   {
     name: "Dark chocolate almonds",
     category: "Sweet",
-    why: "Because this box is about comfort, not restriction. Caffeine and allergens noted on the card.",
+    why: "Because this box is about comfort, not restriction. Caffeine and allergens noted in your guide.",
+  },
+  {
+    name: "Fruit leather",
+    category: "Sweet",
+    why: "Chewy, portable fruit — lunchbox nostalgia that travels anywhere.",
   },
   {
     name: "Sea-salt popcorn",
@@ -91,7 +102,7 @@ export const boxes: Box[] = [
     principles: [
       "Gentle, low-effort options",
       "Protein-smart picks",
-      "Caffeine noted on every card",
+      "Caffeine noted in your guide",
       "Hydration always included",
     ],
     sample: [
@@ -112,7 +123,7 @@ export const boxes: Box[] = [
     principles: [
       "Protein + fiber forward",
       "Lower added sugar",
-      "Added sugars on every card",
+      "Added sugars in your guide",
       "Portion-clear packs",
     ],
     sample: [
@@ -131,7 +142,7 @@ export const boxes: Box[] = [
     forWho: "For sodium-aware, heart-conscious snacking — and the households eating alongside.",
     why: "Because “watch your sodium” shouldn't mean joyless snacking. Good fats, whole grains, and better sweets that hold their own.",
     principles: [
-      "Sodium disclosed per item",
+      "Sodium disclosed in your guide",
       "Good fats + whole grains",
       "70%+ dark chocolate treats",
       "Caffeine-free teas",

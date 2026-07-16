@@ -30,7 +30,8 @@ export function Gift() {
           <p className="mt-4 max-w-[42ch] leading-relaxed text-cream/85">
             Partners, sisters, best friends — whatever they&rsquo;re navigating:
             pregnancy, blood sugar, heart health, GLP-1, menopause. Tell the quiz who
-            it&rsquo;s for and we pack for them. Add a note; it rides along with the cards.
+            it&rsquo;s for and we pack for them. Add a note; it rides along inside their
+            Packed-for-You guide.
           </p>
           <a
             href="#preorder"

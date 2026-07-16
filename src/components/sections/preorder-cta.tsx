@@ -17,12 +17,14 @@ export function PreorderCta() {
           Reserve your box
         </p>
         <h2 className="font-display text-display mt-5 max-w-[18ch] text-ink" data-reveal>
-          Fifty per line. <em className="text-terracotta-deep">First come, first fed.</em>
+          Only {site.firstRunPerBox} of each box.{" "}
+          <em className="text-terracotta-deep">First come, first fed.</em>
         </h2>
         <p className="mt-6 max-w-[54ch] text-lg leading-relaxed text-ink-soft" data-reveal>
-          ${site.preorderPriceUSD} · 12 items · estimated ship window {site.shipWindow} ·
-          US addresses · refundable any time before it ships. Checkout opens on this page
-          within days — your email holds a spot in the first {site.firstRunPerBox} today.
+          ${site.preorderPriceUSD} · {site.snackCount} snacks · one-time purchase, no
+          subscription · estimated ship window {site.shipWindow} · US addresses ·
+          refundable any time before it ships. Checkout opens on this page within days —
+          your email holds one of the {site.firstRunPerBox} today.
         </p>
         <div className="mt-8" data-reveal>
           <div className="flex flex-wrap gap-2">

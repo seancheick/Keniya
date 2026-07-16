@@ -23,10 +23,10 @@ export default function AboutPage() {
           doing the research while feeling her worst.
         </p>
         <p data-reveal>
-          So we built the thing we wished someone had handed us: a box of twelve genuinely
-          good snacks, chosen around how she actually felt that week — and, tucked beside
-          every item, a small card explaining exactly why it earned its place. She calls
-          it the first gift that did the reading for her.
+          So we built the thing we wished someone had handed us: a box of fourteen
+          genuinely good snacks, chosen around how she actually felt that week — with a
+          folded &ldquo;Packed for You&rdquo; guide explaining exactly why each one earned
+          its place. She calls it the first gift that did the reading for her.
         </p>
         <p data-reveal>
           The name comes from <em>kɛnɛya</em> — &ldquo;health&rdquo; in Dioula, the

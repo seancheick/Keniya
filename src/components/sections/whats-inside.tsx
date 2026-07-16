@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { pregnancyBoxItems, type BoxItem } from "@/lib/box";
 
-const categories = ["Comfort ×3", "Protein ×3", "Hydration ×2", "Sweet ×2", "Savory ×2"];
+const categories = ["Comfort ×4", "Protein ×3", "Hydration ×2", "Sweet ×3", "Savory ×2"];
 
 function FlipTile({
   item,
@@ -49,7 +49,7 @@ function FlipTile({
           <div>
             <p className="text-sm leading-relaxed text-blush-ink">{item.why}</p>
             <p className="mt-3 text-[0.65rem] tracking-[0.18em] text-blush-ink/70">
-              CARD {String(index + 1).padStart(2, "0")} · 12
+              GUIDE ENTRY {String(index + 1).padStart(2, "0")} · 14
             </p>
           </div>
         </div>
@@ -74,11 +74,12 @@ export function WhatsInside() {
               className="font-display text-headline mt-4 max-w-[22ch] text-ink"
               data-reveal
             >
-              Twelve items. <em className="text-terracotta-deep">Less</em> label anxiety.
+              Fourteen snacks. <em className="text-terracotta-deep">Less</em> label
+              anxiety.
             </h2>
             <p className="mt-4 max-w-[52ch] text-sm text-ink-soft" data-reveal>
-              The Pregnancy Comfort sample dozen, card by card. Balanced Blood Sugar and
-              Heart Wellness follow the same standard with their own item pools — we do
+              The Pregnancy Comfort sample fourteen, entry by entry. Balanced Blood Sugar
+              and Heart Wellness follow the same standard with their own pools — we do
               the first round of label reading, you still get the full label on every
               sealed item.
             </p>
@@ -108,11 +109,12 @@ export function WhatsInside() {
             className="rounded-full px-6"
             onClick={() => setShowAll((s) => !s)}
           >
-            {showAll ? "Show fewer" : "Show the full dozen"}
+            {showAll ? "Show fewer" : "Show all fourteen"}
           </Button>
           <p className="text-xs text-ink-soft/70">
             Contents rotate based on availability, preferences, and our category
-            standards. Everything ships sealed in its original packaging.
+            standards. Multi-piece packs count as one snack — never four. Everything
+            ships sealed in its original packaging.
           </p>
         </div>
       </div>

@@ -1,9 +1,9 @@
 const words = [
   "The why in every box",
   "Three boxes, one standard",
-  "First release · 50 per box",
+  "Only 50 of each box",
+  "No sample-count tricks",
   "Packed by hand",
-  "Gift-ready",
   "kɛnɛya · health",
 ];
 

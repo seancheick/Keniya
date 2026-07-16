@@ -104,8 +104,20 @@ Natural window light on cream/linen surfaces; warm undertones. Real hands openin
 - **Why-card:** card-cream, hairline border, slight rotation (−3° to −6°), eyebrow + Fraunces item name + soft-ink reason + tracking-wide card number.
 - **Accordion (FAQ):** hairline dividers, no boxes.
 
-## 10. The "why" card (packaging insert)
+## 10. The "Packed for You" guide (packaging insert)
 
-Front: eyebrow `WHY IT'S IN YOUR BOX` / Fraunces item name / 2-line reason (claims-safe) / `Card 03 · 12`.
-Back: Kaniya. wordmark + "Curated with PharmaGuide ingredient intelligence."
-Print: cream stock, ink text, terracotta period, matte, rounded corners.
+One folded 5×7 insert per box — never twelve loose cards (clutter contradicts the
+remove-the-mental-load promise). Four panels:
+
+1. **Cover:** `Packed for You` in Fraunces + one-line welcome ("…one more decision off
+   your plate").
+2. **Personalized block:** Packed for {name} · Box · Preferences · Packed by {founder} ·
+   `Founding Release 01`.
+3. **The fourteen:** item grid, one-line claims-safe why per item, category structure
+   shown (proof of intentional composition).
+4. **Founder note** + signature + QR code → digital page (full labels, ingredients,
+   allergens, substitutions, loved-it feedback, reorder).
+
+Print: thick matte cream stock, ink text, terracotta period, rounded corners.
+Counting promise (site + insert must match ops): 14 selections, ≥8 substantial single
+servings, multi-piece packs count as one, accents never counted.

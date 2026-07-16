@@ -23,21 +23,25 @@ export function WhyCards() {
               Bright, light, and airy — fruit that doesn&rsquo;t ask anything of you.
               Chosen for the weeks when fresh produce keeps losing the fridge battle.
             </p>
-            <p className="mt-6 text-xs tracking-[0.18em] text-blush-ink">CARD 09 · 12</p>
+            <p className="mt-6 text-xs tracking-[0.18em] text-blush-ink">
+              FROM YOUR GUIDE · 10 OF 14
+            </p>
           </div>
         </div>
         <div>
           <p className="eyebrow" data-reveal>
-            The why cards
+            Packed for You — your box, explained
           </p>
           <h2 className="font-display text-headline mt-4 max-w-[20ch] text-ink" data-reveal>
             Every item earns its place — and <em className="text-terracotta-deep">shows its
             work</em>.
           </h2>
           <p className="mt-6 max-w-[48ch] leading-relaxed text-ink-soft" data-reveal>
-            Anyone can fill a box with snacks. Kaniya ships the reasoning: a card for every
-            item explaining why it made the cut for your stage, your answers, your box.
-            It&rsquo;s the research you didn&rsquo;t have the energy to do, done.
+            Anyone can fill a box with snacks. Kaniya ships the reasoning: one folded
+            &ldquo;Packed for You&rdquo; guide with your name, your preferences, and a
+            one-line why for all fourteen snacks — plus a QR code to full labels,
+            ingredients, and a tell-us-what-you-loved page. The research you didn&rsquo;t
+            have the energy to do, done and documented.
           </p>
           <p className="mt-6 text-sm text-sage-deep" data-reveal>
             Curated with PharmaGuide ingredient intelligence.

@@ -6,7 +6,7 @@ const checks = [
   "Sodium",
   "Package integrity + expiration dates",
   "Condition-relevant ingredient flags",
-  "Category balance — 3 comfort · 3 protein · 2 hydration · 2 sweet · 2 savory",
+  "Category balance across comfort, protein, hydration, sweet + savory",
   "Taste. Honestly.",
 ];
 
@@ -36,7 +36,9 @@ export function Standards() {
           <p className="text-sm leading-relaxed text-ink-soft">
             Contents rotate based on availability, your preferences, and these category
             standards — every box is deliberately composed, never random. Specific brands
-            may change batch to batch; the standard doesn&rsquo;t.
+            may change batch to batch; the standard doesn&rsquo;t. And we count honestly:
+            at least eight of the fourteen are substantial single servings, multi-piece
+            packs count as one snack, and small extras aren&rsquo;t counted at all.
           </p>
           <p className="text-sm leading-relaxed text-ink-soft">
             PharmaGuide, our sister platform, supports the label review — ingredient
