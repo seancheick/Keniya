@@ -8,10 +8,28 @@ function req(name: string): string {
 
 export const env = {
   get SUPABASE_URL() {
-    return req("SUPABASE_URL");
+    return (
+      process.env.SUPABASE_URL ??
+      process.env.NEXT_PUBLIC_SUPABASE_URL ??
+      "https://issfvpyewzlnxxdqrzqc.supabase.co"
+    );
   },
   get SUPABASE_SERVICE_ROLE_KEY() {
-    return req("SUPABASE_SERVICE_ROLE_KEY");
+    return (
+      process.env.SUPABASE_SERVICE_ROLE_KEY ??
+      process.env.SUPABASE_SECRET_KEY ??
+      ""
+    );
+  },
+  get SUPABASE_PROJECT_ID() {
+    return (
+      process.env.SUPABASE_PROJECT_ID ??
+      process.env.SUPABASE_PROJECT_REF ??
+      "issfvpyewzlnxxdqrzqc"
+    );
+  },
+  get SUPABASE_STORAGE_BUCKET() {
+    return process.env.SUPABASE_STORAGE_BUCKET ?? "Keniya";
   },
   get STRIPE_SECRET_KEY() {
     return process.env.STRIPE_SECRET_KEY ?? "";

@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { supabase } from "@/lib/supabase";
+import { getSupabaseAdmin } from "@/lib/supabase";
 import { sendWaitlistConfirmEmail } from "@/lib/resend";
 
 const waitlistSchema = z.object({
@@ -25,8 +25,9 @@ export async function joinWaitlist(
   const d = parsed.data;
   const email = d.email.trim().toLowerCase();
 
+  const db = getSupabaseAdmin();
   let dbOk = false;
-  const { error } = await supabase.from("waitlist").insert({
+  const { error } = await db.from("waitlist").insert({
     email,
     box_interest: d.boxInterest,
     source: d.source,
@@ -37,10 +38,8 @@ export async function joinWaitlist(
 
   if (error) {
     if (error.code === "23505") {
-      // Already on list — still success
       dbOk = true;
     } else {
-      // Table missing / RLS / network — don't block the customer; capture via email
       console.error("waitlist insert failed", error.code, error.message);
       dbOk = false;
     }
@@ -55,7 +54,6 @@ export async function joinWaitlist(
     quizCraving: d.quizCraving,
   });
 
-  // Also notify founder so no signup is lost if DB is down
   if (!dbOk) {
     try {
       const { getResend } = await import("@/lib/resend");
@@ -76,11 +74,11 @@ export async function joinWaitlist(
       });
     } catch (notifyErr) {
       console.error("founder notify failed", notifyErr);
-      // If both DB and founder notify fail, only then fail the user
       if (!mail.ok) {
         return {
           ok: false,
-          message: "Something hiccuped — email hello@keniyahealth.com and we’ll add you by hand.",
+          message:
+            "Something hiccuped — email hello@keniyahealth.com and we’ll add you by hand.",
         };
       }
     }
