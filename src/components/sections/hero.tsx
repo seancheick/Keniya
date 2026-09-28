@@ -107,7 +107,7 @@ export function Hero() {
           </div>
           <p className="hero-meta mt-6 text-sm text-ink-soft/80">
             Founding release — only {site.firstRunPerBox} of each · ${site.preorderPriceUSD} ·{" "}
-            {site.freeShippingLabel} · Refundable until it ships
+            {site.freeShippingLabel} · Ships {site.shipDate}
           </p>
         </div>
 

@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const url =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://issfvpyewzlnxxdqrzqc.supabase.co";
+  process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://gubjybzovsfegzbejmaw.supabase.co";
 
 /** Browser / public anon key (legacy JWT preferred for RLS `anon` policies). */
 const anonKey =
@@ -35,7 +35,7 @@ export function getSupabaseAdmin(): SupabaseClient {
 }
 
 export const supabaseProject = {
-  id: process.env.SUPABASE_PROJECT_ID ?? process.env.SUPABASE_PROJECT_REF ?? "issfvpyewzlnxxdqrzqc",
+  id: process.env.SUPABASE_PROJECT_ID ?? process.env.SUPABASE_PROJECT_REF ?? "gubjybzovsfegzbejmaw",
   url,
   storageBucket: process.env.SUPABASE_STORAGE_BUCKET ?? "Keniya",
 } as const;

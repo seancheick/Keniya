@@ -9,6 +9,7 @@ export const site = {
   snackCount: 14,
   currentEdit: "Summer '26",
   firstRunPerBox: 50,
+  shipDate: "November 11, 2026",
   freeShipping: true,
   freeShippingLabel: "Free shipping",
   pharmaguide: {
@@ -18,10 +19,10 @@ export const site = {
       "PharmaGuide is our sister platform for supplement and ingredient intelligence — the same screening mindset we use when every snack earns its place in a Keniya box.",
   },
   supabase: {
-    projectId: process.env.SUPABASE_PROJECT_ID ?? "issfvpyewzlnxxdqrzqc",
+    projectId: process.env.SUPABASE_PROJECT_ID ?? "gubjybzovsfegzbejmaw",
     url:
       process.env.NEXT_PUBLIC_SUPABASE_URL ??
-      "https://issfvpyewzlnxxdqrzqc.supabase.co",
+      "https://gubjybzovsfegzbejmaw.supabase.co",
     storageBucket: process.env.SUPABASE_STORAGE_BUCKET ?? "Keniya",
   },
 } as const;

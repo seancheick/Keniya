@@ -62,7 +62,7 @@ export async function startCheckout(input: {
               unit_amount: site.preorderPriceUSD * 100,
               product_data: {
                 name: `${box.name} (Founding preorder)`,
-                description: `${site.snackCount} snacks · Free shipping · Refundable any time before it ships`,
+                description: `${site.snackCount} snacks · Free shipping · Ships ${site.shipDate} · Refundable before it ships`,
               },
             },
           },

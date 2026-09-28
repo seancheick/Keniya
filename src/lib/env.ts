@@ -11,7 +11,7 @@ export const env = {
     return (
       process.env.SUPABASE_URL ??
       process.env.NEXT_PUBLIC_SUPABASE_URL ??
-      "https://issfvpyewzlnxxdqrzqc.supabase.co"
+      "https://gubjybzovsfegzbejmaw.supabase.co"
     );
   },
   get SUPABASE_SERVICE_ROLE_KEY() {
@@ -25,7 +25,7 @@ export const env = {
     return (
       process.env.SUPABASE_PROJECT_ID ??
       process.env.SUPABASE_PROJECT_REF ??
-      "issfvpyewzlnxxdqrzqc"
+      "gubjybzovsfegzbejmaw"
     );
   },
   get SUPABASE_STORAGE_BUCKET() {

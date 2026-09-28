@@ -12,7 +12,7 @@ export const faqs = [
   },
   {
     q: "When and where do boxes ship?",
-    a: `Founding boxes ship to US addresses in small, hand-packed batches, and we email your ship date after you order. ${site.freeShippingLabel} on every founding preorder. In hot weather we may hold chocolate-containing boxes a few days or pack them accordingly — we'll email you either way. If timing slips, you'll hear from us before you have to ask, and you can cancel for a full refund any time before your box ships.`,
+    a: `Founding boxes ship to US addresses in small, hand-packed batches. Founding boxes ship ${site.shipDate}. ${site.freeShippingLabel} on every founding preorder. In hot weather we may hold chocolate-containing boxes a few days or pack them accordingly — we'll email you either way. If timing slips, you'll hear from us before you have to ask, and you can cancel for a full refund any time before your box ships.`,
   },
   {
     q: "Which boxes can I preorder?",
