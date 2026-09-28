@@ -3,36 +3,28 @@ import { site } from "@/lib/site";
 
 export const faqs = [
   {
-    q: "Is Keniya medical or nutritional advice?",
-    a: "No. We curate packaged snacks for comfort and enjoyment — we don't diagnose, treat, or manage any condition. Every item ships sealed in its original packaging with the manufacturer's full label, and your healthcare provider is always the right call for what's best for you.",
+    q: "What exactly is in the box?",
+    a: `${site.snackCount} snacks, listed above for each box. At least 8 are full single servings. A pack of chews or two tea bags counts as one snack, and small extras are free and don't count. Brands can change with stock. Any swap is an equal pick and is listed on your card.`,
   },
   {
-    q: "How do you handle allergies?",
-    a: "The quiz asks about nuts, gluten, and dairy, and we use your answers to guide selection and steer around stated ingredients where possible. Keniya isn't an allergen-free facility and we can't guarantee against manufacturer cross-contact — so please always check each item's sealed label. If you live with a severe allergy, we'd honestly rather you wait for our dedicated lines than risk a bad box.",
+    q: "When does it ship?",
+    a: `Founding boxes ship ${site.shipDate}, free, to US addresses. If anything changes, we email you first.`,
   },
   {
-    q: "When and where do boxes ship?",
-    a: `Founding boxes ship to US addresses in small, hand-packed batches. Founding boxes ship ${site.shipDate}. ${site.freeShippingLabel} on every founding preorder. In hot weather we may hold chocolate-containing boxes a few days or pack them accordingly — we'll email you either way. If timing slips, you'll hear from us before you have to ask, and you can cancel for a full refund any time before your box ships.`,
+    q: "Can I cancel?",
+    a: `Yes. Email ${site.email} any time before your box ships for a full refund. It's a one-time purchase, not a subscription.`,
   },
   {
-    q: "Which boxes can I preorder?",
-    a: "All three founding boxes are open for preorder: Pregnancy Comfort, Balanced Blood Sugar, and Heart Wellness — $47 each, fifty of each box, free shipping, refundable before ship. Later lines (GLP-1, menopause, postpartum) start as waitlists until demand is clear.",
+    q: "How do I send it as a gift?",
+    a: "Choose \"It's a gift\" when you pick your box, then enter their address at checkout and write a message. We print it on their card.",
   },
   {
-    q: "What's the refund and substitution policy?",
-    a: "Preorders are fully refundable any time before your box ships — one email to hello@keniyahealth.com does it. If an item goes out of stock, we substitute within the same category and the same standards, and the card in your box notes the swap.",
+    q: "What about allergies?",
+    a: "Every snack ships sealed with its full label. Tell us about nuts, gluten or dairy in the quiz and we'll steer around them where we can. We aren't an allergen-free facility and can't rule out cross-contact at the maker, so with a severe allergy, please check every label.",
   },
   {
-    q: "What's actually in a box — and how do you count?",
-    a: "Fourteen distinct snacks across five categories — at least eight of them substantial single servings, with smaller discovery items for variety. We count honestly: a pouch of ginger chews or a pair of tea bags is one snack, never four, and little extras aren't counted toward the total at all. And no two seasons are identical — boxes evolve winter through fall as your feedback and new clean-ingredient finds come in. Same categories, same standards, fresh picks.",
-  },
-  {
-    q: "Is it a subscription?",
-    a: "No — founding-release boxes are one-time purchases. No subscription, no hidden renewal, no cancellation maze. If enough early customers ask for a monthly option, we'll build a subscribe-and-save tier that adapts as your needs change.",
-  },
-  {
-    q: "Can I send it as a gift?",
-    a: "Absolutely — the quiz has a gift path that asks what the recipient is navigating, and you'll be able to add a gift note at checkout. It's the care package that does the reading for you.",
+    q: "Is this medical advice?",
+    a: "No. We pick packaged snacks with care, but we don't diagnose or treat anything. Your doctor is the right person to ask about what's best for you.",
   },
 ];
 
@@ -41,10 +33,10 @@ export function Faq() {
     <section id="faq">
       <div className="mx-auto max-w-3xl px-6 py-16 lg:py-24">
         <p className="eyebrow" data-reveal>
-          Questions, answered
+          Questions
         </p>
         <h2 className="font-display text-headline mt-4 text-ink" data-reveal>
-          The fine print, in plain words.
+          Good to know.
         </h2>
         {/* Native <details>: answers stay in the server HTML, so search and AI crawlers
             that never click (or run JS) still read them. name="faq" = one open at a time. */}

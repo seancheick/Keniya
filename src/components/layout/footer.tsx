@@ -34,7 +34,7 @@ export function Footer() {
             <a className="transition-colors hover:text-ink" href="/about">
               Our story
             </a>
-            <Link className="transition-colors hover:text-ink" href="/#pharmaguide">
+            <Link className="transition-colors hover:text-ink" href="/#how">
               How we pick
             </Link>
             <a

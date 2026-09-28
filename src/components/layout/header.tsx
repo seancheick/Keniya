@@ -4,8 +4,9 @@ import { site } from "@/lib/site";
 
 const nav = [
   { href: "/#boxes", label: "The boxes" },
-  { href: "/#inside", label: "What's inside" },
-  { href: "/#pharmaguide", label: "How we pick" },
+  { href: "/#gift", label: "Gifts" },
+  { href: "/#how", label: "How we pick" },
+  { href: "/#faq", label: "FAQ" },
   { href: "/about", label: "Our story" },
 ];
 
@@ -31,7 +32,7 @@ export function Header() {
           ))}
         </nav>
         <Button asChild className="rounded-full px-5">
-          <Link href="/#preorder">Preorder — ${site.preorderPriceUSD}</Link>
+          <Link href="/#boxes">Preorder — ${site.preorderPriceUSD}</Link>
         </Button>
       </div>
     </header>

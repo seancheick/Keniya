@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { startCheckout } from "@/actions/checkout";
 
-/** POST { boxSlug } → { ok, url } | { ok:false, message } — backup to server actions. */
+/** POST { boxSlug, gift? } → { ok, url } | { ok:false, message } — backup to server actions. */
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as { boxSlug?: string };
-    const result = await startCheckout({ boxSlug: body.boxSlug ?? "" });
+    const body = (await req.json()) as { boxSlug?: string; gift?: boolean };
+    const result = await startCheckout({ boxSlug: body.boxSlug ?? "", gift: body.gift === true });
     return NextResponse.json(result, { status: result.ok ? 200 : 400 });
   } catch (err) {
     console.error("api/checkout", err);

@@ -64,7 +64,7 @@ export function ScrollFx() {
 
         ScrollTrigger.refresh();
 
-        // Pinned sections (BoxOpen) insert their spacers after this effect, pushing every
+        // Pinned sections (if any) insert their spacers after this effect, pushing every
         // #hash target further down. Re-measure next frame, then land on the hash —
         // lenis.resize() first, or Lenis clamps the jump to its stale (pre-spacer) limit.
         const settle = requestAnimationFrame(() => {

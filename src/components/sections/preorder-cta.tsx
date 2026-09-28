@@ -1,60 +1,31 @@
-"use client";
-
-import { useState } from "react";
-import { MatchQuiz } from "@/components/quiz/match-quiz";
-import { BuyButton } from "@/components/buy-button";
-import { boxes } from "@/lib/box";
 import { site } from "@/lib/site";
 
 export function PreorderCta() {
-  const [slug, setSlug] = useState(boxes[0].slug);
-  const selected = boxes.find((b) => b.slug === slug) ?? boxes[0];
-
   return (
-    <section id="preorder" className="border-t border-border bg-blush/40">
-      <div className="mx-auto max-w-6xl px-6 py-20 lg:py-28">
-        <p className="eyebrow" data-reveal>
-          Preorder now
-        </p>
-        <h2 className="font-display text-display mt-5 max-w-[18ch] text-ink" data-reveal>
-          Only {site.firstRunPerBox} of each box.{" "}
-          <em className="text-terracotta-deep">First come, first fed.</em>
-        </h2>
-        <p className="mt-6 max-w-[54ch] text-lg leading-relaxed text-ink-soft" data-reveal>
-          ${site.preorderPriceUSD} · {site.snackCount} snacks · one-time purchase, no
-          subscription · {site.freeShippingLabel} · US addresses · ships {site.shipDate}, and you can cancel for a full refund any time before it ships.
-        </p>
-        <div className="mt-8" data-reveal>
-          <div className="flex flex-wrap gap-2">
-            {boxes.map((box) => (
-              <button
-                key={box.slug}
-                type="button"
-                aria-pressed={slug === box.slug}
-                onClick={() => setSlug(box.slug)}
-                className={`rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-                  slug === box.slug
-                    ? "border-transparent bg-sage-deep text-cream"
-                    : "border-border bg-cream-card text-ink hover:border-sage"
-                }`}
-              >
-                {box.shortName}
-              </button>
-            ))}
-          </div>
-          <div className="mt-5">
-            <BuyButton key={selected.slug} box={selected} />
-          </div>
-          <div className="mt-5">
-            <MatchQuiz>
-              <button
-                type="button"
-                className="text-sm font-medium text-sage-deep transition-colors hover:text-ink"
-              >
-                Not sure which box? Find yours →
-              </button>
-            </MatchQuiz>
-          </div>
+    <section className="bg-sage-deep">
+      <div className="mx-auto flex max-w-6xl flex-col items-start gap-5 px-5 py-12 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-display text-3xl text-cream">
+            Only {site.firstRunPerBox} of each box.
+          </p>
+          <p className="mt-1 text-cream/80">
+            ${site.preorderPriceUSD} · {site.freeShippingLabel.toLowerCase()} · ships{" "}
+            {site.shipDate} · refundable until it ships
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <a
+            href="#boxes"
+            className="inline-flex h-12 items-center rounded-full bg-terracotta px-8 text-base font-semibold text-cream transition-colors hover:bg-terracotta-deep"
+          >
+            Pick your box
+          </a>
+          <a
+            href="#gift"
+            className="inline-flex h-12 items-center rounded-full border border-cream/50 px-6 text-base font-medium text-cream transition-colors hover:bg-cream/10"
+          >
+            Send as a gift
+          </a>
         </div>
       </div>
     </section>

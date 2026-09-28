@@ -7,7 +7,7 @@ export const site = {
   email: "hello@keniyahealth.com",
   preorderPriceUSD: 47,
   snackCount: 14,
-  currentEdit: "Summer '26",
+  currentEdit: "Fall '26",
   firstRunPerBox: 50,
   shipDate: "November 11, 2026",
   freeShipping: true,

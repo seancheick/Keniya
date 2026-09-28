@@ -7,7 +7,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
 import { Button } from "@/components/ui/button";
-import { MatchQuiz } from "@/components/quiz/match-quiz";
 import { site } from "@/lib/site";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText);
@@ -83,31 +82,29 @@ export function Hero() {
     <section ref={scope} className="overflow-hidden">
       <div className="mx-auto grid max-w-6xl gap-16 px-6 pb-16 pt-14 sm:pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pb-24 lg:pt-24">
         <div>
-          <p className="hero-eyebrow eyebrow">Snack boxes with a why</p>
+          <p className="hero-eyebrow eyebrow">Founding preorder · only {site.firstRunPerBox} of each</p>
           <h1 className="hero-title font-display text-display mt-5 text-ink">
-            Snacks chosen around what{" "}
-            <em className="text-terracotta-deep">life asks of you</em>.
+            Snack boxes for{" "}
+            <em className="text-terracotta-deep">what you&rsquo;re going through</em>.
           </h1>
           <p className="hero-sub mt-6 max-w-[48ch] text-lg leading-relaxed text-ink-soft">
-            Thoughtfully curated boxes for pregnancy, balanced blood sugar, and heart
-            wellness — fourteen real snacks each, with the reason behind every single one.
+            Pregnancy, blood sugar or heart health. 14 snacks picked for you, with a card
+            that says why each one is there.
           </p>
           <div className="hero-actions mt-9 flex flex-wrap items-center gap-6">
-            <Button asChild size="lg" className="rounded-full px-7 text-base">
-              <a href="#boxes">Preorder a founding box — ${site.preorderPriceUSD}</a>
+            <Button asChild size="lg" className="h-12 rounded-full px-8 text-base font-semibold">
+              <a href="#boxes">Pick your box, ${site.preorderPriceUSD}</a>
             </Button>
-            <MatchQuiz>
-              <button
-                type="button"
-                className="text-sm font-medium text-sage-deep transition-colors hover:text-ink"
-              >
-                Find your box →
-              </button>
-            </MatchQuiz>
+            <a
+              href="#gift"
+              className="text-sm font-medium text-ink underline underline-offset-4 transition-colors hover:text-terracotta-deep"
+            >
+              Send as a gift
+            </a>
           </div>
           <p className="hero-meta mt-6 text-sm text-ink-soft/80">
-            Founding release — only {site.firstRunPerBox} of each · ${site.preorderPriceUSD} ·{" "}
-            {site.freeShippingLabel} · Ships {site.shipDate}
+            ${site.preorderPriceUSD} · {site.freeShippingLabel} · Ships {site.shipDate} ·
+            Refundable until it ships
           </p>
         </div>
 

@@ -121,7 +121,7 @@ export function WaitlistConfirmEmail({
 
           <Section style={{ margin: "28px 0 8px", textAlign: "center" }}>
             <Link
-              href={`${siteUrl}/#preorder`}
+              href={`${siteUrl}/#boxes`}
               style={{
                 display: "inline-block",
                 padding: "14px 28px",

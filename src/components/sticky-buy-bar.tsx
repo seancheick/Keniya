@@ -2,16 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { site } from "@/lib/site";
-import { boxes } from "@/lib/box";
+
 
 export function StickyBuyBar() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setShow(window.scrollY > 520);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    // Hidden near the top and while the shop itself is on screen (it has its own button).
+    let inShop = false;
+    const update = () => setShow(window.scrollY > 520 && !inShop);
+    const shop = document.getElementById("boxes");
+    const io = new IntersectionObserver(([e]) => {
+      inShop = e.isIntersecting;
+      update();
+    });
+    if (shop) io.observe(shop);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => {
+      io.disconnect();
+      window.removeEventListener("scroll", update);
+    };
   }, []);
 
   if (!show) return null;
@@ -28,10 +39,10 @@ export function StickyBuyBar() {
           </p>
         </div>
         <a
-          href={`#box-${boxes[0].slug}`}
+          href="#boxes"
           className="shrink-0 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
         >
-          Shop boxes
+          Pick your box
         </a>
       </div>
     </div>
