@@ -1,9 +1,4 @@
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { ChevronDownIcon } from "lucide-react";
 import { site } from "@/lib/site";
 
 export const faqs = [
@@ -17,7 +12,7 @@ export const faqs = [
   },
   {
     q: "When and where do boxes ship?",
-    a: `The first release ships in an estimated window of ${site.shipWindow}, to US addresses. ${site.freeShippingLabel} on every founding preorder. In serious summer heat we may hold chocolate-containing boxes a few days or pack accordingly — we'll email you either way. If timing slips, you'll hear from us before you have to ask.`,
+    a: `Founding boxes ship to US addresses in small, hand-packed batches, and we email your ship date after you order. ${site.freeShippingLabel} on every founding preorder. In hot weather we may hold chocolate-containing boxes a few days or pack them accordingly — we'll email you either way. If timing slips, you'll hear from us before you have to ask, and you can cancel for a full refund any time before your box ships.`,
   },
   {
     q: "Which boxes can I preorder?",
@@ -51,19 +46,21 @@ export function Faq() {
         <h2 className="font-display text-headline mt-4 text-ink" data-reveal>
           The fine print, in plain words.
         </h2>
-        <div className="mt-8" data-reveal>
-          <Accordion type="single" collapsible className="w-full">
-            {faqs.map((item, i) => (
-              <AccordionItem key={item.q} value={`item-${i}`}>
-                <AccordionTrigger className="text-left font-medium text-ink hover:no-underline">
-                  {item.q}
-                </AccordionTrigger>
-                <AccordionContent className="leading-relaxed text-ink-soft">
-                  {item.a}
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
+        {/* Native <details>: answers stay in the server HTML, so search and AI crawlers
+            that never click (or run JS) still read them. name="faq" = one open at a time. */}
+        <div className="mt-8 divide-y divide-border border-b border-border" data-reveal>
+          {faqs.map((item) => (
+            <details key={item.q} name="faq" className="group">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-md py-4 text-left text-sm font-medium text-ink outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+                {item.q}
+                <ChevronDownIcon
+                  aria-hidden
+                  className="size-4 shrink-0 text-ink-soft transition-transform duration-200 group-open:rotate-180"
+                />
+              </summary>
+              <p className="pb-4 text-sm leading-relaxed text-ink-soft">{item.a}</p>
+            </details>
+          ))}
         </div>
       </div>
     </section>

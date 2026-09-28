@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { site } from "@/lib/site";
 
 export function Footer() {
@@ -33,9 +34,9 @@ export function Footer() {
             <a className="transition-colors hover:text-ink" href="/about">
               Our story
             </a>
-            <a className="transition-colors hover:text-ink" href="/#pharmaguide">
+            <Link className="transition-colors hover:text-ink" href="/#pharmaguide">
               How we pick
-            </a>
+            </Link>
             <a
               className="transition-colors hover:text-ink"
               href={site.pharmaguide.url}
@@ -44,9 +45,9 @@ export function Footer() {
             >
               PharmaGuide
             </a>
-            <a className="transition-colors hover:text-ink" href="/#faq">
+            <Link className="transition-colors hover:text-ink" href="/#faq">
               FAQ
-            </a>
+            </Link>
             <a className="transition-colors hover:text-ink" href="/privacy">
               Privacy
             </a>

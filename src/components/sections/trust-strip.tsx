@@ -8,10 +8,6 @@ const items = [
     detail: "Founding release, hand-packed",
   },
   {
-    label: `${site.foundingHolders}+ holding spots`,
-    detail: "Early list + preorders",
-  },
-  {
     label: "PharmaGuide screening",
     detail: "Ingredient intelligence",
     href: site.pharmaguide.url,

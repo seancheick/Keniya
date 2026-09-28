@@ -2,9 +2,9 @@ import { site } from "@/lib/site";
 
 const softProof = [
   {
-    title: "Founding holders",
-    value: `${site.foundingHolders}+`,
-    body: "People already on the list for the first 50-of-each release — partners, parents, and gift-givers.",
+    title: "Small batches",
+    value: `${site.firstRunPerBox}`,
+    body: "Of each box in the founding release — hand-packed at our kitchen table, one order at a time.",
   },
   {
     title: "One standard",
@@ -23,15 +23,15 @@ export function SocialProof() {
     <section id="proof" className="border-b border-border">
       <div className="mx-auto max-w-6xl px-6 py-14 lg:py-18">
         <p className="eyebrow" data-reveal>
-          Early proof
+          Before the reviews
         </p>
         <h2 className="font-display text-headline mt-4 max-w-[22ch] text-ink" data-reveal>
-          Already <em className="text-terracotta-deep">{site.foundingHolders}+ people</em>{" "}
-          holding founding spots.
+          Promises we can <em className="text-terracotta-deep">actually keep</em>.
         </h2>
         <p className="mt-4 max-w-[54ch] text-ink-soft" data-reveal>
-          We’re still a kitchen-table company — no fake five-star walls. Numbers update as
-          the list grows. After the first ship, real unboxing notes replace this block.
+          We’re a kitchen-table company, so there’s no wall of five-star reviews here yet —
+          and we won’t fake one. Once the first boxes ship, real notes from real customers
+          go in this spot.
         </p>
         <div className="mt-10 grid gap-6 sm:grid-cols-3" data-reveal-group>
           {softProof.map((item) => (

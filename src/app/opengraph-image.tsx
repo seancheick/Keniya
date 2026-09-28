@@ -1,7 +1,6 @@
 import { ImageResponse } from "next/og";
 import { site } from "@/lib/site";
 
-export const runtime = "edge";
 export const alt = `${site.name} — ${site.tagline}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -50,8 +49,7 @@ export default function OpenGraphImage() {
             maxWidth: 820,
           }}
         >
-          Pregnancy · Blood sugar · Heart wellness · 14 snacks · $
-          {site.preorderPriceUSD} · Free shipping · Founding 50
+          {`Pregnancy · Blood sugar · Heart health · ${site.snackCount} snacks · $${site.preorderPriceUSD} · Free shipping · Founding 50`}
         </div>
         <div
           style={{

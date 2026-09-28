@@ -31,7 +31,7 @@ export function Header() {
           ))}
         </nav>
         <Button asChild className="rounded-full px-5">
-          <a href="/#preorder">Preorder — ${site.preorderPriceUSD}</a>
+          <Link href="/#preorder">Preorder — ${site.preorderPriceUSD}</Link>
         </Button>
       </div>
     </header>

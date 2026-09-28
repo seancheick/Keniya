@@ -4,6 +4,7 @@ import { site } from "@/lib/site";
 export const metadata = {
   title: "Thank you",
   description: "Your Keniya founding preorder is confirmed.",
+  robots: { index: false, follow: false },
 };
 
 export default async function ThanksPage({
@@ -21,9 +22,9 @@ export default async function ThanksPage({
       </h1>
       <p className="mt-6 text-lg leading-relaxed text-ink-soft">
         Your founding preorder is confirmed
-        {sp.box ? ` (${sp.box.replaceAll("_", " ")})` : ""}. We&rsquo;ll email you with
-        the ship window ({site.shipWindow} est.), packing notes, and anything we need for
-        allergy swaps. {site.freeShippingLabel} is included.
+        {sp.box ? ` (${sp.box.replaceAll("_", " ")})` : ""}. We&rsquo;ll email you your
+        ship date, packing notes, and anything we need for allergy swaps.{" "}
+        {site.freeShippingLabel} is included.
       </p>
       <p className="mt-4 text-sm text-ink-soft">
         Questions anytime:{" "}

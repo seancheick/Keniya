@@ -2,6 +2,7 @@ export const metadata = {
   title: "Our story",
   description:
     "Keniya started in the middle of a first trimester — one couple, a snack aisle, and too many labels. Here's why we pack every box with the why.",
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {

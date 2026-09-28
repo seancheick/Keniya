@@ -22,9 +22,8 @@ export function PreorderCta() {
         </h2>
         <p className="mt-6 max-w-[54ch] text-lg leading-relaxed text-ink-soft" data-reveal>
           ${site.preorderPriceUSD} · {site.snackCount} snacks · one-time purchase, no
-          subscription · {site.freeShippingLabel} · estimated ship window {site.shipWindow} ·
-          US addresses · refundable any time before it ships.{" "}
-          {site.foundingHolders}+ people already holding founding spots.
+          subscription · {site.freeShippingLabel} · US addresses · your ship date is
+          confirmed by email, and you can cancel for a full refund any time before it ships.
         </p>
         <div className="mt-8" data-reveal>
           <div className="flex flex-wrap gap-2">

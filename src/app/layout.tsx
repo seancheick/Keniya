@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ScrollFx } from "@/components/fx/scroll-fx";
+import { JsonLd } from "@/components/json-ld";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -19,17 +20,18 @@ const figtree = Figtree({
   variable: "--font-figtree",
 });
 
+// No `alternates.canonical` or `openGraph.url` here: metadata merges shallowly, so
+// anything set in the root layout is inherited by every page. Each page sets its own.
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: `${site.name} — ${site.tagline}`,
+    default: `Snack boxes for pregnancy, blood sugar & heart health · ${site.name}`,
     template: `%s · ${site.name}`,
   },
   description: site.description,
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: site.url,
     siteName: site.name,
     title: `${site.name} — ${site.tagline}`,
     description: site.description,
@@ -39,9 +41,28 @@ export const metadata: Metadata = {
     title: `${site.name} — ${site.tagline}`,
     description: site.description,
   },
-  alternates: {
-    canonical: site.url,
-  },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${site.url}/#organization`,
+      name: site.name,
+      url: site.url,
+      logo: `${site.url}/icon.svg`,
+      email: site.email,
+      description: site.description,
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${site.url}/#website`,
+      name: site.name,
+      url: site.url,
+      publisher: { "@id": `${site.url}/#organization` },
+    },
+  ],
 };
 
 export default function RootLayout({
@@ -55,6 +76,7 @@ export default function RootLayout({
       className={`${fraunces.variable} ${figtree.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
+        <JsonLd data={organizationJsonLd} />
         <ScrollFx />
         <Header />
         <main className="flex-1">{children}</main>

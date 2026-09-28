@@ -2,18 +2,15 @@ export const site = {
   name: "Keniya",
   tagline: "Snack boxes with a why",
   description:
-    "Keniya curates condition-aware snack boxes for pregnancy, balanced blood sugar, and heart wellness — fourteen real snacks per box, with a Packed-for-You guide explaining why every one made the cut.",
+    "Curated snack boxes for pregnancy, balanced blood sugar, and heart health — 14 real snacks, free US shipping, and the reason behind every pick.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://keniyahealth.com",
   email: "hello@keniyahealth.com",
   preorderPriceUSD: 47,
   snackCount: 14,
   currentEdit: "Summer '26",
   firstRunPerBox: 50,
-  shipWindow: "August 3–14, 2026",
   freeShipping: true,
   freeShippingLabel: "Free shipping",
-  /** Soft social proof — bump as waitlist / preorders grow (update manually or via admin later). */
-  foundingHolders: 47,
   pharmaguide: {
     name: "PharmaGuide",
     url: "https://pharmaguide.io",
@@ -35,11 +32,4 @@ export function storagePublicUrl(path: string) {
   const bucket = site.supabase.storageBucket;
   const clean = path.replace(/^\//, "");
   return `${base}/storage/v1/object/public/${bucket}/${clean}`;
-}
-
-export function remainingFoundingEstimate(reserved = site.foundingHolders) {
-  // Soft estimate for marketing copy — not live inventory until Stripe webhooks land.
-  const perBox = site.firstRunPerBox;
-  const left = Math.max(0, perBox * 3 - reserved);
-  return { perBox, leftAcrossLine: left, reserved };
 }

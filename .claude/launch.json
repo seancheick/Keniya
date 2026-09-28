@@ -9,6 +9,15 @@
         "export PATH=\"/Users/seancheick/.nvm/versions/node/v23.5.0/bin:$PATH\" && exec pnpm dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "kaniya-prod",
+      "runtimeExecutable": "/bin/zsh",
+      "runtimeArgs": [
+        "-c",
+        "export PATH=\"/Users/seancheick/.nvm/versions/node/v23.5.0/bin:$PATH\" && exec pnpm start -p 3100"
+      ],
+      "port": 3100
     }
   ]
 }
