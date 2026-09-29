@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
-  BookOpenCheck,
-  Scale,
+  Apple,
+  Gift,
   ScanText,
   ShieldCheck,
   Stethoscope,
@@ -14,7 +14,7 @@ import { site } from "@/lib/site";
 
 const steps: { title: string; body: string; Icon: LucideIcon; conditions?: boolean }[] = [
   { title: "Label", body: "Ingredients and allergens, read on every snack.", Icon: ScanText },
-  { title: "Nutrition", body: "Sugar, sodium, protein, fiber, caffeine and serving size.", Icon: Scale },
+  { title: "Nutrition", body: "Carbs, sugar, sodium, protein, fiber, caffeine and serving size.", Icon: Apple },
   {
     title: "Your condition's rules",
     body: "Each condition has its own screening. A snack must qualify for yours.",
@@ -22,7 +22,7 @@ const steps: { title: string; body: string; Icon: LucideIcon; conditions?: boole
     conditions: true,
   },
   { title: "Clinical review", body: "A pharmacist reviews the criteria and each lineup.", Icon: Stethoscope },
-  { title: "Packed for You", body: "Your guide explains why each snack made the box.", Icon: BookOpenCheck },
+  { title: "Packed for You", body: "Your box ships with a guide to why each snack made it.", Icon: Gift },
 ];
 
 export function Screening() {
@@ -37,23 +37,8 @@ export function Screening() {
           screening, and a snack has to qualify for your condition before it can go in.
         </p>
 
-        {/* The funnel: many snacks in, only qualifying ones out. Decorative; the list below
-            carries the meaning for screen readers. */}
-        <div className="relative mx-auto mt-12 hidden max-w-5xl lg:block" aria-hidden data-reveal>
-          <div
-            className="h-16 bg-gradient-to-r from-sage/25 via-sage/15 to-terracotta/30"
-            style={{ clipPath: "polygon(0 0, 100% 34%, 100% 66%, 0 100%)" }}
-          />
-          <p className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-sage-deep">
-            Every snack we consider
-          </p>
-          <p className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-terracotta-deep">
-            Your {site.snackCount}
-          </p>
-        </div>
-
         <ol
-          className="relative mx-auto mt-10 grid max-w-5xl gap-7 lg:mt-8 lg:grid-cols-5 lg:gap-4"
+          className="relative mx-auto mt-10 grid max-w-5xl gap-7 lg:mt-12 lg:grid-cols-5 lg:gap-4"
           data-reveal-group
         >
           {/* The track the steps sit on: down the left on mobile, across on desktop. */}
@@ -170,7 +155,8 @@ export function PackedGuide() {
               ))}
             </div>
             <figcaption className="mt-4 text-[0.7rem] text-ink-soft">
-              Example layout. Your guide covers all {site.snackCount} snacks.
+              Example layout. Your guide covers all {site.snackCount} snacks, with the numbers
+              that matter for your box: carbs and added sugar for Blood Sugar, sodium for Heart.
             </figcaption>
           </figure>
         </div>

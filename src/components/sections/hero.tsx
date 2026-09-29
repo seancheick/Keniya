@@ -86,7 +86,6 @@ export function Hero() {
         </div>
 
         <div className="hero-visual relative mx-auto w-full max-w-md lg:max-w-none">
-          {/* Badge sits on the frame's corner (a sticker), not inside it: no card-in-card. */}
           <div className="relative mx-auto max-w-md">
             <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] bg-blush shadow-sm">
               <Image
@@ -98,15 +97,6 @@ export function Hero() {
                 sizes="(max-width: 768px) 90vw, 480px"
                 className="object-cover"
               />
-            </div>
-            <div
-              data-speed="0.7"
-              className="absolute -right-3 -top-4 grid size-24 rotate-6 place-items-center rounded-full bg-terracotta-deep text-center shadow-[0_8px_20px_-6px_rgb(51_48_43/0.35)] sm:-right-5"
-            >
-              <p className="font-display text-sm leading-tight text-cream">
-                {site.snackCount} snacks
-                <br />${site.preorderPriceUSD}
-              </p>
             </div>
           </div>
         </div>

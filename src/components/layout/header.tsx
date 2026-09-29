@@ -30,7 +30,7 @@ export function Header() {
             </a>
           ))}
         </nav>
-        <Button asChild className="rounded-full px-5">
+        <Button asChild className="hidden rounded-full px-5 md:inline-flex">
           <Link href="/#boxes">Pick your box</Link>
         </Button>
       </div>

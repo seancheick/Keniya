@@ -11,6 +11,9 @@ const schema = z.object({
   gift: z.boolean().optional(),
 });
 
+const CHECKOUT_DOWN =
+  "Checkout is having a moment. Leave your email and we’ll hold your spot and write to you.";
+
 export type CheckoutResult =
   | { ok: true; url: string }
   | { ok: false; message: string; needsEmail?: boolean; code?: string };
@@ -37,7 +40,7 @@ export async function startCheckout(input: {
       needsEmail: true,
       code: "no_stripe_key",
       message:
-        "Secure checkout isn’t connected on this server yet — leave your email to hold a founding spot.",
+        CHECKOUT_DOWN,
     };
   }
 
@@ -47,7 +50,7 @@ export async function startCheckout(input: {
       ok: false,
       needsEmail: true,
       code: "no_stripe_client",
-      message: "Checkout isn’t ready yet — hold your spot with email.",
+      message: CHECKOUT_DOWN,
     };
   }
 
@@ -121,18 +124,12 @@ export async function startCheckout(input: {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error("stripe checkout failed", msg);
-    // Surface a useful hint without leaking secrets
-    const safe =
-      msg.includes("Invalid API Key") || msg.includes("api_key")
-        ? "Stripe key rejected — we need to refresh the secret on the server."
-        : msg.includes("No such price")
-          ? "That price isn’t set up in Stripe yet."
-          : "Checkout hiccuped — hold your founding spot with email and we’ll follow up.";
+    // Shoppers get one plain message; the cause stays in the server log (and `code`).
     return {
       ok: false,
       needsEmail: true,
-      code: "stripe_error",
-      message: safe,
+      code: msg.includes("No such price") ? "stripe_price" : msg.includes("api_key") || msg.includes("Invalid API Key") ? "stripe_key" : "stripe_error",
+      message: CHECKOUT_DOWN,
     };
   }
 }

@@ -8,8 +8,9 @@ import { cn } from "@/lib/utils";
 export function ReviewerCard({ className }: { className?: string }) {
   return (
     <div
+      id="reviewer"
       className={cn(
-        "flex max-w-lg items-center gap-4 rounded-2xl border border-border bg-cream-card p-4",
+        "flex max-w-lg scroll-mt-28 items-center gap-4 rounded-2xl border border-border bg-cream-card p-4",
         className,
       )}
     >

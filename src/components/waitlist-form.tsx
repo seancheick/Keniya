@@ -29,7 +29,7 @@ export function WaitlistForm({
 
   if (done) {
     return (
-      <p className={`font-medium text-sage-deep ${compact ? "text-sm" : ""}`}>
+      <p role="status" className={`font-medium text-sage-deep ${compact ? "text-sm" : ""}`}>
         ✓ {message}
       </p>
     );
@@ -58,6 +58,7 @@ export function WaitlistForm({
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Your email"
           aria-label="Email address"
+          aria-invalid={message && !done ? true : undefined}
           className={`min-w-0 flex-1 rounded-full border border-border bg-cream-card px-5 text-ink outline-none transition-colors placeholder:text-ink-soft focus:border-sage-deep focus-visible:ring-[3px] focus-visible:ring-ring/40 ${
             compact ? "h-11 text-sm" : "h-12"
           }`}
@@ -72,7 +73,11 @@ export function WaitlistForm({
           {pending ? "One sec…" : cta}
         </Button>
       </div>
-      {message && !done && <p className="mt-2 text-sm text-terracotta-deep">{message}</p>}
+      {message && !done && (
+        <p role="alert" className="mt-2 text-sm text-terracotta-deep">
+          {message}
+        </p>
+      )}
     </form>
   );
 }

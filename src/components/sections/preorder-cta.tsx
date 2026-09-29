@@ -9,8 +9,7 @@ export function PreorderCta() {
             Only {site.firstRunPerBox} of each box.
           </p>
           <p className="mt-1 text-cream">
-            ${site.preorderPriceUSD} · {site.freeShippingLabel.toLowerCase()} · ships{" "}
-            {site.shipDate} · refundable until it ships
+            ${site.preorderPriceUSD} · ships {site.shipDate}
           </p>
         </div>
         <div className="flex flex-wrap gap-3">

@@ -34,6 +34,7 @@ function readHash(): { slug?: Box["slug"]; gift?: boolean; scroll?: boolean } {
 export function Shop() {
   const [slug, setSlug] = useState<Box["slug"]>(boxes[0].slug);
   const [gift, setGift] = useState(false);
+  const [listFor, setListFor] = useState<"box" | "glp1">("box");
   const box = boxes.find((b) => b.slug === slug) ?? boxes[0];
 
   useEffect(() => {
@@ -54,15 +55,25 @@ export function Shop() {
       <span id="preorder" className="block scroll-mt-20" aria-hidden />
       <div className="mx-auto max-w-6xl px-5 py-14 lg:py-20">
         <h2 className="font-display text-headline text-ink">Pick your box.</h2>
-        <p className="mt-3 text-ink-soft">
-          ${site.preorderPriceUSD} each · {site.snackCount} snacks · each screened for its condition
-        </p>
+        <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+          <p className="text-ink-soft">
+            ${site.preorderPriceUSD} each · {site.snackCount} snacks · each screened for its condition
+          </p>
+          <MatchQuiz>
+            <button
+              type="button"
+              className="min-h-11 text-sm font-medium text-ink underline underline-offset-4 hover:text-terracotta-deep"
+            >
+              Not sure which box? Take the quick quiz
+            </button>
+          </MatchQuiz>
+        </div>
 
         {/* Step 1 — real, obviously clickable choices */}
         <div
           role="radiogroup"
           aria-label="Choose a box"
-          className="mt-8 grid grid-cols-3 gap-2 sm:gap-4"
+          className="mt-8 grid gap-3 sm:grid-cols-3 sm:gap-4"
         >
           {boxes.map((b) => {
             const active = b.slug === slug;
@@ -75,18 +86,18 @@ export function Shop() {
                 aria-checked={active}
                 onClick={() => setSlug(b.slug)}
                 className={cn(
-                  "group relative scroll-mt-24 overflow-hidden rounded-2xl border-2 bg-cream-card text-left transition-all focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                  "group relative flex scroll-mt-24 items-stretch justify-start overflow-hidden rounded-2xl border-2 bg-cream-card text-left transition-all focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:flex-col",
                   active
                     ? "border-terracotta shadow-md"
                     : "border-border hover:border-sage",
                 )}
               >
-                <div className="relative aspect-[4/3] w-full bg-cream-deep lg:aspect-[16/9]">
+                <div className="relative aspect-[4/3] w-32 shrink-0 self-start bg-cream-deep sm:w-full lg:aspect-[16/9]">
                   <Image
                     src={b.image}
                     alt={b.imageAlt}
                     fill
-                    sizes="(max-width: 640px) 33vw, 360px"
+                    sizes="(max-width: 640px) 128px, 360px"
                     className="object-cover"
                   />
                   <span
@@ -101,14 +112,14 @@ export function Shop() {
                     <CheckIcon className="size-3.5 sm:size-4" strokeWidth={3} />
                   </span>
                 </div>
-                <div className="p-2.5 sm:p-4">
-                  <p className="text-sm font-semibold leading-tight text-ink sm:text-lg">
+                <div className="min-w-0 p-3 sm:p-4">
+                  <p className="text-base font-semibold leading-tight text-ink sm:text-lg">
                     {b.shortName}
                   </p>
                   <p className="mt-0.5 text-xs text-ink-soft">
                     ${site.preorderPriceUSD} · {site.snackCount} snacks
                   </p>
-                  <p className="mt-1 text-xs leading-snug text-ink-soft sm:text-sm">
+                  <p className="mt-1 text-sm leading-snug text-ink-soft">
                     {b.why}
                   </p>
                   {b.caution && (
@@ -248,51 +259,57 @@ export function Shop() {
 
             <p className="mt-4 border-t border-ink/10 pt-4 text-xs leading-relaxed text-ink-soft">
               Allergies or foods to avoid? Tell us at checkout. Box criteria reviewed by{" "}
-              <a href="#how" className="font-medium text-ink underline underline-offset-2">
+              <a href="#reviewer" className="font-medium text-ink underline underline-offset-2">
                 Laurie Pham, PharmD
               </a>
               .
             </p>
 
-            <MatchQuiz>
-              <button
-                type="button"
-                className="mt-3 min-h-11 text-sm font-medium text-ink underline underline-offset-4 hover:text-terracotta-deep"
-              >
-                Not sure which box? Take the quick quiz
-              </button>
-            </MatchQuiz>
           </div>
         </div>
 
-        {/* Secondary paths live below the decision, not inside the buy panel. */}
-        <div className="mt-6 grid gap-3 lg:grid-cols-2">
-          {[
-            {
-              title: "Not ready yet?",
-              body: "Get shipping news and first pick of the next box.",
-              form: <WaitlistForm boxInterest={box.slug} source="shop_not_ready" cta="Keep me posted" compact variant="outline" />,
-            },
-            {
-              title: "Coming next: GLP-1 Support.",
-              body: "Small portions, protein-forward.",
-              form: <WaitlistForm boxInterest="glp1" source="shop_glp1" cta="Notify me" compact variant="outline" />,
-            },
-          ].map((row) => (
-            <details key={row.title} className="group rounded-2xl border border-dashed border-border px-4 py-3">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm [&::-webkit-details-marker]:hidden">
-                <span>
-                  <strong className="text-ink">{row.title}</strong>{" "}
-                  <span className="text-ink-soft">{row.body}</span>{" "}
-                </span>
-                <span className="shrink-0 font-medium text-sage-deep underline underline-offset-4">
-                  Join the list
-                </span>
-              </summary>
-              <div className="mt-3 max-w-md">{row.form}</div>
-            </details>
-          ))}
-        </div>
+        {/* One secondary path below the decision: updates for this box, or the GLP-1 box. */}
+        <details className="group mt-6 rounded-2xl border border-dashed border-border px-4 py-3">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm [&::-webkit-details-marker]:hidden">
+            <span>
+              <strong className="text-ink">Not ready yet, or waiting for GLP-1 Support?</strong>{" "}
+              <span className="text-ink-soft">Get shipping news or first access.</span>{" "}
+            </span>
+            <span className="shrink-0 font-medium text-sage-deep underline underline-offset-4">
+              Join the list
+            </span>
+          </summary>
+          <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="What should we email you about?">
+            {[
+              { v: "box", label: `Updates on the ${box.shortName} box` },
+              { v: "glp1", label: "GLP-1 Support when it opens" },
+            ].map((o) => (
+              <button
+                key={o.v}
+                type="button"
+                role="radio"
+                aria-checked={listFor === o.v}
+                onClick={() => setListFor(o.v as "box" | "glp1")}
+                className={cn(
+                  "min-h-11 rounded-full border px-4 text-sm transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                  listFor === o.v ? "border-ink bg-ink text-cream" : "border-border text-ink-soft hover:text-ink",
+                )}
+              >
+                {o.label}
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 max-w-md">
+            <WaitlistForm
+              key={listFor === "glp1" ? "glp1" : box.slug}
+              boxInterest={listFor === "glp1" ? "glp1" : box.slug}
+              source={listFor === "glp1" ? "shop_glp1" : "shop_not_ready"}
+              cta={listFor === "glp1" ? "Notify me" : "Keep me posted"}
+              compact
+              variant="outline"
+            />
+          </div>
+        </details>
       </div>
     </section>
   );

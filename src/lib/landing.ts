@@ -119,8 +119,8 @@ export const landings: BoxLanding[] = [
         body: "Several protein and fiber picks, a few whole-food picks and a couple of treats, so it isn't all one kind of snack.",
       },
       {
-        title: "Added sugar in your guide",
-        body: "Your Packed for You guide lists the added sugar from each snack's label.",
+        title: "Carbs and added sugar in your guide",
+        body: "Your Packed for You guide lists the carbs and added sugar from each snack's label.",
       },
       {
         title: "Portion-clear packs",

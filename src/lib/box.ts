@@ -41,7 +41,7 @@ export const boxes: Box[] = [
     shortName: "Blood Sugar",
     forWho: "For anyone watching carbs: type 1, type 2 or prediabetes.",
     caution: "Not yet for gestational diabetes.",
-    why: "More protein and fiber, less added sugar, still fun to open.",
+    why: "More protein and fiber, less added sugar, carbs checked on every snack.",
     categories: [
       { name: "Protein & fiber", count: 5, note: "filling picks with more protein or fiber" },
       { name: "Nuts & seeds", count: 3, note: "whole-food crunch" },
