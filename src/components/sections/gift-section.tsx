@@ -10,7 +10,7 @@ const forWhom = ["wife or partner", "sister", "daughter", "friend", "coworker"];
 export function GiftSection() {
   const img = giftImage();
   return (
-    <section aria-labelledby="gift-heading" className="border-b border-border">
+    <section aria-labelledby="gift-heading" className="overflow-x-clip border-b border-border">
       <div className="mx-auto grid max-w-6xl items-center gap-8 px-5 py-14 lg:grid-cols-2 lg:gap-14 lg:py-20">
         <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-blush" data-reveal="left">
           <Image
