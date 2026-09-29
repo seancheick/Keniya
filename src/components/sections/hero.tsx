@@ -36,7 +36,8 @@ export function Hero() {
             { autoAlpha: 0, y: 18, duration: 0.7, stagger: 0.1 },
             "-=0.55",
           )
-          .from(".hero-visual", { autoAlpha: 0, y: 30, scale: 0.97, duration: 0.9 }, "-=0.6");
+          // Motion only, no fade: the hero image is the LCP element, so it must paint at once.
+          .from(".hero-visual", { y: 30, scale: 0.97, duration: 0.9 }, "-=0.6");
 
         return () => split.revert();
       });
@@ -68,20 +69,26 @@ export function Hero() {
             <em className="text-terracotta-deep">label reading</em> for you.
           </h1>
           <p className="hero-sub mt-6 max-w-[48ch] text-lg leading-relaxed text-ink-soft">
-            Pregnancy, blood sugar or heart health. Choose what you&rsquo;re navigating, and
-            Keniya screens and selects {site.snackCount} snacks around it, with a guide explaining
-            why each one made the box.
+            For pregnancy, carb-conscious eating or heart health: {site.snackCount} snacks
+            already screened for you, with a card on how we choose.
           </p>
-          <div className="hero-actions mt-9 flex flex-wrap items-center gap-6">
-            <Button asChild size="lg" className="h-12 rounded-full px-8 text-base font-semibold">
-              <a href="#boxes">Pick your box, ${site.preorderPriceUSD}</a>
-            </Button>
-            <a
-              href="#gift"
-              className="text-sm font-medium text-ink underline underline-offset-4 transition-colors hover:text-terracotta-deep"
-            >
-              Send as a gift
-            </a>
+          <div className="hero-actions mt-9">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button asChild size="lg" className="h-14 rounded-full px-9 text-lg font-semibold shadow-md">
+                <a href="#boxes">Choose your box</a>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-14 rounded-full border-2 border-ink/80 bg-transparent px-8 text-lg font-semibold text-ink hover:bg-ink hover:text-cream"
+              >
+                <a href="#gift">Send a gift</a>
+              </Button>
+            </div>
+            <p className="mt-4 text-sm font-medium text-ink">
+              ${site.preorderPriceUSD} · {site.snackCount} snacks · Free US shipping · No subscription
+            </p>
           </div>
         </div>
 
@@ -90,7 +97,7 @@ export function Hero() {
             <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] bg-blush shadow-sm">
               <Image
                 src="/images/hero-guide.jpg"
-                alt="A Packed for You guide that reads Made for you, screened for your condition, over a box of 14 snack slots"
+                alt="A Keniya snack box with its Packed for You card"
                 fill
                 loading="eager"
                 fetchPriority="high"

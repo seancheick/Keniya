@@ -5,9 +5,9 @@ const items = [
   { label: "No subscription", detail: "One-time purchase" },
   { label: "Refundable before ship", detail: "One email, full refund" },
   {
-    label: "PharmD-reviewed lineups",
-    detail: "Box criteria, not personal advice",
-    href: "/#how",
+    label: "Reviewed by a pharmacist",
+    detail: "Laurie Pham, PharmD",
+    href: "/#reviewer",
   },
 ];
 

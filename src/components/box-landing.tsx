@@ -55,7 +55,7 @@ export function Faqs({ faqs }: { faqs: { q: string; a: string }[] }) {
 }
 
 /** Links to the other product pages, so every landing page is reachable by crawl. */
-export function OtherBoxes({ current }: { current?: Box["slug"] }) {
+export function OtherBoxes({ current }: { current?: Box["slug"] | "gifts" }) {
   return (
     <nav aria-label="Other Keniya boxes" className="mt-14 border-t border-border pt-8">
       <p className="text-sm font-semibold text-ink">More from Keniya</p>
@@ -69,11 +69,13 @@ export function OtherBoxes({ current }: { current?: Box["slug"] }) {
               </Link>
             </li>
           ))}
-        <li>
-          <Link href={giftLanding.path} className="text-sage-deep underline underline-offset-4 hover:text-ink">
-            Pregnancy gift box
-          </Link>
-        </li>
+        {current !== "gifts" && (
+          <li>
+            <Link href={giftLanding.path} className="text-sage-deep underline underline-offset-4 hover:text-ink">
+              Send a box as a gift
+            </Link>
+          </li>
+        )}
         <li>
           <Link href="/#boxes" className="text-sage-deep underline underline-offset-4 hover:text-ink">
             Compare all boxes
@@ -113,8 +115,9 @@ export function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
                 {site.snackCount} snacks · only {site.firstRunPerBox} made
               </span>
             </p>
-            <div className="mt-4">
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <BuyButton box={box} showNote={false} label={`Preorder the ${box.shortName} box`} />
+              <BuyButton box={box} gift variant="outline" showNote={false} label="Send as a gift" />
             </div>
             <ul className="mt-4 space-y-1.5 text-sm text-ink">
               {promises.map((p) => (
@@ -183,8 +186,8 @@ export function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
         </ol>
         <ReviewerCard className="mt-8" />
         <p className="mt-6 max-w-[65ch] text-sm text-ink-soft">
-          Every box includes a <strong className="text-ink">Packed for You</strong> guide that names
-          each snack, its category and why it made the cut.
+          Every box includes a <strong className="text-ink">Packed for You</strong> card on what
+          this box focuses on and how we choose, and every snack ships sealed with its full label.
         </p>
       </section>
 

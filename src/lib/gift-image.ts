@@ -13,7 +13,7 @@ export function giftImage() {
     ? { src: LIFESTYLE, alt: "A pregnant woman smiling as she opens her Keniya snack box", width: 1600, height: 1200 }
     : {
         src: "/images/gift-guide.jpg",
-        alt: "Example gift guide: a note from Sam to Awa printed in her Packed for You guide",
+        alt: "A printed gift note from Sam to Awa tucked into a Keniya box",
         width: 1600,
         height: 1200,
       };

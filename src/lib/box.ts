@@ -17,6 +17,20 @@ export type Box = {
   imageAlt: string;
 };
 
+/** Waitlist boxInterest for the general "new boxes and shipping" list (no box reserved). */
+export const UPDATES_INTEREST = "updates";
+
+/**
+ * Sweet-or-salty leaning. Asked in the quiz and at Stripe checkout (the checkout answer is
+ * what reaches the order); it steers the pick among snacks the box's screening allows.
+ */
+export const cravings = [
+  { value: "sweet", label: "Sweet" },
+  { value: "salty", label: "Salty & crunchy" },
+  { value: "mix", label: "A mix of both" },
+] as const;
+export type Craving = (typeof cravings)[number]["value"];
+
 export const boxes: Box[] = [
   {
     slug: "pregnancy_comfort",
@@ -33,15 +47,15 @@ export const boxes: Box[] = [
     ],
     tint: "blush",
     image: "/images/box-pregnancy-slots.jpg",
-    imageAlt: "Pregnancy Comfort Box: 14 snack slots by category (4 comfort, 4 protein, 3 sweet, 2 sips, 1 salty) with its Packed for You guide",
+    imageAlt: "Pregnancy Comfort Box: 14 snack slots by category (4 comfort, 4 protein, 3 sweet, 2 sips, 1 salty)",
   },
   {
     slug: "blood_sugar",
-    name: "Balanced Blood Sugar Box",
-    shortName: "Blood Sugar",
-    forWho: "For anyone watching carbs: type 1, type 2 or prediabetes.",
+    name: "Carb Conscious Box",
+    shortName: "Carb Conscious",
+    forWho: "For anyone watching carbs, including type 1, type 2 and prediabetes.",
     caution: "Not yet for gestational diabetes.",
-    why: "More protein and fiber, less added sugar, carbs checked on every snack.",
+    why: "Snacks chosen with carbs, added sugar and portion size in mind.",
     categories: [
       { name: "Protein & fiber", count: 5, note: "filling picks with more protein or fiber" },
       { name: "Nuts & seeds", count: 3, note: "whole-food crunch" },
@@ -51,7 +65,7 @@ export const boxes: Box[] = [
     ],
     tint: "sage",
     image: "/images/box-blood-sugar-slots.jpg",
-    imageAlt: "Balanced Blood Sugar Box: 14 snack slots by category (5 protein and fiber, 3 nuts and seeds, 3 smarter sweets, 2 sips, 1 salty) with its Packed for You guide",
+    imageAlt: "Carb Conscious Box: 14 snack slots by category (5 protein and fiber, 3 nuts and seeds, 3 smarter sweets, 2 sips, 1 salty)",
   },
   {
     slug: "heart",
@@ -68,6 +82,6 @@ export const boxes: Box[] = [
     ],
     tint: "cream",
     image: "/images/box-heart-slots.jpg",
-    imageAlt: "Heart Wellness Box: 14 snack slots by category (4 nuts and seeds, 4 whole grains and fiber, 3 fruit, 2 sips, 1 treat) with its Packed for You guide",
+    imageAlt: "Heart Wellness Box: 14 snack slots by category (4 nuts and seeds, 4 whole grains and fiber, 3 fruit, 2 sips, 1 treat)",
   },
 ];

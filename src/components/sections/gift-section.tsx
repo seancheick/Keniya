@@ -4,7 +4,7 @@ import { giftImage } from "@/lib/gift-image";
 import { giftLanding } from "@/lib/landing";
 import { site } from "@/lib/site";
 
-/** Lifestyle + gifting: the buyer is often not the person who's pregnant. */
+/** Gifting: the buyer is often not the person the box is for. */
 export function GiftSection() {
   const img = giftImage();
   return (
@@ -21,40 +21,29 @@ export function GiftSection() {
         </div>
         <div data-reveal="right">
           <h2 id="gift-heading" className="font-display text-headline text-ink">
-            She&rsquo;s growing a whole human. Send something she&rsquo;ll actually use.
+            A thoughtful box, for someone you care about.
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-ink-soft">
-            {site.snackCount} snacks screened with Keniya Pregnancy Screening, your note printed in
-            her Packed for You guide, and free shipping to her door. The receipt comes to you.
+            Choose their box, add a message, and we send it to their door. Pregnancy, carb
+            conscious or heart: any box can be a gift. Your note is printed and tucked inside,
+            and the receipt comes to you.
           </p>
-          <p className="mt-4 text-ink-soft">
-            People send it to a wife or partner, a sister, a daughter, a friend, a coworker. It
-            ships {site.shipDate}.
-          </p>
-          <div className="mt-7 flex flex-wrap items-center gap-5">
+          <div className="mt-7 flex flex-wrap items-center gap-3">
             <a
-              href="#gift-pregnancy"
+              href="#gift"
               className="inline-flex h-12 items-center rounded-full bg-terracotta-deep px-8 text-base font-semibold text-cream transition-colors hover:bg-ink"
             >
-              Send her a box, ${site.preorderPriceUSD}
+              Choose a gift
             </a>
             <Link
               href={giftLanding.path}
-              className="text-sm font-medium text-ink underline underline-offset-4 hover:text-terracotta-deep"
+              className="inline-flex h-12 items-center rounded-full border-2 border-ink/80 px-6 text-base font-semibold text-ink transition-colors hover:bg-ink hover:text-cream"
             >
               How gifting works
             </Link>
           </div>
-          <p className="mt-6 border-t border-border pt-4 text-sm text-ink-soft">
-            Shopping for someone watching blood sugar or heart health?{" "}
-            <a href="#gift-blood_sugar" className="font-medium text-ink underline underline-offset-4 hover:text-terracotta-deep">
-              Gift a Blood Sugar box
-            </a>{" "}
-            or{" "}
-            <a href="#gift-heart" className="font-medium text-ink underline underline-offset-4 hover:text-terracotta-deep">
-              a Heart box
-            </a>
-            .
+          <p className="mt-5 text-sm text-ink-soft">
+            ${site.preorderPriceUSD} · free shipping to their door · ships {site.shipDate}
           </p>
         </div>
       </div>

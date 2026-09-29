@@ -43,7 +43,7 @@ export default function PrivacyPage() {
 
       <h2>Health-related answers</h2>
       <p>
-        Some quiz answers — like pregnancy, a blood-sugar or heart-health focus, or
+        Some quiz answers — like pregnancy, watching carbs, heart health, or
         allergies — are sensitive. We use them only to decide what goes in your box. We
         never sell them or share them for advertising. The quiz is optional: you can
         preorder without answering anything.

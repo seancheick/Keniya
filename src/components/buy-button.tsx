@@ -1,23 +1,23 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { startCheckout } from "@/actions/checkout";
+import { startCheckout, type CheckoutInput } from "@/actions/checkout";
 import { Button } from "@/components/ui/button";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { site } from "@/lib/site";
 import type { Box } from "@/lib/box";
 import { cn } from "@/lib/utils";
 
-async function openCheckout(boxSlug: string, gift: boolean) {
+async function openCheckout(input: CheckoutInput) {
   // Prefer server action; fall back to API route if the action throws
   try {
-    return await startCheckout({ boxSlug, gift });
+    return await startCheckout(input);
   } catch (err) {
     console.error("startCheckout action threw", err);
     const res = await fetch("/api/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ boxSlug, gift }),
+      body: JSON.stringify(input),
     });
     return (await res.json()) as Awaited<ReturnType<typeof startCheckout>>;
   }
@@ -32,6 +32,7 @@ export function BuyButton({
   gift = false,
   variant = "default",
   showNote = true,
+  prefill,
 }: {
   box: Box;
   size?: "default" | "lg" | "sm";
@@ -41,6 +42,8 @@ export function BuyButton({
   gift?: boolean;
   variant?: "default" | "outline";
   showNote?: boolean;
+  /** Quiz answers to prefill at checkout. */
+  prefill?: Pick<CheckoutInput, "craving" | "avoid">;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +63,7 @@ export function BuyButton({
           setError(null);
           startTransition(async () => {
             try {
-              const res = await openCheckout(box.slug, gift);
+              const res = await openCheckout({ boxSlug: box.slug, gift, ...prefill });
               if (res.ok) {
                 window.location.href = res.url;
                 return;

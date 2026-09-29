@@ -42,7 +42,7 @@ export function StickyBuyBar() {
           href="#boxes"
           className="shrink-0 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
         >
-          Pick your box
+          Choose your box
         </a>
       </div>
     </div>

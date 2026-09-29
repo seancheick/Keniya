@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import { env } from "@/lib/env";
 import { site } from "@/lib/site";
-import type { Box } from "@/lib/box";
+import { UPDATES_INTEREST, type Box } from "@/lib/box";
 import type { OrderEmailProps } from "@/emails/OrderConfirmEmail";
 import type { OrderAlertProps } from "@/emails/OrderAlertEmail";
 
@@ -27,7 +27,10 @@ export async function sendWaitlistConfirmEmail(opts: {
       from: env.RESEND_FROM_EMAIL,
       to: opts.to,
       replyTo: site.email,
-      subject: "You're on the list — Keniya founding release",
+      subject:
+        opts.boxInterest === UPDATES_INTEREST
+          ? "You're subscribed to Keniya updates"
+          : "You're on the list — Keniya founding release",
       react: WaitlistConfirmEmail({
         boxInterest: opts.boxInterest,
         quizWho: opts.quizWho,

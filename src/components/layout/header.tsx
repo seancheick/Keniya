@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { giftLanding } from "@/lib/landing";
 
 const nav = [
   { href: "/#boxes", label: "The boxes" },
-  { href: "/pregnancy-gift-box", label: "Gifts" },
+  { href: giftLanding.path, label: "Gifts" },
   { href: "/#how", label: "How we pick" },
   { href: "/#faq", label: "FAQ" },
   { href: "/about", label: "Our story" },
@@ -31,7 +32,7 @@ export function Header() {
           ))}
         </nav>
         <Button asChild className="hidden rounded-full px-5 md:inline-flex">
-          <Link href="/#boxes">Pick your box</Link>
+          <Link href="/#boxes">Choose your box</Link>
         </Button>
       </div>
     </header>

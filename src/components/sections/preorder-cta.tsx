@@ -17,13 +17,13 @@ export function PreorderCta() {
             href="#boxes"
             className="inline-flex h-12 items-center rounded-full bg-terracotta-deep px-8 text-base font-semibold text-cream transition-colors hover:bg-ink"
           >
-            Pick your box
+            Choose your box
           </a>
           <a
             href="#gift"
             className="inline-flex h-12 items-center rounded-full border border-cream/50 px-6 text-base font-medium text-cream transition-colors hover:bg-cream/10"
           >
-            Send as a gift
+            Send a gift
           </a>
         </div>
       </div>

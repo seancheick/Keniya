@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { boxes } from "@/lib/box";
+import { giftLanding, landingFor } from "@/lib/landing";
 import { site } from "@/lib/site";
 
 export function Footer() {
@@ -31,17 +33,13 @@ export function Footer() {
             className="flex flex-wrap gap-x-7 gap-y-2 text-sm text-ink-soft"
             aria-label="Footer"
           >
-            <Link className="transition-colors hover:text-ink" href="/pregnancy-snack-box">
-              Pregnancy box
-            </Link>
-            <Link className="transition-colors hover:text-ink" href="/balanced-blood-sugar-snack-box">
-              Blood sugar box
-            </Link>
-            <Link className="transition-colors hover:text-ink" href="/heart-healthy-snack-box">
-              Heart box
-            </Link>
-            <Link className="transition-colors hover:text-ink" href="/pregnancy-gift-box">
-              Pregnancy gifts
+            {boxes.map((b) => (
+              <Link key={b.slug} className="transition-colors hover:text-ink" href={landingFor(b.slug).path}>
+                {b.shortName} box
+              </Link>
+            ))}
+            <Link className="transition-colors hover:text-ink" href={giftLanding.path}>
+              Gifts
             </Link>
             <a className="transition-colors hover:text-ink" href="/about">
               Our story

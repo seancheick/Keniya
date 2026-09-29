@@ -12,13 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { BuyButton } from "@/components/buy-button";
-import { boxes } from "@/lib/box";
+import { boxes, cravings, type Box } from "@/lib/box";
 import { site } from "@/lib/site";
 
 const WHO_OPTIONS = [
   "Pregnancy",
   "Postpartum",
-  "Blood sugar",
+  "Watching carbs / diabetes",
   "Gestational diabetes",
   "Heart health",
   "GLP-1 journey",
@@ -29,7 +29,7 @@ const WHO_OPTIONS = [
 const RECIPIENT_OPTIONS = [
   "Pregnancy",
   "Postpartum",
-  "Blood sugar",
+  "Watching carbs / diabetes",
   "Gestational diabetes",
   "Heart health",
   "GLP-1 journey",
@@ -37,7 +37,8 @@ const RECIPIENT_OPTIONS = [
 ] as const;
 
 const ALLERGY_OPTIONS = ["Tree nuts", "Peanuts", "Gluten", "Dairy", "None of these"];
-const CRAVING_OPTIONS = ["Sweet", "Salty & crunchy", "Surprise me"];
+const boxName = (slug: Box["slug"]) => boxes.find((b) => b.slug === slug)!.name;
+const cravingLabel = (value: string | null) => cravings.find((c) => c.value === value)?.label;
 
 type Match = {
   box: string;
@@ -53,23 +54,23 @@ function tuckInFor(boxInterest: string, craving: string | null): string {
     heart: "extra fruit and a dark chocolate treat",
     pregnancy_comfort: "extra sweet treats",
   };
-  if (craving === "Sweet") return sweet[boxInterest] ?? sweet.pregnancy_comfort;
-  if (craving === "Salty & crunchy") return "more of the salty, crunchy picks";
+  if (craving === "sweet") return sweet[boxInterest] ?? sweet.pregnancy_comfort;
+  if (craving === "salty") return "more of the salty, crunchy picks";
   return "a balance of sweet and salty";
 }
 
 function matchBox(condition: string, craving: string | null): Match {
   switch (condition) {
-    case "Blood sugar":
+    case "Watching carbs / diabetes":
       return {
-        box: "Balanced Blood Sugar Box",
+        box: boxName("blood_sugar"),
         status: "preorder",
         boxInterest: "blood_sugar",
         note: `We'd lean toward ${tuckInFor("blood_sugar", craving)}.`,
       };
     case "Heart health":
       return {
-        box: "Heart Wellness Box",
+        box: boxName("heart"),
         status: "preorder",
         boxInterest: "heart",
         note: `We'd lean toward ${tuckInFor("heart", craving)}.`,
@@ -104,7 +105,7 @@ function matchBox(condition: string, craving: string | null): Match {
       };
     default:
       return {
-        box: "Pregnancy Comfort Box",
+        box: boxName("pregnancy_comfort"),
         status: "preorder",
         boxInterest: "pregnancy_comfort",
         note: `We'd lean toward ${tuckInFor("pregnancy_comfort", craving)}.`,
@@ -230,13 +231,13 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
       valid: craving !== null,
       content: (
         <div className="flex flex-wrap gap-2">
-          {CRAVING_OPTIONS.map((option) => (
+          {cravings.map((option) => (
             <Chip
-              key={option}
-              selected={craving === option}
-              onClick={() => setCraving(option)}
+              key={option.value}
+              selected={craving === option.value}
+              onClick={() => setCraving(option.value)}
             >
-              {option}
+              {option.label}
             </Chip>
           ))}
         </div>
@@ -316,12 +317,18 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
                       <BuyButton
                         box={matched}
                         size="default"
-                        label={`Preorder ${matched.shortName} — $${site.preorderPriceUSD}`}
+                        gift={isGift}
+                        showNote={false}
+                        prefill={{
+                          craving: craving ?? undefined,
+                          avoid: realAllergies.join(", ") || undefined,
+                        }}
+                        label={`${isGift ? "Send" : "Preorder"} the ${matched.shortName} box, $${site.preorderPriceUSD}`}
                       />
                     ) : null;
                   })()}
                   <p className="mt-4 text-xs text-ink-soft">
-                    Want us to note allergies before pack day? Drop your email too:
+                    Your answers are filled in at checkout. Not ready yet? Save them with your email:
                   </p>
                   <div className="mt-2">
                     <WaitlistForm
@@ -331,7 +338,7 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
                       quiz={{
                         quizWho: condition ?? undefined,
                         quizAllergies: allergies,
-                        quizCraving: craving ?? undefined,
+                        quizCraving: cravingLabel(craving),
                       }}
                       compact
                     />
@@ -345,7 +352,7 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
                   quiz={{
                     quizWho: condition ?? undefined,
                     quizAllergies: allergies,
-                    quizCraving: craving ?? undefined,
+                    quizCraving: cravingLabel(craving),
                   }}
                   compact
                 />

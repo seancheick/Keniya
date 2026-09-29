@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { CheckIcon } from "lucide-react";
+import { ArrowRightIcon, CheckIcon } from "lucide-react";
 import { BuyButton } from "@/components/buy-button";
+import { Button } from "@/components/ui/button";
 import { MatchQuiz } from "@/components/quiz/match-quiz";
 import { WaitlistForm } from "@/components/waitlist-form";
 import Link from "next/link";
 import { landingFor } from "@/lib/landing";
-import { boxes, type Box } from "@/lib/box";
+import { boxes, UPDATES_INTEREST, type Box } from "@/lib/box";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +35,6 @@ function readHash(): { slug?: Box["slug"]; gift?: boolean; scroll?: boolean } {
 export function Shop() {
   const [slug, setSlug] = useState<Box["slug"]>(boxes[0].slug);
   const [gift, setGift] = useState(false);
-  const [listFor, setListFor] = useState<"box" | "glp1">("box");
   const box = boxes.find((b) => b.slug === slug) ?? boxes[0];
 
   useEffect(() => {
@@ -54,18 +54,23 @@ export function Shop() {
     <section id="boxes" className="scroll-mt-20 border-b border-border">
       <span id="preorder" className="block scroll-mt-20" aria-hidden />
       <div className="mx-auto max-w-6xl px-5 py-14 lg:py-20">
-        <h2 className="font-display text-headline text-ink">Pick your box.</h2>
-        <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-          <p className="text-ink-soft">
-            ${site.preorderPriceUSD} each · {site.snackCount} snacks · each screened for its condition
+        <h2 className="font-display text-headline text-ink">Choose your box.</h2>
+        <p className="mt-3 text-ink-soft">
+          ${site.preorderPriceUSD} each · {site.snackCount} snacks · each screened for its condition
+        </p>
+        <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-sage/50 bg-sage/10 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <p className="text-ink">
+            <strong className="font-semibold">Need a hand choosing?</strong>{" "}
+            <span className="text-ink-soft">Find your box with a few quick questions.</span>
           </p>
           <MatchQuiz>
-            <button
+            <Button
               type="button"
-              className="min-h-11 text-sm font-medium text-ink underline underline-offset-4 hover:text-terracotta-deep"
+              variant="outline"
+              className="h-11 shrink-0 rounded-full border-2 border-sage-deep bg-cream-card px-6 text-sm font-semibold text-sage-deep hover:bg-sage-deep hover:text-cream"
             >
-              Not sure which box? Take the quick quiz
-            </button>
+              Help me choose
+            </Button>
           </MatchQuiz>
         </div>
 
@@ -168,15 +173,16 @@ export function Shop() {
                   ))}
                 </ul>
                 <p className="mt-5 max-w-[52ch] text-xs leading-relaxed text-ink-soft">
-                  Your condition shapes the box: a snack has to pass this box&rsquo;s screening
-                  before it can go in. Exact picks rotate with the season, and your{" "}
-                  <strong className="text-ink">Packed for You</strong> guide explains each one.
+                  A snack has to pass this box&rsquo;s screening before it can go in. Exact picks
+                  rotate with the season, and every box includes a{" "}
+                  <strong className="text-ink">Packed for You</strong> card on how we choose.
                 </p>
                 <Link
                   href={landingFor(b.slug).path}
-                  className="mt-4 inline-block text-sm font-medium text-sage-deep underline underline-offset-4 hover:text-ink"
+                  className="mt-4 inline-flex h-11 items-center gap-2 rounded-full border-2 border-sage-deep px-5 text-sm font-semibold text-sage-deep transition-colors hover:bg-sage-deep hover:text-cream"
                 >
-                  How we screen the {b.shortName} box
+                  How we choose these snacks
+                  <ArrowRightIcon className="size-4" aria-hidden />
                 </Link>
               </div>
             ))}
@@ -224,8 +230,8 @@ export function Shop() {
             </div>
             {gift && (
               <p className="mt-3 text-sm text-ink-soft">
-                Enter their address at checkout and write a message. We print it in their
-                Packed for You guide.
+                Enter their address at checkout and write a message. We print it on a note
+                inside their box.
               </p>
             )}
 
@@ -258,7 +264,7 @@ export function Shop() {
             </ul>
 
             <p className="mt-4 border-t border-ink/10 pt-4 text-xs leading-relaxed text-ink-soft">
-              Allergies or foods to avoid? Tell us at checkout. Box criteria reviewed by{" "}
+              Allergies, or lean sweet or salty? Tell us at checkout. Box criteria reviewed by{" "}
               <a href="#reviewer" className="font-medium text-ink underline underline-offset-2">
                 Laurie Pham, PharmD
               </a>
@@ -268,48 +274,22 @@ export function Shop() {
           </div>
         </div>
 
-        {/* One secondary path below the decision: updates for this box, or the GLP-1 box. */}
-        <details className="group mt-6 rounded-2xl border border-dashed border-border px-4 py-3">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm [&::-webkit-details-marker]:hidden">
-            <span>
-              <strong className="text-ink">Not ready yet, or waiting for GLP-1 Support?</strong>{" "}
-              <span className="text-ink-soft">Get shipping news or first access.</span>{" "}
-            </span>
-            <span className="shrink-0 font-medium text-sage-deep underline underline-offset-4">
-              Join the list
-            </span>
-          </summary>
-          <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-label="What should we email you about?">
-            {[
-              { v: "box", label: `Updates on the ${box.shortName} box` },
-              { v: "glp1", label: "GLP-1 Support when it opens" },
-            ].map((o) => (
-              <button
-                key={o.v}
-                type="button"
-                role="radio"
-                aria-checked={listFor === o.v}
-                onClick={() => setListFor(o.v as "box" | "glp1")}
-                className={cn(
-                  "min-h-11 rounded-full border px-4 text-sm transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-                  listFor === o.v ? "border-ink bg-ink text-cream" : "border-border text-ink-soft hover:text-ink",
-                )}
-              >
-                {o.label}
-              </button>
-            ))}
+        {/* One visible secondary path below the decision: news about new boxes and shipping. */}
+        <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-border bg-cream-card p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="font-display text-xl text-ink">More thoughtful snack boxes are coming.</p>
+            <p className="mt-1 text-sm text-ink-soft">Get updates on new boxes and shipping.</p>
           </div>
-          <div className="mt-3 max-w-md">
+          <div className="w-full max-w-md">
             <WaitlistForm
-              key={listFor === "glp1" ? "glp1" : box.slug}
-              boxInterest={listFor === "glp1" ? "glp1" : box.slug}
-              source={listFor === "glp1" ? "shop_glp1" : "shop_not_ready"}
-              cta={listFor === "glp1" ? "Notify me" : "Keep me posted"}
+              boxInterest={UPDATES_INTEREST}
+              source="home_updates"
+              cta="Keep me posted"
               compact
               variant="outline"
             />
           </div>
-        </details>
+        </div>
       </div>
     </section>
   );

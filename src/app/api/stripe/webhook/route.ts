@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { boxes } from "@/lib/box";
+import { boxes, cravings } from "@/lib/box";
 import { env } from "@/lib/env";
 import { sendCartReminder, sendOrderEmails } from "@/lib/resend";
 import { getStripe } from "@/lib/stripe";
@@ -47,21 +47,30 @@ export async function POST(req: Request) {
         session.custom_fields.find((f) => f.key === "gift_note")?.text?.value?.trim() || undefined;
       const avoid =
         session.custom_fields.find((f) => f.key === "avoid")?.text?.value?.trim() || undefined;
+      const cravingValue = session.custom_fields.find((f) => f.key === "craving")?.dropdown?.value;
+      const craving = cravings.find((c) => c.value === cravingValue)?.label;
 
-      const { error } = await getSupabaseAdmin()
-        .from("preorders")
-        .insert({
-          stripe_event_id: event.id,
-          stripe_session_id: session.id,
-          email,
-          customer_name: session.customer_details?.name ?? ship?.name ?? null,
-          amount_total: session.amount_total ?? 0,
-          currency: session.currency ?? "usd",
-          shipping: ship ?? null,
-          box_slug: box.slug,
-          avoid: avoid ?? null,
-          status: "paid",
-        });
+      const row = {
+        stripe_event_id: event.id,
+        stripe_session_id: session.id,
+        email,
+        customer_name: session.customer_details?.name ?? ship?.name ?? null,
+        amount_total: session.amount_total ?? 0,
+        currency: session.currency ?? "usd",
+        shipping: ship ?? null,
+        box_slug: box.slug,
+        avoid: avoid ?? null,
+        craving: craving ?? null,
+        status: "paid",
+      };
+      let { error } = await getSupabaseAdmin().from("preorders").insert(row);
+      // PGRST204 = column not in the schema yet (migration 0005 not applied): save the order
+      // without it rather than lose the row. The founder alert still carries the craving.
+      if (error?.code === "PGRST204") {
+        const withoutCraving: Partial<typeof row> = { ...row };
+        delete withoutCraving.craving;
+        ({ error } = await getSupabaseAdmin().from("preorders").insert(withoutCraving));
+      }
       // 23505 = already saved (Stripe retry); anything else is logged but still emails —
       // the founder alert below is the backup record.
       if (error && error.code !== "23505") console.error("preorder insert failed", error);
@@ -82,6 +91,7 @@ export async function POST(req: Request) {
           gift: session.metadata?.gift === "yes",
           giftNote,
           avoid,
+          craving,
           shipTo: a
             ? {
                 name: ship?.name ?? undefined,

@@ -12,6 +12,8 @@ export type OrderEmailProps = {
   giftNote?: string;
   /** Checkout's "Allergies or foods to avoid": steers selection within the eligible pool. */
   avoid?: string;
+  /** Checkout's sweet-or-salty answer, as its label. */
+  craving?: string;
   shipTo?: { name?: string; lines: string[] };
 };
 
@@ -73,7 +75,7 @@ export function OrderConfirmEmail({
       {gift && giftNote && (
         <Panel tint={c.blush}>
           <Text style={{ ...t.eyebrow, color: c.blushInk, margin: "0 0 6px" }}>
-            Your note for their guide
+            Your gift note, printed in the box
           </Text>
           <Text style={{ ...t.body, margin: 0, color: c.blushInk, fontStyle: "italic" }}>
             &ldquo;{giftNote}&rdquo;
@@ -95,8 +97,8 @@ export function OrderConfirmEmail({
       <Text style={{ ...t.eyebrow, marginTop: "26px" }}>What goes in</Text>
       <Text style={{ ...t.small, marginBottom: "12px" }}>
         {site.snackCount} snacks across these categories. Each one has to pass Keniya&apos;s
-        screening for this box, picks rotate with the season, and the Packed for You guide
-        explains every one.
+        screening for this box, picks rotate with the season, and a Packed for You card
+        explains how we choose.
       </Text>
       <CategoryList categories={box.categories} />
 

@@ -24,8 +24,7 @@ export default function AboutPage() {
           So we built the thing we wished someone had handed us: a box of fourteen
           genuinely good snacks, chosen around the cravings, nausea and label questions we
           were dealing with that week — with a
-          folded &ldquo;Packed for You&rdquo; guide explaining exactly why each one earned
-          its place. She calls it the first gift that did the reading for her.
+          &ldquo;Packed for You&rdquo; card explaining how we chose them. She calls it the first gift that did the reading for her.
         </p>
         <p data-reveal>
           The name comes from <em>kɛnɛya</em> — &ldquo;health&rdquo; in Dioula, the
@@ -43,7 +42,7 @@ export default function AboutPage() {
         <p data-reveal>
           We&rsquo;re starting small on purpose — fifty of each box, packed by hand,
           with any allergies or foods you tell us to avoid steered around where we can. All three founding edits open together:
-          Pregnancy Comfort, Balanced Blood Sugar, and Heart Wellness. This is a family
+          Pregnancy Comfort, Carb Conscious, and Heart Wellness. This is a family
           company; it will grow at the speed of trust.
         </p>
         <p data-reveal>

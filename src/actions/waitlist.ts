@@ -5,6 +5,7 @@ import { getSupabaseAdmin } from "@/lib/supabase";
 import { getResend, sendWaitlistConfirmEmail } from "@/lib/resend";
 import { env } from "@/lib/env";
 import { site } from "@/lib/site";
+import { UPDATES_INTEREST } from "@/lib/box";
 
 const waitlistSchema = z.object({
   email: z.email().max(255),
@@ -94,10 +95,11 @@ export async function joinWaitlist(
     quizCraving: d.quizCraving,
   });
 
+  const joined = d.boxInterest === UPDATES_INTEREST ? "You're subscribed" : "You're on the list";
   return {
     ok: true,
     message: mail.ok
-      ? "You're on the list — check your inbox for a confirmation."
-      : "You're on the list — we'll be in touch soon.",
+      ? `${joined} — check your inbox for a confirmation.`
+      : `${joined} — we'll be in touch soon.`,
   };
 }

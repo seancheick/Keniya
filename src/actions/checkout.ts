@@ -2,13 +2,23 @@
 
 import type Stripe from "stripe";
 import { z } from "zod";
-import { boxes } from "@/lib/box";
+import { boxes, cravings } from "@/lib/box";
 import { site } from "@/lib/site";
 import { getStripe, isCheckoutConfigured, priceIdForBox } from "@/lib/stripe";
 
 const schema = z.object({
   boxSlug: z.enum(["pregnancy_comfort", "blood_sugar", "heart"]),
   gift: z.boolean().optional(),
+  // Quiz answers only prefill checkout (the buyer can change them there), so a bad value is
+  // dropped rather than blocking the purchase.
+  craving: z
+    .string()
+    .optional()
+    .transform((v) => cravings.find((c) => c.value === v)?.value),
+  avoid: z
+    .string()
+    .optional()
+    .transform((v) => v?.trim().slice(0, 255) || undefined),
 });
 
 const CHECKOUT_DOWN =
@@ -18,16 +28,21 @@ export type CheckoutResult =
   | { ok: true; url: string }
   | { ok: false; message: string; needsEmail?: boolean; code?: string };
 
-export async function startCheckout(input: {
+export type CheckoutInput = {
   boxSlug: string;
   gift?: boolean;
-}): Promise<CheckoutResult> {
+  craving?: string;
+  avoid?: string;
+};
+
+export async function startCheckout(input: CheckoutInput): Promise<CheckoutResult> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, message: "Pick a box to preorder.", code: "bad_box" };
   }
 
   const gift = parsed.data.gift === true;
+  const { craving, avoid } = parsed.data;
   const box = boxes.find((b) => b.slug === parsed.data.boxSlug);
   if (!box) {
     return { ok: false, message: "That box isn’t available.", code: "missing_box" };
@@ -87,17 +102,28 @@ export async function startCheckout(input: {
           key: "gift_note",
           label: {
             type: "custom",
-            custom: gift ? "Gift message (printed in their guide)" : "Gift note (optional)",
+            custom: gift ? "Gift message (printed on a note in the box)" : "Gift note (optional)",
           },
           type: "text",
           optional: !gift,
         },
         {
-          // Condition decides eligibility (the box); this helps choose among eligible snacks.
+          // Condition decides eligibility (the box); these two choose among eligible snacks.
           key: "avoid",
           label: { type: "custom", custom: "Allergies or foods to avoid (optional)" },
           type: "text",
           optional: true,
+          ...(avoid ? { text: { default_value: avoid } } : {}),
+        },
+        {
+          key: "craving",
+          label: { type: "custom", custom: "Sweet or salty? (optional)" },
+          type: "dropdown",
+          optional: true,
+          dropdown: {
+            options: cravings.map((c) => ({ label: c.label, value: c.value })),
+            ...(craving ? { default_value: craving } : {}),
+          },
         },
       ],
       metadata: {

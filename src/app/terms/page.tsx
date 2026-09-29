@@ -39,7 +39,7 @@ export default function TermsPage() {
         Each box holds {site.snackCount} distinct snacks. Contents rotate with the
         seasons, availability, and your preferences, and specific brands may vary batch
         to batch. If an item runs out, we substitute within the same category and the
-        same selection standards, and your guide notes the swap.
+        same selection standards.
       </p>
 
       <h2>Not medical advice</h2>
