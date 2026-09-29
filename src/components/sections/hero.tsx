@@ -84,8 +84,8 @@ export function Hero() {
         <div>
           <p className="hero-eyebrow eyebrow">Founding preorder · only {site.firstRunPerBox} of each</p>
           <h1 className="hero-title font-display text-display mt-5 text-ink">
-            Snack boxes for{" "}
-            <em className="text-terracotta-deep">what you&rsquo;re going through</em>.
+            The snack box that did the{" "}
+            <em className="text-terracotta-deep">label reading</em> for you.
           </h1>
           <p className="hero-sub mt-6 max-w-[48ch] text-lg leading-relaxed text-ink-soft">
             Pregnancy, blood sugar or heart health. 14 snacks picked for you, with a card

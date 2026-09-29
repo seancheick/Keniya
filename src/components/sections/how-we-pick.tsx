@@ -6,8 +6,8 @@ const points = [
     body: "A pack of chews counts as one, never four. At least 8 are full single servings. Small extras are free and don't count.",
   },
   {
-    title: "Checked label by label",
-    body: "Ingredients, allergens, caffeine, sugar and sodium, screened the way our sister app PharmaGuide screens supplements.",
+    title: "A written checklist, every snack",
+    body: "Each box has its own rules. The pregnancy box alone has nine, from fully cooked and sealed to caffeine, sugar and sodium on every card. Screened the way our sister app PharmaGuide screens supplements.",
   },
   {
     title: "A card that explains it",

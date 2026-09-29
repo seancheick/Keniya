@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { CheckIcon } from "lucide-react";
 import { BuyButton } from "@/components/buy-button";
 import { MatchQuiz } from "@/components/quiz/match-quiz";
+import { WaitlistForm } from "@/components/waitlist-form";
 import { boxes, type Box } from "@/lib/box";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -129,7 +130,12 @@ export function Shop() {
 
           <div className="order-1 self-start rounded-3xl bg-blush/60 p-5 sm:p-7 lg:sticky lg:top-24 lg:order-2">
             <div className="flex items-baseline justify-between gap-3">
-              <p className="font-display text-4xl text-ink">${site.preorderPriceUSD}</p>
+              <p className="font-display text-4xl text-ink">
+                ${site.preorderPriceUSD}
+                <span className="ml-2 font-sans text-sm text-ink-soft">
+                  about ${(site.preorderPriceUSD / site.snackCount).toFixed(2)} a snack
+                </span>
+              </p>
               <p className="text-sm font-medium text-terracotta-deep">
                 Only {site.firstRunPerBox} made
               </p>
@@ -201,6 +207,19 @@ export function Shop() {
                 Not sure which box? Take the quick quiz
               </button>
             </MatchQuiz>
+
+            <div className="mt-6 border-t border-ink/10 pt-5">
+              <p className="text-sm font-medium text-ink">Not ready yet? Get updates.</p>
+              <p className="mb-3 mt-0.5 text-xs text-ink-soft">
+                Shipping news and first pick of the next box. No spam.
+              </p>
+              <WaitlistForm
+                boxInterest={box.slug}
+                source="shop_not_ready"
+                cta="Keep me posted"
+                compact
+              />
+            </div>
           </div>
         </div>
       </div>
