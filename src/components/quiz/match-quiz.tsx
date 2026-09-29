@@ -44,26 +44,16 @@ type Match = {
   note: string;
 };
 
+// Category-level only: exact snacks rotate, so the quiz never promises a specific one.
 function tuckInFor(boxInterest: string, craving: string | null): string {
-  if (boxInterest === "blood_sugar") {
-    return craving === "Sweet"
-      ? "lower-sugar dark chocolate and freeze-dried berries"
-      : craving === "Salty & crunchy"
-        ? "cheese crisps and roasted chickpeas"
-        : "protein-forward crunch and lower-sugar treats";
-  }
-  if (boxInterest === "heart") {
-    return craving === "Sweet"
-      ? "70% dark chocolate and dried apricots"
-      : craving === "Salty & crunchy"
-        ? "unsalted pistachios and air-popped popcorn"
-        : "good fats, whole grains, and better sweets";
-  }
-  return craving === "Sweet"
-    ? "freeze-dried strawberries and dark chocolate almonds"
-    : craving === "Salty & crunchy"
-      ? "roasted chickpeas and sea-salt popcorn"
-      : "a balance of sweet and salty, plus one small wildcard";
+  const sweet: Record<string, string> = {
+    blood_sugar: "more of the smarter sweets",
+    heart: "extra fruit and a dark chocolate treat",
+    pregnancy_comfort: "extra sweet treats",
+  };
+  if (craving === "Sweet") return sweet[boxInterest] ?? sweet.pregnancy_comfort;
+  if (craving === "Salty & crunchy") return "more of the salty, crunchy picks";
+  return "a balance of sweet and salty";
 }
 
 function matchBox(condition: string, craving: string | null): Match {
@@ -73,14 +63,14 @@ function matchBox(condition: string, craving: string | null): Match {
         box: "Balanced Blood Sugar Box",
         status: "preorder",
         boxInterest: "blood_sugar",
-        note: `We'd tuck in ${tuckInFor("blood_sugar", craving)}.`,
+        note: `We'd lean toward ${tuckInFor("blood_sugar", craving)}.`,
       };
     case "Heart health":
       return {
         box: "Heart Wellness Box",
         status: "preorder",
         boxInterest: "heart",
-        note: `We'd tuck in ${tuckInFor("heart", craving)}.`,
+        note: `We'd lean toward ${tuckInFor("heart", craving)}.`,
       };
     case "GLP-1 journey":
       return {
@@ -108,7 +98,7 @@ function matchBox(condition: string, craving: string | null): Match {
         box: "Pregnancy Comfort Box",
         status: "preorder",
         boxInterest: "pregnancy_comfort",
-        note: `We'd tuck in ${tuckInFor("pregnancy_comfort", craving)}.`,
+        note: `We'd lean toward ${tuckInFor("pregnancy_comfort", craving)}.`,
       };
   }
 }
