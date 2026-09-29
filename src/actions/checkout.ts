@@ -97,6 +97,10 @@ export async function startCheckout(input: {
         gift: gift ? "yes" : "no",
       },
       allow_promotion_codes: true,
+      // Unfinished checkouts expire after 2h; Stripe then sends checkout.session.expired
+      // with a recovery link, and the webhook emails one "you left your box" reminder.
+      expires_at: Math.floor(Date.now() / 1000) + 2 * 60 * 60,
+      after_expiration: { recovery: { enabled: true, allow_promotion_codes: true } },
     });
 
     if (!session.url) {

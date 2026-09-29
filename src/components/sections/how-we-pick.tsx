@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { site } from "@/lib/site";
 
 const points = [
@@ -30,7 +31,24 @@ export function HowWePick() {
             </div>
           ))}
         </div>
-        <p className="mt-8 max-w-3xl text-sm leading-relaxed text-ink-soft" data-reveal>
+        <div
+          className="mt-8 flex max-w-2xl items-center gap-4 rounded-2xl border border-border bg-cream-card p-4"
+          data-reveal
+        >
+          <Image
+            src="/images/laurie-pham.webp"
+            alt="Laurie Pham, PharmD, Keniya's clinical reviewer"
+            width={56}
+            height={56}
+            className="size-14 shrink-0 rounded-full object-cover"
+          />
+          <p className="text-sm leading-relaxed text-ink-soft">
+            <strong className="text-ink">Reviewed by Laurie Pham, PharmD.</strong> Every box
+            lineup gets a clinical check from PharmaGuide&rsquo;s reviewer, a Doctor of Pharmacy
+            with 15+ years in drug safety.
+          </p>
+        </div>
+        <p className="mt-6 max-w-3xl text-sm leading-relaxed text-ink-soft" data-reveal>
           Started by a family who lived it: a pregnancy full of snack runs, and a lifetime
           of label-reading with type 1 diabetes. See how we screen at{" "}
           <a

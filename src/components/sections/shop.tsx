@@ -111,7 +111,7 @@ export function Shop() {
             <h3 className="font-display text-2xl text-ink">{box.name}</h3>
             <p className="mt-1 text-sm text-ink-soft">{box.forWho}</p>
             <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-sage-deep">
-              What&rsquo;s inside · {site.currentEdit} box
+              What goes in: one of each
             </p>
             <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm text-ink">
               {box.items.map((item) => (
@@ -122,9 +122,9 @@ export function Shop() {
               ))}
             </ul>
             <p className="mt-5 text-xs leading-relaxed text-ink-soft">
-              Plus a <strong className="text-ink">Packed for You</strong> card saying why
-              each snack is there. Brands can change with stock; any swap is an equal pick
-              and listed on your card.
+              The exact snacks change with the season, but every box fills these 14 spots,
+              chosen for your condition. Your <strong className="text-ink">Packed for You</strong>{" "}
+              card names each one and why it&rsquo;s there.
             </p>
           </div>
 

@@ -4,7 +4,7 @@ import { site } from "@/lib/site";
 export const faqs = [
   {
     q: "What exactly is in the box?",
-    a: `${site.snackCount} snacks, listed above for each box. At least 8 are full single servings. A pack of chews or two tea bags counts as one snack, and small extras are free and don't count. Brands can change with stock. Any swap is an equal pick and is listed on your card.`,
+    a: `${site.snackCount} snacks, listed above for each box. At least 8 are full single servings. A pack of chews or two tea bags counts as one snack, and small extras are free and don't count. The exact snacks rotate with the season, but every box fills the same 14 spots for your condition, and your card names each one.`,
   },
   {
     q: "When does it ship?",
