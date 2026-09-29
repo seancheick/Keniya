@@ -32,11 +32,8 @@ export function Faq() {
   return (
     <section id="faq">
       <div className="mx-auto max-w-3xl px-6 py-16 lg:py-24">
-        <p className="eyebrow" data-reveal>
-          Questions
-        </p>
-        <h2 className="font-display text-headline mt-4 text-ink" data-reveal>
-          Good to know.
+        <h2 className="font-display text-headline text-ink" data-reveal>
+          Questions, answered.
         </h2>
         {/* Native <details>: answers stay in the server HTML, so search and AI crawlers
             that never click (or run JS) still read them. name="faq" = one open at a time. */}
@@ -50,7 +47,7 @@ export function Faq() {
                   className="size-4 shrink-0 text-ink-soft transition-transform duration-200 group-open:rotate-180"
                 />
               </summary>
-              <p className="max-w-[68ch] pb-4 text-sm leading-relaxed text-ink-soft">{item.a}</p>
+              <p className="max-w-[56ch] pb-4 text-sm leading-relaxed text-ink-soft">{item.a}</p>
             </details>
           ))}
         </div>

@@ -8,14 +8,11 @@ export const metadata = {
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-16 lg:py-24">
-      <p className="eyebrow" data-reveal>
-        Our story
-      </p>
-      <h1 className="font-display text-display mt-5 text-ink" data-reveal>
+      <h1 className="font-display text-display text-ink" data-reveal>
         Built in the middle of a <em className="text-terracotta-deep">first trimester</em>.
       </h1>
 
-      <div className="mt-10 space-y-6 text-lg leading-relaxed text-ink-soft">
+      <div className="mt-10 max-w-[62ch] space-y-6 text-lg leading-relaxed text-ink-soft">
         <p data-reveal>
           Keniya started in a grocery aisle at 9pm. My wife was newly pregnant, craving
           something — anything — that would actually sit right, and every option meant

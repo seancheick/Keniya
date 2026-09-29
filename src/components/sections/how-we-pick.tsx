@@ -161,9 +161,8 @@ export function PackedGuide() {
         {/* Packed for You: show the guide, not just describe it */}
         <div className="grid items-center gap-8 lg:grid-cols-2" data-reveal>
           <div>
-            <p className="eyebrow">Packed for You</p>
-            <h3 className="font-display text-headline mt-3 text-ink">
-              You don&rsquo;t just get snacks. You get the reason for each one.
+            <h3 className="font-display text-headline text-ink">
+              Your Packed for You guide: the reason behind every snack.
             </h3>
             <p className="mt-4 leading-relaxed text-ink-soft">
               Every box comes with one Packed for You guide: your name and box, the{" "}
@@ -218,7 +217,7 @@ export function TrustStory() {
         <ReviewerCard className="mx-auto" />
 
         <p
-          className="mx-auto mt-8 max-w-2xl text-center text-base leading-relaxed text-ink-soft"
+          className="mx-auto mt-8 max-w-[60ch] text-center text-base leading-relaxed text-ink-soft"
           data-reveal
         >
           It started with years of reading labels for our own family. Now we do that work for
@@ -235,7 +234,7 @@ export function TrustStory() {
           </a>
           , our sister platform.
         </p>
-        <p className="mt-4 text-center text-xs text-ink-soft" data-reveal>
+        <p className="mx-auto mt-4 max-w-[70ch] text-center text-xs text-ink-soft" data-reveal>
           Keniya picks packaged snacks. It isn&rsquo;t medical advice. Follow your
           doctor&rsquo;s guidance and check each label for allergens.
         </p>

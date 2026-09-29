@@ -22,8 +22,7 @@ export function GiftSection() {
           />
         </div>
         <div data-reveal="right">
-          <p className="eyebrow">For someone you love</p>
-          <h2 id="gift-heading" className="font-display text-headline mt-4 text-ink">
+          <h2 id="gift-heading" className="font-display text-headline text-ink">
             She&rsquo;s growing a whole human. Send something she&rsquo;ll actually use.
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-ink-soft">

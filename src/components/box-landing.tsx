@@ -47,7 +47,7 @@ export function Faqs({ faqs }: { faqs: { q: string; a: string }[] }) {
             {f.q}
             <ChevronDownIcon aria-hidden className="size-4 shrink-0 text-ink-soft transition-transform group-open:rotate-180" />
           </summary>
-          <p className="max-w-[68ch] pb-4 text-sm leading-relaxed text-ink-soft">{f.a}</p>
+          <p className="max-w-[56ch] pb-4 text-sm leading-relaxed text-ink-soft">{f.a}</p>
         </details>
       ))}
     </div>
@@ -104,8 +104,7 @@ export function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
       {/* Hero: what it is + buy, above the fold */}
       <div className="mt-6 grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-center">
         <div>
-          <p className="eyebrow">{l.eyebrow}</p>
-          <h1 className="font-display text-display mt-4 text-ink">{l.h1}</h1>
+          <h1 className="font-display text-display text-ink">{l.h1}</h1>
           <p className="mt-5 text-lg leading-relaxed text-ink-soft">{l.intro}</p>
           <div className="mt-7 rounded-3xl bg-blush/60 p-5 sm:p-6">
             <p className="font-display text-4xl text-ink">
@@ -183,7 +182,7 @@ export function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
           ))}
         </ol>
         <ReviewerCard className="mt-8" />
-        <p className="mt-6 max-w-2xl text-sm text-ink-soft">
+        <p className="mt-6 max-w-[65ch] text-sm text-ink-soft">
           Every box includes a <strong className="text-ink">Packed for You</strong> guide that names
           each snack, its category and why it made the cut.
         </p>
@@ -192,7 +191,7 @@ export function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
       <section className="mt-14" aria-labelledby="faq">
         <h2 id="faq" className="font-display text-3xl text-ink">Questions about this box</h2>
         <Faqs faqs={l.faqs} />
-        <p className="mt-6 text-xs text-ink-soft">
+        <p className="mt-6 max-w-[70ch] text-xs text-ink-soft">
           Keniya picks packaged snacks. It isn&rsquo;t medical advice. Follow your doctor&rsquo;s
           guidance and check each label for allergens.
         </p>

@@ -15,8 +15,7 @@ export default async function ThanksPage({
   const sp = await searchParams;
   return (
     <div className="mx-auto max-w-2xl px-6 py-20 lg:py-28">
-      <p className="eyebrow">You&rsquo;re in</p>
-      <h1 className="font-display text-display mt-5 text-ink">
+      <h1 className="font-display text-display text-ink">
         Thank you — someone is packing this{" "}
         <em className="text-terracotta-deep">for you</em>.
       </h1>

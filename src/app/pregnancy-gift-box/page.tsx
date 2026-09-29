@@ -82,8 +82,7 @@ export default function GiftPage() {
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-center">
         <div>
-          <p className="eyebrow">For someone you love</p>
-          <h1 className="font-display text-display mt-4 text-ink">
+          <h1 className="font-display text-display text-ink">
             A pregnancy gift that does the reading for her.
           </h1>
           <p className="mt-5 text-lg leading-relaxed text-ink-soft">
@@ -139,7 +138,7 @@ export default function GiftPage() {
             </li>
           ))}
         </ul>
-        <p className="mt-5 text-sm text-ink-soft">
+        <p className="mt-5 max-w-[65ch] text-sm text-ink-soft">
           Plus her Packed for You guide, with your message and a line on why each snack is there.{" "}
           <Link href={product.path} className="font-medium text-sage-deep underline underline-offset-4 hover:text-ink">
             See how we screen for pregnancy
@@ -153,7 +152,7 @@ export default function GiftPage() {
         <Faqs faqs={faqs} />
       </section>
 
-      <p className="mt-10 text-sm text-ink-soft">
+      <p className="mt-10 max-w-[60ch] text-sm text-ink-soft">
         Shopping for someone watching blood sugar or heart health?{" "}
         <Link href="/#gift" className="font-medium text-sage-deep underline underline-offset-4 hover:text-ink">
           Any box can be sent as a gift

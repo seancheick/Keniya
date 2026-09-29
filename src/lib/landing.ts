@@ -11,7 +11,6 @@ export type BoxLanding = {
   path: string;
   title: string;
   description: string;
-  eyebrow: string;
   h1: string;
   intro: string;
   forWho: string[];
@@ -28,7 +27,6 @@ export const landings: BoxLanding[] = [
     title: "Pregnancy Snack Box: 14 Label-Checked Snacks",
     description:
       "14 snacks screened with Keniya Pregnancy Screening: fully cooked, caffeine noted, excluded ingredients left out. $47, free shipping, no subscription.",
-    eyebrow: "Pregnancy Comfort Box",
     h1: "A pregnancy snack box that already read the labels.",
     intro:
       "Rough mornings, sudden cravings and a lot of label-reading. Every snack has to pass Keniya Pregnancy Screening before it can go in, so you can just open it and eat.",
@@ -96,7 +94,6 @@ export const landings: BoxLanding[] = [
     title: "Balanced Blood Sugar Snack Box: Protein & Fiber",
     description:
       "14 snacks for people watching carbs and added sugar: protein-forward, fiber-forward, nuts and seeds, portioned treats. Added sugar listed. $47, free shipping.",
-    eyebrow: "Balanced Blood Sugar Box",
     h1: "Snacks for when you're watching carbs and added sugar.",
     intro:
       "Built by a founder with a lifetime of label-reading for type 1 diabetes. Each snack has to earn its place through protein, fiber, whole-food fats or a small, portioned treat, and the box balances all four.",
@@ -155,7 +152,6 @@ export const landings: BoxLanding[] = [
     title: "Heart-Conscious Snack Box, Sodium Listed",
     description:
       "14 snacks for heart-conscious eating: nuts and seeds, whole grains, fruit and one treat, with sodium listed for each. $47, free shipping, one-time purchase.",
-    eyebrow: "Heart Wellness Box",
     h1: "Heart-conscious snacking without the label math.",
     intro:
       "“Watch your sodium” shouldn't mean giving up on snacks. This box is built around nuts, seeds and other unsaturated-fat sources, whole grains and fruit, with firm limits on salty picks and treats, and the sodium for every snack in your Packed for You guide.",

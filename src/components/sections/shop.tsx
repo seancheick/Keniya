@@ -157,7 +157,7 @@ export function Shop() {
                     </li>
                   ))}
                 </ul>
-                <p className="mt-5 text-xs leading-relaxed text-ink-soft">
+                <p className="mt-5 max-w-[62ch] text-xs leading-relaxed text-ink-soft">
                   Your condition shapes the box: a snack has to pass this box&rsquo;s screening
                   before it can go in. Exact picks rotate with the season, and your{" "}
                   <strong className="text-ink">Packed for You</strong> guide explains each one.

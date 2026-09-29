@@ -9,7 +9,7 @@ export function ReviewerCard({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "flex max-w-2xl items-center gap-4 rounded-2xl border border-border bg-cream-card p-4",
+        "flex max-w-lg items-center gap-4 rounded-2xl border border-border bg-cream-card p-4",
         className,
       )}
     >

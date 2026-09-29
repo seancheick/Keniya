@@ -28,8 +28,7 @@ export function Hero() {
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         const split = new SplitText(".hero-title", { type: "lines", mask: "lines" });
         const tl = gsap.timeline({ defaults: { ease: "power4.out" } });
-        tl.from(".hero-eyebrow", { autoAlpha: 0, y: 14, duration: 0.6 }, 0.1)
-          .from(
+        tl.from(
             split.lines,
             {
               yPercent: 110,
@@ -82,8 +81,7 @@ export function Hero() {
     <section ref={scope} className="overflow-hidden">
       <div className="mx-auto grid max-w-6xl gap-16 px-6 pb-16 pt-14 sm:pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pb-24 lg:pt-24">
         <div>
-          <p className="hero-eyebrow eyebrow">Founding preorder · only {site.firstRunPerBox} of each</p>
-          <h1 className="hero-title font-display text-display mt-5 text-ink">
+          <h1 className="hero-title font-display text-display text-ink">
             The snack box that did the{" "}
             <em className="text-terracotta-deep">label reading</em> for you.
           </h1>
@@ -105,28 +103,31 @@ export function Hero() {
           </div>
           <p className="hero-meta mt-6 text-sm text-ink-soft">
             ${site.preorderPriceUSD} · No subscription · {site.freeShippingLabel} · Ships{" "}
-            {site.shipDate} · Refundable until it ships
+            {site.shipDate} · Refundable until it ships · Only {site.firstRunPerBox} of each box
           </p>
         </div>
 
         <div className="hero-visual relative mx-auto w-full max-w-md lg:max-w-none">
-          <div className="relative mx-auto aspect-[4/5] max-w-md overflow-hidden rounded-[1.75rem] bg-blush shadow-sm">
-            <Image
-              src="/images/hero-unboxing.jpg"
-              alt="Keniya founding snack box unboxing with Packed for You guide"
-              fill
-              loading="eager"
-              fetchPriority="high"
-              sizes="(max-width: 768px) 90vw, 480px"
-              className="object-cover"
-            />
+          {/* Badge sits on the frame's corner (a sticker), not inside it: no card-in-card. */}
+          <div className="relative mx-auto max-w-md">
+            <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] bg-blush shadow-sm">
+              <Image
+                src="/images/hero-unboxing.jpg"
+                alt="Keniya founding snack box unboxing with Packed for You guide"
+                fill
+                loading="eager"
+                fetchPriority="high"
+                sizes="(max-width: 768px) 90vw, 480px"
+                className="object-cover"
+              />
+            </div>
             <div
               data-speed="0.7"
-              className="absolute right-4 top-4 grid size-24 place-items-center rounded-full border border-blush-ink/25 bg-cream text-center shadow-sm"
+              className="absolute -right-3 -top-4 grid size-24 rotate-6 place-items-center rounded-full bg-terracotta-deep text-center shadow-[0_8px_20px_-6px_rgb(51_48_43/0.35)] sm:-right-5"
             >
-              <p className="text-[0.65rem] font-medium leading-tight tracking-[0.14em] text-blush-ink">
-                14 SNACKS
-                <br />· ${site.preorderPriceUSD} ·
+              <p className="font-display text-sm leading-tight text-cream">
+                {site.snackCount} snacks
+                <br />${site.preorderPriceUSD}
               </p>
             </div>
           </div>
