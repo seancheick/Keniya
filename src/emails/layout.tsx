@@ -85,7 +85,7 @@ export function Button({
         style={{
           display: "inline-block",
           padding: "15px 32px",
-          backgroundColor: c.terracotta,
+          backgroundColor: c.terracottaDeep,
           color: "#FFFDF8",
           borderRadius: "9999px",
           fontSize: "16px",

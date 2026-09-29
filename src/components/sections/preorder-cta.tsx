@@ -8,7 +8,7 @@ export function PreorderCta() {
           <p className="font-display text-3xl text-cream">
             Only {site.firstRunPerBox} of each box.
           </p>
-          <p className="mt-1 text-cream/80">
+          <p className="mt-1 text-cream">
             ${site.preorderPriceUSD} · {site.freeShippingLabel.toLowerCase()} · ships{" "}
             {site.shipDate} · refundable until it ships
           </p>
@@ -16,7 +16,7 @@ export function PreorderCta() {
         <div className="flex flex-wrap gap-3">
           <a
             href="#boxes"
-            className="inline-flex h-12 items-center rounded-full bg-terracotta px-8 text-base font-semibold text-cream transition-colors hover:bg-terracotta-deep"
+            className="inline-flex h-12 items-center rounded-full bg-terracotta-deep px-8 text-base font-semibold text-cream transition-colors hover:bg-ink"
           >
             Pick your box
           </a>

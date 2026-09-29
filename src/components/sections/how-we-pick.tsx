@@ -1,19 +1,15 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ReviewerCard } from "@/components/reviewer-card";
+import { landings } from "@/lib/landing";
+import { boxes } from "@/lib/box";
 import { site } from "@/lib/site";
 
-const points = [
-  {
-    title: "14 real snacks",
-    body: "A pack of chews counts as one, never four. At least 8 are full single servings. Small extras are free and don't count.",
-  },
-  {
-    title: "A written checklist, every snack",
-    body: "Each box has its own rules. The pregnancy box alone has nine, from fully cooked and sealed to caffeine, sugar and sodium on every card. Screened the way our sister app PharmaGuide screens supplements.",
-  },
-  {
-    title: "A card that explains it",
-    body: "Your Packed for You card says in one line why each snack made the cut, and lists any swaps.",
-  },
+const steps = [
+  { title: "Label", body: "We read the ingredients and allergens on every snack." },
+  { title: "Nutrition", body: "Sugar, sodium, protein, fiber, caffeine and serving size." },
+  { title: "Your box's rules", body: "Each box has its own written checklist to pass." },
+  { title: "Clinical review", body: "A pharmacist reviews the criteria and each lineup." },
+  { title: "Packed for You", body: "Your card tells you why each snack made the cut." },
 ];
 
 export function HowWePick() {
@@ -23,32 +19,87 @@ export function HowWePick() {
         <h2 className="text-center font-display text-3xl text-ink" data-reveal>
           How we pick every snack
         </h2>
-        <div className="mt-6 grid gap-6 sm:grid-cols-3" data-reveal-group>
-          {points.map((p) => (
-            <div key={p.title} data-reveal-item>
-              <p className="font-semibold text-ink">{p.title}</p>
-              <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{p.body}</p>
-            </div>
+        <p className="mx-auto mt-3 max-w-xl text-center text-ink-soft" data-reveal>
+          Not every &ldquo;healthy&rdquo; snack makes the box. Each one goes through five steps.
+        </p>
+
+        {/* The process, left to right (top to bottom on mobile) */}
+        <ol className="mt-8 grid gap-2 sm:mt-10 sm:grid-cols-5 sm:gap-3" data-reveal-group>
+          {steps.map((s, i) => (
+            <li
+              key={s.title}
+              data-reveal-item
+              className="flex items-start gap-3 rounded-2xl border border-border bg-cream-card p-3 sm:block sm:p-4 sm:text-center"
+            >
+              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-sage-deep text-sm font-semibold text-cream sm:mx-auto">
+                {i + 1}
+              </span>
+              <span>
+                <span className="block font-semibold text-ink sm:mt-2">{s.title}</span>
+                <span className="mt-0.5 block text-sm leading-snug text-ink-soft sm:mt-1">
+                  {s.body}
+                </span>
+              </span>
+            </li>
           ))}
+        </ol>
+        <p className="mt-4 text-center text-sm text-ink-soft" data-reveal>
+          See the full checklist for each box:{" "}
+          {landings.map((l, i) => (
+            <span key={l.path}>
+              {i > 0 && " · "}
+              <Link
+                href={l.path}
+                className="font-medium text-sage-deep underline underline-offset-4 hover:text-ink"
+              >
+                {boxes.find((b) => b.slug === l.slug)!.shortName}
+              </Link>
+            </span>
+          ))}
+        </p>
+
+        {/* Packed for You: show the card, not just describe it */}
+        <div className="mt-14 grid items-center gap-8 lg:grid-cols-2" data-reveal>
+          <div>
+            <p className="eyebrow">Packed for You</p>
+            <h3 className="font-display text-headline mt-3 text-ink">
+              You don&rsquo;t just get snacks. You get the reason for each one.
+            </h3>
+            <p className="mt-4 leading-relaxed text-ink-soft">
+              Every box comes with a card that lists all {site.snackCount} snacks, the category
+              each one fills, why we picked it, and the label numbers that matter for your box.
+              For a gift, your message goes on it too.
+            </p>
+          </div>
+          {/* Illustrative layout of one card entry; no real product named on purpose. */}
+          <figure className="mx-auto w-full max-w-sm rotate-[-1.5deg] rounded-2xl border border-border bg-cream-card p-6 shadow-md">
+            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-sage-deep">
+              Packed for you · 3 of {site.snackCount}
+            </p>
+            <p className="mt-3 font-display text-2xl text-ink">Your snack&rsquo;s name</p>
+            <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-terracotta-deep">
+              Comfort
+            </p>
+            <p className="mt-4 text-sm leading-relaxed text-ink-soft">
+              <strong className="text-ink">Why it&rsquo;s here:</strong> one plain line on why
+              this snack fits your box.
+            </p>
+            <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border pt-4 text-center">
+              {["Caffeine", "Added sugar", "Sodium"].map((k) => (
+                <div key={k}>
+                  <p className="text-[0.65rem] uppercase tracking-[0.12em] text-ink-soft">{k}</p>
+                  <p className="mt-1 text-sm font-semibold text-ink">from label</p>
+                </div>
+              ))}
+            </div>
+            <figcaption className="mt-4 text-[0.7rem] text-ink-soft">
+              Example layout of one entry on a Packed for You card
+            </figcaption>
+          </figure>
         </div>
-        <div
-          className="mx-auto mt-10 flex max-w-2xl items-center gap-4 rounded-2xl border border-border bg-cream-card p-4"
-          data-reveal
-        >
-          <Image
-            src="/images/laurie-pham.webp"
-            alt="Laurie Pham, PharmD, Keniya's clinical reviewer"
-            width={56}
-            height={56}
-            className="size-14 shrink-0 rounded-full object-cover"
-          />
-          <p className="text-sm leading-relaxed text-ink-soft">
-            <strong className="text-ink">Reviewed by Laurie Pham, PharmD.</strong>{" "}
-            Every box
-            lineup gets a clinical check from PharmaGuide&rsquo;s reviewer, a Doctor of Pharmacy
-            with 15+ years in drug safety.
-          </p>
-        </div>
+
+        <ReviewerCard className="mx-auto mt-14" />
+
         <p
           className="mx-auto mt-8 max-w-2xl text-center text-base leading-relaxed text-ink-soft"
           data-reveal
@@ -67,7 +118,7 @@ export function HowWePick() {
           </a>
           , our sister platform.
         </p>
-        <p className="mt-4 text-center text-xs text-ink-soft/70" data-reveal>
+        <p className="mt-4 text-center text-xs text-ink-soft" data-reveal>
           Keniya picks packaged snacks. It isn&rsquo;t medical advice. Follow your
           doctor&rsquo;s guidance and check each label for allergens.
         </p>

@@ -6,6 +6,8 @@ import { CheckIcon } from "lucide-react";
 import { BuyButton } from "@/components/buy-button";
 import { MatchQuiz } from "@/components/quiz/match-quiz";
 import { WaitlistForm } from "@/components/waitlist-form";
+import Link from "next/link";
+import { landingFor } from "@/lib/landing";
 import { boxes, type Box } from "@/lib/box";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -14,13 +16,13 @@ const promises = [
   `${site.freeShippingLabel} (US)`,
   `Ships ${site.shipDate}`,
   "Full refund any time before it ships",
-  "One-time purchase, no subscription",
 ];
 
 /** #box-heart selects that box; #gift switches to gift mode. Links in llms.txt/JSON-LD use these. */
-function readHash(): { slug?: Box["slug"]; gift?: boolean } {
+function readHash(): { slug?: Box["slug"]; gift?: boolean; scroll?: boolean } {
   const h = typeof window === "undefined" ? "" : window.location.hash.slice(1);
   if (h === "gift") return { gift: true };
+  if (h === "gift-pregnancy") return { gift: true, slug: "pregnancy_comfort", scroll: true };
   const match = boxes.find((b) => `box-${b.slug}` === h);
   return match ? { slug: match.slug } : {};
 }
@@ -32,9 +34,11 @@ export function Shop() {
 
   useEffect(() => {
     const apply = () => {
-      const { slug: s, gift: g } = readHash();
+      const { slug: s, gift: g, scroll } = readHash();
       if (s) setSlug(s);
       if (g) setGift(true);
+      // #gift-pregnancy has no element of its own; bring the buy panel into view.
+      if (scroll) document.getElementById("gift")?.scrollIntoView({ block: "center" });
     };
     apply();
     window.addEventListener("hashchange", apply);
@@ -105,31 +109,64 @@ export function Shop() {
           })}
         </div>
 
+        <details className="group mt-3 rounded-2xl border border-dashed border-border px-4 py-3">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm [&::-webkit-details-marker]:hidden">
+            <span>
+              <strong className="text-ink">Coming next: GLP-1 Support.</strong>{" "}
+              <span className="text-ink-soft">Small portions, protein-forward.</span>
+            </span>
+            <span className="shrink-0 font-medium text-sage-deep underline underline-offset-4">
+              Join the waitlist
+            </span>
+          </summary>
+          <div className="mt-3 max-w-md">
+            <WaitlistForm boxInterest="glp1" source="shop_glp1" cta="Notify me" compact />
+          </div>
+        </details>
+
         {/* Step 2 — what's inside + buy */}
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.25fr_1fr] lg:gap-8">
-          <div className="order-2 rounded-3xl border border-border bg-cream-card p-5 sm:p-7 lg:order-1">
-            <h3 className="font-display text-2xl text-ink">{box.name}</h3>
-            <p className="mt-1 text-sm text-ink-soft">{box.forWho}</p>
-            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-sage-deep">
-              What goes in: {site.snackCount} snacks
-            </p>
-            <ul className="mt-3 space-y-2.5 text-sm">
-              {box.categories.map((cat) => (
-                <li key={cat.name} className="flex gap-3">
-                  <span className="w-7 shrink-0 font-display text-lg leading-5 text-terracotta">
-                    {cat.count}×
-                  </span>
-                  <span className="text-ink-soft">
-                    <strong className="font-semibold text-ink">{cat.name}</strong> · {cat.note}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-5 text-xs leading-relaxed text-ink-soft">
-              We pick the exact snacks for your condition, and they rotate with the season. Your{" "}
-              <strong className="text-ink">Packed for You</strong> card names each one and why
-              it&rsquo;s there.
-            </p>
+          {/* All three panels are in the HTML (tabpanel pattern) so search engines and screen
+              readers get every box; only the selected one is shown. */}
+          <div className="order-2 lg:order-1">
+            {boxes.map((b) => (
+              <div
+                key={b.slug}
+                role="tabpanel"
+                aria-label={b.name}
+                hidden={b.slug !== box.slug}
+                className="rounded-3xl border border-border bg-cream-card p-5 sm:p-7"
+              >
+                <h3 className="font-display text-2xl text-ink">{b.name}</h3>
+                <p className="mt-1 text-sm text-ink-soft">{b.forWho}</p>
+                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-sage-deep">
+                  What goes in: {site.snackCount} snacks
+                </p>
+                <ul className="mt-3 space-y-2.5 text-sm">
+                  {b.categories.map((cat) => (
+                    <li key={cat.name} className="flex gap-3">
+                      <span className="w-7 shrink-0 font-display text-lg leading-5 text-terracotta-deep">
+                        {cat.count}×
+                      </span>
+                      <span className="text-ink-soft">
+                        <strong className="font-semibold text-ink">{cat.name}</strong> · {cat.note}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-5 text-xs leading-relaxed text-ink-soft">
+                  We pick the exact snacks for your condition, and they rotate with the season.
+                  Your <strong className="text-ink">Packed for You</strong>{" "}card names each one and
+                  why it&rsquo;s there.
+                </p>
+                <Link
+                  href={landingFor(b.slug).path}
+                  className="mt-4 inline-block text-sm font-medium text-sage-deep underline underline-offset-4 hover:text-ink"
+                >
+                  How we screen the {b.shortName} box
+                </Link>
+              </div>
+            ))}
           </div>
 
           <div className="order-1 self-start rounded-3xl bg-blush/60 p-5 sm:p-7 lg:sticky lg:top-24 lg:order-2">
@@ -140,7 +177,7 @@ export function Shop() {
                   about ${(site.preorderPriceUSD / site.snackCount).toFixed(2)} a snack
                 </span>
               </p>
-              <p className="text-sm font-medium text-terracotta-deep">
+              <p className="text-sm font-semibold text-blush-ink">
                 Only {site.firstRunPerBox} made
               </p>
             </div>
@@ -194,7 +231,11 @@ export function Shop() {
               />
             </div>
 
-            <ul className="mt-5 space-y-1.5 text-sm text-ink">
+            <p className="mt-3 text-center text-sm font-semibold text-ink">
+              No subscription. No surprise renewal.
+            </p>
+
+            <ul className="mt-4 space-y-1.5 text-sm text-ink">
               {promises.map((p) => (
                 <li key={p} className="flex items-center gap-2">
                   <CheckIcon className="size-4 text-sage-deep" strokeWidth={2.5} aria-hidden />
@@ -206,7 +247,7 @@ export function Shop() {
             <MatchQuiz>
               <button
                 type="button"
-                className="mt-5 text-sm font-medium text-sage-deep underline underline-offset-4 hover:text-ink"
+                className="mt-5 text-sm font-medium text-ink underline underline-offset-4 hover:text-terracotta-deep"
               >
                 Not sure which box? Take the quick quiz
               </button>

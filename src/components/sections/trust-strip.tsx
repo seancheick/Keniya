@@ -8,9 +8,9 @@ const items = [
     detail: "Founding release, hand-packed",
   },
   {
-    label: "PharmaGuide screening",
-    detail: "Ingredient intelligence",
-    href: site.pharmaguide.url,
+    label: "PharmD-reviewed lineups",
+    detail: "Box criteria, not personal advice",
+    href: "/#how",
   },
 ];
 
@@ -35,8 +35,6 @@ export function TrustStrip() {
               <a
                 key={item.label}
                 href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
                 className={`${className} transition-colors hover:text-ink`}
               >
                 {inner}

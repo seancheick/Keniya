@@ -1,4 +1,5 @@
 import { boxes } from "@/lib/box";
+import { giftLanding, landingFor } from "@/lib/landing";
 import { site } from "@/lib/site";
 
 export const dynamic = "force-static";
@@ -15,11 +16,12 @@ ${site.name} (from kɛnɛya, "health" in Dioula) is a small, founder-run US comp
 
 ## Boxes
 
-${boxes.map((b) => `- [${b.name}](${base}/#box-${b.slug}): ${b.forWho} ${b.why}`).join("\n")}
+${boxes.map((b) => `- [${b.name}](${base}${landingFor(b.slug).path}): ${b.forWho} ${b.why}`).join("\n")}
+- [Pregnancy gift box](${base}${giftLanding.path}): send the Pregnancy Comfort box as a gift, with your note printed on the card.
 
 ## Pages
 
-- [Home — boxes, selection standards, FAQ](${base}/)
+- [Home — pick a box, how we pick, FAQ](${base}/)
 - [Our story](${base}/about)
 - [Privacy policy](${base}/privacy)
 - [Terms of service](${base}/terms)

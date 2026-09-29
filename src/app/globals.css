@@ -23,8 +23,8 @@
   --card-foreground: var(--ink);
   --popover: var(--cream-card);
   --popover-foreground: var(--ink);
-  --primary: var(--terracotta);
-  --primary-foreground: #fbefe8;
+  --primary: var(--terracotta-deep); /* deep shade: cream text passes WCAG AA (4.66:1) */
+  --primary-foreground: #fffdf8;
   --secondary: var(--cream-deep);
   --secondary-foreground: var(--ink);
   --muted: var(--cream-deep);

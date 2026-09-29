@@ -4,7 +4,7 @@ import { site } from "@/lib/site";
 
 const nav = [
   { href: "/#boxes", label: "The boxes" },
-  { href: "/#gift", label: "Gifts" },
+  { href: "/pregnancy-gift-box", label: "Gifts" },
   { href: "/#how", label: "How we pick" },
   { href: "/#faq", label: "FAQ" },
   { href: "/about", label: "Our story" },

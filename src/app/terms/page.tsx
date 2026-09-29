@@ -19,7 +19,7 @@ export default function TermsPage() {
       <h2>Orders and pricing</h2>
       <p>
         Every box is a one-time purchase at ${site.preorderPriceUSD} in US dollars, with{" "}
-        {site.freeShippingLabel.toLowerCase()} to US addresses. There&rsquo;s no
+        {site.freeShippingLabel.toLowerCase()}{" "}to US addresses. There&rsquo;s no
         subscription and nothing renews automatically.
       </p>
 

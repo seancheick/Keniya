@@ -5,5 +5,14 @@ import { site } from "@/lib/site";
 // ignore. Add real per-page dates if the site grows past a handful of pages.
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = site.url.replace(/\/$/, "");
-  return ["", "/about", "/privacy", "/terms"].map((path) => ({ url: `${base}${path}` }));
+  return [
+    "",
+    "/pregnancy-snack-box",
+    "/balanced-blood-sugar-snack-box",
+    "/heart-healthy-snack-box",
+    "/pregnancy-gift-box",
+    "/about",
+    "/privacy",
+    "/terms",
+  ].map((path) => ({ url: `${base}${path}` }));
 }

@@ -343,7 +343,7 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
               )}
             </div>
             <div className="flex items-center justify-between pt-4">
-              <p className="text-xs text-ink-soft/70">
+              <p className="text-xs text-ink-soft">
                 {result.status === "preorder"
                   ? `$${site.preorderPriceUSD} · ${site.snackCount} snacks · free shipping · only ${site.firstRunPerBox} in the founding release.`
                   : "We build the next box where the need is loudest."}

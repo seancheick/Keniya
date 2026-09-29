@@ -102,9 +102,9 @@ export function Hero() {
               Send as a gift
             </a>
           </div>
-          <p className="hero-meta mt-6 text-sm text-ink-soft/80">
-            ${site.preorderPriceUSD} · {site.freeShippingLabel} · Ships {site.shipDate} ·
-            Refundable until it ships
+          <p className="hero-meta mt-6 text-sm text-ink-soft">
+            ${site.preorderPriceUSD} · No subscription · {site.freeShippingLabel} · Ships{" "}
+            {site.shipDate} · Refundable until it ships
           </p>
         </div>
 

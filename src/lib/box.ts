@@ -20,7 +20,7 @@ export const boxes: Box[] = [
     slug: "pregnancy_comfort",
     name: "Pregnancy Comfort Box",
     shortName: "Pregnancy",
-    forWho: "For pregnancy and the first weeks after, and the people buying for her.",
+    forWho: "For pregnancy, first trimester to third, and the people buying for her.",
     why: "Gentle picks for rough mornings, real treats for cravings.",
     categories: [
       { name: "Comfort", count: 4, note: "gentle, easy picks for rough days" },

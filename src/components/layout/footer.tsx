@@ -31,6 +31,18 @@ export function Footer() {
             className="flex flex-wrap gap-x-7 gap-y-2 text-sm text-ink-soft"
             aria-label="Footer"
           >
+            <Link className="transition-colors hover:text-ink" href="/pregnancy-snack-box">
+              Pregnancy box
+            </Link>
+            <Link className="transition-colors hover:text-ink" href="/balanced-blood-sugar-snack-box">
+              Blood sugar box
+            </Link>
+            <Link className="transition-colors hover:text-ink" href="/heart-healthy-snack-box">
+              Heart box
+            </Link>
+            <Link className="transition-colors hover:text-ink" href="/pregnancy-gift-box">
+              Pregnancy gifts
+            </Link>
             <a className="transition-colors hover:text-ink" href="/about">
               Our story
             </a>
@@ -59,7 +71,7 @@ export function Footer() {
             </a>
           </nav>
         </div>
-        <p className="mt-10 max-w-3xl text-xs leading-relaxed text-ink-soft/80">
+        <p className="mt-10 max-w-3xl text-xs leading-relaxed text-ink-soft">
           Keniya curates packaged snacks for comfort and enjoyment through pregnancy and
           other life stages. These statements have not been evaluated by the Food and Drug
           Administration. Our boxes are not intended to diagnose, treat, cure, or prevent
@@ -68,7 +80,7 @@ export function Footer() {
           for you. Every item ships in its original sealed packaging; check manufacturer
           labels for allergens.
         </p>
-        <p className="mt-6 text-xs text-ink-soft/70">
+        <p className="mt-6 text-xs text-ink-soft">
           © 2026 Keniya. All rights reserved. · Free shipping on founding preorders ·{" "}
           <a href={site.url} className="hover:text-ink">
             keniyahealth.com
