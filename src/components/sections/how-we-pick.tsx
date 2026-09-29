@@ -20,7 +20,7 @@ export function HowWePick() {
   return (
     <section id="how" className="scroll-mt-20 border-b border-border bg-cream-deep/50">
       <div className="mx-auto max-w-6xl px-5 py-14 lg:py-16">
-        <h2 className="font-display text-3xl text-ink" data-reveal>
+        <h2 className="text-center font-display text-3xl text-ink" data-reveal>
           How we pick every snack
         </h2>
         <div className="mt-6 grid gap-6 sm:grid-cols-3" data-reveal-group>
@@ -32,7 +32,7 @@ export function HowWePick() {
           ))}
         </div>
         <div
-          className="mt-8 flex max-w-2xl items-center gap-4 rounded-2xl border border-border bg-cream-card p-4"
+          className="mx-auto mt-10 flex max-w-2xl items-center gap-4 rounded-2xl border border-border bg-cream-card p-4"
           data-reveal
         >
           <Image
@@ -43,14 +43,20 @@ export function HowWePick() {
             className="size-14 shrink-0 rounded-full object-cover"
           />
           <p className="text-sm leading-relaxed text-ink-soft">
-            <strong className="text-ink">Reviewed by Laurie Pham, PharmD.</strong> Every box
+            <strong className="text-ink">Reviewed by Laurie Pham, PharmD.</strong>{" "}
+            Every box
             lineup gets a clinical check from PharmaGuide&rsquo;s reviewer, a Doctor of Pharmacy
             with 15+ years in drug safety.
           </p>
         </div>
-        <p className="mt-6 max-w-3xl text-sm leading-relaxed text-ink-soft" data-reveal>
-          Started by a family who lived it: a pregnancy full of snack runs, and a lifetime
-          of label-reading with type 1 diabetes. See how we screen at{" "}
+        <p
+          className="mx-auto mt-8 max-w-2xl text-center text-base leading-relaxed text-ink-soft"
+          data-reveal
+        >
+          It started with years of reading labels for our own family. Now we do that work for
+          everyone: whatever you&rsquo;re living with, you get a box that already did the reading,
+          so you can just enjoy the snack. Pregnancy, blood sugar and heart health today, with
+          more conditions on the way. Every snack is screened with the same care as{" "}
           <a
             href={site.pharmaguide.url}
             target="_blank"
@@ -59,9 +65,9 @@ export function HowWePick() {
           >
             PharmaGuide
           </a>
-          .
+          , our sister platform.
         </p>
-        <p className="mt-3 text-xs text-ink-soft/70" data-reveal>
+        <p className="mt-4 text-center text-xs text-ink-soft/70" data-reveal>
           Keniya picks packaged snacks. It isn&rsquo;t medical advice. Follow your
           doctor&rsquo;s guidance and check each label for allergens.
         </p>
