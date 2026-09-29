@@ -184,7 +184,7 @@ export function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
         </ol>
         <ReviewerCard className="mt-8" />
         <p className="mt-6 max-w-2xl text-sm text-ink-soft">
-          Every box includes a <strong className="text-ink">Packed for You</strong> card that names
+          Every box includes a <strong className="text-ink">Packed for You</strong> guide that names
           each snack, its category and why it made the cut.
         </p>
       </section>
