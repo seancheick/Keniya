@@ -32,7 +32,10 @@ const serif = "Georgia, 'Times New Roman', serif";
 const sans =
   "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
-export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? site.url).replace(/\/$/, "");
+export const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? site.url).replace(
+  /\/$/,
+  "",
+);
 
 export const t = {
   eyebrow: {
@@ -68,7 +71,13 @@ export const t = {
   },
 };
 
-export function Button({ href, children }: { href: string; children: ReactNode }) {
+export function Button({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
   return (
     <Section style={{ margin: "28px 0 8px", textAlign: "center" }}>
       <Link
@@ -92,10 +101,21 @@ export function Button({ href, children }: { href: string; children: ReactNode }
 }
 
 /** Soft-tinted panel for details (order summary, what's inside, notes). */
-export function Panel({ children, tint = c.creamDeep }: { children: ReactNode; tint?: string }) {
+export function Panel({
+  children,
+  tint = c.creamDeep,
+}: {
+  children: ReactNode;
+  tint?: string;
+}) {
   return (
     <Section
-      style={{ margin: "20px 0", padding: "18px 20px", backgroundColor: tint, borderRadius: "14px" }}
+      style={{
+        margin: "20px 0",
+        padding: "18px 20px",
+        backgroundColor: tint,
+        borderRadius: "14px",
+      }}
     >
       {children}
     </Section>
@@ -103,7 +123,11 @@ export function Panel({ children, tint = c.creamDeep }: { children: ReactNode; t
 }
 
 /** "4 × Comfort — gentle picks" rows: what's in a box, by category (never specific snacks). */
-export function CategoryList({ categories }: { categories: { name: string; count: number; note: string }[] }) {
+export function CategoryList({
+  categories,
+}: {
+  categories: { name: string; count: number; note: string }[];
+}) {
   return (
     <table role="presentation" width="100%" cellPadding={0} cellSpacing={0}>
       <tbody>
@@ -111,11 +135,27 @@ export function CategoryList({ categories }: { categories: { name: string; count
           <tr key={cat.name}>
             <td
               valign="top"
-              style={{ width: "36px", padding: "6px 0", fontSize: "15px", fontWeight: 700, color: c.terracotta, fontFamily: sans }}
+              style={{
+                width: "36px",
+                padding: "6px 0",
+                fontSize: "15px",
+                fontWeight: 700,
+                color: c.terracotta,
+                fontFamily: sans,
+              }}
             >
               {cat.count}×
             </td>
-            <td valign="top" style={{ padding: "6px 0", fontSize: "14px", lineHeight: 1.45, color: c.inkSoft, fontFamily: sans }}>
+            <td
+              valign="top"
+              style={{
+                padding: "6px 0",
+                fontSize: "14px",
+                lineHeight: 1.45,
+                color: c.inkSoft,
+                fontFamily: sans,
+              }}
+            >
               <strong style={{ color: c.ink }}>{cat.name}</strong> · {cat.note}
             </td>
           </tr>
@@ -131,6 +171,7 @@ export function EmailShell({
   image,
   imageAlt = "",
   footerNote,
+  internal = false,
 }: {
   preview: string;
   children: ReactNode;
@@ -138,6 +179,8 @@ export function EmailShell({
   image?: string;
   imageAlt?: string;
   footerNote?: ReactNode;
+  /** Team-only email (order alert): drop the customer-facing footer. */
+  internal?: boolean;
 }) {
   return (
     <Html lang="en">
@@ -147,7 +190,14 @@ export function EmailShell({
         <meta name="supported-color-schemes" content="light only" />
       </Head>
       <Preview>{preview}</Preview>
-      <Body style={{ backgroundColor: c.cream, margin: 0, padding: "32px 12px", fontFamily: sans }}>
+      <Body
+        style={{
+          backgroundColor: c.cream,
+          margin: 0,
+          padding: "32px 12px",
+          fontFamily: sans,
+        }}
+      >
         <Container
           style={{
             maxWidth: "560px",
@@ -160,7 +210,14 @@ export function EmailShell({
         >
           <Section style={{ padding: "28px 32px 0" }}>
             <Link href={siteUrl} style={{ textDecoration: "none" }}>
-              <Text style={{ margin: 0, fontSize: "26px", color: c.ink, fontFamily: serif }}>
+              <Text
+                style={{
+                  margin: 0,
+                  fontSize: "26px",
+                  color: c.ink,
+                  fontFamily: serif,
+                }}
+              >
                 Keniya<span style={{ color: c.terracotta }}>.</span>
               </Text>
             </Link>
@@ -172,27 +229,46 @@ export function EmailShell({
                 src={`${siteUrl}${image}`}
                 alt={imageAlt}
                 width="496"
-                style={{ width: "100%", height: "auto", borderRadius: "16px", display: "block" }}
+                style={{
+                  width: "100%",
+                  height: "auto",
+                  borderRadius: "16px",
+                  display: "block",
+                }}
               />
             </Section>
           )}
 
           <Section style={{ padding: "28px 32px 36px" }}>{children}</Section>
 
-          <Section style={{ padding: "0 32px 32px" }}>
-            <Hr style={{ borderColor: c.line, margin: "0 0 18px" }} />
-            {footerNote && <Text style={{ ...t.small, marginBottom: "10px" }}>{footerNote}</Text>}
-            <Text style={t.small}>
-              Questions? Just reply, or write to{" "}
-              <Link href={`mailto:${site.email}`} style={{ color: c.sage }}>
-                {site.email}
-              </Link>
-              .
-            </Text>
-            <Text style={{ ...t.small, marginTop: "10px", fontSize: "11px", color: "#9A938A" }}>
-              Keniya picks packaged snacks with care. It isn&apos;t medical advice.
-            </Text>
-          </Section>
+          {!internal && (
+            <Section style={{ padding: "0 32px 32px" }}>
+              <Hr style={{ borderColor: c.line, margin: "0 0 18px" }} />
+              {footerNote && (
+                <Text style={{ ...t.small, marginBottom: "10px" }}>
+                  {footerNote}
+                </Text>
+              )}
+              <Text style={t.small}>
+                Questions? Just reply, or write to{" "}
+                <Link href={`mailto:${site.email}`} style={{ color: c.sage }}>
+                  {site.email}
+                </Link>
+                .
+              </Text>
+              <Text
+                style={{
+                  ...t.small,
+                  marginTop: "10px",
+                  fontSize: "11px",
+                  color: "#9A938A",
+                }}
+              >
+                Keniya picks packaged snacks with care. It isn&apos;t medical
+                advice.
+              </Text>
+            </Section>
+          )}
         </Container>
       </Body>
     </Html>

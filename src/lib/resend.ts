@@ -3,6 +3,7 @@ import { env } from "@/lib/env";
 import { site } from "@/lib/site";
 import type { Box } from "@/lib/box";
 import type { OrderEmailProps } from "@/emails/OrderConfirmEmail";
+import type { OrderAlertProps } from "@/emails/OrderAlertEmail";
 
 let client: Resend | null = null;
 
@@ -71,9 +72,13 @@ async function sendOnce(label: string, idempotencyKey: string, payload: SendArgs
 export async function sendOrderEmails(
   to: string,
   props: OrderEmailProps,
+  alert: Omit<OrderAlertProps, keyof OrderEmailProps | "customerEmail" | "sessionId">,
   sessionId: string,
 ) {
-  const { OrderConfirmEmail } = await import("@/emails/OrderConfirmEmail");
+  const [{ OrderConfirmEmail }, { OrderAlertEmail }] = await Promise.all([
+    import("@/emails/OrderConfirmEmail"),
+    import("@/emails/OrderAlertEmail"),
+  ]);
   const customer = await sendOnce("order confirm", `order-${sessionId}`, {
     from: env.RESEND_FROM_EMAIL,
     to,
@@ -81,21 +86,14 @@ export async function sendOrderEmails(
     subject: `Your ${props.box.name} is reserved`,
     react: OrderConfirmEmail(props),
   });
-  // Founder alert: everything needed to pack it, including the gift card message.
+  // Founder packing slip; reply goes straight to the buyer.
+  const left = alert.soldCount == null ? "" : ` · ${Math.max(site.firstRunPerBox - alert.soldCount, 0)} left`;
   const founder = await sendOnce("order alert", `alert-${sessionId}`, {
     from: env.RESEND_FROM_EMAIL,
     to: site.email,
     replyTo: to,
-    subject: `[Keniya order] ${props.box.shortName}${props.gift ? " (GIFT)" : ""} · ${to}`,
-    text: [
-      `Box: ${props.box.name}`,
-      `Customer: ${props.firstName ?? ""} <${to}>`,
-      `Paid: $${(props.amountCents / 100).toFixed(2)}`,
-      `Gift: ${props.gift ? "yes" : "no"}`,
-      `Card message: ${props.giftNote || "(none)"}`,
-      `Ship to: ${props.shipTo ? [props.shipTo.name, ...props.shipTo.lines].filter(Boolean).join(", ") : "(missing)"}`,
-      `Stripe session: ${sessionId}`,
-    ].join("\n"),
+    subject: `New order: ${props.box.shortName}${props.gift ? " (gift)" : ""}${left}`,
+    react: OrderAlertEmail({ ...props, ...alert, customerEmail: to, sessionId }),
   });
   return { customer, founder };
 }

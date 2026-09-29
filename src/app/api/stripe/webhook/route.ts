@@ -63,6 +63,12 @@ export async function POST(req: Request) {
       // the founder alert below is the backup record.
       if (error && error.code !== "23505") console.error("preorder insert failed", error);
 
+      const { count } = await getSupabaseAdmin()
+        .from("preorders")
+        .select("id", { count: "exact", head: true })
+        .eq("box_slug", box.slug)
+        .eq("status", "paid");
+
       await sendOrderEmails(
         email,
         {
@@ -81,6 +87,12 @@ export async function POST(req: Request) {
                 ].filter(Boolean),
               }
             : undefined,
+        },
+        {
+          customerName: session.customer_details?.name ?? undefined,
+          soldCount: count ?? null,
+          paymentIntentId:
+            typeof session.payment_intent === "string" ? session.payment_intent : undefined,
         },
         session.id,
       );
