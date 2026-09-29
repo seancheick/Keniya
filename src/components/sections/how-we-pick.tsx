@@ -1,15 +1,28 @@
 import Link from "next/link";
+import {
+  BookOpenCheck,
+  Scale,
+  ScanText,
+  ShieldCheck,
+  Stethoscope,
+  type LucideIcon,
+} from "lucide-react";
 import { ReviewerCard } from "@/components/reviewer-card";
 import { landings } from "@/lib/landing";
 import { boxes } from "@/lib/box";
 import { site } from "@/lib/site";
 
-const steps = [
-  { title: "Label", body: "We read the ingredients and allergens on every snack." },
-  { title: "Nutrition", body: "Sugar, sodium, protein, fiber, caffeine and serving size." },
-  { title: "Your condition's rules", body: "Pregnancy, blood sugar and heart each have their own screening." },
-  { title: "Clinical review", body: "A pharmacist reviews the criteria and each lineup." },
-  { title: "Packed for You", body: "Your guide explains why each snack made the box." },
+const steps: { title: string; body: string; Icon: LucideIcon; conditions?: boolean }[] = [
+  { title: "Label", body: "Ingredients and allergens, read on every snack.", Icon: ScanText },
+  { title: "Nutrition", body: "Sugar, sodium, protein, fiber, caffeine and serving size.", Icon: Scale },
+  {
+    title: "Your condition's rules",
+    body: "Each condition has its own screening. A snack must qualify for yours.",
+    Icon: ShieldCheck,
+    conditions: true,
+  },
+  { title: "Clinical review", body: "A pharmacist reviews the criteria and each lineup.", Icon: Stethoscope },
+  { title: "Packed for You", body: "Your guide explains why each snack made the box.", Icon: BookOpenCheck },
 ];
 
 /** Short emotional/problem beat + how condition-aware curation works (no mechanics jargon). */
@@ -54,28 +67,76 @@ export function Screening() {
           snack has to qualify before it can make yours.
         </p>
 
-        {/* The process, left to right (top to bottom on mobile) */}
-        <ol className="mt-8 grid gap-2 sm:mt-10 sm:grid-cols-5 sm:gap-3" data-reveal-group>
-          {steps.map((s, i) => (
-            <li
-              key={s.title}
-              data-reveal-item
-              className="flex items-start gap-3 rounded-2xl border border-border bg-cream-card p-3 sm:block sm:p-4 sm:text-center"
-            >
-              <span className="grid size-8 shrink-0 place-items-center rounded-full bg-sage-deep text-sm font-semibold text-cream sm:mx-auto">
-                {i + 1}
-              </span>
-              <span>
-                <span className="block font-semibold text-ink sm:mt-2">{s.title}</span>
-                <span className="mt-0.5 block text-sm leading-snug text-ink-soft sm:mt-1">
-                  {s.body}
+        {/* The funnel: many snacks in, only qualifying ones out. Decorative; the list below
+            carries the meaning for screen readers. */}
+        <div className="relative mx-auto mt-12 hidden max-w-5xl lg:block" aria-hidden data-reveal>
+          <div
+            className="h-16 bg-gradient-to-r from-sage/25 via-sage/15 to-terracotta/30"
+            style={{ clipPath: "polygon(0 0, 100% 34%, 100% 66%, 0 100%)" }}
+          />
+          <p className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-sage-deep">
+            Every snack we consider
+          </p>
+          <p className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-terracotta-deep">
+            Your {site.snackCount}
+          </p>
+        </div>
+
+        <ol
+          className="relative mx-auto mt-10 grid max-w-5xl gap-7 lg:mt-8 lg:grid-cols-5 lg:gap-4"
+          data-reveal-group
+        >
+          {/* The track the steps sit on: down the left on mobile, across on desktop. */}
+          <span
+            aria-hidden
+            className="absolute bottom-6 left-6 top-6 w-px bg-sage/40 lg:bottom-auto lg:left-[10%] lg:right-[10%] lg:top-6 lg:h-px lg:w-auto"
+          />
+          {steps.map(({ title, body, Icon, conditions }, i) => {
+            const last = i === steps.length - 1;
+            return (
+              <li
+                key={title}
+                data-reveal-item
+                className="relative flex gap-4 lg:flex-col lg:items-center lg:gap-0 lg:text-center"
+              >
+                <span
+                  className={`relative grid size-12 shrink-0 place-items-center rounded-full border shadow-[0_4px_12px_-4px_rgb(51_48_43/0.18)] ${
+                    last
+                      ? "border-terracotta-deep bg-terracotta-deep text-cream"
+                      : "border-border bg-cream-card text-sage-deep"
+                  }`}
+                >
+                  <Icon className="size-5" strokeWidth={1.75} aria-hidden />
                 </span>
-              </span>
-            </li>
-          ))}
+                <span className="lg:mt-4">
+                  <span className="block text-xs font-medium tabular-nums text-ink-soft">
+                    Step {i + 1}
+                  </span>
+                  <span className="mt-0.5 block font-display text-xl leading-tight text-ink">
+                    {title}
+                  </span>
+                  <span className="mt-1.5 block max-w-[28ch] text-sm leading-snug text-ink-soft lg:mx-auto">
+                    {body}
+                  </span>
+                  {conditions && (
+                    <span className="mt-3 flex flex-wrap gap-1.5 lg:justify-center">
+                      {boxes.map((b) => (
+                        <span
+                          key={b.slug}
+                          className="rounded-full border border-sage/40 bg-cream-card px-2.5 py-0.5 text-xs text-sage-deep"
+                        >
+                          {b.shortName}
+                        </span>
+                      ))}
+                    </span>
+                  )}
+                </span>
+              </li>
+            );
+          })}
         </ol>
-        <p className="mt-4 text-center text-sm text-ink-soft" data-reveal>
-          See the full checklist for each box:{" "}
+        <p className="mt-10 text-center text-sm text-ink-soft" data-reveal>
+          See the full screening for each box:{" "}
           {landings.map((l, i) => (
             <span key={l.path}>
               {i > 0 && " · "}

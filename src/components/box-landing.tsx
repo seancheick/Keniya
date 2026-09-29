@@ -47,7 +47,7 @@ export function Faqs({ faqs }: { faqs: { q: string; a: string }[] }) {
             {f.q}
             <ChevronDownIcon aria-hidden className="size-4 shrink-0 text-ink-soft transition-transform group-open:rotate-180" />
           </summary>
-          <p className="pb-4 text-sm leading-relaxed text-ink-soft">{f.a}</p>
+          <p className="max-w-[68ch] pb-4 text-sm leading-relaxed text-ink-soft">{f.a}</p>
         </details>
       ))}
     </div>

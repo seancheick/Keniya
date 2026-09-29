@@ -122,7 +122,7 @@ export function Hero() {
             />
             <div
               data-speed="0.7"
-              className="absolute right-4 top-4 grid size-24 place-items-center rounded-full border border-blush-ink/25 bg-cream/90 text-center backdrop-blur-sm"
+              className="absolute right-4 top-4 grid size-24 place-items-center rounded-full border border-blush-ink/25 bg-cream text-center shadow-sm"
             >
               <p className="text-[0.65rem] font-medium leading-tight tracking-[0.14em] text-blush-ink">
                 14 SNACKS

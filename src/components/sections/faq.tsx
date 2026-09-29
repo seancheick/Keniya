@@ -50,7 +50,7 @@ export function Faq() {
                   className="size-4 shrink-0 text-ink-soft transition-transform duration-200 group-open:rotate-180"
                 />
               </summary>
-              <p className="pb-4 text-sm leading-relaxed text-ink-soft">{item.a}</p>
+              <p className="max-w-[68ch] pb-4 text-sm leading-relaxed text-ink-soft">{item.a}</p>
             </details>
           ))}
         </div>

@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# impeccable design skill (local tooling, 14MB binary)
+.claude/skills/
+.claude/agents/

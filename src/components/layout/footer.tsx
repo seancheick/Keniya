@@ -71,7 +71,7 @@ export function Footer() {
             </a>
           </nav>
         </div>
-        <p className="mt-10 max-w-3xl text-xs leading-relaxed text-ink-soft">
+        <p className="mt-10 max-w-[80ch] text-xs leading-relaxed text-ink-soft">
           Keniya curates packaged snacks for comfort and enjoyment through pregnancy and
           other life stages. These statements have not been evaluated by the Food and Drug
           Administration. Our boxes are not intended to diagnose, treat, cure, or prevent
