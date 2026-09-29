@@ -4,7 +4,7 @@ export const site = {
   description:
     "Curated snack boxes for pregnancy, balanced blood sugar, and heart health — 14 real snacks, free US shipping, and the reason behind every pick.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://keniyahealth.com",
-  email: "hello@keniyahealth.com",
+  email: "info@keniyahealth.com",
   preorderPriceUSD: 47,
   snackCount: 14,
   currentEdit: "Fall '26",

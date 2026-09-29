@@ -141,8 +141,8 @@ export function WaitlistConfirmEmail({
 
           <Text style={{ margin: 0, fontSize: "12px", lineHeight: 1.5, color: "#6B655C" }}>
             Sent to {email}. Questions? Reply or write{" "}
-            <Link href="mailto:hello@keniyahealth.com" style={{ color: "#5F7057" }}>
-              hello@keniyahealth.com
+            <Link href="mailto:info@keniyahealth.com" style={{ color: "#5F7057" }}>
+              info@keniyahealth.com
             </Link>
             .
           </Text>

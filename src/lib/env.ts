@@ -50,7 +50,7 @@ export const env = {
     return req("RESEND_API_KEY");
   },
   get RESEND_FROM_EMAIL() {
-    return process.env.RESEND_FROM_EMAIL ?? "Keniya <hello@keniyahealth.com>";
+    return process.env.RESEND_FROM_EMAIL ?? "Keniya <info@keniyahealth.com>";
   },
   get UPSTASH_REDIS_REST_URL() {
     return req("UPSTASH_REDIS_REST_URL");

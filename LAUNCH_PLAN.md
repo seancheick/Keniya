@@ -97,7 +97,7 @@ Env: `NEXT_PUBLIC_SITE_URL, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, STRIPE_SECR
 - `api/stripe/webhook/route.ts`: raw body → `constructEvent` signature check → on `checkout.session.completed`, insert preorder with `onConflict('stripe_event_id').ignoreDuplicates()`; send thank-you email **only on fresh insert**; email failure logged, never 500s the webhook. **Fulfillment ONLY here** — `/thanks` is display-only.
 
 ### Emails (Resend)
-Verify keniyahealth.com (SPF/DKIM/DMARC); from `Keniya <hello@keniyahealth.com>`. `WaitlistConfirmEmail` (echoes quiz answers) + `PreorderThanksEmail` (order summary, ship window, why-cards teaser). Supabase = source of truth; Resend Audience sync deferred.
+Verify keniyahealth.com (SPF/DKIM/DMARC); from `Keniya <info@keniyahealth.com>`. `WaitlistConfirmEmail` (echoes quiz answers) + `PreorderThanksEmail` (order summary, ship window, why-cards teaser). Supabase = source of truth; Resend Audience sync deferred.
 
 ### SEO/analytics
 Metadata + OG image (box on cream, serif wordmark), JSON-LD `Product` (`availability: PreOrder`) + `Organization` + `FAQPage`, sitemap/robots, security headers, Vercel Analytics. Meta/TikTok pixels: stub component with TODO — wire only when paid ads start.
