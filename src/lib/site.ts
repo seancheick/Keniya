@@ -19,10 +19,10 @@ export const site = {
       "PharmaGuide is our sister platform for supplement and ingredient intelligence — the same screening mindset we use when every snack earns its place in a Keniya box.",
   },
   supabase: {
-    projectId: process.env.SUPABASE_PROJECT_ID ?? "gubjybzovsfegzbejmaw",
+    projectId: process.env.SUPABASE_PROJECT_ID ?? "issfvpyewzlnxxdqrzqc",
     url:
       process.env.NEXT_PUBLIC_SUPABASE_URL ??
-      "https://gubjybzovsfegzbejmaw.supabase.co",
+      "https://issfvpyewzlnxxdqrzqc.supabase.co",
     storageBucket: process.env.SUPABASE_STORAGE_BUCKET ?? "Keniya",
   },
 } as const;
