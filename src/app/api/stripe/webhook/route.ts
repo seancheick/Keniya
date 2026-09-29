@@ -59,6 +59,7 @@ export async function POST(req: Request) {
           currency: session.currency ?? "usd",
           shipping: ship ?? null,
           box_slug: box.slug,
+          avoid: avoid ?? null,
           status: "paid",
         });
       // 23505 = already saved (Stripe retry); anything else is logged but still emails —
