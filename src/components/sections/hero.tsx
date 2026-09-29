@@ -12,10 +12,10 @@ import { site } from "@/lib/site";
 gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText);
 
 const chips = [
-  { label: "Ginger chews", className: "left-[-8%] top-[12%]", speed: "1.4" },
-  { label: "Freeze-dried strawberries", className: "right-[-6%] top-[30%]", speed: "0.9" },
-  { label: "Electrolytes", className: "left-[-4%] top-[54%]", speed: "1.1" },
-  { label: "Dark chocolate almonds", className: "right-[-8%] top-[70%]", speed: "1.5" },
+  { label: "Comfort picks", className: "left-[-8%] top-[12%]", speed: "1.4" },
+  { label: "Protein & fiber", className: "right-[-6%] top-[30%]", speed: "0.9" },
+  { label: "Caffeine-free sips", className: "left-[-4%] top-[54%]", speed: "1.1" },
+  { label: "Smarter sweets", className: "right-[-8%] top-[70%]", speed: "1.5" },
 ];
 
 export function Hero() {
