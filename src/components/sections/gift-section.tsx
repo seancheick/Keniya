@@ -4,8 +4,6 @@ import { giftImage } from "@/lib/gift-image";
 import { giftLanding } from "@/lib/landing";
 import { site } from "@/lib/site";
 
-const forWhom = ["wife or partner", "sister", "daughter", "friend", "coworker"];
-
 /** Lifestyle + gifting: the buyer is often not the person who's pregnant. */
 export function GiftSection() {
   const img = giftImage();
@@ -29,13 +27,10 @@ export function GiftSection() {
             {site.snackCount} snacks screened with Keniya Pregnancy Screening, your note printed in
             her Packed for You guide, and free shipping to her door. The receipt comes to you.
           </p>
-          <ul className="mt-5 flex flex-wrap gap-2" aria-label="Who people send it to">
-            {forWhom.map((w) => (
-              <li key={w} className="rounded-full border border-border bg-cream-card px-3 py-1 text-sm text-ink-soft">
-                For your {w}
-              </li>
-            ))}
-          </ul>
+          <p className="mt-4 text-ink-soft">
+            People send it to a wife or partner, a sister, a daughter, a friend, a coworker. It
+            ships {site.shipDate}.
+          </p>
           <div className="mt-7 flex flex-wrap items-center gap-5">
             <a
               href="#gift-pregnancy"
@@ -45,11 +40,22 @@ export function GiftSection() {
             </a>
             <Link
               href={giftLanding.path}
-              className="text-sm font-medium text-sage-deep underline underline-offset-4 hover:text-ink"
+              className="text-sm font-medium text-ink underline underline-offset-4 hover:text-terracotta-deep"
             >
               How gifting works
             </Link>
           </div>
+          <p className="mt-6 border-t border-border pt-4 text-sm text-ink-soft">
+            Shopping for someone watching blood sugar or heart health?{" "}
+            <a href="#gift-blood_sugar" className="font-medium text-ink underline underline-offset-4 hover:text-terracotta-deep">
+              Gift a Blood Sugar box
+            </a>{" "}
+            or{" "}
+            <a href="#gift-heart" className="font-medium text-ink underline underline-offset-4 hover:text-terracotta-deep">
+              a Heart box
+            </a>
+            .
+          </p>
         </div>
       </div>
     </section>

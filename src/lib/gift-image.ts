@@ -11,5 +11,10 @@ const LIFESTYLE = "/images/lifestyle-gift.jpg";
 export function giftImage() {
   return existsSync(path.join(process.cwd(), "public", LIFESTYLE))
     ? { src: LIFESTYLE, alt: "A pregnant woman smiling as she opens her Keniya snack box", width: 1600, height: 1200 }
-    : { src: "/images/box-pregnancy.jpg", alt: "Keniya Pregnancy Comfort Box with Packed for You guide", width: 1600, height: 1200 };
+    : {
+        src: "/images/gift-guide.jpg",
+        alt: "Example gift guide: a note from Sam to Awa printed in her Packed for You guide",
+        width: 1600,
+        height: 1200,
+      };
 }

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { site } from "@/lib/site";
 
 const nav = [
   { href: "/#boxes", label: "The boxes" },
@@ -32,7 +31,7 @@ export function Header() {
           ))}
         </nav>
         <Button asChild className="rounded-full px-5">
-          <Link href="/#boxes">Preorder — ${site.preorderPriceUSD}</Link>
+          <Link href="/#boxes">Pick your box</Link>
         </Button>
       </div>
     </header>

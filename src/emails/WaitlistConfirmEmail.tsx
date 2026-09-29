@@ -27,7 +27,7 @@ export function WaitlistConfirmEmail({
   return (
     <EmailShell
       preview={box ? `Your spot for the ${box.name} is saved.` : `You're on the ${boxName} list.`}
-      image={box?.image ?? "/images/hero-unboxing.jpg"}
+      image={box?.image ?? "/images/hero-guide.jpg"}
       imageAlt={box?.imageAlt ?? "An open Keniya snack box"}
       footerNote="You're getting this because you joined the Keniya list. We only email when there's news about your box."
     >

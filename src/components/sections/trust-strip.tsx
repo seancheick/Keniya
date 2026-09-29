@@ -1,12 +1,9 @@
 import { site } from "@/lib/site";
 
 const items = [
-  { label: "Free US shipping", detail: "On every founding box" },
+  { label: `Ships ${site.shipDate.replace(/, \d{4}$/, "")}`, detail: "Free US shipping" },
+  { label: "No subscription", detail: "One-time purchase" },
   { label: "Refundable before ship", detail: "One email, full refund" },
-  {
-    label: `Only ${site.firstRunPerBox} of each box`,
-    detail: "Founding release, hand-packed",
-  },
   {
     label: "PharmD-reviewed lineups",
     detail: "Box criteria, not personal advice",
@@ -20,7 +17,7 @@ export function TrustStrip() {
       aria-label="Trust highlights"
       className="border-y border-border bg-cream-deep/50"
     >
-      <div className="mx-auto flex max-w-6xl flex-wrap items-stretch justify-between gap-4 px-6 py-5">
+      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-4 gap-y-4 px-6 py-5 lg:grid-cols-4">
         {items.map((item) => {
           const inner = (
             <>
@@ -29,7 +26,7 @@ export function TrustStrip() {
             </>
           );
           const className =
-            "min-w-[9.5rem] flex-1 border-l border-border pl-4 first:border-l-0 first:pl-0";
+            "lg:border-l lg:border-border lg:pl-4 lg:first:border-l-0 lg:first:pl-0";
           if ("href" in item && item.href) {
             return (
               <a

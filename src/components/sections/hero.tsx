@@ -11,13 +11,6 @@ import { site } from "@/lib/site";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, SplitText);
 
-const chips = [
-  { label: "Comfort picks", className: "left-[-8%] top-[12%]", speed: "1.4" },
-  { label: "Protein & fiber", className: "right-[-6%] top-[30%]", speed: "0.9" },
-  { label: "Caffeine-free sips", className: "left-[-4%] top-[54%]", speed: "1.1" },
-  { label: "Smarter sweets", className: "right-[-8%] top-[70%]", speed: "1.5" },
-];
-
 export function Hero() {
   const scope = useRef<HTMLElement>(null);
 
@@ -39,22 +32,11 @@ export function Hero() {
             0.15,
           )
           .from(
-            [".hero-sub", ".hero-actions", ".hero-meta"],
+            [".hero-sub", ".hero-actions"],
             { autoAlpha: 0, y: 18, duration: 0.7, stagger: 0.1 },
             "-=0.55",
           )
-          .from(".hero-visual", { autoAlpha: 0, y: 30, scale: 0.97, duration: 0.9 }, "-=0.6")
-          .from(".hero-chip", { autoAlpha: 0, y: 16, stagger: 0.08, duration: 0.5 }, "-=0.5");
-
-        gsap.utils.toArray<HTMLElement>(".hero-chip").forEach((chip, i) => {
-          gsap.to(chip, {
-            y: i % 2 ? 9 : -9,
-            duration: 2.6 + i * 0.4,
-            yoyo: true,
-            repeat: -1,
-            ease: "sine.inOut",
-          });
-        });
+          .from(".hero-visual", { autoAlpha: 0, y: 30, scale: 0.97, duration: 0.9 }, "-=0.6");
 
         return () => split.revert();
       });
@@ -86,7 +68,7 @@ export function Hero() {
             <em className="text-terracotta-deep">label reading</em> for you.
           </h1>
           <p className="hero-sub mt-6 max-w-[48ch] text-lg leading-relaxed text-ink-soft">
-            Pregnancy, blood sugar or heart health. Tell us what you&rsquo;re navigating, and
+            Pregnancy, blood sugar or heart health. Choose what you&rsquo;re navigating, and
             Keniya screens and selects {site.snackCount} snacks around it, with a guide explaining
             why each one made the box.
           </p>
@@ -101,10 +83,6 @@ export function Hero() {
               Send as a gift
             </a>
           </div>
-          <p className="hero-meta mt-6 text-sm text-ink-soft">
-            ${site.preorderPriceUSD} · No subscription · {site.freeShippingLabel} · Ships{" "}
-            {site.shipDate} · Refundable until it ships · Only {site.firstRunPerBox} of each box
-          </p>
         </div>
 
         <div className="hero-visual relative mx-auto w-full max-w-md lg:max-w-none">
@@ -112,8 +90,8 @@ export function Hero() {
           <div className="relative mx-auto max-w-md">
             <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] bg-blush shadow-sm">
               <Image
-                src="/images/hero-unboxing.jpg"
-                alt="Keniya founding snack box unboxing with Packed for You guide"
+                src="/images/hero-guide.jpg"
+                alt="A Packed for You guide that reads Made for you, screened for your condition, over a box of 14 snack slots"
                 fill
                 loading="eager"
                 fetchPriority="high"
@@ -131,16 +109,6 @@ export function Hero() {
               </p>
             </div>
           </div>
-          {chips.map((chip) => (
-            <span
-              key={chip.label}
-              data-speed={chip.speed}
-              className={`hero-chip absolute hidden items-center gap-2 rounded-full border border-border bg-cream-card px-4 py-2 text-xs font-medium text-ink sm:inline-flex ${chip.className}`}
-            >
-              <span className="size-1.5 rounded-full bg-sage-deep" aria-hidden />
-              {chip.label}
-            </span>
-          ))}
         </div>
       </div>
     </section>

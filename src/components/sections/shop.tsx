@@ -18,11 +18,15 @@ const promises = [
   "Full refund any time before it ships",
 ];
 
-/** #box-heart selects that box; #gift switches to gift mode. Links in llms.txt/JSON-LD use these. */
+/**
+ * #box-heart selects that box; #gift switches to gift mode; #gift-<slug> does both
+ * (e.g. #gift-blood_sugar). Links in llms.txt/JSON-LD and the gift section use these.
+ */
 function readHash(): { slug?: Box["slug"]; gift?: boolean; scroll?: boolean } {
   const h = typeof window === "undefined" ? "" : window.location.hash.slice(1);
   if (h === "gift") return { gift: true };
-  if (h === "gift-pregnancy") return { gift: true, slug: "pregnancy_comfort", scroll: true };
+  const giftFor = boxes.find((b) => `gift-${b.slug}` === h || (h === "gift-pregnancy" && b.slug === "pregnancy_comfort"));
+  if (giftFor) return { gift: true, slug: giftFor.slug, scroll: true };
   const match = boxes.find((b) => `box-${b.slug}` === h);
   return match ? { slug: match.slug } : {};
 }
@@ -37,7 +41,7 @@ export function Shop() {
       const { slug: s, gift: g, scroll } = readHash();
       if (s) setSlug(s);
       if (g) setGift(true);
-      // #gift-pregnancy has no element of its own; bring the buy panel into view.
+      // #gift-<slug> has no element of its own; bring the buy panel into view.
       if (scroll) document.getElementById("gift")?.scrollIntoView({ block: "center" });
     };
     apply();
@@ -51,8 +55,7 @@ export function Shop() {
       <div className="mx-auto max-w-6xl px-5 py-14 lg:py-20">
         <h2 className="font-display text-headline text-ink">Pick your box.</h2>
         <p className="mt-3 text-ink-soft">
-          ${site.preorderPriceUSD} each · {site.snackCount} snacks · only{" "}
-          {site.firstRunPerBox} of each box
+          ${site.preorderPriceUSD} each · {site.snackCount} snacks · each screened for its condition
         </p>
 
         {/* Step 1 — real, obviously clickable choices */}
@@ -105,33 +108,26 @@ export function Shop() {
                   <p className="mt-0.5 text-xs text-ink-soft">
                     ${site.preorderPriceUSD} · {site.snackCount} snacks
                   </p>
-                  <p className="mt-1 hidden text-sm text-ink-soft sm:block">{b.why}</p>
+                  <p className="mt-1 text-xs leading-snug text-ink-soft sm:text-sm">
+                    {b.why}
+                  </p>
+                  {b.caution && (
+                    <p className="mt-1.5 text-xs font-semibold leading-snug text-blush-ink">
+                      {b.caution}
+                    </p>
+                  )}
                 </div>
               </button>
             );
           })}
         </div>
 
-        <details className="group mt-3 rounded-2xl border border-dashed border-border px-4 py-3">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm [&::-webkit-details-marker]:hidden">
-            <span>
-              <strong className="text-ink">Coming next: GLP-1 Support.</strong>{" "}
-              <span className="text-ink-soft">Small portions, protein-forward.</span>{" "}
-            </span>
-            <span className="shrink-0 font-medium text-sage-deep underline underline-offset-4">
-              Join the waitlist
-            </span>
-          </summary>
-          <div className="mt-3 max-w-md">
-            <WaitlistForm boxInterest="glp1" source="shop_glp1" cta="Notify me" compact />
-          </div>
-        </details>
 
         {/* Step 2 — what's inside + buy */}
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.25fr_1fr] lg:gap-8">
           {/* All three panels are in the HTML (tabpanel pattern) so search engines and screen
               readers get every box; only the selected one is shown. */}
-          <div className="order-2 lg:order-1">
+          <div className="order-1">
             {boxes.map((b) => (
               <div
                 key={b.slug}
@@ -142,6 +138,9 @@ export function Shop() {
               >
                 <h3 className="font-display text-2xl text-ink">{b.name}</h3>
                 <p className="mt-1 text-sm text-ink-soft">{b.forWho}</p>
+                {b.caution && (
+                  <p className="mt-1 text-sm font-semibold text-blush-ink">{b.caution}</p>
+                )}
                 <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-sage-deep">
                   What goes in: {site.snackCount} snacks
                 </p>
@@ -157,7 +156,7 @@ export function Shop() {
                     </li>
                   ))}
                 </ul>
-                <p className="mt-5 max-w-[62ch] text-xs leading-relaxed text-ink-soft">
+                <p className="mt-5 max-w-[52ch] text-xs leading-relaxed text-ink-soft">
                   Your condition shapes the box: a snack has to pass this box&rsquo;s screening
                   before it can go in. Exact picks rotate with the season, and your{" "}
                   <strong className="text-ink">Packed for You</strong> guide explains each one.
@@ -172,8 +171,8 @@ export function Shop() {
             ))}
           </div>
 
-          <div className="order-1 self-start rounded-3xl bg-blush/60 p-5 sm:p-7 lg:sticky lg:top-24 lg:order-2">
-            <div className="flex items-baseline justify-between gap-3">
+          <div className="order-2 self-start rounded-3xl bg-blush/60 p-5 sm:p-7 lg:sticky lg:top-24">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <p className="font-display text-4xl text-ink">
                 ${site.preorderPriceUSD}
                 <span className="ml-2 font-sans text-sm text-ink-soft">
@@ -202,7 +201,7 @@ export function Shop() {
                   aria-checked={gift === opt.value}
                   onClick={() => setGift(opt.value)}
                   className={cn(
-                    "rounded-full py-2.5 text-sm font-medium transition-colors",
+                    "min-h-11 rounded-full py-2.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
                     gift === opt.value
                       ? "bg-ink text-cream"
                       : "text-ink-soft hover:text-ink",
@@ -247,28 +246,52 @@ export function Shop() {
               ))}
             </ul>
 
+            <p className="mt-4 border-t border-ink/10 pt-4 text-xs leading-relaxed text-ink-soft">
+              Allergies or foods to avoid? Tell us at checkout. Box criteria reviewed by{" "}
+              <a href="#how" className="font-medium text-ink underline underline-offset-2">
+                Laurie Pham, PharmD
+              </a>
+              .
+            </p>
+
             <MatchQuiz>
               <button
                 type="button"
-                className="mt-5 text-sm font-medium text-ink underline underline-offset-4 hover:text-terracotta-deep"
+                className="mt-3 min-h-11 text-sm font-medium text-ink underline underline-offset-4 hover:text-terracotta-deep"
               >
                 Not sure which box? Take the quick quiz
               </button>
             </MatchQuiz>
-
-            <div className="mt-6 border-t border-ink/10 pt-5">
-              <p className="text-sm font-medium text-ink">Not ready yet? Get updates.</p>
-              <p className="mb-3 mt-0.5 text-xs text-ink-soft">
-                Shipping news and first pick of the next box. No spam.
-              </p>
-              <WaitlistForm
-                boxInterest={box.slug}
-                source="shop_not_ready"
-                cta="Keep me posted"
-                compact
-              />
-            </div>
           </div>
+        </div>
+
+        {/* Secondary paths live below the decision, not inside the buy panel. */}
+        <div className="mt-6 grid gap-3 lg:grid-cols-2">
+          {[
+            {
+              title: "Not ready yet?",
+              body: "Get shipping news and first pick of the next box.",
+              form: <WaitlistForm boxInterest={box.slug} source="shop_not_ready" cta="Keep me posted" compact variant="outline" />,
+            },
+            {
+              title: "Coming next: GLP-1 Support.",
+              body: "Small portions, protein-forward.",
+              form: <WaitlistForm boxInterest="glp1" source="shop_glp1" cta="Notify me" compact variant="outline" />,
+            },
+          ].map((row) => (
+            <details key={row.title} className="group rounded-2xl border border-dashed border-border px-4 py-3">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm [&::-webkit-details-marker]:hidden">
+                <span>
+                  <strong className="text-ink">{row.title}</strong>{" "}
+                  <span className="text-ink-soft">{row.body}</span>{" "}
+                </span>
+                <span className="shrink-0 font-medium text-sage-deep underline underline-offset-4">
+                  Join the list
+                </span>
+              </summary>
+              <div className="mt-3 max-w-md">{row.form}</div>
+            </details>
+          ))}
         </div>
       </div>
     </section>

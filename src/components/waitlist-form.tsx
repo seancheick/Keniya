@@ -10,6 +10,7 @@ export function WaitlistForm({
   cta = "Get launch-day access",
   quiz,
   compact = false,
+  variant = "default",
   onJoined,
 }: {
   boxInterest?: string;
@@ -17,6 +18,8 @@ export function WaitlistForm({
   cta?: string;
   quiz?: Pick<WaitlistInput, "quizWho" | "quizAllergies" | "quizCraving">;
   compact?: boolean;
+  /** "outline" when a stronger primary action (Preorder) sits nearby. */
+  variant?: "default" | "outline";
   onJoined?: () => void;
 }) {
   const [email, setEmail] = useState("");
@@ -53,17 +56,18 @@ export function WaitlistForm({
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
+          placeholder="Your email"
           aria-label="Email address"
-          className={`min-w-0 flex-1 rounded-full border border-border bg-cream-card px-5 text-ink outline-none transition-colors placeholder:text-ink-soft/50 focus:border-sage-deep ${
-            compact ? "h-10 text-sm" : "h-12"
+          className={`min-w-0 flex-1 rounded-full border border-border bg-cream-card px-5 text-ink outline-none transition-colors placeholder:text-ink-soft focus:border-sage-deep focus-visible:ring-[3px] focus-visible:ring-ring/40 ${
+            compact ? "h-11 text-sm" : "h-12"
           }`}
         />
         <Button
           type="submit"
           disabled={pending}
           size={compact ? "default" : "lg"}
-          className="rounded-full px-6"
+          variant={variant}
+          className={`rounded-full px-6 ${compact ? "h-11" : ""}`}
         >
           {pending ? "One sec…" : cta}
         </Button>

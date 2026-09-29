@@ -4,6 +4,8 @@ export type Box = {
   shortName: string;
   forWho: string;
   why: string;
+  /** Shown on the box card itself so it can't be missed before choosing. */
+  caution?: string;
   /**
    * What every box of this kind contains, by category (counts sum to 14), from the Box
    * Builder slots. Categories only, never specific snacks: picks rotate, promises don't.
@@ -30,14 +32,15 @@ export const boxes: Box[] = [
       { name: "Salty snack", count: 1, note: "for the salty craving" },
     ],
     tint: "blush",
-    image: "/images/box-pregnancy.jpg",
-    imageAlt: "Keniya Pregnancy Comfort Box with Packed for You guide",
+    image: "/images/box-pregnancy-slots.jpg",
+    imageAlt: "Pregnancy Comfort Box: 14 snack slots by category (4 comfort, 4 protein, 3 sweet, 2 sips, 1 salty) with its Packed for You guide",
   },
   {
     slug: "blood_sugar",
     name: "Balanced Blood Sugar Box",
     shortName: "Blood Sugar",
-    forWho: "For anyone watching carbs: type 1, type 2 or prediabetes. Not yet for gestational diabetes.",
+    forWho: "For anyone watching carbs: type 1, type 2 or prediabetes.",
+    caution: "Not yet for gestational diabetes.",
     why: "More protein and fiber, less added sugar, still fun to open.",
     categories: [
       { name: "Protein & fiber", count: 5, note: "filling picks with more protein or fiber" },
@@ -47,8 +50,8 @@ export const boxes: Box[] = [
       { name: "Salty snack", count: 1, note: "portioned and easy" },
     ],
     tint: "sage",
-    image: "/images/box-blood-sugar.jpg",
-    imageAlt: "Keniya Balanced Blood Sugar Box with Packed for You guide",
+    image: "/images/box-blood-sugar-slots.jpg",
+    imageAlt: "Balanced Blood Sugar Box: 14 snack slots by category (5 protein and fiber, 3 nuts and seeds, 3 smarter sweets, 2 sips, 1 salty) with its Packed for You guide",
   },
   {
     slug: "heart",
@@ -64,7 +67,7 @@ export const boxes: Box[] = [
       { name: "Treat", count: 1, note: "dark chocolate, sodium on the label" },
     ],
     tint: "cream",
-    image: "/images/box-heart.jpg",
-    imageAlt: "Keniya Heart Wellness Box with Packed for You guide",
+    image: "/images/box-heart-slots.jpg",
+    imageAlt: "Heart Wellness Box: 14 snack slots by category (4 nuts and seeds, 4 whole grains and fiber, 3 fruit, 2 sips, 1 treat) with its Packed for You guide",
   },
 ];

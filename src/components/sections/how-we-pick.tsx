@@ -25,36 +25,6 @@ const steps: { title: string; body: string; Icon: LucideIcon; conditions?: boole
   { title: "Packed for You", body: "Your guide explains why each snack made the box.", Icon: BookOpenCheck },
 ];
 
-/** Short emotional/problem beat + how condition-aware curation works (no mechanics jargon). */
-export function WhyKeniya() {
-  const flow = [
-    "You tell us what you're navigating",
-    "We apply that condition's screening",
-    "We choose among the snacks that qualify, around your preferences",
-  ];
-  return (
-    <section className="border-b border-border">
-      <div className="mx-auto max-w-3xl px-5 py-14 text-center lg:py-16">
-        <h2 className="font-display text-headline text-ink" data-reveal>
-          Your condition already gives you enough to think about.
-        </h2>
-        <p className="mt-4 text-lg leading-relaxed text-ink-soft" data-reveal>
-          Your condition shapes the box. Keniya handles the screening, label reading and
-          selection, so snack research is one less thing on your plate.
-        </p>
-        <ol className="mt-8 grid gap-3 text-left sm:grid-cols-3" data-reveal-group>
-          {flow.map((f, i) => (
-            <li key={f} data-reveal-item className="flex items-start gap-3 rounded-2xl bg-cream-deep/60 p-4">
-              <span className="font-display text-2xl leading-none text-terracotta-deep">{i + 1}</span>
-              <span className="text-sm leading-snug text-ink">{f}</span>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </section>
-  );
-}
-
 export function Screening() {
   return (
     <section id="how" className="scroll-mt-20 border-b border-border bg-cream-deep/50">
@@ -63,8 +33,8 @@ export function Screening() {
           How we pick every snack
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-center text-ink-soft" data-reveal>
-          Not every snack belongs in every Keniya box. Each condition has its own screening, and a
-          snack has to qualify before it can make yours.
+          Your condition already gives you enough to think about. So every Keniya box has its own
+          screening, and a snack has to qualify for your condition before it can go in.
         </p>
 
         {/* The funnel: many snacks in, only qualifying ones out. Decorative; the list below
@@ -161,9 +131,9 @@ export function PackedGuide() {
         {/* Packed for You: show the guide, not just describe it */}
         <div className="grid items-center gap-8 lg:grid-cols-2" data-reveal>
           <div>
-            <h3 className="font-display text-headline text-ink">
+            <h2 className="font-display text-headline text-ink">
               Your Packed for You guide: the reason behind every snack.
-            </h3>
+            </h2>
             <p className="mt-4 leading-relaxed text-ink-soft">
               Every box comes with one Packed for You guide: your name and box, the{" "}
               {site.snackCount} snacks inside, a short line on why each one was chosen, and the
@@ -214,6 +184,7 @@ export function TrustStory() {
   return (
     <section className="border-b border-border bg-cream-deep/50">
       <div className="mx-auto max-w-6xl px-5 py-14 lg:py-16">
+        <h2 className="sr-only">Clinical review and our story</h2>
         <ReviewerCard className="mx-auto" />
 
         <p

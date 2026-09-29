@@ -35,7 +35,7 @@ export function StickyBuyBar() {
             Preorder · ${site.preorderPriceUSD}
           </p>
           <p className="truncate text-xs text-ink-soft">
-            Free shipping · only {site.firstRunPerBox} of each box
+            Free shipping · ships {site.shipDate.replace(/, \d{4}$/, "")}
           </p>
         </div>
         <a
