@@ -25,7 +25,8 @@ export default function AboutPage() {
         </p>
         <p data-reveal>
           So we built the thing we wished someone had handed us: a box of fourteen
-          genuinely good snacks, chosen around how she actually felt that week — with a
+          genuinely good snacks, chosen around the cravings, nausea and label questions we
+          were dealing with that week — with a
           folded &ldquo;Packed for You&rdquo; guide explaining exactly why each one earned
           its place. She calls it the first gift that did the reading for her.
         </p>
@@ -44,7 +45,7 @@ export default function AboutPage() {
         </p>
         <p data-reveal>
           We&rsquo;re starting small on purpose — fifty of each box, packed by hand,
-          allergy swaps done one box at a time. All three founding edits open together:
+          with any allergies or foods you tell us to avoid steered around where we can. All three founding edits open together:
           Pregnancy Comfort, Balanced Blood Sugar, and Heart Wellness. This is a family
           company; it will grow at the speed of trust.
         </p>

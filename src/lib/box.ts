@@ -37,7 +37,7 @@ export const boxes: Box[] = [
     slug: "blood_sugar",
     name: "Balanced Blood Sugar Box",
     shortName: "Blood Sugar",
-    forWho: "For anyone watching carbs: type 1, type 2, prediabetes or gestational.",
+    forWho: "For anyone watching carbs: type 1, type 2 or prediabetes. Not yet for gestational diabetes.",
     why: "More protein and fiber, less added sugar, still fun to open.",
     categories: [
       { name: "Protein & fiber", count: 5, note: "filling picks with more protein or fiber" },
@@ -57,7 +57,7 @@ export const boxes: Box[] = [
     forWho: "For anyone watching sodium and eating for their heart.",
     why: "Nuts, seeds, whole grains and good treats, with sodium on every label.",
     categories: [
-      { name: "Nuts & seeds", count: 4, note: "good fats in single servings" },
+      { name: "Nuts & seeds", count: 4, note: "unsaturated-fat sources in single servings" },
       { name: "Whole grains & fiber", count: 4, note: "crackers, bars and crunch" },
       { name: "Fruit", count: 3, note: "dried, freeze-dried and fruit bars" },
       { name: "Sips", count: 2, note: "unsweetened sparkling and flavored water" },

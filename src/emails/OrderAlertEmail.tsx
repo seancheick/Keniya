@@ -71,7 +71,7 @@ export function OrderAlertEmail(p: OrderAlertProps) {
       {p.gift && (
         <Panel tint={c.blush}>
           <Text style={{ ...t.eyebrow, color: c.blushInk, margin: "0 0 6px" }}>
-            🎁 Gift: print this on their card
+            🎁 Gift: print this in their guide
           </Text>
           <Text
             style={{ margin: 0, fontSize: "18px", lineHeight: 1.5, color: c.blushInk, fontFamily: "Georgia, serif", fontStyle: "italic" }}
@@ -81,6 +81,13 @@ export function OrderAlertEmail(p: OrderAlertProps) {
           <Text style={{ ...t.small, marginTop: "8px", color: c.blushInk }}>
             From {p.customerName ?? p.customerEmail}. No prices or receipt in the box.
           </Text>
+        </Panel>
+      )}
+
+      {p.avoid && (
+        <Panel tint={c.blush}>
+          <Text style={{ ...t.eyebrow, color: c.blushInk, margin: "0 0 6px" }}>⚠️ Avoid</Text>
+          <Text style={{ margin: 0, fontSize: "16px", color: c.blushInk, fontWeight: 600 }}>{p.avoid}</Text>
         </Panel>
       )}
 
@@ -125,7 +132,12 @@ export function OrderAlertEmail(p: OrderAlertProps) {
       <CategoryList categories={p.box.categories} />
       <Text style={{ ...t.small, marginTop: "10px" }}>
         ☐ Check every label against the box rules and expiry dates
-        <br />☐ Fill in the Packed for You card: each snack and why
+        {p.avoid ? (
+          <>
+            <br />☐ Choose only eligible snacks without: {p.avoid}
+          </>
+        ) : null}
+        <br />☐ Fill in the Packed for You guide: name, each snack and why
         {p.gift ? (
           <>
             <br />☐ Hand-write or print the gift message above

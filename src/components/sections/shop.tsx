@@ -102,6 +102,9 @@ export function Shop() {
                   <p className="text-sm font-semibold leading-tight text-ink sm:text-lg">
                     {b.shortName}
                   </p>
+                  <p className="mt-0.5 text-xs text-ink-soft">
+                    ${site.preorderPriceUSD} · {site.snackCount} snacks
+                  </p>
                   <p className="mt-1 hidden text-sm text-ink-soft sm:block">{b.why}</p>
                 </div>
               </button>
@@ -113,7 +116,7 @@ export function Shop() {
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm [&::-webkit-details-marker]:hidden">
             <span>
               <strong className="text-ink">Coming next: GLP-1 Support.</strong>{" "}
-              <span className="text-ink-soft">Small portions, protein-forward.</span>
+              <span className="text-ink-soft">Small portions, protein-forward.</span>{" "}
             </span>
             <span className="shrink-0 font-medium text-sage-deep underline underline-offset-4">
               Join the waitlist
@@ -155,9 +158,9 @@ export function Shop() {
                   ))}
                 </ul>
                 <p className="mt-5 text-xs leading-relaxed text-ink-soft">
-                  We pick the exact snacks for your condition, and they rotate with the season.
-                  Your <strong className="text-ink">Packed for You</strong>{" "}card names each one and
-                  why it&rsquo;s there.
+                  Your condition shapes the box: a snack has to pass this box&rsquo;s screening
+                  before it can go in. Exact picks rotate with the season, and your{" "}
+                  <strong className="text-ink">Packed for You</strong> guide explains each one.
                 </p>
                 <Link
                   href={landingFor(b.slug).path}
@@ -174,7 +177,7 @@ export function Shop() {
               <p className="font-display text-4xl text-ink">
                 ${site.preorderPriceUSD}
                 <span className="ml-2 font-sans text-sm text-ink-soft">
-                  about ${(site.preorderPriceUSD / site.snackCount).toFixed(2)} a snack
+                  {site.snackCount} snacks · {site.freeShippingLabel.toLowerCase()}
                 </span>
               </p>
               <p className="text-sm font-semibold text-blush-ink">
@@ -211,8 +214,8 @@ export function Shop() {
             </div>
             {gift && (
               <p className="mt-3 text-sm text-ink-soft">
-                Enter their address at checkout and write a message. We print it on their
-                card.
+                Enter their address at checkout and write a message. We print it in their
+                Packed for You guide.
               </p>
             )}
 

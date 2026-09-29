@@ -7,6 +7,7 @@ const LATER_BOXES: Record<string, string> = {
   glp1: "GLP-1 Companion Box",
   menopause: "Menopause Comfort Box",
   postpartum: "Postpartum Recovery Box",
+  gestational_diabetes: "Gestational Diabetes Box",
 };
 
 /** Welcome email after joining the list (site form or quiz). */
@@ -48,9 +49,10 @@ export function WaitlistConfirmEmail({
       )}
 
       <Text style={t.body}>
-        Every box has {site.snackCount} real snacks, picked for what you&apos;re going through, plus
-        a <strong style={{ color: c.ink }}>Packed for You</strong> card that says why each one is
-        there.
+        Your condition shapes the box: every snack has to pass Keniya&apos;s screening for it
+        before it goes in. You get {site.snackCount} snacks and a{" "}
+        <strong style={{ color: c.ink }}>Packed for You</strong> guide explaining why each one
+        made the box.
       </Text>
 
       <Button href={box ? `${siteUrl}/#box-${box.slug}` : `${siteUrl}/#boxes`}>

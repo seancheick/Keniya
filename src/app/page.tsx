@@ -1,7 +1,7 @@
 import { Hero } from "@/components/sections/hero";
 import { TrustStrip } from "@/components/sections/trust-strip";
 import { Shop } from "@/components/sections/shop";
-import { HowWePick } from "@/components/sections/how-we-pick";
+import { PackedGuide, Screening, TrustStory, WhyKeniya } from "@/components/sections/how-we-pick";
 import { Faq } from "@/components/sections/faq";
 import { PreorderCta } from "@/components/sections/preorder-cta";
 import { StickyBuyBar } from "@/components/sticky-buy-bar";
@@ -30,9 +30,12 @@ export default function Home() {
       <JsonLd data={homeJsonLd} />
       <Hero />
       <TrustStrip />
-      <GiftSection />
       <Shop />
-      <HowWePick />
+      <WhyKeniya />
+      <Screening />
+      <PackedGuide />
+      <GiftSection />
+      <TrustStory />
       <Faq />
       <PreorderCta />
       <StickyBuyBar />

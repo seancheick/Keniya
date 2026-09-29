@@ -27,11 +27,11 @@ export const landings: BoxLanding[] = [
     path: "/pregnancy-snack-box",
     title: "Pregnancy Snack Box: 14 Label-Checked Snacks",
     description:
-      "14 real snacks checked against a written pregnancy checklist: fully cooked, caffeine noted, nothing on the avoid list. $47, free shipping, no subscription.",
+      "14 snacks screened with Keniya Pregnancy Screening: fully cooked, caffeine noted, excluded ingredients left out. $47, free shipping, no subscription.",
     eyebrow: "Pregnancy Comfort Box",
     h1: "A pregnancy snack box that already read the labels.",
     intro:
-      "Rough mornings, sudden cravings and a lot of label-reading. Every snack in this box has been checked against our pregnancy checklist before it goes in, so you can just open it and eat.",
+      "Rough mornings, sudden cravings and a lot of label-reading. Every snack has to pass Keniya Pregnancy Screening before it can go in, so you can just open it and eat.",
     forWho: [
       "Anyone who is pregnant, first trimester to third",
       "Partners, parents and friends who want to send something useful",
@@ -47,7 +47,7 @@ export const landings: BoxLanding[] = [
     screening: [
       { title: "Fully cooked or pasteurized", body: "No raw or unpasteurized ingredients." },
       {
-        title: "Nothing on the pregnancy avoid list",
+        title: "Foods we exclude from the Pregnancy box",
         body: "No raw dairy, eggs or fish, deli meat, high-mercury fish, raw sprouts, alcohol or liver.",
       },
       {
@@ -56,7 +56,7 @@ export const landings: BoxLanding[] = [
       },
       {
         title: "Added sugar, sodium and allergens noted",
-        body: "Your Packed for You card lists them for each snack, straight from the label.",
+        body: "Your Packed for You guide lists them for each snack, straight from the label.",
       },
       {
         title: "Ingredients with a known pregnancy concern left out",
@@ -70,11 +70,15 @@ export const landings: BoxLanding[] = [
     faqs: [
       {
         q: "Is every snack safe during pregnancy?",
-        a: "We check every snack against our written pregnancy checklist, and the lineup gets a clinical review. That isn't personal medical advice, so if your doctor has told you to avoid something specific, check each label or ask us before you order.",
+        a: "Every snack has to pass Keniya Pregnancy Screening, and the lineup gets a clinical review. That isn't personal medical advice, so if your doctor has told you to avoid something specific, check each label or ask us before you order.",
       },
       {
         q: "Does anything have caffeine?",
-        a: "We choose caffeine-free snacks wherever we can. Chocolate can have a small amount, and your card lists the caffeine for every snack.",
+        a: "We choose caffeine-free snacks wherever we can. Chocolate can have a small amount, and your guide lists the caffeine for every snack.",
+      },
+      {
+        q: "I have gestational diabetes. Is this box right for me?",
+        a: "Not yet. This box uses Keniya Pregnancy Screening only, not our blood-sugar rules. A box that applies both together isn't built and reviewed yet. You can join its waitlist through the quiz.",
       },
       {
         q: "Is this box for after the baby arrives?",
@@ -82,7 +86,7 @@ export const landings: BoxLanding[] = [
       },
       {
         q: "Can I send it to someone?",
-        a: "Yes. Choose \"It's a gift\", enter their address at checkout and write a message. We print it on their card.",
+        a: "Yes. Choose \"It's a gift\", enter their address at checkout and write a message. We print it in their Packed for You guide.",
       },
     ],
   },
@@ -97,7 +101,7 @@ export const landings: BoxLanding[] = [
     intro:
       "Built by a founder with a lifetime of label-reading for type 1 diabetes. Each snack has to earn its place through protein, fiber, whole-food fats or a small, portioned treat, and the box balances all four.",
     forWho: [
-      "People with type 1 or type 2 diabetes, prediabetes or gestational diabetes",
+      "People with type 1 or type 2 diabetes or prediabetes",
       "Anyone keeping an eye on carbs and added sugar",
       "Family and friends who want to send snacks that fit",
     ],
@@ -118,8 +122,8 @@ export const landings: BoxLanding[] = [
         body: "Several protein and fiber picks, a few whole-food picks and a couple of treats, so it isn't all one kind of snack.",
       },
       {
-        title: "Added sugar on every card",
-        body: "Your Packed for You card lists the added sugar from each snack's label.",
+        title: "Added sugar in your guide",
+        body: "Your Packed for You guide lists the added sugar from each snack's label.",
       },
       {
         title: "Portion-clear packs",
@@ -133,11 +137,11 @@ export const landings: BoxLanding[] = [
       },
       {
         q: "Is it sugar-free?",
-        a: "No. Some snacks, like the treats and fruit bars, contain sugar. They're portioned, and the added sugar is on your card.",
+        a: "No. Some snacks, like the treats and fruit bars, contain sugar. They're portioned, and the added sugar is in your guide.",
       },
       {
-        q: "Does it work for gestational diabetes?",
-        a: "This box isn't checked against our pregnancy checklist. If you're pregnant, the Pregnancy Comfort box is, and your care team's plan comes first.",
+        q: "Is there a box for gestational diabetes?",
+        a: "Not yet. Gestational diabetes needs Keniya Pregnancy Screening and our blood-sugar rules applied together, so a snack would have to pass both. That combined screening isn't built and reviewed yet, so please don't order this box for gestational diabetes. You can join the waitlist through the quiz.",
       },
       {
         q: "Are there artificial sweeteners?",
@@ -154,14 +158,14 @@ export const landings: BoxLanding[] = [
     eyebrow: "Heart Wellness Box",
     h1: "Heart-conscious snacking without the label math.",
     intro:
-      "“Watch your sodium” shouldn't mean giving up on snacks. This box is built around good fats, whole grains and fruit, with firm limits on salty picks and treats, and the sodium for every snack on your card.",
+      "“Watch your sodium” shouldn't mean giving up on snacks. This box is built around nuts, seeds and other unsaturated-fat sources, whole grains and fruit, with firm limits on salty picks and treats, and the sodium for every snack in your Packed for You guide.",
     forWho: [
       "Anyone watching sodium or eating for their heart",
       "People following a heart-conscious plan from their doctor",
       "Households who want snacks everyone can share",
     ],
     categoryWhy: {
-      "Nuts & seeds": "Single servings of nuts and seeds for good fats.",
+      "Nuts & seeds": "Single servings of nuts, seeds and other unsaturated-fat sources.",
       "Whole grains & fiber": "Crackers, bars and crunch built on whole grains and fiber.",
       Fruit: "Dried and freeze-dried fruit and fruit bars.",
       Sips: "Unsweetened sparkling and flavored water.",
@@ -174,7 +178,7 @@ export const landings: BoxLanding[] = [
       },
       {
         title: "At least 4 nut and seed picks",
-        body: "Good fats are the backbone of this box.",
+        body: "Nuts, seeds and unsaturated-fat sources are the backbone of this box.",
       },
       { title: "At least 3 fiber-forward picks", body: "Whole grains, beans and fruit." },
       {
@@ -186,7 +190,7 @@ export const landings: BoxLanding[] = [
     faqs: [
       {
         q: "Is every snack low-sodium?",
-        a: "Not necessarily. We cap higher-sodium picks, anything over 300 mg per serving, at two per box, and your card lists the sodium for every snack so you can plan around it.",
+        a: "Not necessarily. We cap higher-sodium picks, anything over 300 mg per serving, at two per box, and your guide lists the sodium for every snack so you can plan around it.",
       },
       {
         q: "Will this lower my blood pressure or cholesterol?",
@@ -208,7 +212,7 @@ export const giftLanding = {
   path: "/pregnancy-gift-box",
   title: "Pregnancy Gift Box With Your Note Inside",
   description:
-    "Send 14 label-checked pregnancy snacks with your message printed on her card. $47, free shipping to her door, one-time purchase, ships November 11, 2026.",
+    "Send 14 pregnancy-screened snacks with your message printed in her guide. $47, free shipping to her door, one-time purchase, ships November 11, 2026.",
 };
 
 export const landingFor = (slug: Box["slug"]) => landings.find((l) => l.slug === slug)!;

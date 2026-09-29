@@ -19,6 +19,7 @@ const WHO_OPTIONS = [
   "Pregnancy",
   "Postpartum",
   "Blood sugar",
+  "Gestational diabetes",
   "Heart health",
   "GLP-1 journey",
   "Menopause",
@@ -29,6 +30,7 @@ const RECIPIENT_OPTIONS = [
   "Pregnancy",
   "Postpartum",
   "Blood sugar",
+  "Gestational diabetes",
   "Heart health",
   "GLP-1 journey",
   "Menopause",
@@ -79,6 +81,13 @@ function matchBox(condition: string, craving: string | null): Match {
         boxInterest: "glp1",
         note: "This one's in development — small, protein-dense portions for shrunken appetites. Your email tells us the demand is real and gets you first access.",
       };
+    case "Gestational diabetes":
+      return {
+        box: "Gestational Diabetes Box",
+        status: "development",
+        boxInterest: "gestational_diabetes",
+        note: "Not supported yet. It needs Keniya Pregnancy Screening and our blood-sugar rules applied together, and that combined screening isn't built and reviewed yet. Your email tells us the demand is real and gets you first access.",
+      };
     case "Menopause":
       return {
         box: "Menopause Comfort Box",
@@ -91,7 +100,7 @@ function matchBox(condition: string, craving: string | null): Match {
         box: "Postpartum Recovery Box",
         status: "development",
         boxInterest: "postpartum",
-        note: "This one's in development — meanwhile, the Pregnancy Comfort Box ships now and travels well into the fourth trimester.",
+        note: "This one's in development. Postpartum needs its own screening, so we don't recommend the Pregnancy box for it. Your email tells us the demand is real and gets you first access.",
       };
     default:
       return {

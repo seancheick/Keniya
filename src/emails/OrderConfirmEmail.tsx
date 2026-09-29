@@ -10,6 +10,8 @@ export type OrderEmailProps = {
   orderRef: string;
   gift: boolean;
   giftNote?: string;
+  /** Checkout's "Allergies or foods to avoid": steers selection within the eligible pool. */
+  avoid?: string;
   shipTo?: { name?: string; lines: string[] };
 };
 
@@ -21,6 +23,7 @@ export function OrderConfirmEmail({
   orderRef,
   gift,
   giftNote,
+  avoid,
   shipTo,
 }: OrderEmailProps) {
   const amount = `$${(amountCents / 100).toFixed(2).replace(/\.00$/, "")}`;
@@ -70,7 +73,7 @@ export function OrderConfirmEmail({
       {gift && giftNote && (
         <Panel tint={c.blush}>
           <Text style={{ ...t.eyebrow, color: c.blushInk, margin: "0 0 6px" }}>
-            Your note for their card
+            Your note for their guide
           </Text>
           <Text style={{ ...t.body, margin: 0, color: c.blushInk, fontStyle: "italic" }}>
             &ldquo;{giftNote}&rdquo;
@@ -78,10 +81,22 @@ export function OrderConfirmEmail({
         </Panel>
       )}
 
+      {avoid && (
+        <Panel>
+          <Text style={{ ...t.eyebrow, margin: "0 0 6px" }}>You asked us to avoid</Text>
+          <Text style={{ ...t.small, color: c.ink }}>{avoid}</Text>
+          <Text style={{ ...t.small, marginTop: "6px" }}>
+            We&apos;ll steer around it where we can. Snacks ship sealed with their full labels, and
+            we can&apos;t rule out cross-contact at the maker, so please check each one.
+          </Text>
+        </Panel>
+      )}
+
       <Text style={{ ...t.eyebrow, marginTop: "26px" }}>What goes in</Text>
       <Text style={{ ...t.small, marginBottom: "12px" }}>
-        {site.snackCount} snacks across these categories, chosen for {gift ? "them" : "you"}. The
-        picks rotate with the season, and your Packed for You card names each one and why.
+        {site.snackCount} snacks across these categories. Each one has to pass Keniya&apos;s
+        screening for this box, picks rotate with the season, and the Packed for You guide
+        explains every one.
       </Text>
       <CategoryList categories={box.categories} />
 

@@ -4,7 +4,7 @@ import { site } from "@/lib/site";
 export const faqs = [
   {
     q: "What exactly is in the box?",
-    a: `${site.snackCount} snacks across the categories shown for each box, like comfort, protein, sweets and sips. We pick the exact snacks for your condition, and they rotate with the season, so no two seasons are the same. At least 8 are full single servings, a pack of chews or two tea bags counts as one snack, and small extras are free. Your Packed for You card names every snack and why it's there.`,
+    a: `${site.snackCount} snacks across the categories shown for each box, like comfort, protein, sweets and sips. Each condition has its own screening rules, so a snack has to qualify for your box before it can go in. Exact picks rotate with the season. At least 8 are full single servings, a pack of chews or two tea bags counts as one snack, and small extras are free and never counted. Your Packed for You guide explains every pick.`,
   },
   {
     q: "When does it ship?",
@@ -16,15 +16,15 @@ export const faqs = [
   },
   {
     q: "How do I send it as a gift?",
-    a: "Choose \"It's a gift\" when you pick your box, then enter their address at checkout and write a message. We print it on their card.",
+    a: "Choose \"It's a gift\" when you pick your box, then enter their address at checkout and write a message. We print it in their Packed for You guide.",
   },
   {
     q: "What about allergies?",
-    a: "Every snack ships sealed with its full label. Tell us about nuts, gluten or dairy in the quiz and we'll steer around them where we can. We aren't an allergen-free facility and can't rule out cross-contact at the maker, so with a severe allergy, please check every label.",
+    a: "Every snack ships sealed with its full label. Your condition decides which snacks are eligible; your preferences help us choose among them. Tell us about allergies or foods to avoid at checkout and we'll steer around them where we can. We aren't an allergen-free facility and can't rule out cross-contact at the maker, so with a severe allergy, please check every label.",
   },
   {
     q: "Is this medical advice?",
-    a: "No. We pick packaged snacks with care, but we don't diagnose or treat anything. Your doctor is the right person to ask about what's best for you.",
+    a: "No. We screen and select packaged snacks around your condition, but we don't diagnose, treat or give personal medical advice. Your doctor is the right person to ask about what's best for you.",
   },
 ];
 

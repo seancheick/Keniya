@@ -27,8 +27,8 @@ export function GiftSection() {
             She&rsquo;s growing a whole human. Send something she&rsquo;ll actually use.
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-ink-soft">
-            {site.snackCount} snacks checked against our pregnancy checklist, your note printed on
-            her card, and free shipping to her door. The receipt comes to you.
+            {site.snackCount} snacks screened with Keniya Pregnancy Screening, your note printed in
+            her Packed for You guide, and free shipping to her door. The receipt comes to you.
           </p>
           <ul className="mt-5 flex flex-wrap gap-2" aria-label="Who people send it to">
             {forWhom.map((w) => (

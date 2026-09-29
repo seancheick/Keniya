@@ -51,7 +51,7 @@ export default function PrivacyPage() {
 
       <h2>How we use it</h2>
       <ul>
-        <li>To pack and ship your box, including swaps around allergies you flag.</li>
+        <li>To pack and ship your box, including steering around allergies or foods you ask us to avoid.</li>
         <li>To email you about your order, your ship date, and lists you joined.</li>
         <li>To answer your questions and improve future boxes.</li>
       </ul>

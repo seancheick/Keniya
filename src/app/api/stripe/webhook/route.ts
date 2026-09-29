@@ -45,6 +45,8 @@ export async function POST(req: Request) {
       const a = ship?.address;
       const giftNote =
         session.custom_fields.find((f) => f.key === "gift_note")?.text?.value?.trim() || undefined;
+      const avoid =
+        session.custom_fields.find((f) => f.key === "avoid")?.text?.value?.trim() || undefined;
 
       const { error } = await getSupabaseAdmin()
         .from("preorders")
@@ -78,6 +80,7 @@ export async function POST(req: Request) {
           orderRef: session.id.slice(-8).toUpperCase(),
           gift: session.metadata?.gift === "yes",
           giftNote,
+          avoid,
           shipTo: a
             ? {
                 name: ship?.name ?? undefined,

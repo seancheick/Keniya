@@ -23,7 +23,7 @@ export default async function ThanksPage({
       <p className="mt-6 text-lg leading-relaxed text-ink-soft">
         Your founding preorder is confirmed
         {sp.box ? ` (${sp.box.replaceAll("_", " ")})` : ""}. Your box ships{" "}
-        {site.shipDate} — we&rsquo;ll email packing notes and anything we need for allergy swaps.{" "}
+        {site.shipDate} — if you listed allergies or foods to avoid, we&rsquo;ll steer around them where we can.{" "}
         {site.freeShippingLabel} is included.
       </p>
       <p className="mt-4 text-sm text-ink-soft">

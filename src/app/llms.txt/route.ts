@@ -17,7 +17,7 @@ ${site.name} (from kɛnɛya, "health" in Dioula) is a small, founder-run US comp
 ## Boxes
 
 ${boxes.map((b) => `- [${b.name}](${base}${landingFor(b.slug).path}): ${b.forWho} ${b.why}`).join("\n")}
-- [Pregnancy gift box](${base}${giftLanding.path}): send the Pregnancy Comfort box as a gift, with your note printed on the card.
+- [Pregnancy gift box](${base}${giftLanding.path}): send the Pregnancy Comfort box as a gift, with your note printed in the Packed for You guide.
 
 ## Pages
 

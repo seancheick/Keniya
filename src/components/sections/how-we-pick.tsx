@@ -7,12 +7,42 @@ import { site } from "@/lib/site";
 const steps = [
   { title: "Label", body: "We read the ingredients and allergens on every snack." },
   { title: "Nutrition", body: "Sugar, sodium, protein, fiber, caffeine and serving size." },
-  { title: "Your box's rules", body: "Each box has its own written checklist to pass." },
+  { title: "Your condition's rules", body: "Pregnancy, blood sugar and heart each have their own screening." },
   { title: "Clinical review", body: "A pharmacist reviews the criteria and each lineup." },
-  { title: "Packed for You", body: "Your card tells you why each snack made the cut." },
+  { title: "Packed for You", body: "Your guide explains why each snack made the box." },
 ];
 
-export function HowWePick() {
+/** Short emotional/problem beat + how condition-aware curation works (no mechanics jargon). */
+export function WhyKeniya() {
+  const flow = [
+    "You tell us what you're navigating",
+    "We apply that condition's screening",
+    "We choose among the snacks that qualify, around your preferences",
+  ];
+  return (
+    <section className="border-b border-border">
+      <div className="mx-auto max-w-3xl px-5 py-14 text-center lg:py-16">
+        <h2 className="font-display text-headline text-ink" data-reveal>
+          Your condition already gives you enough to think about.
+        </h2>
+        <p className="mt-4 text-lg leading-relaxed text-ink-soft" data-reveal>
+          Your condition shapes the box. Keniya handles the screening, label reading and
+          selection, so snack research is one less thing on your plate.
+        </p>
+        <ol className="mt-8 grid gap-3 text-left sm:grid-cols-3" data-reveal-group>
+          {flow.map((f, i) => (
+            <li key={f} data-reveal-item className="flex items-start gap-3 rounded-2xl bg-cream-deep/60 p-4">
+              <span className="font-display text-2xl leading-none text-terracotta-deep">{i + 1}</span>
+              <span className="text-sm leading-snug text-ink">{f}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+  );
+}
+
+export function Screening() {
   return (
     <section id="how" className="scroll-mt-20 border-b border-border bg-cream-deep/50">
       <div className="mx-auto max-w-6xl px-5 py-14 lg:py-16">
@@ -20,7 +50,8 @@ export function HowWePick() {
           How we pick every snack
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-center text-ink-soft" data-reveal>
-          Not every &ldquo;healthy&rdquo; snack makes the box. Each one goes through five steps.
+          Not every snack belongs in every Keniya box. Each condition has its own screening, and a
+          snack has to qualify before it can make yours.
         </p>
 
         {/* The process, left to right (top to bottom on mobile) */}
@@ -57,26 +88,42 @@ export function HowWePick() {
             </span>
           ))}
         </p>
+      </div>
+    </section>
+  );
+}
 
-        {/* Packed for You: show the card, not just describe it */}
-        <div className="mt-14 grid items-center gap-8 lg:grid-cols-2" data-reveal>
+export function PackedGuide() {
+  return (
+    <section className="border-b border-border">
+      <div className="mx-auto max-w-6xl px-5 py-14 lg:py-16">
+        {/* Packed for You: show the guide, not just describe it */}
+        <div className="grid items-center gap-8 lg:grid-cols-2" data-reveal>
           <div>
             <p className="eyebrow">Packed for You</p>
             <h3 className="font-display text-headline mt-3 text-ink">
               You don&rsquo;t just get snacks. You get the reason for each one.
             </h3>
             <p className="mt-4 leading-relaxed text-ink-soft">
-              Every box comes with a card that lists all {site.snackCount} snacks, the category
-              each one fills, why we picked it, and the label numbers that matter for your box.
-              For a gift, your message goes on it too.
+              Every box comes with one Packed for You guide: your name and box, the{" "}
+              {site.snackCount} snacks inside, a short line on why each one was chosen, and the
+              label numbers that matter for your condition. For a gift, your message goes in it
+              too.
             </p>
           </div>
-          {/* Illustrative layout of one card entry; no real product named on purpose. */}
+          {/* Illustrative layout of one guide entry; no real product named on purpose. */}
           <figure className="mx-auto w-full max-w-sm rotate-[-1.5deg] rounded-2xl border border-border bg-cream-card p-6 shadow-md">
             <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-sage-deep">
-              Packed for you · 3 of {site.snackCount}
+              Packed for You guide
             </p>
-            <p className="mt-3 font-display text-2xl text-ink">Your snack&rsquo;s name</p>
+            <p className="mt-2 text-sm text-ink-soft">
+              Made for <strong className="text-ink">your name</strong> · Pregnancy Comfort ·
+              avoiding what you told us
+            </p>
+            <p className="mt-4 border-t border-border pt-4 text-[0.65rem] uppercase tracking-[0.16em] text-ink-soft">
+              Snack 3 of {site.snackCount}
+            </p>
+            <p className="mt-1 font-display text-2xl text-ink">Your snack&rsquo;s name</p>
             <p className="mt-1 text-xs font-medium uppercase tracking-[0.14em] text-terracotta-deep">
               Comfort
             </p>
@@ -93,12 +140,21 @@ export function HowWePick() {
               ))}
             </div>
             <figcaption className="mt-4 text-[0.7rem] text-ink-soft">
-              Example layout of one entry on a Packed for You card
+              Example layout. Your guide covers all {site.snackCount} snacks.
             </figcaption>
           </figure>
         </div>
+      </div>
+    </section>
+  );
+}
 
-        <ReviewerCard className="mx-auto mt-14" />
+/** Clinical reviewer + origin story, after the gift section. */
+export function TrustStory() {
+  return (
+    <section className="border-b border-border bg-cream-deep/50">
+      <div className="mx-auto max-w-6xl px-5 py-14 lg:py-16">
+        <ReviewerCard className="mx-auto" />
 
         <p
           className="mx-auto mt-8 max-w-2xl text-center text-base leading-relaxed text-ink-soft"

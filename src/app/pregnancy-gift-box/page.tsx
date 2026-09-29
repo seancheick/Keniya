@@ -37,8 +37,8 @@ export const metadata: Metadata = {
 
 const steps = [
   { t: "Choose “It’s a gift”", b: "Pick the Pregnancy Comfort box and switch to gift mode." },
-  { t: "Add her address and your note", b: "Checkout asks where to send it and what to write on her card." },
-  { t: "We pack it by hand", b: "Your message is printed on her Packed for You card." },
+  { t: "Add her address and your note", b: "Checkout asks where to send it and what to write in her guide." },
+  { t: "We pack it by hand", b: "Your message is printed in her Packed for You guide." },
   { t: "It ships to her door", b: `Founding boxes ship ${site.shipDate}, free. Your receipt comes to you.` },
 ];
 
@@ -87,8 +87,8 @@ export default function GiftPage() {
             A pregnancy gift that does the reading for her.
           </h1>
           <p className="mt-5 text-lg leading-relaxed text-ink-soft">
-            {site.snackCount}{" "}snacks checked against our pregnancy checklist, packed by hand, with
-            your note printed on her card. Something she&rsquo;ll actually use, for your wife or
+            {site.snackCount}{" "}snacks screened with Keniya Pregnancy Screening, packed by hand, with
+            your note printed in her Packed for You guide. Something she&rsquo;ll actually use, for your wife or
             partner, sister, daughter, friend or coworker.
           </p>
           <div className="mt-7 rounded-3xl bg-blush/60 p-5 sm:p-6">
@@ -140,7 +140,7 @@ export default function GiftPage() {
           ))}
         </ul>
         <p className="mt-5 text-sm text-ink-soft">
-          Plus a Packed for You card with your message and a line on why each snack is there.{" "}
+          Plus her Packed for You guide, with your message and a line on why each snack is there.{" "}
           <Link href={product.path} className="font-medium text-sage-deep underline underline-offset-4 hover:text-ink">
             See how we screen for pregnancy
           </Link>

@@ -84,10 +84,17 @@ export async function startCheckout(input: {
           key: "gift_note",
           label: {
             type: "custom",
-            custom: gift ? "Gift message for the card" : "Gift note (optional)",
+            custom: gift ? "Gift message (printed in their guide)" : "Gift note (optional)",
           },
           type: "text",
           optional: !gift,
+        },
+        {
+          // Condition decides eligibility (the box); this helps choose among eligible snacks.
+          key: "avoid",
+          label: { type: "custom", custom: "Allergies or foods to avoid (optional)" },
+          type: "text",
+          optional: true,
         },
       ],
       metadata: {

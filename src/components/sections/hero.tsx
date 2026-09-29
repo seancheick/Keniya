@@ -88,8 +88,9 @@ export function Hero() {
             <em className="text-terracotta-deep">label reading</em> for you.
           </h1>
           <p className="hero-sub mt-6 max-w-[48ch] text-lg leading-relaxed text-ink-soft">
-            Pregnancy, blood sugar or heart health. 14 snacks picked for you, with a card
-            that says why each one is there.
+            Pregnancy, blood sugar or heart health. Tell us what you&rsquo;re navigating, and
+            Keniya screens and selects {site.snackCount} snacks around it, with a guide explaining
+            why each one made the box.
           </p>
           <div className="hero-actions mt-9 flex flex-wrap items-center gap-6">
             <Button asChild size="lg" className="h-12 rounded-full px-8 text-base font-semibold">
