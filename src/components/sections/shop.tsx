@@ -111,20 +111,24 @@ export function Shop() {
             <h3 className="font-display text-2xl text-ink">{box.name}</h3>
             <p className="mt-1 text-sm text-ink-soft">{box.forWho}</p>
             <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-sage-deep">
-              What goes in: one of each
+              What goes in: {site.snackCount} snacks
             </p>
-            <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm text-ink">
-              {box.items.map((item) => (
-                <li key={item} className="flex gap-2">
-                  <span className="mt-[0.45em] size-1.5 shrink-0 rounded-full bg-terracotta" aria-hidden />
-                  {item}
+            <ul className="mt-3 space-y-2.5 text-sm">
+              {box.categories.map((cat) => (
+                <li key={cat.name} className="flex gap-3">
+                  <span className="w-7 shrink-0 font-display text-lg leading-5 text-terracotta">
+                    {cat.count}×
+                  </span>
+                  <span className="text-ink-soft">
+                    <strong className="font-semibold text-ink">{cat.name}</strong> · {cat.note}
+                  </span>
                 </li>
               ))}
             </ul>
             <p className="mt-5 text-xs leading-relaxed text-ink-soft">
-              The exact snacks change with the season, but every box fills these 14 spots,
-              chosen for your condition. Your <strong className="text-ink">Packed for You</strong>{" "}
-              card names each one and why it&rsquo;s there.
+              We pick the exact snacks for your condition, and they rotate with the season. Your{" "}
+              <strong className="text-ink">Packed for You</strong> card names each one and why
+              it&rsquo;s there.
             </p>
           </div>
 

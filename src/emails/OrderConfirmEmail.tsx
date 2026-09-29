@@ -1,7 +1,7 @@
 import { Heading, Text } from "@react-email/components";
 import type { Box } from "@/lib/box";
 import { site } from "@/lib/site";
-import { Button, EmailShell, Panel, TwoColList, c, siteUrl, t } from "@/emails/layout";
+import { Button, EmailShell, Panel, CategoryList, c, siteUrl, t } from "@/emails/layout";
 
 export type OrderEmailProps = {
   box: Box;
@@ -80,10 +80,10 @@ export function OrderConfirmEmail({
 
       <Text style={{ ...t.eyebrow, marginTop: "26px" }}>What goes in</Text>
       <Text style={{ ...t.small, marginBottom: "12px" }}>
-        {site.snackCount} snacks, one from each of these, chosen for {gift ? "them" : "you"}. The
-        exact brands change with the season, and your Packed for You card explains every pick.
+        {site.snackCount} snacks across these categories, chosen for {gift ? "them" : "you"}. The
+        picks rotate with the season, and your Packed for You card names each one and why.
       </Text>
-      <TwoColList items={box.items} />
+      <CategoryList categories={box.categories} />
 
       <Text style={{ ...t.eyebrow, marginTop: "26px" }}>What happens next</Text>
       <Text style={t.small}>

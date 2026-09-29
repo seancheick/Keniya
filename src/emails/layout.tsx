@@ -102,27 +102,24 @@ export function Panel({ children, tint = c.creamDeep }: { children: ReactNode; t
   );
 }
 
-/** Two-column list (e.g. the 14 snack types) as a table: the only layout every client renders. */
-export function TwoColList({ items }: { items: string[] }) {
-  const half = Math.ceil(items.length / 2);
-  const cols = [items.slice(0, half), items.slice(half)];
+/** "4 × Comfort — gentle picks" rows: what's in a box, by category (never specific snacks). */
+export function CategoryList({ categories }: { categories: { name: string; count: number; note: string }[] }) {
   return (
     <table role="presentation" width="100%" cellPadding={0} cellSpacing={0}>
       <tbody>
-        <tr>
-          {cols.map((col, i) => (
-            <td key={i} valign="top" width="50%" style={{ paddingRight: i === 0 ? "12px" : 0 }}>
-              {col.map((item) => (
-                <p
-                  key={item}
-                  style={{ margin: "0 0 7px", fontSize: "14px", lineHeight: 1.4, color: c.ink, fontFamily: sans }}
-                >
-                  <span style={{ color: c.terracotta }}>●</span>&nbsp; {item}
-                </p>
-              ))}
+        {categories.map((cat) => (
+          <tr key={cat.name}>
+            <td
+              valign="top"
+              style={{ width: "36px", padding: "6px 0", fontSize: "15px", fontWeight: 700, color: c.terracotta, fontFamily: sans }}
+            >
+              {cat.count}×
             </td>
-          ))}
-        </tr>
+            <td valign="top" style={{ padding: "6px 0", fontSize: "14px", lineHeight: 1.45, color: c.inkSoft, fontFamily: sans }}>
+              <strong style={{ color: c.ink }}>{cat.name}</strong> · {cat.note}
+            </td>
+          </tr>
+        ))}
       </tbody>
     </table>
   );

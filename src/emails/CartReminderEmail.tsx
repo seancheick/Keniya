@@ -1,7 +1,7 @@
 import { Heading, Text } from "@react-email/components";
 import type { Box } from "@/lib/box";
 import { site } from "@/lib/site";
-import { Button, EmailShell, Panel, TwoColList, c, t } from "@/emails/layout";
+import { Button, EmailShell, Panel, CategoryList, c, t } from "@/emails/layout";
 
 /** One reminder after a Stripe Checkout session expires unpaid. */
 export function CartReminderEmail({ box, recoveryUrl }: { box: Box; recoveryUrl: string }) {
@@ -31,7 +31,7 @@ export function CartReminderEmail({ box, recoveryUrl }: { box: Box; recoveryUrl:
       </Panel>
 
       <Text style={{ ...t.eyebrow, marginTop: "24px" }}>What goes in</Text>
-      <TwoColList items={box.items} />
+      <CategoryList categories={box.categories} />
     </EmailShell>
   );
 }

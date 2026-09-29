@@ -5,10 +5,10 @@ export type Box = {
   forWho: string;
   why: string;
   /**
-   * This season's 14 selections, from the Box Builder workbook (one line per slot).
-   * Generic names on purpose: brands can swap for an equal pick without the page lying.
+   * What every box of this kind contains, by category (counts sum to 14), from the Box
+   * Builder slots. Categories only, never specific snacks: picks rotate, promises don't.
    */
-  items: string[];
+  categories: { name: string; count: number; note: string }[];
   tint: "blush" | "sage" | "cream";
   /** Product photography under /public */
   image: string;
@@ -22,21 +22,12 @@ export const boxes: Box[] = [
     shortName: "Pregnancy",
     forWho: "For pregnancy and the first weeks after, and the people buying for her.",
     why: "Gentle picks for rough mornings, real treats for cravings.",
-    items: [
-      "Ginger chews",
-      "Plain crackers",
-      "Ginger tea (caffeine-free)",
-      "Applesauce pouch",
-      "Roasted chickpeas",
-      "Nut butter squeeze pack",
-      "Lightly salted nuts",
-      "Electrolyte drink mix",
-      "Sweet & sour chews",
-      "Dark chocolate almonds",
-      "Dried mango",
-      "Dried apricots",
-      "Pumpkin seeds",
-      "Sea-salt popcorn",
+    categories: [
+      { name: "Comfort", count: 4, note: "gentle, easy picks for rough days" },
+      { name: "Protein & staying power", count: 4, note: "nuts, seeds and savory crunch" },
+      { name: "Sweet treats", count: 3, note: "fruit and chocolate, because cravings count" },
+      { name: "Sips", count: 2, note: "caffeine-free tea and hydration" },
+      { name: "Salty snack", count: 1, note: "for the salty craving" },
     ],
     tint: "blush",
     image: "/images/box-pregnancy.jpg",
@@ -48,21 +39,12 @@ export const boxes: Box[] = [
     shortName: "Blood Sugar",
     forWho: "For anyone watching carbs: type 1, type 2, prediabetes or gestational.",
     why: "More protein and fiber, less added sugar, still fun to open.",
-    items: [
-      "Roasted chickpeas",
-      "Nut butter squeeze pack",
-      "Lightly salted nuts",
-      "Pumpkin seeds",
-      "Dark chocolate almonds",
-      "Baked cheese crisps",
-      "Jerky stick",
-      "Protein bar",
-      "Roasted broad beans",
-      "Fruit bar",
-      "Dark chocolate nut bar",
-      "Unsweetened flavored water",
-      "Protein shake",
-      "Sea-salt popcorn",
+    categories: [
+      { name: "Protein & fiber", count: 5, note: "filling picks with more protein or fiber" },
+      { name: "Nuts & seeds", count: 3, note: "whole-food crunch" },
+      { name: "Smarter sweets", count: 3, note: "treats with less added sugar" },
+      { name: "Sips", count: 2, note: "unsweetened and protein drinks" },
+      { name: "Salty snack", count: 1, note: "portioned and easy" },
     ],
     tint: "sage",
     image: "/images/box-blood-sugar.jpg",
@@ -74,21 +56,12 @@ export const boxes: Box[] = [
     shortName: "Heart",
     forWho: "For anyone watching sodium and eating for their heart.",
     why: "Nuts, seeds, whole grains and good treats, with sodium on every label.",
-    items: [
-      "Nut butter squeeze pack",
-      "Roasted seeds",
-      "Almonds or pistachios",
-      "Mixed nuts",
-      "Roasted chickpeas",
-      "Whole-grain crackers",
-      "Oat & seed bar",
-      "Fruit & nut bar",
-      "Fruit bar",
-      "Freeze-dried fruit",
-      "Sea-salt popcorn",
-      "Dark chocolate seed bar",
-      "Sparkling water",
-      "Unsweetened flavored water",
+    categories: [
+      { name: "Nuts & seeds", count: 4, note: "good fats in single servings" },
+      { name: "Whole grains & fiber", count: 4, note: "crackers, bars and crunch" },
+      { name: "Fruit", count: 3, note: "dried, freeze-dried and fruit bars" },
+      { name: "Sips", count: 2, note: "unsweetened sparkling and flavored water" },
+      { name: "Treat", count: 1, note: "dark chocolate, sodium on the label" },
     ],
     tint: "cream",
     image: "/images/box-heart.jpg",
