@@ -26,7 +26,6 @@ export async function sendWaitlistConfirmEmail(opts: {
       replyTo: site.email,
       subject: "You're on the list — Keniya founding release",
       react: WaitlistConfirmEmail({
-        email: opts.to,
         boxInterest: opts.boxInterest,
         quizWho: opts.quizWho,
         quizCraving: opts.quizCraving,

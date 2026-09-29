@@ -10,6 +10,8 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { boxes } from "@/lib/box";
+import { site } from "@/lib/site";
 
 const BOX_LABELS: Record<string, string> = {
   pregnancy_comfort: "Pregnancy Comfort Box",
@@ -21,17 +23,17 @@ const BOX_LABELS: Record<string, string> = {
 };
 
 export function WaitlistConfirmEmail({
-  email,
   boxInterest,
   quizWho,
   quizCraving,
 }: {
-  email: string;
   boxInterest: string;
   quizWho?: string;
   quizCraving?: string;
 }) {
   const boxName = BOX_LABELS[boxInterest] ?? "Keniya snack box";
+  // GLP-1 / menopause / postpartum are waitlist-only; don't tell them to preorder.
+  const canPreorder = boxes.some((b) => b.slug === boxInterest);
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://keniyahealth.com";
 
@@ -85,8 +87,10 @@ export function WaitlistConfirmEmail({
 
           <Text style={{ margin: "0 0 16px", fontSize: "16px", lineHeight: 1.65, color: "#6B655C" }}>
             We saved your spot for the <strong style={{ color: "#33302B" }}>{boxName}</strong>
-            {quizWho ? ` (${quizWho.toLowerCase()})` : ""}. Founding release is only 50 of each box
-            — you&apos;ll hear from us first when checkout opens, and again before we ship.
+            {quizWho ? ` (${quizWho.toLowerCase()})` : ""}.{" "}
+            {canPreorder
+              ? `Preorders are open now: only ${site.firstRunPerBox} of each box, shipping ${site.shipDate}.`
+              : "This box is still in development. You'll be first to know when it opens."}
           </Text>
 
           {(quizWho || quizCraving) && (
@@ -121,7 +125,7 @@ export function WaitlistConfirmEmail({
 
           <Section style={{ margin: "28px 0 8px", textAlign: "center" }}>
             <Link
-              href={`${siteUrl}/#boxes`}
+              href={canPreorder ? `${siteUrl}/#box-${boxInterest}` : `${siteUrl}/#boxes`}
               style={{
                 display: "inline-block",
                 padding: "14px 28px",
@@ -133,16 +137,16 @@ export function WaitlistConfirmEmail({
                 textDecoration: "none",
               }}
             >
-              Back to Keniya
+              {canPreorder ? "Preorder your box" : "See the boxes"}
             </Link>
           </Section>
 
           <Hr style={{ borderColor: "#E5DACB", margin: "32px 0 20px" }} />
 
           <Text style={{ margin: 0, fontSize: "12px", lineHeight: 1.5, color: "#6B655C" }}>
-            Sent to {email}. Questions? Reply or write{" "}
-            <Link href="mailto:hello@keniyahealth.com" style={{ color: "#5F7057" }}>
-              hello@keniyahealth.com
+            Questions? Write to{" "}
+            <Link href={`mailto:${site.email}`} style={{ color: "#5F7057" }}>
+              {site.email}
             </Link>
             .
           </Text>
