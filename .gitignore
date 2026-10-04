@@ -44,3 +44,6 @@ next-env.d.ts
 .claude/skills/
 .claude/agents/
 .impeccable/
+
+# Business ops workbook (costs, vendors, margins, sales) — never commit: repo is public
+/ops/
