@@ -58,8 +58,8 @@ export const boxes: Box[] = [
       { name: "Salty snack", count: 1, note: "for the salty craving" },
     ],
     tint: "blush",
-    image: "/images/box-pregnancy-slots.jpg",
-    imageAlt: "Pregnancy Comfort Box: 14 snack slots by category (4 comfort, 4 protein, 3 sweet, 2 sips, 1 salty)",
+    image: "/images/box-pregnancy.jpg",
+    imageAlt: "An open Pregnancy Comfort Box: ginger chews, crackers, a fruit pouch, almond butter, roasted chickpeas, fruit bars, peppermint tea, an electrolyte stick and popcorn",
   },
   {
     slug: "blood_sugar",
@@ -76,8 +76,8 @@ export const boxes: Box[] = [
       { name: "Salty snack", count: 1, note: "portioned and easy" },
     ],
     tint: "sage",
-    image: "/images/box-blood-sugar-slots.jpg",
-    imageAlt: "Carb Conscious Box: 14 snack slots by category (6 protein and fiber, 3 nuts and seeds, 3 smarter sweets, 1 sip, 1 salty)",
+    image: "/images/box-carb-conscious.jpg",
+    imageAlt: "An open Keniya box of 14 carb-conscious snacks: roasted chickpeas, almond butter, almonds, pumpkin seeds, cheese crisps, jerky, a protein bar, fruit bar, popcorn and an electrolyte stick",
   },
   {
     slug: "heart",
@@ -93,7 +93,7 @@ export const boxes: Box[] = [
       { name: "Treat", count: 1, note: "dark chocolate, sodium on the label" },
     ],
     tint: "cream",
-    image: "/images/box-heart-slots.jpg",
-    imageAlt: "Heart Wellness Box: 14 snack slots by category (4 nuts and seeds, 4 whole grains and fiber, 3 fruit, 2 sips, 1 treat)",
+    image: "/images/box-heart.jpg",
+    imageAlt: "An open Heart Wellness Box of 14 snacks: almond butter, pumpkin seeds, almonds, a heart-healthy nut mix, chickpeas, whole-grain crackers, seed bars, fruit, popcorn, an electrolyte stick and ginger tea",
   },
 ];
