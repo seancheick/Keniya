@@ -29,7 +29,7 @@ function readHash(): { slug?: Box["slug"]; gift?: boolean; scroll?: boolean } {
   const giftFor = boxes.find((b) => `gift-${b.slug}` === h || (h === "gift-pregnancy" && b.slug === "pregnancy_comfort"));
   if (giftFor) return { gift: true, slug: giftFor.slug, scroll: true };
   const match = boxes.find((b) => `box-${b.slug}` === h);
-  return match ? { slug: match.slug } : {};
+  return match ? { slug: match.slug, scroll: true } : {};
 }
 
 export function Shop() {
@@ -48,8 +48,12 @@ export function Shop() {
         setPicked(true);
       }
       if (g) setGift(true);
-      // #gift-<slug> has no element of its own; bring the buy panel into view.
-      if (scroll) document.getElementById("gift")?.scrollIntoView({ block: "center" });
+      // After the cards fold (next frame), bring the switcher + checkout into view. This is also
+      // where Stripe's back arrow lands (#box-<slug> / #gift-<slug>), one tap from switching.
+      if (scroll)
+        requestAnimationFrame(() =>
+          document.getElementById("box-picker")?.scrollIntoView({ block: "start" }),
+        );
     };
     apply();
     window.addEventListener("hashchange", apply);

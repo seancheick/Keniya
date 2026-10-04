@@ -93,7 +93,9 @@ export async function startCheckout(input: CheckoutInput): Promise<CheckoutResul
       mode: "payment",
       line_items: lineItems,
       success_url: `${base}/thanks?session_id={CHECKOUT_SESSION_ID}&box=${box.slug}${gift ? "&gift=1" : ""}`,
-      cancel_url: `${base}/#boxes`,
+      // Stripe can't swap the product in place, so "back" lands on the picker with this box
+      // selected (gift mode kept), one tap from switching.
+      cancel_url: `${base}/#${gift ? "gift" : "box"}-${box.slug}`,
       shipping_address_collection: { allowed_countries: ["US"] },
       phone_number_collection: { enabled: false },
       billing_address_collection: "auto",
@@ -133,6 +135,11 @@ export async function startCheckout(input: CheckoutInput): Promise<CheckoutResul
         gift: gift ? "yes" : "no",
       },
       allow_promotion_codes: true,
+      custom_text: {
+        submit: {
+          message: `Want a different box? Use the ← arrow at the top to switch. Every box is $${site.preorderPriceUSD}.`,
+        },
+      },
       // Unfinished checkouts expire after 2h; Stripe then sends checkout.session.expired
       // with a recovery link, and the webhook emails one "you left your box" reminder.
       expires_at: Math.floor(Date.now() / 1000) + 2 * 60 * 60,
