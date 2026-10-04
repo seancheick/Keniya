@@ -78,11 +78,11 @@ export const landings: BoxLanding[] = [
       },
       {
         q: "I have gestational diabetes. Is this box right for me?",
-        a: "Not yet. This box uses Keniya Pregnancy Screening only, not our blood-sugar rules. A box that applies both together isn't built and reviewed yet. You can join its waitlist through the quiz.",
+        a: "Not yet. This box uses Keniya Pregnancy Screening only, not our carb-conscious rules. A box that applies both together isn't built and reviewed yet. You can request it through the quiz.",
       },
       {
         q: "Is this box for after the baby arrives?",
-        a: "This box is built for pregnancy. A postpartum box is in development, and you can join its waitlist through the quiz.",
+        a: "This box is built for pregnancy. We don't make a postpartum box yet, but you can request one through the quiz.",
       },
       {
         q: "Can I send it to someone?",
@@ -141,7 +141,7 @@ export const landings: BoxLanding[] = [
       },
       {
         q: "Is there a box for gestational diabetes?",
-        a: "Not yet. Gestational diabetes needs Keniya Pregnancy Screening and our blood-sugar rules applied together, so a snack would have to pass both. That combined screening isn't built and reviewed yet, so please don't order this box for gestational diabetes. You can join the waitlist through the quiz.",
+        a: "Not yet. Gestational diabetes needs Keniya Pregnancy Screening and our carb-conscious rules applied together, so a snack would have to pass both. That combined screening isn't built and reviewed yet, so please don't order this box for gestational diabetes. You can request it through the quiz.",
       },
       {
         q: "Are there artificial sweeteners?",

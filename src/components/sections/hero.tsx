@@ -92,16 +92,16 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="hero-visual relative mx-auto w-full max-w-md lg:max-w-none">
-          <div className="relative mx-auto max-w-md">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] bg-blush shadow-sm">
+        <div className="hero-visual relative mx-auto w-full">
+          <div className="relative mx-auto max-w-xl lg:max-w-none">
+            <div className="relative aspect-[16/10] overflow-hidden rounded-[1.75rem] bg-blush shadow-sm">
               <Image
-                src="/images/hero-guide.jpg"
-                alt="A Keniya snack box with its Packed for You card"
+                src="/images/hero-box.jpg"
+                alt="An open Keniya box of 14 snacks with its Packed for You card"
                 fill
                 loading="eager"
                 fetchPriority="high"
-                sizes="(max-width: 768px) 90vw, 480px"
+                sizes="(max-width: 1024px) 90vw, 560px"
                 className="object-cover"
               />
             </div>

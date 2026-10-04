@@ -111,7 +111,7 @@ export function TrustStory() {
           It started with years of reading labels for our own family. Now we do that work for
           everyone: whatever you&rsquo;re living with, you get a box that already did the reading,
           so you can just enjoy the snack. Pregnancy, carb-conscious and heart boxes today, with
-          more conditions on the way. Every snack is screened with the same care as{" "}
+          more as you ask for them. Every snack is screened with the same care as{" "}
           <a
             href={site.pharmaguide.url}
             target="_blank"

@@ -35,12 +35,18 @@ function readHash(): { slug?: Box["slug"]; gift?: boolean; scroll?: boolean } {
 export function Shop() {
   const [slug, setSlug] = useState<Box["slug"]>(boxes[0].slug);
   const [gift, setGift] = useState(false);
+  // After a choice the big cards fold into a compact switcher, so price + checkout sit
+  // right under the choice instead of a scroll away.
+  const [picked, setPicked] = useState(false);
   const box = boxes.find((b) => b.slug === slug) ?? boxes[0];
 
   useEffect(() => {
     const apply = () => {
       const { slug: s, gift: g, scroll } = readHash();
-      if (s) setSlug(s);
+      if (s) {
+        setSlug(s);
+        setPicked(true);
+      }
       if (g) setGift(true);
       // #gift-<slug> has no element of its own; bring the buy panel into view.
       if (scroll) document.getElementById("gift")?.scrollIntoView({ block: "center" });
@@ -74,14 +80,48 @@ export function Shop() {
           </MatchQuiz>
         </div>
 
-        {/* Step 1 — real, obviously clickable choices */}
+        {/* Step 1 — real, obviously clickable choices; folds to a switcher once chosen. */}
         <div
+          id="box-picker"
           role="radiogroup"
           aria-label="Choose a box"
-          className="mt-8 grid gap-3 sm:grid-cols-3 sm:gap-4"
+          className={cn(
+            "mt-8 scroll-mt-24",
+            picked
+              ? "flex gap-2 overflow-x-auto rounded-full bg-cream-deep p-1"
+              : "grid gap-3 sm:grid-cols-3 sm:gap-4",
+          )}
         >
           {boxes.map((b) => {
             const active = b.slug === slug;
+            const choose = () => {
+              setSlug(b.slug);
+              if (!picked) {
+                setPicked(true);
+                // Let the fold render, then bring the switcher + checkout into view.
+                requestAnimationFrame(() =>
+                  document.getElementById("box-picker")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+                );
+              }
+            };
+            if (picked) {
+              return (
+                <button
+                  key={b.slug}
+                  id={`box-${b.slug}`}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  onClick={choose}
+                  className={cn(
+                    "min-h-11 flex-1 whitespace-nowrap rounded-full px-4 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
+                    active ? "bg-ink text-cream shadow-sm" : "text-ink-soft hover:text-ink",
+                  )}
+                >
+                  {b.shortName}
+                </button>
+              );
+            }
             return (
               <button
                 key={b.slug}
@@ -89,7 +129,7 @@ export function Shop() {
                 type="button"
                 role="radio"
                 aria-checked={active}
-                onClick={() => setSlug(b.slug)}
+                onClick={choose}
                 className={cn(
                   "group relative flex scroll-mt-24 items-stretch justify-start overflow-hidden rounded-2xl border-2 bg-cream-card text-left transition-all focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:flex-col",
                   active
@@ -143,7 +183,7 @@ export function Shop() {
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.25fr_1fr] lg:gap-8">
           {/* All three panels are in the HTML (tabpanel pattern) so search engines and screen
               readers get every box; only the selected one is shown. */}
-          <div className="order-1">
+          <div className="order-2 lg:order-1">
             {boxes.map((b) => (
               <div
                 key={b.slug}
@@ -188,7 +228,20 @@ export function Shop() {
             ))}
           </div>
 
-          <div className="order-2 self-start rounded-3xl bg-blush/60 p-5 sm:p-7 lg:sticky lg:top-24">
+          <div className="order-1 self-start rounded-3xl bg-blush/60 p-5 sm:p-7 lg:sticky lg:top-24 lg:order-2">
+            {picked && (
+              <div className="relative -mx-1 -mt-1 mb-5 aspect-[16/10] overflow-hidden rounded-2xl bg-cream-deep">
+                <Image
+                  key={box.slug}
+                  src={box.image}
+                  alt={box.imageAlt}
+                  fill
+                  sizes="(max-width: 1024px) 90vw, 440px"
+                  className="object-cover animate-in fade-in duration-300"
+                />
+              </div>
+            )}
+            <p className="mb-1 font-display text-2xl text-ink">{box.name}</p>
             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <p className="font-display text-4xl text-ink">
                 ${site.preorderPriceUSD}
@@ -277,8 +330,8 @@ export function Shop() {
         {/* One visible secondary path below the decision: news about new boxes and shipping. */}
         <div className="mt-8 flex flex-col gap-4 rounded-2xl border border-border bg-cream-card p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="font-display text-xl text-ink">More thoughtful snack boxes are coming.</p>
-            <p className="mt-1 text-sm text-ink-soft">Get updates on new boxes and shipping.</p>
+            <p className="font-display text-xl text-ink">Not ready to order?</p>
+            <p className="mt-1 text-sm text-ink-soft">Get Keniya news: shipping updates and new boxes.</p>
           </div>
           <div className="w-full max-w-md">
             <WaitlistForm

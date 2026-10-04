@@ -1,5 +1,5 @@
 import { Heading, Text } from "@react-email/components";
-import { boxes, comingSoon, UPDATES_INTEREST } from "@/lib/box";
+import { boxes, requestable, UPDATES_INTEREST } from "@/lib/box";
 import { site } from "@/lib/site";
 import { Button, EmailShell, Panel, c, siteUrl, t } from "@/emails/layout";
 
@@ -18,7 +18,7 @@ export function WaitlistConfirmEmail({
   // General updates list: nothing is reserved, so no "spot saved" language.
   const updates = boxInterest === UPDATES_INTEREST;
   // GLP-1 / menopause / postpartum are waitlist-only; don't tell them to preorder.
-  const boxName = box?.name ?? comingSoon.find((c) => c.slug === boxInterest)?.name ?? "Keniya snack box";
+  const boxName = box?.name ?? requestable.find((c) => c.slug === boxInterest)?.name ?? "Keniya snack box";
 
   return (
     <EmailShell
@@ -29,7 +29,7 @@ export function WaitlistConfirmEmail({
             ? `Your spot for the ${box.name} is saved.`
             : `You're on the ${boxName} list.`
       }
-      image={box?.image ?? "/images/hero-guide.jpg"}
+      image={box?.image ?? "/images/hero-box.jpg"}
       imageAlt={box?.imageAlt ?? "An open Keniya snack box"}
       footerNote={
         updates
@@ -49,7 +49,7 @@ export function WaitlistConfirmEmail({
           We saved your spot for the <strong style={{ color: c.ink }}>{boxName}</strong>.{" "}
           {box
             ? `Preorders are open now, and there are only ${site.firstRunPerBox} of each box. Founding boxes ship ${site.shipDate}.`
-            : "This box is still in development. You'll be the first to know when it opens."}
+            : "Thanks for the request. Requests decide what we build next, and if we make it, you'll be the first to know."}
         </Text>
       )}
 

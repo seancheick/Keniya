@@ -17,8 +17,8 @@ export type Box = {
   imageAlt: string;
 };
 
-/** Boxes still in development: waitlist only, never sold. `slug` is the waitlist boxInterest. */
-export const comingSoon = [
+/** Boxes we don't make: visitors can request them (never sold). `slug` is the waitlist boxInterest. */
+export const requestable = [
   {
     slug: "gestational_diabetes",
     name: "Gestational Diabetes Box",

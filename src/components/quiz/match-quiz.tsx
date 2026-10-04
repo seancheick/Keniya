@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { BuyButton } from "@/components/buy-button";
-import { boxes, comingSoon, cravings, UPDATES_INTEREST, type Box } from "@/lib/box";
+import { boxes, requestable, cravings, UPDATES_INTEREST, type Box } from "@/lib/box";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -85,7 +85,7 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
   const advancing = useRef(false);
 
   const box = boxes.find((b) => b.slug === pick);
-  // Two paths: a box we sell (checkout), or "something else" (coming soon → waitlist).
+  // Two paths: a box we sell (checkout), or "something else" (request a box → email).
   const flow: StepId[] =
     pick === SOMETHING_ELSE
       ? ["who", "box", "soon", "email"]
@@ -128,7 +128,7 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
     soon: "Which box should we make next?",
   };
 
-  const wantedNames = comingSoon.filter((c) => wanted.includes(c.slug)).map((c) => c.name);
+  const wantedNames = requestable.filter((c) => wanted.includes(c.slug)).map((c) => c.name);
   const requestNote = [
     wantedNames.length ? `Wants: ${wantedNames.join(", ")}` : "",
     request.trim() ? `Asked for: ${request.trim()}` : "",
@@ -297,14 +297,17 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
           {current === "soon" && (
             <div className="mt-6 grid gap-3">
               <p className="-mt-2 text-sm text-ink-soft">
-                These are in development. Pick any you&rsquo;d want, or tell us your idea.
+                We don&rsquo;t make these yet. Tap one, or tell us your idea.
               </p>
-              {comingSoon.map((c) => (
+              {requestable.map((c) => (
                 <Option
                   key={c.slug}
                   selected={wanted.includes(c.slug)}
                   hint={c.note}
-                  onClick={() => setWanted((prev) => toggle(prev, c.slug))}
+                  onClick={() => {
+                    setWanted([c.slug]);
+                    next();
+                  }}
                 >
                   {c.name}
                 </Option>
@@ -314,6 +317,8 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
                 <input
                   value={request}
                   onChange={(e) => setRequest(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && request.trim() && next()}
+                  enterKeyHint="next"
                   maxLength={120}
                   placeholder="e.g. a kidney-friendly box"
                   className="mt-2 h-12 w-full rounded-2xl border-2 border-border bg-cream-card px-4 text-base text-ink placeholder:text-ink-soft/70 focus:border-sage-deep focus:outline-none"
@@ -321,7 +326,7 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
               </label>
               <Button
                 onClick={next}
-                disabled={wanted.length === 0 && !request.trim()}
+                disabled={!request.trim()}
                 className="mt-2 h-14 w-full rounded-full text-base font-semibold"
               >
                 Continue
@@ -332,14 +337,14 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
           {current === "email" && (
             <>
               <DialogHeader className="text-left">
-                <p className="eyebrow">You&rsquo;re almost on the list</p>
+                <p className="eyebrow">Request a box</p>
                 <DialogTitle className="font-display pt-2 text-3xl font-normal leading-tight text-ink">
-                  We&rsquo;ll email you the moment it opens.
+                  Tell us where to reach you.
                 </DialogTitle>
                 <DialogDescription className="pt-2 text-ink-soft">
                   {wantedNames.length > 0 ? `${wantedNames.join(", ")}. ` : ""}
                   {request.trim() ? `Your idea: ${request.trim()}. ` : ""}
-                  Your email tells us where the need is loudest. No spam.
+                  Requests decide what we build next, and we&rsquo;ll email you if we make it. No spam.
                 </DialogDescription>
               </DialogHeader>
               <div className="mt-5">
@@ -347,14 +352,14 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
                   // One confirmation email: the first box they picked, or the general list.
                   boxInterest={wanted[0] ?? UPDATES_INTEREST}
                   source="quiz_request"
-                  cta="Join the waitlist"
+                  cta="Send my request"
                   quiz={{ quizWho: requestNote || undefined }}
                 />
               </div>
 
               <div className="mt-8 border-t border-border pt-6">
                 <p className="font-display text-xl text-ink">
-                  {isGift ? "Want to send something now?" : "Shop a box while you wait"}
+                  {isGift ? "Want to send something now?" : "Or order one of ours today"}
                 </p>
                 <ul className="mt-4 grid gap-3">
                   {boxes.map((b) => (
