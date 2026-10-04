@@ -1,14 +1,8 @@
 import { Heading, Text } from "@react-email/components";
-import { boxes, UPDATES_INTEREST } from "@/lib/box";
+import { boxes, comingSoon, UPDATES_INTEREST } from "@/lib/box";
 import { site } from "@/lib/site";
 import { Button, EmailShell, Panel, c, siteUrl, t } from "@/emails/layout";
 
-const LATER_BOXES: Record<string, string> = {
-  glp1: "GLP-1 Companion Box",
-  menopause: "Menopause Comfort Box",
-  postpartum: "Postpartum Recovery Box",
-  gestational_diabetes: "Gestational Diabetes Box",
-};
 
 /** Welcome email after joining the list (site form or quiz). */
 export function WaitlistConfirmEmail({
@@ -24,7 +18,7 @@ export function WaitlistConfirmEmail({
   // General updates list: nothing is reserved, so no "spot saved" language.
   const updates = boxInterest === UPDATES_INTEREST;
   // GLP-1 / menopause / postpartum are waitlist-only; don't tell them to preorder.
-  const boxName = box?.name ?? LATER_BOXES[boxInterest] ?? "Keniya snack box";
+  const boxName = box?.name ?? comingSoon.find((c) => c.slug === boxInterest)?.name ?? "Keniya snack box";
 
   return (
     <EmailShell

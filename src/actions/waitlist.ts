@@ -11,7 +11,7 @@ const waitlistSchema = z.object({
   email: z.email().max(255),
   boxInterest: z.string().max(40).default("pregnancy_comfort"),
   source: z.string().max(40).default("site"),
-  quizWho: z.string().max(60).optional(),
+  quizWho: z.string().max(300).optional(),
   quizAllergies: z.array(z.string().max(30)).max(6).optional(),
   quizCraving: z.string().max(30).optional(),
 });

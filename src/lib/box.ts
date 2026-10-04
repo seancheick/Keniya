@@ -17,6 +17,18 @@ export type Box = {
   imageAlt: string;
 };
 
+/** Boxes still in development: waitlist only, never sold. `slug` is the waitlist boxInterest. */
+export const comingSoon = [
+  {
+    slug: "gestational_diabetes",
+    name: "Gestational Diabetes Box",
+    note: "Pregnancy and carb-conscious screening together, still being built and reviewed.",
+  },
+  { slug: "postpartum", name: "Postpartum Recovery Box", note: "Its own screening for the fourth trimester." },
+  { slug: "glp1", name: "GLP-1 Companion Box", note: "Small, protein-dense portions for smaller appetites." },
+  { slug: "menopause", name: "Menopause Comfort Box", note: "Snacks for the changes menopause brings." },
+] as const;
+
 /** Waitlist boxInterest for the general "new boxes and shipping" list (no box reserved). */
 export const UPDATES_INTEREST = "updates";
 
