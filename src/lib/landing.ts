@@ -109,7 +109,7 @@ export const landings: BoxLanding[] = [
       "Protein & fiber": "The core of the box: filling picks that lead with protein or fiber.",
       "Nuts & seeds": "Whole-food fats and protein with nothing sugary added.",
       "Smarter sweets": "Real treats, portioned, with less added sugar.",
-      Sips: "Unsweetened and protein drinks instead of sugary ones.",
+      Sips: "A sugar-free electrolyte drink mix instead of a sugary drink.",
       "Salty snack": "A portioned savory crunch.",
     },
     screening: [
@@ -167,7 +167,7 @@ export const landings: BoxLanding[] = [
       "Nuts & seeds": "Single servings of nuts, seeds and other unsaturated-fat sources.",
       "Whole grains & fiber": "Crackers, bars and crunch built on whole grains and fiber.",
       Fruit: "Dried and freeze-dried fruit and fruit bars.",
-      Sips: "Unsweetened sparkling and flavored water.",
+      Sips: "A sugar-free electrolyte drink mix and a caffeine-free tea. Light to ship, easy to carry.",
       Treat: "One dark-chocolate treat, sodium checked like everything else.",
     },
     screening: [
