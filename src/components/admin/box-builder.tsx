@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { fmt$, landedCost } from "@/lib/admin/costing";
 import { canBuild, daysUntil, optimize } from "@/lib/admin/optimizer";
 import { estimatePostage, type PostageSample } from "@/lib/admin/postage";
-import { checkLineup, fitFor, isReady, packedWeightOz, shipsUnderPolicy, type Pick } from "@/lib/admin/rules";
+import { checkLineup, eligibleFor, isReady, packedWeightOz, type Pick } from "@/lib/admin/rules";
 import { BOX_LABEL, OBJECTIVES, OBJECTIVE_LABEL, type BoxRules, type BoxSlug, type Objective, type Settings, type Snack } from "@/lib/admin/types";
 import { avoidConflict } from "@/lib/admin/avoid";
 import { cn } from "@/lib/utils";
@@ -74,6 +74,7 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
   });
   const build = canBuild(picks);
   const ready = picks.length > 0 && isReady(checks);
+  const unapproved = picks.filter((p) => p.snack.status !== "Approved").length;
   const cats = mix.map((c) => c.name);
 
   function startCustom() {
@@ -126,13 +127,12 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
     return [...snacks]
       .filter((s) => s.status !== "Retired")
       .map((s) => {
-        const fit = fitFor(slug, s);
-        const ships = shipsUnderPolicy(s, settings.policy);
-        const why = !fit.fits ? fit.reasons[0] : !ships.ok ? ships.reason : s.status === "Rejected" ? "Rejected" : (conflict.get(s.id) ?? null);
+        const fit = eligibleFor(slug, s, buildRules, settings.policy, s.rejectReason);
+        const why = !fit.fits ? fit.reasons[0] : (conflict.get(s.id) ?? null);
         return { s, why };
       })
       .sort((a, b) => Number(Boolean(a.why)) - Number(Boolean(b.why)) || (a.s.unitCostCents ?? 1e9) - (b.s.unitCostCents ?? 1e9));
-  }, [snacks, slug, settings.policy, conflict]);
+  }, [snacks, slug, buildRules, settings.policy, conflict]);
 
   const failing = checks.filter((c) => !c.pass && c.level !== "info");
 
@@ -238,11 +238,16 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
               {BOX_LABEL[slug]} lineup · {picks.length}/{rules.total}
             </p>
             <Badge tone={ready ? "good" : "bad"}>{ready ? "READY" : `FIX · ${failing.filter((c) => c.level === "block").length} failing`}</Badge>
+            {ready && unapproved > 0 && (
+              <Badge tone="warn" title="Packing is blocked until every pick is clinician-approved and package-verified.">
+                {`PROVISIONAL · ${unapproved} not clinician-approved`}
+              </Badge>
+            )}
             <span className="ml-auto text-xs text-muted-foreground">{source === "manual" ? "Edited by hand" : `Suggested: ${OBJECTIVE_LABEL[source]}`}</span>
           </div>
           <ul className="divide-y">
             {picks.map((p, i) => {
-              const fit = fitFor(slug, p.snack);
+              const fit = eligibleFor(slug, p.snack, buildRules, settings.policy, p.snack.rejectReason);
               const d = daysUntil(p.snack.earliestExpiry);
               return (
                 <li key={`${p.snack.id}-${i}`} className="grid gap-2 p-3 sm:grid-cols-[110px_1fr_auto] sm:items-center">
@@ -270,7 +275,7 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
                       <span>{p.snack.type}</span>
                       <span>· {p.snack.unit_wt_oz ?? "?"} oz</span>
                       {conflict.has(p.snack.id) && <Badge tone="bad">{conflict.get(p.snack.id)}</Badge>}
-                      {!fit.fits && <Badge tone="bad" title={fit.reasons.join("; ")}>doesn&apos;t fit</Badge>}
+                      {!fit.fits && <Badge tone="bad" title={fit.reasons.join("; ")}>{`not eligible: ${fit.reasons[0] ?? ""}`}</Badge>}
                       {p.snack.status !== "Approved" && <Badge tone="info">{p.snack.status}</Badge>}
                       {p.snack.onHand < runSize && <Badge tone={p.snack.onHand === 0 ? "bad" : "warn"}>{p.snack.onHand} on hand</Badge>}
                       {d !== null && d < settings.expiryTiersDays[2] && <Badge tone="orange">expires in {d} d</Badge>}

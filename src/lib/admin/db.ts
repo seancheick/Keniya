@@ -43,8 +43,12 @@ export type ProductRow = {
   price_checked_on: string | null;
   status: Status;
   reject_reason: string | null;
+  /** Clinician decision (Approved / Rejected). */
   reviewed_by: string | null;
   reviewed_at: string | null;
+  /** Pre-screen (status Pre-approved, or a pre-screen rejection). */
+  prescreened_by: string | null;
+  prescreened_at: string | null;
   sensory: string | null;
   notes: string | null;
   created_by: string | null;

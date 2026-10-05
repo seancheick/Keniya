@@ -104,15 +104,12 @@ export async function setProductStatus(_prev: FormState, fd: FormData): Promise<
   if (!parsed.success) return { error: "Invalid request" };
   const { id, status, reason } = parsed.data;
   if (status === "Rejected" && !reason) return { error: "Say why it's rejected (shown wherever it's offered)." };
+  const now = new Date().toISOString();
+  // Pre-approval is the pre-screen, not a clinical decision: keep the two audit trails apart.
+  const who = status === "Pre-approved" ? { prescreened_by: admin.name, prescreened_at: now } : { reviewed_by: admin.name, reviewed_at: now };
   const res = await db()
     .from("products")
-    .update({
-      status,
-      reject_reason: status === "Rejected" ? reason : null,
-      reviewed_by: admin.name,
-      reviewed_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+    .update({ status, reject_reason: status === "Rejected" ? reason : null, ...who, updated_at: now })
     .eq("id", id);
   if (res.error) return { error: res.error.message };
   refresh();

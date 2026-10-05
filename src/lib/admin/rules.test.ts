@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { gingerChews, popcorn, settings, snack } from "./__fixtures__/snacks";
-import { checkLineup, fitsBoxes, isReady, shipsUnderPolicy, type Pick } from "./rules";
+import { checkLineup, eligibleFor, fitsBoxes, isReady, packBlockers, shipsUnderPolicy, type Pick } from "./rules";
 import { DEFAULT_BOX_RULES } from "./types";
 
 describe("product fit (workbook v4 formulas)", () => {
-  it("popcorn: pregnancy ✓, carb ✓ via fiber-forward + portioned treat, heart ✓ via whole grain", () => {
+  it("popcorn: pregnancy ✓, carb ✓ via portioned treat (fiber alone isn't fiber-forward), heart ✓ via whole grain", () => {
     const f = fitsBoxes(popcorn());
     expect(f.pregnancy_comfort.fits).toBe(true);
-    expect(f.blood_sugar).toMatchObject({ fits: true, via: ["Fiber-forward", "Portioned treat"] });
+    expect(f.blood_sugar).toMatchObject({ fits: true, via: ["Portioned treat"] });
     expect(f.heart.via).toContain("Whole grain");
   });
 
@@ -58,6 +58,45 @@ describe("product fit (workbook v4 formulas)", () => {
     expect(shipsUnderPolicy(snack({ form: "Liquid" }), settings.policy).ok).toBe(false);
     expect(shipsUnderPolicy(snack({ unit_wt_oz: 4 }), settings.policy).reason).toMatch(/over the 3.5 oz/);
     expect(shipsUnderPolicy(snack({ unit_wt_oz: 3.2, form: "Puree" }), settings.policy).ok).toBe(true);
+  });
+});
+
+describe("final eligibility (qualifies + gates)", () => {
+  const policy = settings.policy;
+  it("blocks a high-sodium seed pack from Heart even though its roles qualify it", () => {
+    const seeds = snack({ roles: { NS: true, UF: true }, sodium_mg: 2142, sat_fat_g: 4.6, fiber_g: 13 });
+    expect(fitsBoxes(seeds).heart.fits).toBe(true); // qualifies
+    const e = eligibleFor("heart", seeds, DEFAULT_BOX_RULES.heart, policy);
+    expect(e.fits).toBe(false);
+    expect(e.reasons.join(" ")).toMatch(/2142 mg sodium \(max 230 mg\)/);
+    expect(e.reasons.join(" ")).toMatch(/4.6 g saturated fat \(max 4 g for nuts\/seeds\)/);
+  });
+  it("allows nut sat fat up to 4 g but holds others to 2 g, and requires sat fat for Heart", () => {
+    expect(eligibleFor("heart", snack({ roles: { NS: true }, sat_fat_g: 3 }), DEFAULT_BOX_RULES.heart, policy).fits).toBe(true);
+    expect(eligibleFor("heart", snack({ roles: { WG: true }, sat_fat_g: 3 }), DEFAULT_BOX_RULES.heart, policy).fits).toBe(false);
+    expect(eligibleFor("heart", snack({ roles: { WG: true }, sat_fat_g: null }), DEFAULT_BOX_RULES.heart, policy).reasons).toContain("Saturated fat not recorded");
+  });
+  it("caps Carb Conscious carbs and added sugar for every pick", () => {
+    const fruit = snack({ protein_g: 2, fiber_g: 4, carbs_g: 31, added_sugar_g: 0, roles: { MF: true } });
+    expect(eligibleFor("blood_sugar", fruit, DEFAULT_BOX_RULES.blood_sugar, policy).reasons).toContain("31 g carbs (max 20 g)");
+    expect(eligibleFor("blood_sugar", snack({ carbs_g: 12, added_sugar_g: 2 }), DEFAULT_BOX_RULES.blood_sugar, policy).fits).toBe(true);
+  });
+  it("rejected, liquid and multi-serve products are never eligible", () => {
+    const r = DEFAULT_BOX_RULES.blood_sugar;
+    expect(eligibleFor("blood_sugar", snack({ status: "Rejected" }), r, policy, "too salty").fits).toBe(false);
+    expect(eligibleFor("blood_sugar", snack({ form: "Liquid" }), r, policy).fits).toBe(false);
+    expect(eligibleFor("blood_sugar", snack({ pregnancy_checks: { P8: "FAIL" } }), r, policy).reasons).toContain("Multi-serve pack (P8)");
+  });
+});
+
+describe("pack gate", () => {
+  it("blocks packing until every pick is eligible, approved, has a UPC and a verified package", () => {
+    const ok = snack({ status: "Approved" });
+    const pre = snack({ status: "Pre-approved" });
+    const r = DEFAULT_BOX_RULES.blood_sugar;
+    expect(packBlockers("blood_sugar", [{ snack: ok, upc: "012", verifiedAt: "2026-10-05" }], r, settings.policy)).toEqual([]);
+    const out = packBlockers("blood_sugar", [{ snack: pre, upc: null, verifiedAt: null }], r, settings.policy);
+    expect(out[0]).toMatch(/Pre-approved, not clinician-approved, no UPC, package not verified/);
   });
 });
 

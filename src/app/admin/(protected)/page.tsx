@@ -4,9 +4,9 @@ import { Badge, Card, PageHeader, Stat, TextLink, expiryTone } from "@/component
 import { fmt$, fmtPct, shipmentProfit } from "@/lib/admin/costing";
 import { db, must } from "@/lib/admin/db";
 import { daysUntil } from "@/lib/admin/optimizer";
-import { blockingFailures, fitFor, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
+import { blockingFailures, eligibleFor, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
 import { loadAdminContext } from "@/lib/admin/summary";
-import { BOX_LABEL, BOX_SLUGS } from "@/lib/admin/types";
+import { BOX_LABEL, BOX_SLUGS, type BoxSlug } from "@/lib/admin/types";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -31,7 +31,9 @@ export default async function Dashboard() {
   ]);
   const ships = must(shipsRes, "shipments") as Ship[];
   const paid = must(presRes, "preorders") as { id: string }[];
-  const { catalog, settings, boxes } = ctx;
+  const { catalog, settings, boxes, rules } = ctx;
+  const provisional = (b: (typeof boxes)[BoxSlug]) => b.picks.some((p) => p.snack.status !== "Approved");
+  const eligible = (b: BoxSlug, s: (typeof catalog.snacks)[number]) => eligibleFor(b, s, rules[b], settings.policy, s.rejectReason).fits;
   const tiers = settings.expiryTiersDays;
 
   const withShipment = new Set(ships.map((s) => s.preorder_id));
@@ -76,7 +78,7 @@ export default async function Dashboard() {
     ["Approved", catalog.snacks.filter((s) => s.status === "Approved").length, "/admin/products?status=Approved"],
     ["Pre-approved (awaiting clinician)", catalog.snacks.filter((s) => s.status === "Pre-approved").length, "/admin/products?status=Pre-approved"],
     ["Candidates", catalog.snacks.filter((s) => s.status === "Candidate").length, "/admin/products?status=Candidate"],
-    ["Fit all three boxes", catalog.snacks.filter((s) => BOX_SLUGS.every((b) => fitFor(b, s).fits)).length, "/admin/products"],
+    ["Eligible for all three boxes", catalog.snacks.filter((s) => BOX_SLUGS.every((b) => eligible(b, s))).length, "/admin/products"],
   ] as const;
 
   return (
@@ -101,8 +103,8 @@ export default async function Dashboard() {
               <Card className="h-full hover:border-primary">
                 <div className="mb-3 flex items-center gap-2">
                   <p className="font-display text-lg">{BOX_LABEL[slug]}</p>
-                  <Badge tone={b.ready ? "good" : "bad"} className="ml-auto">
-                    {!b.lineup ? "No lineup" : b.ready ? "READY ✓" : "FIX ⚠"}
+                  <Badge tone={b.ready ? (provisional(b) ? "warn" : "good") : "bad"} className="ml-auto">
+                    {!b.lineup ? "No lineup" : !b.ready ? "FIX ⚠" : provisional(b) ? "READY · PROVISIONAL" : "READY ✓"}
                   </Badge>
                 </div>
                 {b.cost ? (
@@ -134,7 +136,7 @@ export default async function Dashboard() {
               {expiring.slice(0, 6).map(({ l, d, s }) => {
                 const tone = expiryTone(d, tiers);
                 const usedBy = BOX_SLUGS.filter((b) => boxes[b].picks.some((p) => p.snack.id === s.id));
-                const fits = BOX_SLUGS.filter((b) => fitFor(b, s).fits);
+                const fits = BOX_SLUGS.filter((b) => eligible(b, s));
                 const target = usedBy[0] ?? fits[0];
                 return (
                   <li key={l.id} className="flex flex-wrap items-center gap-2">

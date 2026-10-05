@@ -20,7 +20,8 @@ function widthFor(header: string): number {
   if (header === CLINICIAN_VERDICT) return 18;
   if (/: why$|Nutrition source|Allergens/.test(header)) return 34;
   if (/^P\d/.test(header)) return 14;
-  if (/^(Fits |Role: )/.test(header)) return 11;
+  if (/^(Eligible |Role: )/.test(header)) return 11;
+  if (/nutrition rules alone$/.test(header)) return 13;
   if (/^(Code|Calories|Type|Form)$|\((g|mg|oz)\)/.test(header)) return 9;
   return 15;
 }
@@ -33,7 +34,8 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[]): Promise
   const ws = wb.addWorksheet("Review", { views: [{ state: "frozen", xSplit: 2, ySplit: 1 }] });
   const headers = Object.keys(rows[0] ?? {});
   ws.columns = headers.map((h) => ({ header: h, key: h, width: widthFor(h) }));
-  for (const r of rows) ws.addRow(headers.map((h) => (r[h] === null || r[h] === undefined ? "" : r[h])));
+  // Blanks stay truly empty: an "" cell is stored as a shared string, which some viewers show as its index.
+  for (const r of rows) ws.addRow(headers.map((h) => (r[h] === null || r[h] === undefined || r[h] === "" ? null : r[h])));
 
   const head = ws.getRow(1);
   head.height = 75;
@@ -50,7 +52,7 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[]): Promise
     if (STATUS_FILL[status]) row.getCell(col("Status")).fill = fill(STATUS_FILL[status]);
     for (const h of [CLINICIAN_VERDICT, CLINICIAN_COMMENTS]) row.getCell(col(h)).fill = fill(INPUT_FILL);
     row.eachCell((c) => {
-      if (c.value === "FAIL" || (c.value === "no" && String(ws.getRow(1).getCell(c.col).value).startsWith("Fits "))) c.font = { color: { argb: "FFB91C1C" }, bold: true };
+      if (c.value === "FAIL" || (c.value === "no" && String(ws.getRow(1).getCell(c.col).value).startsWith("Eligible "))) c.font = { color: { argb: "FFB91C1C" }, bold: true };
     });
   });
   ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
@@ -63,7 +65,7 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[]): Promise
     r.getCell(1).fill = fill(HEADER_FILL);
   };
   const line = (a: string, b: string, c = "") => {
-    const r = lg.addRow([a, b, c]);
+    const r = lg.addRow(c ? [a, b, c] : [a, b]);
     r.alignment = { wrapText: true, vertical: "top" };
   };
   section("How to review");
@@ -85,7 +87,12 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[]): Promise
   line("Pregnancy fit", "Nutrition complete + a caffeine value present + all 10 blocking checks PASS + not Rejected. Blank means not checked yet.");
   lg.addRow([]);
   section("Other columns");
-  line("Fits <box> / why", "Computed from the label numbers and the box rules; 'why' gives the qualifying pathway or the reason it doesn't fit.");
+  line("Eligible <box>", "Final answer: the nutrition rules qualify it AND it passes the box's hard limits, the shipping policy (no liquids, max item weight), single-serve (P8) and status (not Rejected/Retired).");
+  line("<box>: why", "If eligible: the qualifying pathway. If not: every reason, nutrition rule or hard limit (e.g. '2142 mg sodium (max 230 mg)').");
+  line("Nutrition rules alone", "Whether the label numbers and roles qualify it before the hard limits and status; shown for transparency only.");
+  line("Hard limits", "Carb Conscious: ≤20 g total carbs and ≤5 g added sugar per pack. Heart: ≤230 mg sodium and ≤2 g saturated fat per pack (≤4 g when the fat comes from nuts/seeds). Founder defaults 2026-10-05; clinician to confirm or change.");
+  line("Pre-screened by/on", "Who ran the source and ingredient pre-screen. Not a clinical decision.");
+  line("Clinician decision by/on", "Who approved or rejected it clinically. Blank until the clinician decides.");
   line("Free-from columns", "yes = free from it; no = contains it or may contain it (cross-contact counts as 'no'); unknown = not recorded.");
   line("Nutrition source", "Where the numbers come from (USDA FoodData Central label data, manufacturer site, NIH DSLD, Open Food Facts).");
   line("Verified on (package in hand)", "Blank until someone checks the actual package; the pre-screen used published label data only.");

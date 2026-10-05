@@ -17,13 +17,14 @@ export default async function BoxesPage() {
         {BOX_SLUGS.map((slug) => {
           const b = boxes[slug];
           const fails = blockingFailures(b.checks);
+          const provisional = b.picks.filter((p) => p.snack.status !== "Approved").length;
           return (
             <Link key={slug} href={`/admin/boxes/${slug}`} className="block">
               <Card className="h-full transition-colors hover:border-primary">
                 <div className="mb-3 flex items-center gap-2">
                   <p className="font-display text-xl">{BOX_LABEL[slug]}</p>
-                  <Badge tone={b.ready ? "good" : "bad"} className="ml-auto">
-                    {b.lineup ? (b.ready ? "READY ✓" : `FIX · ${fails.length}`) : "No lineup"}
+                  <Badge tone={b.ready ? (provisional ? "warn" : "good") : "bad"} className="ml-auto" title={provisional ? `${provisional} pick(s) not clinician-approved: packing is blocked until they are` : undefined}>
+                    {b.lineup ? (b.ready ? (provisional ? "READY · PROVISIONAL" : "READY ✓") : `FIX · ${fails.length}`) : "No lineup"}
                   </Badge>
                 </div>
                 {b.cost ? (

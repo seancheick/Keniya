@@ -6,8 +6,8 @@ import { PlannedItems } from "@/components/admin/planned-items";
 import { PrintButton } from "@/components/admin/print-button";
 import { Badge, Card, PageHeader, Table, type Tone } from "@/components/admin/ui";
 import { fmt$, fmtPct, shipmentProfit } from "@/lib/admin/costing";
-import { db, loadCatalog, must } from "@/lib/admin/db";
-import { fitFor } from "@/lib/admin/rules";
+import { db, loadBoxRules, loadCatalog, loadSettings, must } from "@/lib/admin/db";
+import { eligibleFor } from "@/lib/admin/rules";
 import { BOX_LABEL, isBoxSlug, type BoxSlug } from "@/lib/admin/types";
 
 export const metadata: Metadata = { title: "Shipment" };
@@ -21,10 +21,12 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
   const res = await db().from("shipments").select("*").eq("id", id).maybeSingle();
   if (!res.data) notFound();
   const s = res.data;
-  const [catalog, itemsRes, preRes] = await Promise.all([
+  const [catalog, itemsRes, preRes, settings, rules] = await Promise.all([
     loadCatalog(),
     db().from("shipment_items").select("id, qty, unit_cost_cents, lot_id, product_id, purchase_lots(lot_code, expires_on)").eq("shipment_id", id),
     s.preorder_id ? db().from("preorders").select("avoid, craving, created_at, email").eq("id", s.preorder_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    loadSettings(),
+    loadBoxRules(),
   ]);
   const items = must(itemsRes, "items") as unknown as Item[];
   const pre = preRes.data as { avoid: string | null; craving: string | null; created_at: string; email: string } | null;
@@ -34,7 +36,7 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
   const addr = s.ship_to?.address as Record<string, string | null> | undefined;
   const options = catalog.snacks
     .filter((x) => x.status !== "Retired")
-    .map((x) => ({ id: x.id, label: `${x.name} · ${x.onHand} on hand`, ok: slug ? fitFor(slug, x).fits && x.status !== "Rejected" : true }))
+    .map((x) => ({ id: x.id, label: `${x.name} · ${x.onHand} on hand`, ok: slug ? eligibleFor(slug, x, rules[slug], settings.policy, x.rejectReason).fits : true }))
     .sort((a, b) => Number(b.ok) - Number(a.ok) || a.label.localeCompare(b.label));
 
   return (

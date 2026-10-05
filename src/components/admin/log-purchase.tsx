@@ -13,9 +13,9 @@ import { BarcodeScanner, sameBarcode } from "@/components/admin/barcode-scanner"
 import { compressImage } from "@/components/admin/compress-image";
 import { Badge, Field, FitReasons, fieldClass } from "@/components/admin/ui";
 import { fmt$ } from "@/lib/admin/costing";
-import { fitsBoxes, type BoxFit } from "@/lib/admin/rules";
+import { eligibleBoxes, type BoxFit } from "@/lib/admin/rules";
 import { ruleInputFromForm } from "@/lib/admin/forms";
-import { CATEGORIES, FORMS, PRODUCT_TYPES, type BoxSlug } from "@/lib/admin/types";
+import { CATEGORIES, FORMS, PRODUCT_TYPES, type BoxRules, type BoxSlug, type Settings } from "@/lib/admin/types";
 
 export type PurchaseProduct = {
   id: string;
@@ -34,7 +34,19 @@ export type PurchaseProduct = {
 
 const today = () => new Date().toLocaleDateString("en-CA");
 
-export function LogPurchase({ products, vendors, initialId }: { products: PurchaseProduct[]; vendors: string[]; initialId?: string }) {
+export function LogPurchase({
+  products,
+  vendors,
+  initialId,
+  rules,
+  policy,
+}: {
+  products: PurchaseProduct[];
+  vendors: string[];
+  initialId?: string;
+  rules: Record<BoxSlug, BoxRules>;
+  policy: Settings["policy"];
+}) {
   const [list, setList] = useState(products);
   const [selected, setSelected] = useState<PurchaseProduct | null>(() => products.find((p) => p.id === initialId) ?? null);
   const [query, setQuery] = useState("");
@@ -220,7 +232,7 @@ export function LogPurchase({ products, vendors, initialId }: { products: Purcha
                 onHand: 0,
                 lotAvgCents: null,
                 unitCostCents: null,
-                fits: fitsBoxes(ruleInputFromForm(fd)),
+                fits: eligibleBoxes(ruleInputFromForm(fd), rules, policy),
                 usedIn: [],
               };
               setList((l) => [...l, p]);

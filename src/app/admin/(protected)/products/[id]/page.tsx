@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { fmt$ } from "@/lib/admin/costing";
 import {
   db,
+  loadBoxRules,
   loadSettings,
   loadVendors,
   must,
@@ -19,7 +20,7 @@ import {
   type VersionRow,
 } from "@/lib/admin/db";
 import { daysUntil } from "@/lib/admin/optimizer";
-import { fitsBoxes, shipsUnderPolicy } from "@/lib/admin/rules";
+import { eligibleBoxes, shipsUnderPolicy } from "@/lib/admin/rules";
 import { BOX_LABEL, NUTRIENT_KEYS, PREGNANCY_CHECK_KEYS, ROLE_KEYS, ROLE_LABEL, type BoxSlug } from "@/lib/admin/types";
 
 export const metadata: Metadata = { title: "Product" };
@@ -44,7 +45,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   if (!pr.data) notFound();
   const p = pr.data as ProductRow;
 
-  const [versionsRes, lotsRes, pricesRes, photosRes, usageRes, shippedRes, vendors, settings] = await Promise.all([
+  const [versionsRes, lotsRes, pricesRes, photosRes, usageRes, shippedRes, vendors, settings, rules] = await Promise.all([
     db().from("product_versions").select("*").eq("product_id", id).order("version", { ascending: false }),
     db().from("purchase_lots").select("*").eq("product_id", id).order("purchased_at", { ascending: false }),
     db().from("vendor_prices").select("*").eq("product_id", id).order("seen_at", { ascending: false }).limit(50),
@@ -53,6 +54,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
     db().from("shipment_items").select("qty").eq("product_id", id),
     loadVendors(),
     loadSettings(),
+    loadBoxRules(),
   ]);
   const versions = must(versionsRes, "versions") as VersionRow[];
   const lots = (must(lotsRes, "lots") as LotRow[]).map((l) => ({ ...l, unit_cost_cents: Number(l.unit_cost_cents) }));
@@ -64,7 +66,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const shippedUnits = (must(shippedRes, "shipped") as { qty: number }[]).reduce((s, r) => s + r.qty, 0);
   const current = versions.find((v) => v.is_current);
   const snack = toSnack(p, current, lots, prices[0]?.unit_cost_cents ?? null);
-  const fits = fitsBoxes(snack, p.reject_reason);
+  const fits = eligibleBoxes(snack, rules, settings.policy, p.reject_reason);
   const ships = shipsUnderPolicy(snack, settings.policy);
   const urls = await signedUrls(photos.map((x) => x.path));
   const vendorName = (vid: string | null) => vendors.find((v) => v.id === vid)?.name ?? "—";
@@ -104,7 +106,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             {p.status === "Rejected" && <p className="mt-2 text-sm text-red-700">Rejected: {p.reject_reason}</p>}
             <div className="mt-4 border-t pt-3">
               <p className="mb-2 text-xs text-muted-foreground">
-                Review{p.reviewed_by ? ` · last by ${p.reviewed_by} on ${date(p.reviewed_at)}` : ""}
+                Review
+                {p.prescreened_by ? ` · pre-screened by ${p.prescreened_by} on ${date(p.prescreened_at)}` : ""}
+                {p.reviewed_by ? ` · clinician decision by ${p.reviewed_by} on ${date(p.reviewed_at)}` : p.status === "Approved" ? " · approved in the workbook (approver not recorded)" : ""}
               </p>
               <StatusControls id={id} status={p.status} />
             </div>

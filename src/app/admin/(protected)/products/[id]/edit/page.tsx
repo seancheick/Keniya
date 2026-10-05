@@ -3,17 +3,18 @@ import { notFound } from "next/navigation";
 import { updateProduct } from "@/actions/admin/products";
 import { ProductForm } from "@/components/admin/product-form";
 import { PageHeader } from "@/components/admin/ui";
-import { db, loadSettings, loadVendors, type ProductRow, type VersionRow } from "@/lib/admin/db";
+import { db, loadBoxRules, loadSettings, loadVendors, type ProductRow, type VersionRow } from "@/lib/admin/db";
 
 export const metadata: Metadata = { title: "Edit product" };
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [p, v, vendors, settings] = await Promise.all([
+  const [p, v, vendors, settings, rules] = await Promise.all([
     db().from("products").select("*").eq("id", id).maybeSingle(),
     db().from("product_versions").select("*").eq("product_id", id).eq("is_current", true).maybeSingle(),
     loadVendors(),
     loadSettings(),
+    loadBoxRules(),
   ]);
   if (!p.data) notFound();
   const product = p.data as ProductRow;
@@ -27,6 +28,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         vendorName={vendors.find((x) => x.id === product.default_vendor_id)?.name}
         vendors={vendors.map((x) => x.name)}
         policy={settings.policy}
+        rules={rules}
         submitLabel="Save changes"
         editing
       />

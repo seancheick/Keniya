@@ -2,12 +2,12 @@
 // by an objective (margin, expiring stock, overstock, customer favorites, or balanced).
 //
 // Method (deterministic, ~100 products → milliseconds):
-//   1. candidates = qualifies for the box, ships, not rejected/retired, in a box category
+//   1. candidates = eligible for the box (qualifies + gates + ships), not rejected/retired, in a box category
 //   2. greedy: fill each category's minimum with its best-scoring candidates
 //   3. greedy: fill up to the total within category maximums
 //   4. repair: single swaps that most reduce the total check deficit
 //   5. improve: single swaps that raise the score without breaking anything
-import { checkLineup, fitFor, shipsUnderPolicy, type Check, type Pick } from "./rules";
+import { checkLineup, eligibleFor, type Check, type Pick } from "./rules";
 import type { BoxRules, BoxSlug, Objective, Settings, Snack } from "./types";
 
 export type OptimizeInput = {
@@ -88,8 +88,7 @@ export function optimize(input: OptimizeInput): OptimizeResult {
       s.status !== "Rejected" &&
       s.status !== "Retired" &&
       (input.requireStock === false || s.onHand > 0) &&
-      fitFor(slug, s).fits &&
-      shipsUnderPolicy(s, settings.policy).ok &&
+      eligibleFor(slug, s, rules, settings.policy).fits &&
       (catNames.length === 0 || s.categories.some((c) => catNames.includes(c))),
   );
   const score = scorer(input.objective, pool, input.runSize ?? 1, today);

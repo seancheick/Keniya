@@ -1,6 +1,6 @@
 // Clinician review sheet: one row per product with the label data and every rule decision,
 // so a reviewer can audit box fit without the admin. No costs or vendors (not theirs to audit).
-import { fitFor } from "./rules";
+import { fitFor, type BoxFit } from "./rules";
 import {
   BOX_LABEL,
   BOX_SLUGS,
@@ -23,6 +23,8 @@ export type ClinicalExtra = {
   verifiedBy: string | null;
   reviewedBy: string | null;
   reviewedAt: string | null;
+  prescreenedBy?: string | null;
+  prescreenedAt?: string | null;
   notes: string | null;
 };
 
@@ -45,6 +47,8 @@ export function clinicalReviewRows(
   snacks: Snack[],
   extra: (id: string) => ClinicalExtra | undefined,
   inLineup: (id: string) => BoxSlug[],
+  /** Final eligibility (qualifies + hard limits + policy + status). Defaults to the nutrition rules alone. */
+  eligible: (slug: BoxSlug, s: Snack) => BoxFit = (slug, s) => fitFor(slug, s, s.rejectReason),
 ): Record<string, unknown>[] {
   return snacks.map((s) => {
     const x = extra(s.id);
@@ -61,9 +65,10 @@ export function clinicalReviewRows(
       "In active box lineup": inLineup(s.id).map((b) => BOX_LABEL[b]).join("; "),
     };
     for (const b of BOX_SLUGS) {
-      const f = fitFor(b, s, s.rejectReason);
-      row[`Fits ${BOX_LABEL[b]}`] = f.fits ? "yes" : "no";
-      row[`${BOX_LABEL[b]}: why`] = f.fits ? f.via.join("; ") : f.reasons.join("; ");
+      const e = eligible(b, s);
+      row[`Eligible ${BOX_LABEL[b]}`] = e.fits ? "yes" : "no";
+      row[`${BOX_LABEL[b]}: why`] = e.fits ? e.via.join("; ") : e.reasons.join("; ");
+      row[`${BOX_LABEL[b]} nutrition rules alone`] = fitFor(b, s, s.rejectReason).fits ? "qualify" : "don't qualify";
     }
     for (const k of PREGNANCY_CHECK_KEYS) row[pCheckHeader(k)] = s.pregnancy_checks[k] ?? "";
     Object.assign(row, {
@@ -94,8 +99,10 @@ export function clinicalReviewRows(
       "Nutrition verified on (package in hand)": day(x?.verifiedAt ?? null),
       "Nutrition verified by": x?.verifiedBy,
       "Reject reason": s.rejectReason,
-      "Reviewed by": x?.reviewedBy,
-      "Reviewed on": day(x?.reviewedAt ?? null),
+      "Pre-screened by": x?.prescreenedBy,
+      "Pre-screened on": day(x?.prescreenedAt ?? null),
+      "Clinician decision by": x?.reviewedBy ?? (s.status === "Approved" ? "Approved in workbook (approver not recorded)" : null),
+      "Clinician decision on": day(x?.reviewedAt ?? null),
       UPC: x?.upc,
       "Other notes": notes.other,
     });

@@ -39,7 +39,9 @@ export function shipsUnderPolicy(p: RuleInput, policy: Settings["policy"]): { ok
 
 // Carb Conscious pathways (any one qualifies).
 export const ccProteinForward = (p: RuleInput) => p.protein_g! >= 5 && p.carbs_g! <= 25;
-export const ccFiberForward = (p: RuleInput) => p.fiber_g! >= 3 && p.added_sugar_g! <= 5;
+// Fiber alone isn't enough (dried fruit has 3–4 g): pair it with protein or nut/seed fat.
+export const ccFiberForward = (p: RuleInput) =>
+  p.fiber_g! >= 3 && p.added_sugar_g! <= 5 && (p.protein_g! >= 3 || p.roles.NS === true || p.roles.UF === true);
 export const ccWholeFood = (p: RuleInput) => p.roles.WHOLE_FOOD === true;
 export const ccPortionedTreat = (p: RuleInput) =>
   p.type !== "Beverage" && p.calories! <= 200 && p.added_sugar_g! <= 8 && p.carbs_g! <= 30;
@@ -149,6 +151,73 @@ export function fitFor(slug: BoxSlug, p: RuleInput, rejectReason?: string | null
   return hit[slug]!;
 }
 
+// ---------------------------------------------------------------- final eligibility
+/**
+ * Reasons a product can't go in this box even if its nutrition qualifies: status, shipping
+ * policy, multi-serve packs, and the box's hard limits (checked before any pathway counts).
+ */
+export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, policy: Settings["policy"]): string[] {
+  const out: string[] = [];
+  if (p.status === "Retired") out.push("Retired");
+  const ships = shipsUnderPolicy(p, policy);
+  if (!ships.ok) out.push(ships.reason!);
+  if (slug !== "pregnancy_comfort" && (p.pregnancy_checks.P8 ?? "").toUpperCase() === "FAIL") out.push("Multi-serve pack (P8)");
+  const over = (v: number | null, max: number | null, what: string, unit: string) => {
+    if (max !== null && num(v) && v > max) out.push(`${v} ${unit} ${what} (max ${max} ${unit})`);
+  };
+  over(p.carbs_g, rules.carbsMax, "carbs", "g");
+  over(p.added_sugar_g, rules.addedSugarMax, "added sugar", "g");
+  over(p.sodium_mg, rules.sodiumMax, "sodium", "mg");
+  if (rules.satFatMax !== null) {
+    const nutFat = p.roles.NS === true || p.roles.UF === true;
+    const max = nutFat && rules.satFatNutMax !== null ? rules.satFatNutMax : rules.satFatMax;
+    if (!num(p.sat_fat_g)) out.push("Saturated fat not recorded");
+    else if (p.sat_fat_g > max) out.push(`${p.sat_fat_g} g saturated fat (max ${max} g${nutFat ? " for nuts/seeds" : ""})`);
+  }
+  return out;
+}
+
+/** Final answer for a box: the nutrition rules qualify it AND it passes every gate. */
+export function eligibleFor(slug: BoxSlug, p: RuleInput, rules: BoxRules, policy: Settings["policy"], rejectReason?: string | null): BoxFit {
+  const q = fitFor(slug, p, rejectReason);
+  const gates = gateFailures(slug, p, rules, policy);
+  return { box: slug, fits: q.fits && gates.length === 0, via: q.via, reasons: [...q.reasons, ...gates] };
+}
+
+export function eligibleBoxes(
+  p: RuleInput,
+  rules: Record<BoxSlug, BoxRules>,
+  policy: Settings["policy"],
+  rejectReason?: string | null,
+): Record<BoxSlug, BoxFit> {
+  return {
+    pregnancy_comfort: eligibleFor("pregnancy_comfort", p, rules.pregnancy_comfort, policy, rejectReason),
+    blood_sugar: eligibleFor("blood_sugar", p, rules.blood_sugar, policy, rejectReason),
+    heart: eligibleFor("heart", p, rules.heart, policy, rejectReason),
+  };
+}
+
+/**
+ * Launch gate before anything is packed: each pick must be eligible, clinician-approved and
+ * package-verified (UPC on file and the label checked with the package in hand).
+ */
+export function packBlockers(
+  slug: BoxSlug,
+  items: { snack: Snack; upc: string | null; verifiedAt: string | null }[],
+  rules: BoxRules,
+  policy: Settings["policy"],
+): string[] {
+  return items.flatMap(({ snack, upc, verifiedAt }) => {
+    const why: string[] = [];
+    const e = eligibleFor(slug, snack, rules, policy, snack.rejectReason);
+    if (!e.fits) why.push(`not eligible (${e.reasons[0]})`);
+    if (snack.status !== "Approved") why.push(`${snack.status}, not clinician-approved`);
+    if (!upc) why.push("no UPC");
+    if (!verifiedAt) why.push("package not verified");
+    return why.length ? [`${snack.code} ${snack.name}: ${why.join(", ")}`] : [];
+  });
+}
+
 // ---------------------------------------------------------------- lineup checks
 export type Pick = { snack: Snack; category: string | null };
 
@@ -237,7 +306,7 @@ export function checkLineup(
   const weight = packedWeightOz(picks, packagingOz);
   checks.push(check("weight", "Packed weight", Math.round(weight * 10) / 10, { max: settings.policy.maxBoxOz }, "block", " oz"));
   checks.push(
-    check("fit", `Picks that don't qualify for ${BOX_LABEL[slug]}`, count((x) => !fitFor(slug, x).fits), { max: 0 }),
+    check("fit", `Picks not eligible for ${BOX_LABEL[slug]}`, count((x) => !eligibleFor(slug, x, rules, settings.policy).fits), { max: 0 }),
   );
   checks.push(check("approved", "Picks not yet approved (clinical review)", count((x) => x.status !== "Approved"), { max: 0 }, "warn"));
   checks.push(

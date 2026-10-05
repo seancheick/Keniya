@@ -3,6 +3,7 @@ import { db, must } from "@/lib/admin/db";
 import { clinicalReviewRows } from "@/lib/admin/clinical";
 import { clinicalWorkbook } from "@/lib/admin/clinical-xlsx";
 import { toCsv } from "@/lib/admin/recall";
+import { eligibleFor } from "@/lib/admin/rules";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_SLUGS } from "@/lib/admin/types";
 
@@ -61,10 +62,13 @@ async function clinicalReview() {
         verifiedBy: v?.verified_by ?? null,
         reviewedBy: p.reviewed_by,
         reviewedAt: p.reviewed_at,
+        prescreenedBy: p.prescreened_by,
+        prescreenedAt: p.prescreened_at,
         notes: p.notes,
       };
     },
     (id) => BOX_SLUGS.filter((b) => ctx.boxes[b].picks.some((x) => x.snack.id === id)),
+    (slug, s) => eligibleFor(slug, s, ctx.rules[slug], ctx.settings.policy, s.rejectReason),
   );
 }
 

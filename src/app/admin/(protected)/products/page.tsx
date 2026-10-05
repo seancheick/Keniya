@@ -4,8 +4,8 @@ import { Download, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Card, Empty, FitBadges, PageHeader, StatusBadge, Table, fieldClass } from "@/components/admin/ui";
 import { fmt$ } from "@/lib/admin/costing";
-import { loadCatalog, loadSettings } from "@/lib/admin/db";
-import { fitsBoxes, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
+import { loadBoxRules, loadCatalog, loadSettings } from "@/lib/admin/db";
+import { eligibleBoxes, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
 import { BOX_LABEL, BOX_SLUGS, CATEGORIES, STATUSES, isBoxSlug } from "@/lib/admin/types";
 
 export const metadata: Metadata = { title: "Products" };
@@ -14,12 +14,12 @@ type SP = { q?: string; status?: string; box?: string; cat?: string; issue?: str
 
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
-  const [{ snacks, products }, settings] = await Promise.all([loadCatalog(), loadSettings()]);
+  const [{ snacks, products }, settings, rules] = await Promise.all([loadCatalog(), loadSettings(), loadBoxRules()]);
   const productBy = new Map(products.map((p) => [p.id, p]));
   const q = sp.q?.trim().toLowerCase() ?? "";
 
   const rows = snacks
-    .map((s) => ({ s, p: productBy.get(s.id)!, fits: fitsBoxes(s, s.rejectReason) }))
+    .map((s) => ({ s, p: productBy.get(s.id)!, fits: eligibleBoxes(s, rules, settings.policy, s.rejectReason) }))
     .filter(({ s, p, fits }) => {
       if (q && !`${s.code} ${s.name} ${s.brand ?? ""} ${p.upc ?? ""}`.toLowerCase().includes(q)) return false;
       if (sp.status && s.status !== sp.status) return false;
@@ -37,7 +37,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     <>
       <PageHeader
         title="Products"
-        description={`${snacks.length} snacks in the library. Box fit is computed from nutrition and the pregnancy checks; hover a box chip for the reason.`}
+        description={`${snacks.length} snacks in the library. A box chip means eligible: the nutrition rules qualify it and it passes the box's hard limits, shipping policy and status. Hover a chip for the reason.`}
         actions={
           <div className="flex gap-2">
             <Button asChild variant="outline" title="Excel file of every snack: status, pre-screen finding, box fit, P1–P9 checks, nutrition and allergens, columns for the clinician's verdict, and a Legend sheet. No costs.">

@@ -228,6 +228,13 @@ export const boxRulesSchema = z.object({
   highSodiumMax: z.number().int().min(0).nullable(),
   /** Heart: controlled treats. */
   treatMax: z.number().int().min(0).nullable(),
+  // Hard limits every pick must meet before any pathway counts (null = no limit).
+  carbsMax: z.number().min(0).nullable().default(null),
+  addedSugarMax: z.number().min(0).nullable().default(null),
+  sodiumMax: z.number().min(0).nullable().default(null),
+  satFatMax: z.number().min(0).nullable().default(null),
+  /** Sat-fat limit for nut/seed or unsaturated-fat picks (fat that comes from nuts and seeds). */
+  satFatNutMax: z.number().min(0).nullable().default(null),
 });
 export type BoxRules = z.infer<typeof boxRulesSchema>;
 
@@ -241,6 +248,11 @@ const none = {
   fiberMin: null,
   highSodiumMax: null,
   treatMax: null,
+  carbsMax: null,
+  addedSugarMax: null,
+  sodiumMax: null,
+  satFatMax: null,
+  satFatNutMax: null,
 };
 
 /** Starting rules (workbook v4 + v3.1 proposals). Editable on the Boxes tab. */
@@ -271,6 +283,9 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     ],
     proteinOrFiberMin: 5,
     wholeFoodMin: 2,
+    // Founder decision 2026-10-05 (clinician to confirm): every pick ≤20 g carbs, ≤5 g added sugar.
+    carbsMax: 20,
+    addedSugarMax: 5,
   },
   heart: {
     ...none,
@@ -286,6 +301,11 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     fiberMin: 3,
     highSodiumMax: 2,
     treatMax: 2,
+    // Founder decision 2026-10-05 (clinician to confirm): FDA "healthy" sodium (10% DV);
+    // sat fat ≤2 g, or ≤4 g when the fat comes from nuts/seeds.
+    sodiumMax: 230,
+    satFatMax: 2,
+    satFatNutMax: 4,
   },
 };
 

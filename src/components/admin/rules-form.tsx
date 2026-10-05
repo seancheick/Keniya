@@ -15,12 +15,20 @@ const SIZE: [key: keyof BoxRules, label: string, hint: string][] = [
   ["beverageMax", "Drinks: at most", "Drink mixes and tea"],
 ];
 const HEALTH: [key: keyof BoxRules, label: string, hint: string][] = [
-  ["proteinOrFiberMin", "Protein or fiber snacks: at least", "5 g+ protein with ≤25 g carbs, or 3 g+ fiber with ≤5 g added sugar"],
+  ["proteinOrFiberMin", "Protein or fiber snacks: at least", "5 g+ protein with ≤25 g carbs, or 3 g+ fiber with ≤5 g added sugar plus 3 g+ protein or nut/seed fat"],
   ["wholeFoodMin", "Whole-food snacks: at least", "Nuts, seeds, cheese, jerky and similar"],
   ["nutSeedMin", "Nut, seed or healthy-fat snacks: at least", "Marked nut/seed or unsaturated fat"],
   ["fiberMin", "Fiber snacks (3 g+): at least", "3 g or more fiber"],
   ["highSodiumMax", "Salty snacks (over 300 mg sodium): at most", "Keeps the box lower in salt"],
   ["treatMax", "Treats: at most", "Products marked as a controlled treat"],
+];
+// Checked on every pick before any pathway counts; a pick over a limit isn't eligible.
+const GATES: [key: keyof BoxRules, label: string, hint: string][] = [
+  ["carbsMax", "Total carbs: at most (g)", "Per pack"],
+  ["addedSugarMax", "Added sugar: at most (g)", "Per pack"],
+  ["sodiumMax", "Sodium: at most (mg)", "Per pack"],
+  ["satFatMax", "Saturated fat: at most (g)", "Per pack; blank sat fat counts as not eligible when set"],
+  ["satFatNutMax", "Saturated fat from nuts/seeds: at most (g)", "For nut/seed or healthy-fat picks"],
 ];
 
 export function RulesForm({ slug, rules }: { slug: BoxSlug; rules: BoxRules }) {
@@ -79,6 +87,7 @@ export function RulesForm({ slug, rules }: { slug: BoxSlug; rules: BoxRules }) {
           ))}
         </datalist>
       </div>
+      <Limits title="Hard limits (every pick)" note="A snack over any of these can't go in this box, whatever else it qualifies for. Leave empty for no limit." items={GATES} rules={rules} />
       <Limits title="Snack sizes" items={SIZE} rules={rules} />
       <Limits title="Health rules" note="Leave a box empty if this box doesn't need that rule." items={HEALTH} rules={rules} />
       <Button disabled={pending}>{pending ? "Saving…" : "Save recipe"}</Button>
@@ -94,7 +103,7 @@ function Limits({ title, note, items, rules }: { title: string; note?: string; i
       <div className="mt-2 grid gap-3 sm:grid-cols-3">
         {items.map(([k, label, hint]) => (
           <Field key={k} label={label} hint={hint}>
-            <input name={k} defaultValue={(rules[k] as number | null) ?? ""} inputMode="numeric" placeholder="no rule" className={fieldClass} />
+            <input name={k} defaultValue={(rules[k] as number | null) ?? ""} inputMode="decimal" placeholder="no rule" className={fieldClass} />
           </Field>
         ))}
       </div>

@@ -63,6 +63,7 @@ export async function activateLineup(fd: FormData) {
 }
 
 const int = (v: FormDataEntryValue | null) => (v === null || v === "" ? null : Number.parseInt(String(v), 10));
+const dec = (v: FormDataEntryValue | null) => (v === null || String(v).trim() === "" ? null : Number(v));
 
 export async function saveBoxRules(_prev: BoxState, fd: FormData): Promise<BoxState> {
   const admin = await requireAdmin();
@@ -86,6 +87,11 @@ export async function saveBoxRules(_prev: BoxState, fd: FormData): Promise<BoxSt
     fiberMin: int(fd.get("fiberMin")),
     highSodiumMax: int(fd.get("highSodiumMax")),
     treatMax: int(fd.get("treatMax")),
+    carbsMax: dec(fd.get("carbsMax")),
+    addedSugarMax: dec(fd.get("addedSugarMax")),
+    sodiumMax: dec(fd.get("sodiumMax")),
+    satFatMax: dec(fd.get("satFatMax")),
+    satFatNutMax: dec(fd.get("satFatNutMax")),
   });
   if (!rules.success) return { error: rules.error.issues[0].message };
   const r = rules.data;

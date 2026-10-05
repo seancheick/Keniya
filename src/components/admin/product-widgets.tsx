@@ -30,8 +30,13 @@ export function StatusControls({ id, status }: { id: string; status: Status }) {
       <form action={action} className="flex flex-wrap gap-2">
         <input type="hidden" name="id" value={id} />
         {status !== "Approved" && (
-          <Button size="sm" name="status" value="Approved" disabled={pending}>
-            Approve
+          <Button size="sm" name="status" value="Approved" disabled={pending} title="Clinician approval">
+            Approve (clinician)
+          </Button>
+        )}
+        {status === "Candidate" && (
+          <Button size="sm" variant="outline" name="status" value="Pre-approved" disabled={pending} title="Passed your source and ingredient check; waits for the clinician">
+            Pre-approve
           </Button>
         )}
         {status !== "Candidate" && (

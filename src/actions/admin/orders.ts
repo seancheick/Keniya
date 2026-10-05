@@ -9,6 +9,7 @@ import { optimize } from "@/lib/admin/optimizer";
 import { matchLabel, readLabelCsv } from "@/lib/admin/pirateship";
 import { estimatePostage } from "@/lib/admin/postage";
 import { stripeFeeForSession } from "@/lib/stripe-fee";
+import { packBlockers } from "@/lib/admin/rules";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_SLUGS, type BoxSlug } from "@/lib/admin/types";
 
@@ -189,6 +190,17 @@ export async function packShipment(_prev: OrderState, fd: FormData): Promise<Ord
     zone: number | null;
   };
   const ctx = await loadAdminContext();
+  const prodBy = new Map(ctx.catalog.products.map((p) => [p.id, p]));
+  const blockers = packBlockers(
+    ship.box_slug,
+    ship.planned_items.flatMap((pid) => {
+      const snack = ctx.catalog.byId.get(pid);
+      return snack ? [{ snack, upc: prodBy.get(pid)?.upc ?? null, verifiedAt: ctx.catalog.versions.get(pid)?.verified_at ?? null }] : [];
+    }),
+    ctx.rules[ship.box_slug],
+    ctx.settings.policy,
+  );
+  if (blockers.length) return { error: `Can't pack yet. ${blockers.length} pick(s) need attention: ${blockers.join("; ")}` };
   const pkg = ctx.packages.find((p) => p.id === ship.package_profile_id) ?? ctx.pkg;
   const packOz = (pkg?.empty_weight_oz ?? 0) + ctx.settings.packaging.reduce((s, p) => s + p.weightOz, 0);
   const weight = ship.planned_items.reduce((s, pid) => s + (ctx.catalog.byId.get(pid)?.unit_wt_oz ?? 0), 0) + packOz;

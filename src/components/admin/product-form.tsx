@@ -7,7 +7,7 @@ import { lookupBarcode } from "@/actions/admin/lookup";
 import { Field, FitReasons, fieldClass } from "@/components/admin/ui";
 import type { FormState } from "@/actions/admin/products";
 import { ruleInputFromForm } from "@/lib/admin/forms";
-import { fitsBoxes, shipsUnderPolicy } from "@/lib/admin/rules";
+import { eligibleBoxes, shipsUnderPolicy } from "@/lib/admin/rules";
 import {
   CATEGORIES,
   FORMS,
@@ -18,6 +18,8 @@ import {
   PRODUCT_TYPES,
   ROLE_KEYS,
   ROLE_LABEL,
+  type BoxRules,
+  type BoxSlug,
   type Settings,
   type Status,
 } from "@/lib/admin/types";
@@ -30,6 +32,7 @@ type Props = {
   vendorName?: string;
   vendors: string[];
   policy: Settings["policy"];
+  rules: Record<BoxSlug, BoxRules>;
   submitLabel: string;
   /** Edit mode shows "save as a new formula version". */
   editing?: boolean;
@@ -70,7 +73,7 @@ function Section({ title, children, hint }: { title: string; hint?: string; chil
   );
 }
 
-export function ProductForm({ action, product: p, version: ver, vendorName, vendors, policy, submitLabel, editing }: Props) {
+export function ProductForm({ action, product: p, version: ver, vendorName, vendors, policy, rules, submitLabel, editing }: Props) {
   const [state, formAction, pending] = useActionState(action, {});
   const ref = useRef<HTMLFormElement>(null);
   const status: Status = p?.status ?? "Candidate";
@@ -79,7 +82,7 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
   function fitsFromVersion() {
     if (!ver || !p) return null;
     const input = { ...ver, type: p.type, form: p.form, status, roles: ver.roles ?? {}, pregnancy_checks: ver.pregnancy_checks ?? {} };
-    return { fits: fitsBoxes(input, p.reject_reason), ships: shipsUnderPolicy(input, policy) };
+    return { fits: eligibleBoxes(input, rules, policy, p.reject_reason), ships: shipsUnderPolicy(input, policy) };
   }
 
   const [looking, setLooking] = useState(false);
@@ -116,7 +119,7 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
   function update() {
     if (!ref.current) return;
     const input = ruleInputFromForm(new FormData(ref.current), status);
-    setPreview({ fits: fitsBoxes(input, p?.reject_reason), ships: shipsUnderPolicy(input, policy) });
+    setPreview({ fits: eligibleBoxes(input, rules, policy, p?.reject_reason), ships: shipsUnderPolicy(input, policy) });
   }
 
   return (
