@@ -41,9 +41,14 @@
   2. Enter the store, units and total paid. Unit cost is calculated for you.
   3. Optionally add the expiry date, lot code and a receipt photo.
   - An unknown barcode is looked up in USDA FoodData Central first, then Open Food Facts. The new product is prefilled and marked unverified, so check it against the label.
+- **Verify** (package in hand, phone or packing table): the last step before a product can be packed.
+  1. Scan the barcode: a handheld USB/Bluetooth scanner types into the box at the top (it's focused for you), or tap **Camera**, or type the digits. A known barcode opens its product; an unknown one is attached to the product you tap.
+  2. Compare the label with what's on file (nutrition per pack, ingredients, allergen statement), confirm it's one sealed single-serve pack, and enter the expiry date (at least 90 days left).
+  3. **Verify package** saves the UPC, marks it package-verified and sets P8/P9 to PASS. A mismatch is refused with the reason: fix the product first. Answering "not single-serve" records P8 FAIL, so the product drops out of the boxes.
+  - Ready to pack = clinician-approved (named) + package-verified. Boxes show CLEARED TO PACK once every pick is ready; packing is blocked until then.
 - **Products**
-  - Fit badges per box, with the reason a snack doesn't fit.
-  - Approve, reject (reason required) or retire.
+  - Eligibility badges per box, with the reason a snack isn't eligible.
+  - Pre-approve (pre-screen), Approve (clinician; re-attest legacy approvals), reject (reason required) or retire.
   - Photos: front, nutrition facts, ingredients and barcode.
   - A provenance record ("Verified on · source · by").
   - "Reformulated?" saves a new formula version, so past shipments keep the nutrition they actually had.

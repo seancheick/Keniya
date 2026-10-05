@@ -1,5 +1,12 @@
 # Handoff: Keniya Admin (`/admin`)
 
+**Status, Oct 5 2026, latest: pack-floor Verify screen.**
+- `/admin/verify` (nav tab "Verify"): `src/app/admin/(protected)/verify/page.tsx`, `src/components/admin/verify-flow.tsx`, action `src/actions/admin/verify.ts`, pure checks `src/lib/admin/verify.ts` (+ tests).
+- Scan with a handheld scanner (keyboard input, auto-focused), the camera (`BarcodeScanner`) or by typing. Then confirm the nutrition, ingredients/allergens and single-serve format, and enter an expiry ≥ `MIN_DAYS_TO_EXPIRY` (90).
+- Success sets `products.upc` (if empty), `verified_at/by`, P8/P9 PASS, and adds an audit line under the pre-screen line in notes. Refused when: the barcode differs from the one on file, the barcode belongs to another product, the label doesn't match, or the date is too short. "Not single-serve" records P8 FAIL.
+- Tested: rejection paths in the browser against live data (nothing written), unit tests for every rule. **Not yet run:** a successful verification (it would mark a real product verified). The owner's first real check is that test.
+- Not built yet: photo capture inside the flow (use the product page's photo upload), lot creation from the verified package (use Log purchase).
+
 **Status, Oct 5 2026, later (clinician review #2 applied).**
 - **Approval ladder:** Candidate → Pre-approved (pre-screen) → Approved (named clinician) → package verified (UPC + label in hand) → ready to pack. `lineupStage()` in `rules.ts` drives the box badges: FIX → READY · PROVISIONAL → CLEARED TO PACK.
 - **P8 blank = unknown, not a pass:** Carb and Heart eligibility now need P8 = PASS. P8 was set to PASS on 21 products whose USDA label shows one serving per pack (noted in each pre-screen line). 15 non-rejected products are still unknown. P044's workbook PASS was cleared because no 1 oz pack is confirmed.

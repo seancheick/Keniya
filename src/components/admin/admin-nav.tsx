@@ -8,6 +8,7 @@ export const ADMIN_TABS = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/products", label: "Products" },
   { href: "/admin/inventory", label: "Inventory" },
+  { href: "/admin/verify", label: "Verify" },
   { href: "/admin/boxes", label: "Boxes" },
   { href: "/admin/orders", label: "Orders" },
   { href: "/admin/purchasing", label: "Purchasing" },
