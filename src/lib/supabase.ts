@@ -34,6 +34,21 @@ export function getSupabaseAdmin(): SupabaseClient {
   return admin;
 }
 
+let strict: SupabaseClient | null = null;
+
+/**
+ * Service-role client for the admin area. Unlike getSupabaseAdmin() it never falls back to
+ * the anon key: admin tables have no anon policies, so a fallback would only hide a
+ * misconfiguration behind empty results.
+ */
+export function getSupabaseAdminStrict(): SupabaseClient {
+  if (strict) return strict;
+  const service = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.SUPABASE_SECRET_KEY ?? "";
+  if (!service) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not set: the admin needs the service key");
+  strict = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
+  return strict;
+}
+
 export const supabaseProject = {
   id: process.env.SUPABASE_PROJECT_ID ?? process.env.SUPABASE_PROJECT_REF ?? "issfvpyewzlnxxdqrzqc",
   url,

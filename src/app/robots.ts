@@ -5,7 +5,7 @@ import { site } from "@/lib/site";
 // Google-Extended…) — are welcome; being quotable in AI answers is the goal.
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: { userAgent: "*", allow: "/", disallow: "/api/" },
+    rules: { userAgent: "*", allow: "/", disallow: ["/api/", "/admin"] },
     sitemap: `${site.url}/sitemap.xml`,
   };
 }
