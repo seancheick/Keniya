@@ -15,7 +15,8 @@ export const PRODUCT_TYPES = ["Substantial", "Mini", "Beverage"] as const;
 export type ProductType = (typeof PRODUCT_TYPES)[number];
 export const FORMS = ["Solid", "Powder", "Tea", "Spread", "Puree", "Liquid"] as const;
 export type Form = (typeof FORMS)[number];
-export const STATUSES = ["Candidate", "Approved", "Rejected", "Retired"] as const;
+/** "Pre-approved" = passed the automated source/ingredient pre-screen; only "Approved" is clinician-approved. */
+export const STATUSES = ["Candidate", "Pre-approved", "Approved", "Rejected", "Retired"] as const;
 export type Status = (typeof STATUSES)[number];
 /** Shared category vocabulary (from the workbook's Slots). Box rules pick from these. */
 export const CATEGORIES = ["Comfort", "Protein", "Sweet", "Savory", "Hydration"] as const;

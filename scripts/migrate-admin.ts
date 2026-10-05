@@ -43,6 +43,10 @@ const MIGRATIONS: { file: string; applied: string }[] = [
     applied:
       "select exists (select 1 from information_schema.columns where table_schema='public' and table_name='preorders' and column_name='stripe_fee_cents') and exists (select 1 from storage.buckets where id='keniya-admin') as ok",
   },
+  {
+    file: "supabase/migrations/0008_product_preapproved.sql",
+    applied: "select pg_get_constraintdef(oid) like '%Pre-approved%' as ok from pg_constraint where conname='products_status_check'",
+  },
 ];
 
 const TABLES = [

@@ -92,6 +92,14 @@ describe("lineup checks", () => {
     expect(isReady(checks)).toBe(false);
   });
 
+  it("a pre-approved pick still counts as not clinically approved", () => {
+    const picks = heartLineup();
+    picks[0] = { ...picks[0], snack: { ...picks[0].snack, status: "Pre-approved" } };
+    const checks = checkLineup("heart", heartRules, picks, settings, 6);
+    expect(checks.find((c) => c.key === "approved")!.value).toBe("1 (need ≤ 0)");
+    expect(isReady(checks)).toBe(true); // a warning, not a blocker
+  });
+
   it("duplicates and unapproved picks", () => {
     const picks = heartLineup();
     picks[1] = picks[0];

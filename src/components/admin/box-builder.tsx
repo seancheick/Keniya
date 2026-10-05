@@ -12,7 +12,11 @@ import { canBuild, daysUntil, optimize } from "@/lib/admin/optimizer";
 import { estimatePostage, type PostageSample } from "@/lib/admin/postage";
 import { checkLineup, fitFor, isReady, packedWeightOz, shipsUnderPolicy, type Pick } from "@/lib/admin/rules";
 import { BOX_LABEL, OBJECTIVES, OBJECTIVE_LABEL, type BoxRules, type BoxSlug, type Objective, type Settings, type Snack } from "@/lib/admin/types";
+import { avoidConflict } from "@/lib/admin/avoid";
 import { cn } from "@/lib/utils";
+
+// Same words the order avoid-matcher understands (src/lib/admin/avoid.ts).
+const ALLERGENS = ["Peanuts", "Tree nuts", "Dairy", "Gluten", "Soy"];
 
 type Props = {
   slug: BoxSlug;
@@ -33,12 +37,31 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
   );
   const [objective, setObjective] = useState<Objective>("balanced");
   const [source, setSource] = useState<Objective | "manual">("manual");
-  const [requireStock, setRequireStock] = useState(true);
+  // Nothing logged yet → building from stock would return an empty box, so start unticked.
+  const [requireStock, setRequireStock] = useState(() => snacks.some((s) => s.onHand > 0));
+  // Snack mix for this build only (the saved recipe is the "Box recipe" form below).
+  // null = let Build box choose within the recipe's ranges; otherwise exact counts per kind.
+  const [counts, setCounts] = useState<Record<string, number> | null>(null);
+  const [allergens, setAllergens] = useState<string[]>([]);
+  const [otherAvoid, setOtherAvoid] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, startSave] = useTransition();
   const runSize = settings.runSize[slug];
+  const customMix = counts !== null;
+  const mix = useMemo(
+    () => (counts ? rules.categories.map((c) => ({ ...c, min: counts[c.name] ?? 0, max: counts[c.name] ?? 0 })) : rules.categories),
+    [rules.categories, counts],
+  );
+  const buildRules = useMemo(() => ({ ...rules, categories: mix }), [rules, mix]);
+  const countTotal = counts ? Object.values(counts).reduce((t, n) => t + n, 0) : rules.total;
+  const avoidText = [...allergens, otherAvoid].filter(Boolean).join(", ");
+  const conflict = useMemo(() => {
+    const m = new Map<string, string>();
+    if (avoidText) for (const s of snacks) { const why = avoidConflict(s, avoidText); if (why) m.set(s.id, why); }
+    return m;
+  }, [snacks, avoidText]);
 
-  const checks = useMemo(() => checkLineup(slug, rules, picks, settings, packagingOz), [slug, rules, picks, settings, packagingOz]);
+  const checks = useMemo(() => checkLineup(slug, buildRules, picks, settings, packagingOz), [slug, buildRules, picks, settings, packagingOz]);
   const weight = packedWeightOz(picks, packagingOz);
   const postage = estimatePostage({ settings, slug, weightOz: weight, packageProfileId: mailer?.id, history });
   const cost = landedCost({
@@ -51,10 +74,19 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
   });
   const build = canBuild(picks);
   const ready = picks.length > 0 && isReady(checks);
-  const cats = rules.categories.map((c) => c.name);
+  const cats = mix.map((c) => c.name);
+
+  function startCustom() {
+    // Start from what's in the box now, so the total is already right.
+    setCounts(Object.fromEntries(rules.categories.map((c) => [c.name, picks.filter((p) => p.category === c.name).length || c.min])));
+  }
 
   function runOptimizer() {
-    const r = optimize({ slug, rules, settings, snacks, objective, packagingOz, runSize, requireStock });
+    if (countTotal !== rules.total) {
+      toast.error(`Your snack mix adds up to ${countTotal}; make it ${rules.total} first.`);
+      return;
+    }
+    const r = optimize({ slug, rules: buildRules, settings, snacks, objective, packagingOz, runSize, requireStock, excludeIds: [...conflict.keys()] });
     setPicks(r.picks);
     setSource(objective);
     if (r.picks.length < rules.total) toast.warning(`Only ${r.picks.length} eligible picks found (${r.candidates} candidates). Add stock or products.`);
@@ -74,7 +106,10 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
       const res = await saveLineup({
         slug,
         objective: source,
-        notes: notes || null,
+        notes:
+          [notes, customMix && `Custom mix: ${mix.map((c) => `${c.min} ${c.name}`).join(", ")}`, avoidText && `Avoids: ${avoidText}`]
+            .filter(Boolean)
+            .join(" · ") || null,
         activate,
         items: picks.map((p) => ({ product_id: p.snack.id, category: p.category, is_extra: false })),
       });
@@ -93,33 +128,108 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
       .map((s) => {
         const fit = fitFor(slug, s);
         const ships = shipsUnderPolicy(s, settings.policy);
-        const why = !fit.fits ? fit.reasons[0] : !ships.ok ? ships.reason : s.status === "Rejected" ? "Rejected" : null;
+        const why = !fit.fits ? fit.reasons[0] : !ships.ok ? ships.reason : s.status === "Rejected" ? "Rejected" : (conflict.get(s.id) ?? null);
         return { s, why };
       })
       .sort((a, b) => Number(Boolean(a.why)) - Number(Boolean(b.why)) || (a.s.unitCostCents ?? 1e9) - (b.s.unitCostCents ?? 1e9));
-  }, [snacks, slug, settings.policy]);
+  }, [snacks, slug, settings.policy, conflict]);
 
   const failing = checks.filter((c) => !c.pass && c.level !== "info");
 
   return (
     <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
       <div className="space-y-4">
-        <div className="flex flex-wrap items-end gap-2 rounded-xl border bg-card p-4">
-          <label className="min-w-56 flex-1 space-y-1">
-            <span className="text-sm font-medium">Optimize for</span>
-            <select value={objective} onChange={(e) => setObjective(e.target.value as Objective)} className={fieldClass}>
-              {OBJECTIVES.map((o) => (
-                <option key={o} value={o}>
-                  {OBJECTIVE_LABEL[o]}
-                  {o === "favorites" ? " (needs ratings)" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex items-center gap-2 pb-2 text-sm">
-            <input type="checkbox" checked={requireStock} onChange={(e) => setRequireStock(e.target.checked)} /> Only in-stock
-          </label>
-          <Button onClick={runOptimizer}>Suggest lineup</Button>
+        <div className="space-y-4 rounded-xl border bg-card p-4">
+          <div className="flex flex-wrap items-end gap-2">
+            <label className="min-w-56 flex-1 space-y-1">
+              <span className="text-sm font-medium">Pick snacks for</span>
+              <select value={objective} onChange={(e) => setObjective(e.target.value as Objective)} className={fieldClass}>
+                {OBJECTIVES.map((o) => (
+                  <option key={o} value={o}>
+                    {OBJECTIVE_LABEL[o]}
+                    {o === "favorites" ? " (needs ratings)" : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex items-center gap-2 pb-2 text-sm">
+              <input type="checkbox" checked={requireStock} onChange={(e) => setRequireStock(e.target.checked)} /> Only snacks in stock
+            </label>
+            <Button size="lg" onClick={runOptimizer}>
+              Build box
+            </Button>
+          </div>
+
+          <div>
+            <p className="mb-1 text-sm font-medium">Leave out</p>
+            <div className="flex flex-wrap items-center gap-2">
+              {ALLERGENS.map((a) => {
+                const on = allergens.includes(a);
+                return (
+                  <Button key={a} size="sm" variant={on ? "default" : "outline"} aria-pressed={on} onClick={() => setAllergens((xs) => (on ? xs.filter((x) => x !== a) : [...xs, a]))}>
+                    {a}
+                  </Button>
+                );
+              })}
+              <input value={otherAvoid} onChange={(e) => setOtherAvoid(e.target.value)} placeholder="Other, e.g. sesame, coconut" className={cn(fieldClass, "h-8 w-56")} aria-label="Other foods to leave out" />
+            </div>
+            {avoidText && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {`${conflict.size} products left out. Matches allergen labels, "made in a facility with" warnings and product names; we have no ingredient lists yet, so check the labels.`}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="text-sm font-medium">Snack mix</p>
+              {customMix ? (
+                <Button size="xs" variant="ghost" onClick={() => setCounts(null)}>
+                  Back to the box recipe
+                </Button>
+              ) : (
+                <Button size="xs" variant="outline" onClick={startCustom}>
+                  Choose my own mix
+                </Button>
+              )}
+            </div>
+            {!customMix ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {`Build box follows the box recipe: ${rules.categories.map((c) => `${c.name} ${c.min === c.max ? c.min : `${c.min}–${c.max}`}`).join(", ")}. It picks the exact numbers so they total ${rules.total}.`}
+              </p>
+            ) : (
+              <>
+                <p className="mt-1 text-xs text-muted-foreground">{`How many of each kind in this build only. The saved recipe doesn't change.`}</p>
+                <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+                  {rules.categories.map((c) => {
+                    const n = counts![c.name] ?? 0;
+                    const set = (v: number) => setCounts((m) => ({ ...m!, [c.name]: Math.max(0, Math.min(rules.total, v)) }));
+                    return (
+                      <li key={c.name} className="flex items-center gap-2 rounded-lg border px-3 py-1.5">
+                        <span className="flex-1 text-sm">{c.name}</span>
+                        <Button size="icon-xs" variant="outline" aria-label={`Fewer ${c.name}`} disabled={n === 0} onClick={() => set(n - 1)}>
+                          −
+                        </Button>
+                        <span className="w-6 text-center text-base font-semibold tabular-nums" aria-live="polite">
+                          {n}
+                        </span>
+                        <Button size="icon-xs" variant="outline" aria-label={`More ${c.name}`} onClick={() => set(n + 1)}>
+                          +
+                        </Button>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <p className={cn("mt-2 text-sm font-medium", countTotal === rules.total ? "text-emerald-700" : "text-amber-700")}>
+                  {countTotal === rules.total
+                    ? `${countTotal} of ${rules.total} ✓ Ready to build`
+                    : countTotal < rules.total
+                      ? `${countTotal} of ${rules.total}: add ${rules.total - countTotal} more`
+                      : `${countTotal} of ${rules.total}: remove ${countTotal - rules.total}`}
+                </p>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="rounded-xl border bg-card">
@@ -159,6 +269,7 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
                     <div className="mt-1 flex flex-wrap gap-1 text-xs text-muted-foreground">
                       <span>{p.snack.type}</span>
                       <span>· {p.snack.unit_wt_oz ?? "?"} oz</span>
+                      {conflict.has(p.snack.id) && <Badge tone="bad">{conflict.get(p.snack.id)}</Badge>}
                       {!fit.fits && <Badge tone="bad" title={fit.reasons.join("; ")}>doesn&apos;t fit</Badge>}
                       {p.snack.status !== "Approved" && <Badge tone="info">{p.snack.status}</Badge>}
                       {p.snack.onHand < runSize && <Badge tone={p.snack.onHand === 0 ? "bad" : "warn"}>{p.snack.onHand} on hand</Badge>}
@@ -193,7 +304,7 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
         </div>
 
         <div className="rounded-xl border bg-card p-4">
-          <p className="mb-2 font-semibold">Checks</p>
+          <p className="mb-2 font-semibold">Does this box follow the recipe?</p>
           <ul className="grid gap-1 text-sm sm:grid-cols-2">
             {checks.map((c) => (
               <li key={c.key} className="flex items-start gap-2">

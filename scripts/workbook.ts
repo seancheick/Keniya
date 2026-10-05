@@ -48,7 +48,7 @@ export type WbProduct = {
   quote_cost_cents: number | null;
   price_checked_on: string | null;
   retail_cents: number | null;
-  status: "Candidate" | "Approved" | "Rejected" | "Retired";
+  status: "Candidate" | "Pre-approved" | "Approved" | "Rejected" | "Retired";
   reject_reason: string | null;
   notes: string | null;
   sensory: string | null;
@@ -160,7 +160,7 @@ export async function readWorkbook(path: string): Promise<Workbook> {
       quote_cost_cents: cents(num(c("Your quote $"))),
       price_checked_on: text(c("Price checked on")),
       retail_cents: num(c("Typical retail $")) === null ? null : Math.round(num(c("Typical retail $"))! * 100),
-      status: ["Candidate", "Approved", "Rejected", "Retired"].includes(status) ? status : "Candidate",
+      status: ["Candidate", "Pre-approved", "Approved", "Rejected", "Retired"].includes(status) ? status : "Candidate",
       reject_reason: status === "Rejected" ? (notes?.slice(0, 300) ?? "Rejected in the workbook") : null,
       notes,
       sensory: text(c("Sensory profile")),

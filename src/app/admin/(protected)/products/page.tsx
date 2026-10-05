@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge, Card, Empty, FitBadges, PageHeader, StatusBadge, Table, fieldClass } from "@/components/admin/ui";
 import { fmt$ } from "@/lib/admin/costing";
@@ -39,11 +39,18 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         title="Products"
         description={`${snacks.length} snacks in the library. Box fit is computed from nutrition and the pregnancy checks; hover a box chip for the reason.`}
         actions={
-          <Button asChild>
-            <Link href="/admin/products/new">
-              <Plus /> Add product
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline" title="Spreadsheet of every snack with nutrition, allergens, pregnancy checks and box-fit reasons, plus columns for the clinician's verdict. No costs.">
+              <a href="/admin/reports/export?table=clinical_review" download>
+                <Download /> Export for clinician
+              </a>
+            </Button>
+            <Button asChild>
+              <Link href="/admin/products/new">
+                <Plus /> Add product
+              </Link>
+            </Button>
+          </div>
         }
       />
       <Card className="mb-4">

@@ -87,7 +87,7 @@ export function Badge({ tone = "muted", title, className, children }: { tone?: T
   );
 }
 
-export const STATUS_TONE: Record<Status, Tone> = { Approved: "good", Candidate: "info", Rejected: "bad", Retired: "muted" };
+export const STATUS_TONE: Record<Status, Tone> = { Approved: "good", "Pre-approved": "warn", Candidate: "info", Rejected: "bad", Retired: "muted" };
 
 export function StatusBadge({ status }: { status: Status }) {
   return <Badge tone={STATUS_TONE[status]}>{status}</Badge>;

@@ -74,6 +74,7 @@ export default async function Dashboard() {
     ["No cost yet", catalog.snacks.filter((s) => s.unitCostCents === null).length, "/admin/products?issue=cost"],
     ["Don't ship (policy)", catalog.snacks.filter((s) => !shipsUnderPolicy(s, settings.policy).ok).length, "/admin/products?issue=ships"],
     ["Approved", catalog.snacks.filter((s) => s.status === "Approved").length, "/admin/products?status=Approved"],
+    ["Pre-approved (awaiting clinician)", catalog.snacks.filter((s) => s.status === "Pre-approved").length, "/admin/products?status=Pre-approved"],
     ["Candidates", catalog.snacks.filter((s) => s.status === "Candidate").length, "/admin/products?status=Candidate"],
     ["Fit all three boxes", catalog.snacks.filter((s) => BOX_SLUGS.every((b) => fitFor(b, s).fits)).length, "/admin/products"],
   ] as const;

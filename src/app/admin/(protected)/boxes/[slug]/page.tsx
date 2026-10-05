@@ -28,7 +28,14 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
     <>
       <PageHeader
         title={`${BOX_LABEL[slug]} box`}
-        description={b.lineup ? `Active lineup v${b.lineup.version}, by ${b.lineup.created_by ?? "—"}` : "No active lineup yet: suggest one below."}
+        description={
+          <>
+            1. Press <b>Build box</b> to pick {ctx.rules[slug].total} snacks. 2. Swap any you don&apos;t want. 3. <b>Save &amp; activate</b>: new orders get that lineup.
+            <span className="block text-xs">
+              {b.lineup ? `Orders now get lineup v${b.lineup.version}, saved by ${b.lineup.created_by ?? "—"}.` : "No lineup is active yet."}
+            </span>
+          </>
+        }
         actions={
           <div className="flex gap-1">
             {BOX_SLUGS.map((s) => (
@@ -51,19 +58,20 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
         history={history}
       />
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card title="Composition rules">
+        <Card title="Box recipe (saved default)">
           <RulesForm slug={slug} rules={ctx.rules[slug]} />
         </Card>
-        <Card title="Lineup versions">
+        <Card title="Saved lineups">
+          <p className="mb-3 text-sm text-muted-foreground">Each time you save a lineup it is kept here. The active one is what new orders get; activate an older one to go back to it.</p>
           {versions.length === 0 ? (
             <p className="text-sm text-muted-foreground">None saved yet.</p>
           ) : (
             <Table>
               <thead>
                 <tr>
-                  <th>Version</th>
+                  <th>Lineup</th>
                   <th>Status</th>
-                  <th>Made with</th>
+                  <th>How it was picked</th>
                   <th>By</th>
                   <th />
                 </tr>

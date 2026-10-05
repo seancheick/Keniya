@@ -54,7 +54,7 @@ export function scorer(objective: Objective, pool: Snack[], runSize: number, tod
     const expiring = d === null ? 0 : 1 / (1 + Math.max(0, d) / 30);
     const overstock = Math.min(1, s.onHand / (need * 2));
     const favorite = s.loveRate ?? 0.5;
-    const approved = s.status === "Approved" ? 1 : 0;
+    const approved = s.status === "Approved" ? 1 : s.status === "Pre-approved" ? 0.5 : 0;
     return { margin, expiring, overstock, favorite, approved };
   };
   return (s: Snack) => {

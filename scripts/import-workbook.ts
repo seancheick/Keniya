@@ -64,7 +64,7 @@ async function main() {
   console.log(`Products: ${all.length}`);
   console.log(`  missing nutrition: ${all.filter((s) => !nutritionComplete(s)).length}`);
   console.log(`  no cost: ${all.filter((s) => s.unitCostCents === null).length}`);
-  console.log(`  status: ${["Approved", "Candidate", "Rejected"].map((st) => `${st} ${all.filter((s) => s.status === st).length}`).join(", ")}`);
+  console.log(`  status: ${["Approved", "Pre-approved", "Candidate", "Rejected"].map((st) => `${st} ${all.filter((s) => s.status === st).length}`).join(", ")}`);
   for (const b of BOX_SLUGS) console.log(`  fit ${BOX_LABEL[b]}: ${all.filter((s) => fitsBoxes(s)[b].fits).length}`);
   console.log(`  fit all three: ${all.filter((s) => BOX_SLUGS.every((b) => fitsBoxes(s)[b].fits)).length}`);
   for (const b of BOX_SLUGS) {
