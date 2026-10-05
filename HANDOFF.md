@@ -1,5 +1,25 @@
 # Handoff: Keniya Admin (`/admin`)
 
+**Status, Oct 5 2026 (pre-screen + eligibility gates live; awaiting clinician).**
+- **Box builder:** one-click **Build box**, "Leave out" allergen chips (same matcher as order avoid lists), a one-off snack mix (exact counts that must total the box size; the saved recipe is untouched), and plain-language recipe copy.
+- **Clinician export:** Products → **Export for clinician** downloads a formatted `.xlsx` (`src/lib/admin/clinical.ts` rows + `clinical-xlsx.ts` formatting). The Review sheet puts decision columns first (status, pre-screen finding, yellow verdict/comment columns), then eligibility per box with reasons, P1–P9 with their meanings, nutrition, allergens and sources; a Legend sheet explains statuses, P1–P9 and the hard limits. No costs or vendors. Blank cells are written as truly empty, because `""` cells showed up as "66" in some viewers.
+- **New status `Pre-approved`** (migration 0008): passed the source/ingredient pre-screen and is waiting for the clinician. Only `Approved` means clinician-approved; the lineup check still counts Pre-approved as not approved.
+- **Pre-screen of all 97 products (Oct 5),** checked against USDA FDC branded label data, manufacturer sites, NIH DSLD, Open Food Facts and openFDA recalls (none relevant in 24 months).
+  - Statuses: 54 Pre-approved; 17 "not recommended" set to Rejected with the reason (liquids, multi-serve bags, maltitol, 2,142 mg sodium…).
+  - Data fixes: nutrition corrected in place on 52 versions, ingredients filled on 84 (there were none before), sat fat filled on 12 from sources.
+  - Allergen flags fixed: P030 contains milk, P031/P051 contain wheat, P061 contains soy and wheat. Cocoa items' caffeine changed from 0 to blank.
+  - Each product's notes start with a `[Pre-screen 2026-10-05 …]` verdict line, which the export shows as "Pre-screen finding".
+  - `verified_at`/`verified_by` were left blank on purpose: they mean "label checked with the package in hand".
+- **Eligibility gates (after the clinician's first review):**
+  - "Eligible" = nutrition rules qualify (`fitFor`) + box hard limits + shipping policy + single-serve (P8 FAIL blocks every box) + status. `eligibleFor`/`eligibleBoxes`/`gateFailures` in `rules.ts` now drive badges, the box builder, the optimizer, orders, lineup checks and the export.
+  - Hard limits live in `box_rules` (editable in each box recipe). Founder defaults, clinician to confirm: Carb Conscious ≤20 g carbs and ≤5 g added sugar; Heart sodium ≤230 mg and sat fat ≤2 g (≤4 g when the fat comes from nuts/seeds; blank sat fat counts as not eligible).
+  - Carb "fiber-forward" now also needs ≥3 g protein or nut/seed fat.
+  - Eligible counts: Pregnancy 41, Carb Conscious 48 (was 80), Heart 50 (was 69).
+- **Provisional lineups and the pack gate:** a READY lineup with any non-Approved pick shows **READY · PROVISIONAL**. `packShipment` refuses unless every pick is eligible, Approved, has a UPC and has `verified_at` (`packBlockers` in `rules.ts`).
+- **Audit trail** (migration 0009): `prescreened_by/at` (pre-screen) is separate from `reviewed_by/at` (clinician decision). The product page has **Pre-approve** and **Approve (clinician)** buttons. The 11 workbook approvals show "Approved in workbook (approver not recorded)" and need the clinician to re-confirm them.
+- **Lineups:** Carb Conscious and Heart v2 are active (built with minimal swaps after the gates; v1 archived). Pregnancy is still v1. All three are READY · PROVISIONAL (10 / 12 / 12 picks not yet Approved).
+- **Undo/audit files** (gitignored, in `ops/`): `prescreen-backup-2026-10-05.json` and `gates-backup-2026-10-05.json` (rows before each change), `prescreen-plan-2026-10-05.json`, `prescreen-verdicts-2026-10-05.py`, and the latest `keniya-clinician-review-2026-10-05.xlsx`.
+
 **Status, Oct 4 2026 (production set up).**
 - The code for phases 1–5 of the plan is written, tested locally and merged to `main`; production runs it (Vercel deploy of `7b8194e`).
 - **Live Supabase is set up.** Migrations 0006/0007 were applied by the owner and verified object by object: a catalog fingerprint of the live DB (349 columns, constraints, indexes, triggers, function bodies, grants, RLS, seeds, buckets) is identical to a fresh Postgres 17 built from `supabase/migrations/*`.
@@ -11,7 +31,7 @@ Read `ADMIN.md` (the operator guide) and `AGENTS.md` (Next 16 is different from 
 
 ---
 
-## 1. Finish setup (blocking, do first)
+## 1. Setup (done Oct 4–5; kept for reference)
 
 The previous session ran in a cloud container. It had no access to the owner's `.env`, and Vercel refused to show env vars (403). You need:
 
@@ -24,15 +44,16 @@ The previous session ran in a cloud container. It had no access to the owner's `
 | Workbook | Owner's `ops/keniya-box-builder.xlsx` (gitignored; never commit it, the repo is public) | Import |
 
 Steps:
-1. Apply the migrations: `SUPABASE_ACCESS_TOKEN=... pnpm db:migrate`.
-   - It applies 0006 and 0007 through `POST /v1/projects/{ref}/database/query`, then verifies: tables exist, RLS is on with no policies, the RPCs are not executable by anon, and the photo bucket is private.
+1. Apply the migrations: `SUPABASE_ACCESS_TOKEN=... pnpm db:migrate` (0006–0009 are applied on production; the script skips applied ones).
+   - It applies each missing migration through `POST /v1/projects/{ref}/database/query`, then verifies: tables exist, RLS is on with no policies, the RPCs are not executable by anon, and the photo bucket is private.
    - It should end with **"Database ready for the admin."**
    - Never run against a live API so far: check its output carefully. If the API rejects `begin; … commit;` wrapping, strip it.
    - Direct Postgres (port 5432/6543) was blocked from the cloud container. The HTTPS Management API was reachable.
    - The alternative is to paste the two SQL files into the Supabase SQL editor.
 2. Import the workbook:
    - Dry run first: `pnpm import:workbook ops/keniya-box-builder.xlsx --dry-run`. Expected: **97 products, 12 missing nutrition, 2 no cost, Approved 11 / Candidate 84 / Rejected 2, all three boxes READY**. Landed cost: Pregnancy ≈ $34.41, Carb ≈ $38.22, Heart ≈ $35.44. Pregnancy was verified by hand against the Price Calculator.
-   - Then run it without `--dry-run`. Re-running is safe; `--force` overwrites settings, rules and lineups.
+   - Then run it without `--dry-run`. `--force` overwrites settings, rules and lineups.
+   - **Don't re-run it casually any more:** it re-syncs products from the workbook and would overwrite the Oct 5 pre-screen corrections, statuses and notes.
 3. Smoke-test production `/admin` (§4) and confirm with the owner.
 
 ## 2. What exists (map)
@@ -48,8 +69,11 @@ Steps:
   - RPCs: `pack_shipment` (FEFO, row-locked, aborts with `SHORTAGE` + JSON detail), `unpack_shipment`, `adjust_lot`.
   - Triggers: auto `P###` codes; receive ledger row + `vendor_prices` row on each lot insert.
   - `0007` adds the private bucket `keniya-admin` and `preorders.stripe_fee_cents` / `amount_net_cents`.
-- **Pure logic (unit-tested, `pnpm test`, 46 tests)** in `src/lib/admin/`:
-  - `rules.ts`: workbook formulas for box fit + lineup checks;
+  - `0008` adds the `Pre-approved` product status.
+  - `0009` adds `products.prescreened_by/at` and moves the pre-screen stamp out of `reviewed_by/at`.
+- **Pure logic (unit-tested, `pnpm test`, 56 tests)** in `src/lib/admin/`:
+  - `rules.ts`: workbook formulas for "qualifies" (`fitFor`), final eligibility with hard limits (`eligibleFor`), the pack gate (`packBlockers`) and lineup checks;
+  - `clinical.ts` + `clinical-xlsx.ts`: the clinician review export;
   - `costing.ts`: landed cost, Price Calculator port;
   - `optimizer.ts`: greedy + swap local search, 5 objectives, `canBuild`;
   - `purchasing.ts`, `postage.ts` (learns the median of ≥5 real labels per 4 oz band), `avoid.ts`, `pirateship.ts` (CSV in/out), `reports.ts`;
@@ -62,6 +86,19 @@ Steps:
 - **Webhook:** `src/app/api/stripe/webhook/route.ts` stores the actual Stripe fee (`src/lib/stripe-fee.ts`). Planning a shipment retries the fee lookup if it's missing.
 
 ## 3. Not done / gaps (prioritized)
+
+**P0: before the Nov 11 ship (owner / clinician)**
+- Clinician (Laurie Pham, PharmD) reviews the export: confirms or changes the hard limits, approves products (**Approve (clinician)**), and re-confirms the 11 workbook approvals.
+- Package verification: for every lineup pick, enter the UPC and check the label with the package in hand (set "verified"). Packing is blocked until this is done.
+- Pre-screen follow-ups:
+  - P044/P026: the brand's site lists only multi-serve bags; confirm a 1 oz pack exists.
+  - P061: confirm the exact product (in the Carb lineup).
+  - P097 (the single-serve size of P058) has no cost, so P084 replaced P058 in the Carb lineup; add a cost and swap it in.
+  - Cocoa items need a caffeine estimate before any Pregnancy use.
+  - Ginger teas (P032–P034) need a clinician call (the labels say to consult a practitioner if pregnant).
+  - Chews and tea bags repacked from bags don't carry the full label, which the site promises.
+- The site promises "only 50 of each" but checkout never stops at 50 (`src/actions/checkout.ts`); add a sold-out check.
+- No live-money checkout has been tested yet (Stripe is live): buy one box and refund it.
 
 **P0: production readiness**
 1. §1 setup is done except `ADMIN_PASSWORD` on Vercel **Preview** (could not be checked: Vercel API returns 403 for env listing). Owner: confirm in Vercel → Settings → Environment Variables.
@@ -81,10 +118,10 @@ Steps:
 
 **P2: features in the approved plan, not built**
 12. **Phase 6, customers and feedback:**
-    - `customers`, `feedback` and `customer_prefs` tables (migration 0008);
+    - `customers`, `feedback` and `customer_prefs` tables (next free migration number: 0010);
     - a public `/feedback/[token]` page (signed token, QR on the Packed-for-You card) where the customer rates each item (loved / good / okay / not for me) and picks send again / never send;
     - feed `Snack.loveRate` (currently always `null`, so the "Customer favorites" objective scores 0.5 for everything) and never-send exclusions into `planItems`.
-13. Watchlist (26 ingredients imported into `watchlist`) is **not shown anywhere**. Surface it on the product form next to P7a, and flag ingredient matches.
+13. Watchlist (26 ingredients imported into `watchlist`) is **not shown anywhere**. Ingredients are now filled on 84 products, so auto-flagging watchlist matches for P7a is possible: surface it on the product form.
 14. Edit and delete for expenses, package profiles (deactivate) and vendors. There is no vendor detail page; price history per vendor exists only inside the product pages and the Purchasing summary.
 15. A box size experiment helper (compare package profiles by actual label cost). Data is captured (`package_profile_id` on shipments) but there is no report yet.
 16. Shipping analytics: zone is only known after the label. The postage estimate ignores zone pre-ship.
@@ -97,8 +134,9 @@ Steps:
 - [x] `pnpm db:migrate --check` reports everything ✓ on production.
 - [x] With the anon key: `select` on `products`, `purchase_lots`, `shipments` returns nothing, and `rpc('pack_shipment')` is denied.
 - [ ] Photo bucket `keniya-admin` is private, and photos load only via signed URLs (product page).
-- [ ] Logged out: `/admin/*` and `/admin/reports/export?table=preorders` redirect to login. POSTing a server action without the cookie redirects and does not mutate.
-- [ ] Headers: `/admin` has `camera=(self)` and `X-Robots-Tag: noindex`; the public site still has `camera=()`. `robots.txt` disallows `/admin`.
+- [ ] Logged out: `/admin/*` and `/admin/reports/export?table=preorders` (and `?table=clinical_review`) redirect to login (**verified by curl on production Oct 5**). Still to do: POSTing a server action without the cookie redirects and does not mutate.
+- [x] Headers: `/admin` has `camera=(self)` and `X-Robots-Tag: noindex`; the public site still has `camera=()`. `robots.txt` disallows `/admin` (verified on production Oct 5).
+- [ ] Pack gate: packing a shipment with a non-Approved or unverified pick returns the blocker list (unit-tested; not yet run end to end).
 - [ ] Log purchase: 24 units for $11.99 shows $0.50/unit, the lot is created, and the ledger has a `receive` row and a `vendor_prices` row with `source=purchase`.
 - [ ] Scan an unknown UPC on a real phone (iOS + Android). Prefill comes from USDA (with `USDA_API_KEY`) and from Open Food Facts, and the source is shown as unverified.
 - [ ] Boxes: "Suggest lineup" gives READY for each box once there's stock. Save & activate creates a new version and archives the old one.
