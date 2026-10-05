@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, Card, PageHeader, Stat } from "@/components/admin/ui";
 import { fmt$, fmtPct } from "@/lib/admin/costing";
-import { blockingFailures } from "@/lib/admin/rules";
+import { blockingFailures, lineupStage } from "@/lib/admin/rules";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_LABEL, BOX_SLUGS } from "@/lib/admin/types";
 
@@ -17,14 +17,14 @@ export default async function BoxesPage() {
         {BOX_SLUGS.map((slug) => {
           const b = boxes[slug];
           const fails = blockingFailures(b.checks);
-          const provisional = b.picks.filter((p) => p.snack.status !== "Approved").length;
+          const stage = lineupStage(b.picks, b.ready);
           return (
             <Link key={slug} href={`/admin/boxes/${slug}`} className="block">
               <Card className="h-full transition-colors hover:border-primary">
                 <div className="mb-3 flex items-center gap-2">
                   <p className="font-display text-xl">{BOX_LABEL[slug]}</p>
-                  <Badge tone={b.ready ? (provisional ? "warn" : "good") : "bad"} className="ml-auto" title={provisional ? `${provisional} pick(s) not clinician-approved: packing is blocked until they are` : undefined}>
-                    {b.lineup ? (b.ready ? (provisional ? "READY · PROVISIONAL" : "READY ✓") : `FIX · ${fails.length}`) : "No lineup"}
+                  <Badge tone={b.lineup ? stage.tone : "bad"} className="ml-auto" title={stage.detail}>
+                    {b.lineup ? (b.ready ? stage.label : `FIX · ${fails.length}`) : "No lineup"}
                   </Badge>
                 </div>
                 {b.cost ? (

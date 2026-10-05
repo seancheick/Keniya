@@ -35,6 +35,8 @@ export function snack(over: Partial<Snack> = {}): Snack {
     onHand: 100,
     earliestExpiry: null,
     loveRate: null,
+    clinicianApprovedBy: "Test Clinician",
+    packageVerified: true,
     ...over,
   };
 }

@@ -229,6 +229,8 @@ export function toSnack(
     onHand: live.reduce((s, l) => s + l.qty_remaining, 0),
     earliestExpiry: expiries[0] ?? null,
     loveRate: null,
+    clinicianApprovedBy: p.status === "Approved" ? p.reviewed_by : null,
+    packageVerified: Boolean(p.upc && v?.verified_at),
   };
 }
 

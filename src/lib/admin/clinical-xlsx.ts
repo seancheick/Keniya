@@ -18,6 +18,7 @@ function widthFor(header: string): number {
   if (header === "Product" || header === "Pre-screen finding (what to check)") return header === "Product" ? 34 : 60;
   if (header === CLINICIAN_COMMENTS || header === "Ingredients" || header === "Other notes") return 48;
   if (header === CLINICIAN_VERDICT) return 18;
+  if (header === "Ready to pack") return 30;
   if (/: why$|Nutrition source|Allergens/.test(header)) return 34;
   if (/^P\d/.test(header)) return 14;
   if (/^(Eligible |Role: )/.test(header)) return 11;
@@ -87,7 +88,9 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[]): Promise
   line("Pregnancy fit", "Nutrition complete + a caffeine value present + all 10 blocking checks PASS + not Rejected. Blank means not checked yet.");
   lg.addRow([]);
   section("Other columns");
-  line("Eligible <box>", "Final answer: the nutrition rules qualify it AND it passes the box's hard limits, the shipping policy (no liquids, max item weight), single-serve (P8) and status (not Rejected/Retired).");
+  line("Eligible <box>", "The nutrition rules qualify it AND it passes the box's hard limits, the shipping policy (no liquids, max item weight), single-serve (P8 must be PASS: blank means not yet confirmed) and status (not Rejected/Retired).");
+  line("Ready to pack", "The last steps after eligibility: approved by a named clinician (legacy workbook approvals need re-attestation), UPC on file, and the label checked with the package in hand. Packing is blocked until every pick is ready.");
+  line("Ladder", "Candidate → Pre-approved (pre-screen passed) → Approved (clinician) → Package verified → Ready to pack. Candidates can't be in a lineup; a lineup with Pre-approved or unverified picks is PROVISIONAL.");
   line("<box>: why", "If eligible: the qualifying pathway. If not: every reason, nutrition rule or hard limit (e.g. '2142 mg sodium (max 230 mg)').");
   line("Nutrition rules alone", "Whether the label numbers and roles qualify it before the hard limits and status; shown for transparency only.");
   line("Hard limits", "Carb Conscious: ≤20 g total carbs and ≤5 g added sugar per pack. Heart: ≤230 mg sodium and ≤2 g saturated fat per pack (≤4 g when the fat comes from nuts/seeds). Founder defaults 2026-10-05; clinician to confirm or change.");

@@ -21,7 +21,7 @@ function useToast(state: FormState, ok: string, after?: () => void) {
   }, [state, ok, after]);
 }
 
-export function StatusControls({ id, status }: { id: string; status: Status }) {
+export function StatusControls({ id, status, legacyApproval }: { id: string; status: Status; legacyApproval?: boolean }) {
   const [state, action, pending] = useActionState(setProductStatus, {});
   const [rejecting, setRejecting] = useState(false);
   useToast(state, "Status updated", () => setRejecting(false));
@@ -29,9 +29,9 @@ export function StatusControls({ id, status }: { id: string; status: Status }) {
     <div className="space-y-2">
       <form action={action} className="flex flex-wrap gap-2">
         <input type="hidden" name="id" value={id} />
-        {status !== "Approved" && (
-          <Button size="sm" name="status" value="Approved" disabled={pending} title="Clinician approval">
-            Approve (clinician)
+        {(status !== "Approved" || legacyApproval) && (
+          <Button size="sm" name="status" value="Approved" disabled={pending} title="Records the clinician's name and date">
+            {legacyApproval ? "Re-attest approval (clinician)" : "Approve (clinician)"}
           </Button>
         )}
         {status === "Candidate" && (

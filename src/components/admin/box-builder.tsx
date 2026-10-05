@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { fmt$, landedCost } from "@/lib/admin/costing";
 import { canBuild, daysUntil, optimize } from "@/lib/admin/optimizer";
 import { estimatePostage, type PostageSample } from "@/lib/admin/postage";
-import { checkLineup, eligibleFor, isReady, packedWeightOz, type Pick } from "@/lib/admin/rules";
+import { checkLineup, eligibleFor, isReady, lineupStage, packedWeightOz, type Pick } from "@/lib/admin/rules";
 import { BOX_LABEL, OBJECTIVES, OBJECTIVE_LABEL, type BoxRules, type BoxSlug, type Objective, type Settings, type Snack } from "@/lib/admin/types";
 import { avoidConflict } from "@/lib/admin/avoid";
 import { cn } from "@/lib/utils";
@@ -74,7 +74,7 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
   });
   const build = canBuild(picks);
   const ready = picks.length > 0 && isReady(checks);
-  const unapproved = picks.filter((p) => p.snack.status !== "Approved").length;
+  const stage = lineupStage(picks, ready);
   const cats = mix.map((c) => c.name);
 
   function startCustom() {
@@ -237,12 +237,10 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
             <p className="font-semibold">
               {BOX_LABEL[slug]} lineup · {picks.length}/{rules.total}
             </p>
-            <Badge tone={ready ? "good" : "bad"}>{ready ? "READY" : `FIX · ${failing.filter((c) => c.level === "block").length} failing`}</Badge>
-            {ready && unapproved > 0 && (
-              <Badge tone="warn" title="Packing is blocked until every pick is clinician-approved and package-verified.">
-                {`PROVISIONAL · ${unapproved} not clinician-approved`}
-              </Badge>
-            )}
+            <Badge tone={stage.tone} title={stage.detail}>
+              {ready ? stage.label : `FIX · ${failing.filter((c) => c.level === "block").length} failing`}
+            </Badge>
+            {ready && stage.tone === "warn" && <span className="text-xs text-muted-foreground">{stage.detail}</span>}
             <span className="ml-auto text-xs text-muted-foreground">{source === "manual" ? "Edited by hand" : `Suggested: ${OBJECTIVE_LABEL[source]}`}</span>
           </div>
           <ul className="divide-y">

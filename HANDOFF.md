@@ -1,5 +1,14 @@
 # Handoff: Keniya Admin (`/admin`)
 
+**Status, Oct 5 2026, later (clinician review #2 applied).**
+- **Approval ladder:** Candidate → Pre-approved (pre-screen) → Approved (named clinician) → package verified (UPC + label in hand) → ready to pack. `lineupStage()` in `rules.ts` drives the box badges: FIX → READY · PROVISIONAL → CLEARED TO PACK.
+- **P8 blank = unknown, not a pass:** Carb and Heart eligibility now need P8 = PASS. P8 was set to PASS on 21 products whose USDA label shows one serving per pack (noted in each pre-screen line). 15 non-rejected products are still unknown. P044's workbook PASS was cleared because no 1 oz pack is confirmed.
+- **Candidates can't be in a lineup** (blocking check). Legacy workbook approvals (`status Approved` with no `reviewed_by`) count as not clinician-approved: they show "Legacy workbook approval: re-attestation needed" and get a **Re-attest approval** button. The pack gate requires a named approver.
+- `Snack` now carries `clinicianApprovedBy` and `packageVerified` (from `toSnack`).
+- The export has a **Ready to pack** column, and the Legend explains the ladder and the P8 rule.
+- **Active lineups:** Pregnancy v2, Carb Conscious v3, Heart v3. They have no Candidates and no unconfirmed P8 picks, and all show READY · PROVISIONAL (14 picks each need clinician approval and a package check). Previous versions are archived (re-activate from Saved lineups). Backup: `ops/p8-backup-2026-10-05.json`.
+- Eligible now: Pregnancy 40, Carb Conscious 34, Heart 40.
+
 **Status, Oct 5 2026 (pre-screen + eligibility gates live; awaiting clinician).**
 - **Box builder:** one-click **Build box**, "Leave out" allergen chips (same matcher as order avoid lists), a one-off snack mix (exact counts that must total the box size; the saved recipe is untouched), and plain-language recipe copy.
 - **Clinician export:** Products → **Export for clinician** downloads a formatted `.xlsx` (`src/lib/admin/clinical.ts` rows + `clinical-xlsx.ts` formatting). The Review sheet puts decision columns first (status, pre-screen finding, yellow verdict/comment columns), then eligibility per box with reasons, P1–P9 with their meanings, nutrition, allergens and sources; a Legend sheet explains statuses, P1–P9 and the hard limits. No costs or vendors. Blank cells are written as truly empty, because `""` cells showed up as "66" in some viewers.
@@ -89,7 +98,8 @@ Steps:
 
 **P0: before the Nov 11 ship (owner / clinician)**
 - Clinician (Laurie Pham, PharmD) reviews the export: confirms or changes the hard limits, approves products (**Approve (clinician)**), and re-confirms the 11 workbook approvals.
-- Package verification: for every lineup pick, enter the UPC and check the label with the package in hand (set "verified"). Packing is blocked until this is done.
+- Package verification: for every lineup pick, enter the UPC and check the label with the package in hand (set "verified"). Packing is blocked until this is done. Next build (suggested by the clinician): a pack-floor "verify" flow (scan UPC → confirm label, serving format, expiry → Ready to pack) and a simpler box-builder table (product, photo, stock, per-box ✓, approval, package verified, expiry, add) with the evidence one click away.
+- Confirm P8 (single-serve) for the 15 products still unknown.
 - Pre-screen follow-ups:
   - P044/P026: the brand's site lists only multi-serve bags; confirm a 1 oz pack exists.
   - P061: confirm the exact product (in the Carb lineup).

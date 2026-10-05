@@ -108,9 +108,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <p className="mb-2 text-xs text-muted-foreground">
                 Review
                 {p.prescreened_by ? ` · pre-screened by ${p.prescreened_by} on ${date(p.prescreened_at)}` : ""}
-                {p.reviewed_by ? ` · clinician decision by ${p.reviewed_by} on ${date(p.reviewed_at)}` : p.status === "Approved" ? " · approved in the workbook (approver not recorded)" : ""}
+                {p.reviewed_by ? ` · clinician decision by ${p.reviewed_by} on ${date(p.reviewed_at)}` : p.status === "Approved" ? " · legacy workbook approval: needs clinician re-attestation" : ""}
               </p>
-              <StatusControls id={id} status={p.status} />
+              <StatusControls id={id} status={p.status} legacyApproval={p.status === "Approved" && !p.reviewed_by} />
             </div>
           </Card>
 

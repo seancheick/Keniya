@@ -30,7 +30,7 @@ describe("clinicalReviewRows", () => {
     expect(r["Heart nutrition rules alone"]).toBe("qualify");
     expect(r["Eligible Heart"]).toBe("no");
     expect(String(r["Heart: why"])).toContain("2142 mg sodium");
-    expect(r["Clinician decision by"]).toBe("Approved in workbook (approver not recorded)");
+    expect(r["Clinician decision by"]).toBe("Legacy workbook approval: re-attestation needed");
   });
 
   it("splits the pre-screen line out of the notes", () => {

@@ -161,7 +161,12 @@ export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, polic
   if (p.status === "Retired") out.push("Retired");
   const ships = shipsUnderPolicy(p, policy);
   if (!ships.ok) out.push(ships.reason!);
-  if (slug !== "pregnancy_comfort" && (p.pregnancy_checks.P8 ?? "").toUpperCase() === "FAIL") out.push("Multi-serve pack (P8)");
+  // Single-serve must be confirmed: blank P8 is "unknown", not a pass. (Pregnancy's own P1–P9 rule already covers it.)
+  if (slug !== "pregnancy_comfort") {
+    const p8 = (p.pregnancy_checks.P8 ?? "").toUpperCase();
+    if (p8 === "FAIL") out.push("Multi-serve pack (P8)");
+    else if (p8 !== "PASS") out.push("Single-serve not yet confirmed (P8)");
+  }
   const over = (v: number | null, max: number | null, what: string, unit: string) => {
     if (max !== null && num(v) && v > max) out.push(`${v} ${unit} ${what} (max ${max} ${unit})`);
   };
@@ -197,6 +202,21 @@ export function eligibleBoxes(
   };
 }
 
+/** Approved by a named clinician (legacy workbook approvals don't count until re-attested). */
+export const isClinicianApproved = (s: { status: Snack["status"]; clinicianApprovedBy?: string | null }) => s.status === "Approved" && Boolean(s.clinicianApprovedBy);
+/** Clinician-approved and package-verified: the last step before a pick can be packed. */
+export const isReadyToPack = (s: Snack) => isClinicianApproved(s) && s.packageVerified === true;
+
+/** Lineup readiness ladder: FIX → PROVISIONAL (needs approval / package checks) → CLEARED TO PACK. */
+export function lineupStage(picks: { snack: Snack }[], ready: boolean): { label: string; tone: "good" | "warn" | "bad"; detail: string } {
+  if (!ready) return { label: "FIX", tone: "bad", detail: "Fails a box rule" };
+  const needApproval = picks.filter((p) => !isClinicianApproved(p.snack)).length;
+  const needPackage = picks.filter((p) => p.snack.packageVerified !== true).length;
+  if (!needApproval && !needPackage) return { label: "CLEARED TO PACK", tone: "good", detail: "Every pick is clinician-approved and package-verified" };
+  const parts = [needApproval && `${needApproval} need clinician approval`, needPackage && `${needPackage} need a package check`].filter(Boolean);
+  return { label: "READY · PROVISIONAL", tone: "warn", detail: `${parts.join(", ")}; packing is blocked until done` };
+}
+
 /**
  * Launch gate before anything is packed: each pick must be eligible, clinician-approved and
  * package-verified (UPC on file and the label checked with the package in hand).
@@ -212,6 +232,7 @@ export function packBlockers(
     const e = eligibleFor(slug, snack, rules, policy, snack.rejectReason);
     if (!e.fits) why.push(`not eligible (${e.reasons[0]})`);
     if (snack.status !== "Approved") why.push(`${snack.status}, not clinician-approved`);
+    else if (!snack.clinicianApprovedBy) why.push("legacy approval, needs clinician re-attestation");
     if (!upc) why.push("no UPC");
     if (!verifiedAt) why.push("package not verified");
     return why.length ? [`${snack.code} ${snack.name}: ${why.join(", ")}`] : [];
@@ -308,7 +329,10 @@ export function checkLineup(
   checks.push(
     check("fit", `Picks not eligible for ${BOX_LABEL[slug]}`, count((x) => !eligibleFor(slug, x, rules, settings.policy).fits), { max: 0 }),
   );
-  checks.push(check("approved", "Picks not yet approved (clinical review)", count((x) => x.status !== "Approved"), { max: 0 }, "warn"));
+  // Candidates haven't passed the pre-screen: they can't be in a lineup at all.
+  checks.push(check("candidate", "Unreviewed picks (Candidate)", count((x) => x.status === "Candidate"), { max: 0 }));
+  checks.push(check("approved", "Picks not yet clinician-approved (incl. legacy approvals)", count((x) => !isClinicianApproved(x)), { max: 0 }, "warn"));
+  checks.push(check("verified", "Picks without a verified package (UPC + label in hand)", count((x) => x.packageVerified !== true), { max: 0 }, "warn"));
   checks.push(
     check("stock", "Picks out of stock", count((x) => x.onHand <= 0), { max: 0 }, "warn"),
   );

@@ -4,7 +4,7 @@ import { Badge, Card, PageHeader, Stat, TextLink, expiryTone } from "@/component
 import { fmt$, fmtPct, shipmentProfit } from "@/lib/admin/costing";
 import { db, must } from "@/lib/admin/db";
 import { daysUntil } from "@/lib/admin/optimizer";
-import { blockingFailures, eligibleFor, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
+import { blockingFailures, eligibleFor, lineupStage, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_LABEL, BOX_SLUGS, type BoxSlug } from "@/lib/admin/types";
 
@@ -32,7 +32,6 @@ export default async function Dashboard() {
   const ships = must(shipsRes, "shipments") as Ship[];
   const paid = must(presRes, "preorders") as { id: string }[];
   const { catalog, settings, boxes, rules } = ctx;
-  const provisional = (b: (typeof boxes)[BoxSlug]) => b.picks.some((p) => p.snack.status !== "Approved");
   const eligible = (b: BoxSlug, s: (typeof catalog.snacks)[number]) => eligibleFor(b, s, rules[b], settings.policy, s.rejectReason).fits;
   const tiers = settings.expiryTiersDays;
 
@@ -103,8 +102,8 @@ export default async function Dashboard() {
               <Card className="h-full hover:border-primary">
                 <div className="mb-3 flex items-center gap-2">
                   <p className="font-display text-lg">{BOX_LABEL[slug]}</p>
-                  <Badge tone={b.ready ? (provisional(b) ? "warn" : "good") : "bad"} className="ml-auto">
-                    {!b.lineup ? "No lineup" : !b.ready ? "FIX ⚠" : provisional(b) ? "READY · PROVISIONAL" : "READY ✓"}
+                  <Badge tone={b.lineup ? lineupStage(b.picks, b.ready).tone : "bad"} className="ml-auto" title={lineupStage(b.picks, b.ready).detail}>
+                    {!b.lineup ? "No lineup" : !b.ready ? "FIX ⚠" : lineupStage(b.picks, b.ready).label}
                   </Badge>
                 </div>
                 {b.cost ? (

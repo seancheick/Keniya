@@ -81,6 +81,12 @@ describe("final eligibility (qualifies + gates)", () => {
     expect(eligibleFor("blood_sugar", fruit, DEFAULT_BOX_RULES.blood_sugar, policy).reasons).toContain("31 g carbs (max 20 g)");
     expect(eligibleFor("blood_sugar", snack({ carbs_g: 12, added_sugar_g: 2 }), DEFAULT_BOX_RULES.blood_sugar, policy).fits).toBe(true);
   });
+  it("an unchecked P8 is unknown, not a pass", () => {
+    const e = eligibleFor("heart", snack({ roles: { NS: true }, pregnancy_checks: {} }), DEFAULT_BOX_RULES.heart, policy);
+    expect(e.fits).toBe(false);
+    expect(e.reasons).toContain("Single-serve not yet confirmed (P8)");
+  });
+
   it("rejected, liquid and multi-serve products are never eligible", () => {
     const r = DEFAULT_BOX_RULES.blood_sugar;
     expect(eligibleFor("blood_sugar", snack({ status: "Rejected" }), r, policy, "too salty").fits).toBe(false);
@@ -97,6 +103,19 @@ describe("pack gate", () => {
     expect(packBlockers("blood_sugar", [{ snack: ok, upc: "012", verifiedAt: "2026-10-05" }], r, settings.policy)).toEqual([]);
     const out = packBlockers("blood_sugar", [{ snack: pre, upc: null, verifiedAt: null }], r, settings.policy);
     expect(out[0]).toMatch(/Pre-approved, not clinician-approved, no UPC, package not verified/);
+  });
+});
+
+describe("approval ladder", () => {
+  it("legacy approvals and unverified packages block packing; Candidates block a lineup", () => {
+    const r = DEFAULT_BOX_RULES.blood_sugar;
+    const legacy = snack({ status: "Approved", clinicianApprovedBy: null });
+    expect(packBlockers("blood_sugar", [{ snack: legacy, upc: "1", verifiedAt: "2026-10-05" }], r, settings.policy)[0]).toMatch(/legacy approval/);
+    const picks = Array.from({ length: 14 }, () => ({ snack: snack({ categories: ["Savory"] }), category: "Savory" }));
+    picks[0] = { snack: { ...picks[0].snack, status: "Candidate" }, category: "Savory" };
+    const checks = checkLineup("blood_sugar", { ...r, categories: [] }, picks, settings, 6);
+    expect(checks.find((c) => c.key === "candidate")!.pass).toBe(false);
+    expect(isReady(checks)).toBe(false);
   });
 });
 

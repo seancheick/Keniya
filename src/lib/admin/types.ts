@@ -112,6 +112,10 @@ export type Snack = RuleInput & {
   earliestExpiry: string | null;
   /** Share of ratings that were "loved" (Phase 6); null when unrated. */
   loveRate: number | null;
+  /** Who made the clinician decision; null for legacy workbook approvals (need re-attestation). */
+  clinicianApprovedBy?: string | null;
+  /** UPC on file and the label checked with the package in hand. */
+  packageVerified?: boolean;
 };
 
 // ---------------------------------------------------------------- settings

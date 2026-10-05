@@ -28,6 +28,16 @@ export type ClinicalExtra = {
   notes: string | null;
 };
 
+/** Last two rungs of the ladder: clinician approval (named) and package verification. */
+function readyToPack(s: Snack, x: ClinicalExtra | undefined): string {
+  const missing = [
+    s.status !== "Approved" ? "clinician approval" : !x?.reviewedBy ? "clinician re-attestation" : null,
+    !x?.upc ? "UPC" : null,
+    !x?.verifiedAt ? "label checked in hand" : null,
+  ].filter(Boolean);
+  return missing.length ? `no: needs ${missing.join(", ")}` : "yes";
+}
+
 const yn = (v: boolean | undefined) => (v === true ? "yes" : v === false ? "no" : "unknown");
 const day = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
 
@@ -63,6 +73,7 @@ export function clinicalReviewRows(
       [CLINICIAN_VERDICT]: "",
       [CLINICIAN_COMMENTS]: "",
       "In active box lineup": inLineup(s.id).map((b) => BOX_LABEL[b]).join("; "),
+      "Ready to pack": readyToPack(s, x),
     };
     for (const b of BOX_SLUGS) {
       const e = eligible(b, s);
@@ -101,7 +112,7 @@ export function clinicalReviewRows(
       "Reject reason": s.rejectReason,
       "Pre-screened by": x?.prescreenedBy,
       "Pre-screened on": day(x?.prescreenedAt ?? null),
-      "Clinician decision by": x?.reviewedBy ?? (s.status === "Approved" ? "Approved in workbook (approver not recorded)" : null),
+      "Clinician decision by": x?.reviewedBy ?? (s.status === "Approved" ? "Legacy workbook approval: re-attestation needed" : null),
       "Clinician decision on": day(x?.reviewedAt ?? null),
       UPC: x?.upc,
       "Other notes": notes.other,
