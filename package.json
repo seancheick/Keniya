@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "import:workbook": "tsx scripts/import-workbook.ts"
+    "import:workbook": "tsx scripts/import-workbook.ts",
+    "db:migrate": "tsx scripts/migrate-admin.ts"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
