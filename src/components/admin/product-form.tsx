@@ -14,6 +14,7 @@ import {
   FREE_FROM_KEYS,
   NUTRITION_SOURCES,
   PREGNANCY_CHECK_KEYS,
+  PREGNANCY_CHECK_LABEL,
   PRODUCT_TYPES,
   ROLE_KEYS,
   ROLE_LABEL,
@@ -245,9 +246,9 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
         </Section>
 
         <Section title="Pregnancy checks" hint="All of P1–P9 must be PASS for the Pregnancy box. P7c is informational. P7a: check ingredients against the watchlist.">
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {PREGNANCY_CHECK_KEYS.map((k) => (
-              <Field key={k} label={k === "P7c" ? "P7c (info)" : k}>
+              <Field key={k} label={k === "P7c" ? "P7c (info)" : k} hint={PREGNANCY_CHECK_LABEL[k]}>
                 <select name={`pc_${k}`} defaultValue={ver?.pregnancy_checks?.[k] ?? ""} className={fieldClass}>
                   <option value="">—</option>
                   <option>PASS</option>

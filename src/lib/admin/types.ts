@@ -25,6 +25,28 @@ export const NUTRITION_SOURCES = ["Package label", "Manufacturer", "Retailer", "
 /** Pregnancy checks that must all be PASS. P7c is information only and never blocks. */
 export const PREGNANCY_BLOCKING = ["P1", "P2", "P3", "P4", "P5", "P6", "P7a", "P7b", "P8", "P9"] as const;
 export const PREGNANCY_CHECK_KEYS = [...PREGNANCY_BLOCKING, "P7c"] as const;
+/** Keniya Pregnancy Standard P1–P9 (revised v3, original box-builder workbook). */
+export const PREGNANCY_CHECK_LABEL: Record<(typeof PREGNANCY_CHECK_KEYS)[number], string> = {
+  P1: "Pasteurized or fully cooked",
+  P2: "No pregnancy no-gos (raw dairy/eggs/fish, deli meat, high-mercury fish, raw sprouts, alcohol, liver)",
+  P3: "Caffeine checked and shown per serving (caffeine-free preferred, except incidental chocolate)",
+  P4: "Added sugar shown",
+  P5: "Sodium shown",
+  P6: "Allergens identified",
+  P7a: "No ingredient with an established pregnancy concern (watchlist, e.g. saccharin, licorice root, sage)",
+  P7b: "Keniya brand preference (e.g. no erythritol or sugar alcohols); never framed as unsafe",
+  P7c: "Customer-preference flag (e.g. stevia, sweeteners); information only, never blocks",
+  P8: "Honest single-serve count (one pack = one snack)",
+  P9: "Expiry fits the 3-month ship + shelf window",
+};
+/** What each status means for a reviewer. */
+export const STATUS_MEANING: Record<Status, string> = {
+  Candidate: "Not reviewed yet, or waiting on a label check",
+  "Pre-approved": "Passed the automated source and ingredient pre-screen; waiting for the clinician",
+  Approved: "Approved by the clinician (or approved earlier in the workbook)",
+  Rejected: "Not used; reason given",
+  Retired: "No longer sold or used",
+};
 
 /** Judged roles (reviewer's call, not computed). */
 export const ROLE_KEYS = ["UF", "NS", "WG", "MF", "CT", "WHOLE_FOOD"] as const;

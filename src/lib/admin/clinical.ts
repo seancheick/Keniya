@@ -6,6 +6,7 @@ import {
   BOX_SLUGS,
   FREE_FROM_KEYS,
   PREGNANCY_CHECK_KEYS,
+  PREGNANCY_CHECK_LABEL,
   ROLE_KEYS,
   ROLE_LABEL,
   type BoxSlug,
@@ -28,6 +29,18 @@ export type ClinicalExtra = {
 const yn = (v: boolean | undefined) => (v === true ? "yes" : v === false ? "no" : "unknown");
 const day = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
 
+const PRESCREEN = /^\[Pre-screen[^\]]*\]\s*/;
+
+/** The "[Pre-screen …]" verdict line at the top of a product's notes, split from the rest. */
+export function splitNotes(notes: string | null | undefined): { prescreen: string; other: string } {
+  const [first, ...rest] = (notes ?? "").split("\n");
+  return PRESCREEN.test(first) ? { prescreen: first.replace(PRESCREEN, ""), other: rest.join("\n").trim() } : { prescreen: "", other: (notes ?? "").trim() };
+}
+
+export const CLINICIAN_VERDICT = "Clinician verdict (OK / change / reject)";
+export const CLINICIAN_COMMENTS = "Clinician comments";
+export const pCheckHeader = (k: (typeof PREGNANCY_CHECK_KEYS)[number]) => `${k} · ${PREGNANCY_CHECK_LABEL[k]}`;
+
 export function clinicalReviewRows(
   snacks: Snack[],
   extra: (id: string) => ClinicalExtra | undefined,
@@ -35,19 +48,30 @@ export function clinicalReviewRows(
 ): Record<string, unknown>[] {
   return snacks.map((s) => {
     const x = extra(s.id);
+    const notes = splitNotes(x?.notes);
+    // Decision columns first, so the clinician sees what to check before the data.
     const row: Record<string, unknown> = {
       Code: s.code,
       Product: s.name,
       Brand: s.brand,
-      UPC: x?.upc,
       Status: s.status,
-      "Reject reason": s.rejectReason,
-      "Reviewed by": x?.reviewedBy,
-      "Reviewed on": day(x?.reviewedAt ?? null),
-      Type: s.type,
-      Form: x?.form,
-      Categories: s.categories.join("; "),
+      "Pre-screen finding (what to check)": notes.prescreen,
+      [CLINICIAN_VERDICT]: "",
+      [CLINICIAN_COMMENTS]: "",
       "In active box lineup": inLineup(s.id).map((b) => BOX_LABEL[b]).join("; "),
+    };
+    for (const b of BOX_SLUGS) {
+      const f = fitFor(b, s, s.rejectReason);
+      row[`Fits ${BOX_LABEL[b]}`] = f.fits ? "yes" : "no";
+      row[`${BOX_LABEL[b]}: why`] = f.fits ? f.via.join("; ") : f.reasons.join("; ");
+    }
+    for (const k of PREGNANCY_CHECK_KEYS) row[pCheckHeader(k)] = s.pregnancy_checks[k] ?? "";
+    Object.assign(row, {
+      Ingredients: x?.ingredients,
+      Allergens: s.allergens,
+    });
+    for (const k of FREE_FROM_KEYS) row[k.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())] = yn(s.freeFrom[k]);
+    Object.assign(row, {
       "Serving weight (oz)": s.unit_wt_oz,
       Calories: s.calories,
       "Protein (g)": s.protein_g,
@@ -58,25 +82,23 @@ export function clinicalReviewRows(
       "Caffeine (mg)": s.caffeine_mg,
       "Saturated fat (g)": s.sat_fat_g,
       "Sugar alcohols (g)": s.sugar_alcohols_g,
-      Allergens: s.allergens,
-      Ingredients: x?.ingredients,
-      "Shelf life": x?.shelfLife,
-      "Nutrition source": x?.nutritionSource,
-      "Nutrition verified on": day(x?.verifiedAt ?? null),
-      "Nutrition verified by": x?.verifiedBy,
-    };
-    for (const k of FREE_FROM_KEYS) row[k.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())] = yn(s.freeFrom[k]);
-    for (const k of PREGNANCY_CHECK_KEYS) row[k === "P7c" ? "P7c (info only)" : k] = s.pregnancy_checks[k] ?? "";
+    });
     // Roles are reviewer tick-boxes: unticked means "not marked", not unknown data.
     for (const k of ROLE_KEYS) row[`Role: ${ROLE_LABEL[k]}`] = s.roles[k] ? "yes" : "";
-    for (const b of BOX_SLUGS) {
-      const f = fitFor(b, s, s.rejectReason);
-      row[`Fits ${BOX_LABEL[b]}`] = f.fits ? "yes" : "no";
-      row[`${BOX_LABEL[b]}: why`] = f.fits ? f.via.join("; ") : f.reasons.join("; ");
-    }
-    row.Notes = x?.notes;
-    row["Clinician verdict (OK / change / reject)"] = "";
-    row["Clinician comments"] = "";
+    Object.assign(row, {
+      Type: s.type,
+      Form: x?.form,
+      Categories: s.categories.join("; "),
+      "Shelf life": x?.shelfLife,
+      "Nutrition source": x?.nutritionSource,
+      "Nutrition verified on (package in hand)": day(x?.verifiedAt ?? null),
+      "Nutrition verified by": x?.verifiedBy,
+      "Reject reason": s.rejectReason,
+      "Reviewed by": x?.reviewedBy,
+      "Reviewed on": day(x?.reviewedAt ?? null),
+      UPC: x?.upc,
+      "Other notes": notes.other,
+    });
     return row;
   });
 }

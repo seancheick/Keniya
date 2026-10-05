@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/admin/auth";
 import { db, must } from "@/lib/admin/db";
 import { clinicalReviewRows } from "@/lib/admin/clinical";
+import { clinicalWorkbook } from "@/lib/admin/clinical-xlsx";
 import { toCsv } from "@/lib/admin/recall";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_SLUGS } from "@/lib/admin/types";
@@ -21,7 +22,14 @@ const TABLES = {
 export async function GET(request: Request) {
   await requireAdmin();
   const t = new URL(request.url).searchParams.get("table") as keyof typeof TABLES | "clinical_review" | null;
-  if (t === "clinical_review") return csv(t, await clinicalReview());
+  if (t === "clinical_review")
+    return new Response(new Uint8Array(await clinicalWorkbook(await clinicalReview())), {
+      headers: {
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="keniya-clinician-review-${new Date().toISOString().slice(0, 10)}.xlsx"`,
+        "Cache-Control": "no-store",
+      },
+    });
   if (!t || !(t in TABLES)) return new Response("Unknown table", { status: 400 });
   const rows: Record<string, unknown>[] = [];
   // Page through (PostgREST caps responses at 1000 rows).
