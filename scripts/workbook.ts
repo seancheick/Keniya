@@ -1,4 +1,4 @@
-// Parse keniya-box-builder (v4) into admin rows. Pure: no database. Used by import-workbook.ts.
+// Parse keniya-box-builder (v4 or v5) into admin rows. Pure: no database. Used by import-workbook.ts.
 // Reads only input cells (the workbook has no cached formula results); everything computed
 // in Excel is recomputed by src/lib/admin (rules, costing).
 import ExcelJS from "exceljs";
@@ -89,12 +89,17 @@ const BUILDER: Record<BoxSlug, { sheet: string; first: number }> = {
   blood_sugar: { sheet: "Builder — Carb Conscious", first: 20 },
   heart: { sheet: "Builder — Heart", first: 21 },
 };
+// Products columns are found by their row-4 header (first line, prefix match), so inserted
+// columns (v5 added the stock block after "Your quote $") don't shift what we read.
 const CHECK_COLS: [string, string][] = [
-  ["Z", "P1"], ["AA", "P2"], ["AB", "P3"], ["AC", "P4"], ["AD", "P5"], ["AE", "P6"],
-  ["AF", "P7a"], ["AG", "P7b"], ["AH", "P8"], ["AI", "P9"], ["AJ", "P7c"],
+  ["P1", "P1"], ["P2", "P2"], ["P3", "P3"], ["P4", "P4"], ["P5", "P5"], ["P6", "P6"],
+  ["P7a", "P7a"], ["P7b", "P7b"], ["P8", "P8"], ["P9", "P9"], ["P7c", "P7c"],
 ];
-const ROLE_COLS: [string, string][] = [["AK", "UF"], ["AL", "NS"], ["AM", "WG"], ["AN", "MF"], ["AO", "CT"], ["AP", "WHOLE_FOOD"]];
-const FF_COLS: [string, string][] = [["BK", "vegan"], ["BL", "gluten_free"], ["BM", "dairy_free"], ["BN", "peanut_free"], ["BO", "tree_nut_free"], ["BP", "soy_free"]];
+const ROLE_COLS: [string, string][] = [["UF", "UF"], ["NS", "NS"], ["WG", "WG"], ["MF", "MF"], ["CT", "CT"], ["Whole-food fat/protein", "WHOLE_FOOD"]];
+const FF_COLS: [string, string][] = [
+  ["Vegan", "vegan"], ["Gluten-free", "gluten_free"], ["Dairy-free", "dairy_free"],
+  ["Peanut-free", "peanut_free"], ["Tree-nut-free", "tree_nut_free"], ["Soy-free", "soy_free"],
+];
 
 const cleanVendor = (v: string | null) => v?.split("(")[0].split(" - ")[0].trim().slice(0, 120) || null;
 const cents = (d: number | null) => (d === null ? null : Math.round(d * 10_000) / 100);
@@ -104,54 +109,76 @@ export async function readWorkbook(path: string): Promise<Workbook> {
   await wb.xlsx.readFile(path);
   const sheet = (name: string) => {
     const s = wb.getWorksheet(name);
-    if (!s) throw new Error(`Sheet "${name}" not found: is this keniya-box-builder v4?`);
+    if (!s) throw new Error(`Sheet "${name}" not found: is this keniya-box-builder v4 or v5?`);
     return s;
   };
 
   // ---- Products
   const P = sheet("Products");
+  const headers = new Map<string, number>();
+  P.getRow(4).eachCell((cell, i) => {
+    const h = text(cell.value)?.split("\n")[0].trim();
+    if (h && !headers.has(h)) headers.set(h, i);
+  });
+  // Exact header first, else the one header that starts with the key ("P7c" → "P7c (info only)").
+  const colOf = (key: string) => {
+    const exact = headers.get(key);
+    if (exact) return exact;
+    const hits = [...headers.keys()].filter((h) => h.startsWith(key));
+    if (hits.length !== 1) throw new Error(`Products: ${hits.length ? "ambiguous" : "no"} column for "${key}" (${hits.join(", ")})`);
+    return headers.get(hits[0])!;
+  };
+  const COL = Object.fromEntries(
+    [
+      "ID", "Product", "Brand", "Type", "Form", "Vendor", "URL", "Estimated unit cost $", "Your quote $",
+      "Price checked on", "Typical retail $", "Unit wt oz", "Calories", "Protein g", "Fiber g", "Carbs g",
+      "Added sugar g", "Sodium mg", "Caffeine mg", "Sat fat g", "Sugar alcohols g", "Allergens", "Shelf life",
+      "Nutrition source", "Status", "Notes", "Sensory profile",
+      ...[...CHECK_COLS, ...ROLE_COLS, ...FF_COLS].map(([h]) => h),
+    ].map((h) => [h, colOf(h)]),
+  );
   const products: WbProduct[] = [];
   for (let r = 5; r <= P.rowCount; r++) {
     const row = P.getRow(r);
-    const c = (col: string) => row.getCell(col).value;
-    const code = text(c("A"));
-    const name = text(c("B"));
+    const c = (header: string) => row.getCell(COL[header]).value;
+    const code = text(c("ID"));
+    const name = text(c("Product"));
     if (!code || !name) continue;
-    const type = text(c("D"));
-    const form = text(c("E"));
-    const status = (text(c("BG")) ?? "Candidate") as WbProduct["status"];
-    const notes = text(c("BJ"));
+    const type = text(c("Type"));
+    const form = text(c("Form"));
+    const status = (text(c("Status")) ?? "Candidate") as WbProduct["status"];
+    const notes = text(c("Notes"));
     products.push({
       code,
       name,
-      brand: text(c("C")),
+      brand: text(c("Brand")),
       type: (PRODUCT_TYPES as readonly string[]).includes(type ?? "") ? (type as WbProduct["type"]) : "Substantial",
       form: (FORMS as readonly string[]).includes(form ?? "") ? (form as WbProduct["form"]) : "Solid",
-      vendor: cleanVendor(text(c("F"))),
-      url: text(c("G"))?.replace(/\)$/, "") ?? null,
-      estimate_cost_cents: cents(num(c("H"))),
-      quote_cost_cents: cents(num(c("I"))),
-      price_checked_on: text(c("K")),
-      retail_cents: num(c("L")) === null ? null : Math.round(num(c("L"))! * 100),
+      vendor: cleanVendor(text(c("Vendor"))),
+      url: text(c("URL"))?.replace(/\)$/, "") ?? null,
+      estimate_cost_cents: cents(num(c("Estimated unit cost $"))),
+      quote_cost_cents: cents(num(c("Your quote $"))),
+      price_checked_on: text(c("Price checked on")),
+      retail_cents: num(c("Typical retail $")) === null ? null : Math.round(num(c("Typical retail $"))! * 100),
       status: ["Candidate", "Approved", "Rejected", "Retired"].includes(status) ? status : "Candidate",
       reject_reason: status === "Rejected" ? (notes?.slice(0, 300) ?? "Rejected in the workbook") : null,
       notes,
-      sensory: text(c("BQ")),
+      sensory: text(c("Sensory profile")),
       categories: [],
       version: {
-        unit_wt_oz: num(c("M")),
-        calories: num(c("N")),
-        protein_g: num(c("O")),
-        fiber_g: num(c("P")),
-        carbs_g: num(c("Q")),
-        added_sugar_g: num(c("R")),
-        sodium_mg: num(c("S")),
-        caffeine_mg: num(c("T")),
-        sat_fat_g: num(c("U")),
-        sugar_alcohols_g: num(c("V")),
-        allergens: text(c("W")),
-        shelf_life: text(c("X")),
-        nutrition_source: text(c("Y"))?.slice(0, 60) ?? null,
+        unit_wt_oz: num(c("Unit wt oz")),
+        calories: num(c("Calories")),
+        protein_g: num(c("Protein g")),
+        fiber_g: num(c("Fiber g")),
+        carbs_g: num(c("Carbs g")),
+        added_sugar_g: num(c("Added sugar g")),
+        sodium_mg: num(c("Sodium mg")),
+        caffeine_mg: num(c("Caffeine mg")),
+        sat_fat_g: num(c("Sat fat g")),
+        sugar_alcohols_g: num(c("Sugar alcohols g")),
+        allergens: text(c("Allergens")),
+        shelf_life: text(c("Shelf life")),
+        nutrition_source: text(c("Nutrition source"))?.slice(0, 60) ?? null,
         pregnancy_checks: Object.fromEntries(CHECK_COLS.flatMap(([col, k]) => (text(c(col)) ? [[k, text(c(col))!.slice(0, 120)]] : []))),
         roles: Object.fromEntries(ROLE_COLS.flatMap(([col, k]) => (yes(c(col)) ? [[k, true]] : []))),
         free_from: Object.fromEntries(

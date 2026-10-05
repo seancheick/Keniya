@@ -1,9 +1,9 @@
 /**
- * One-time (re-runnable) import of keniya-box-builder v4 into the admin database.
+ * One-time (re-runnable) import of keniya-box-builder (v4 or v5) into the admin database.
  *
- *   pnpm import:workbook ./ops/keniya-box-builder_v4.xlsx --dry-run   # parse + report only
- *   pnpm import:workbook ./ops/keniya-box-builder_v4.xlsx             # write
- *   pnpm import:workbook ./ops/keniya-box-builder_v4.xlsx --force     # also overwrite settings,
+ *   pnpm import:workbook ./ops/keniya-box-builder.xlsx --dry-run   # parse + report only
+ *   pnpm import:workbook ./ops/keniya-box-builder.xlsx             # write
+ *   pnpm import:workbook ./ops/keniya-box-builder.xlsx --force     # also overwrite settings,
  *                                                                     #   box rules and lineups
  *
  * Needs NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY in .env.local.

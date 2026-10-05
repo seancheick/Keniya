@@ -22,8 +22,8 @@
 
 3. **Import the workbook (local only; the workbook stays in `/ops`, which is gitignored)**
    ```bash
-   pnpm import:workbook ./ops/keniya-box-builder_v4.xlsx --dry-run   # report only
-   pnpm import:workbook ./ops/keniya-box-builder_v4.xlsx             # write
+   pnpm import:workbook ./ops/keniya-box-builder.xlsx --dry-run   # report only
+   pnpm import:workbook ./ops/keniya-box-builder.xlsx             # write
    ```
    - What gets imported:
      - all products, with nutrition, P1–P9 checks, roles and estimates;
