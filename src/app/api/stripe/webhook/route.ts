@@ -4,6 +4,7 @@ import { boxes, cravings } from "@/lib/box";
 import { env } from "@/lib/env";
 import { sendCartReminder, sendOrderEmails } from "@/lib/resend";
 import { getStripe } from "@/lib/stripe";
+import { stripeFeeForSession } from "@/lib/stripe-fee";
 import { getSupabaseAdmin } from "@/lib/supabase";
 
 /**
@@ -74,6 +75,17 @@ export async function POST(req: Request) {
       // 23505 = already saved (Stripe retry); anything else is logged but still emails —
       // the founder alert below is the backup record.
       if (error && error.code !== "23505") console.error("preorder insert failed", error);
+
+      // Actual Stripe fee for per-order profit in the admin (best effort; the admin retries
+      // when it plans the shipment if the balance transaction wasn't ready yet).
+      const fee = await stripeFeeForSession(session.id);
+      if (fee) {
+        const { error: feeError } = await getSupabaseAdmin()
+          .from("preorders")
+          .update({ stripe_fee_cents: fee.feeCents, amount_net_cents: fee.netCents })
+          .eq("stripe_session_id", session.id);
+        if (feeError) console.error("preorder fee update failed", feeError.message);
+      }
 
       const { count } = await getSupabaseAdmin()
         .from("preorders")

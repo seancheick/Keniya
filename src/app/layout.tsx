@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
 import { Figtree, Fraunces } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import { Header } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { ScrollFx } from "@/components/fx/scroll-fx";
-import { JsonLd } from "@/components/json-ld";
 import { site } from "@/lib/site";
 import "./globals.css";
 
@@ -43,28 +39,6 @@ export const metadata: Metadata = {
   },
 };
 
-const organizationJsonLd = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Organization",
-      "@id": `${site.url}/#organization`,
-      name: site.name,
-      url: site.url,
-      logo: `${site.url}/icon.svg`,
-      email: site.email,
-      description: site.description,
-    },
-    {
-      "@type": "WebSite",
-      "@id": `${site.url}/#website`,
-      name: site.name,
-      url: site.url,
-      publisher: { "@id": `${site.url}/#organization` },
-    },
-  ],
-};
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -76,11 +50,7 @@ export default function RootLayout({
       className={`${fraunces.variable} ${figtree.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">
-        <JsonLd data={organizationJsonLd} />
-        <ScrollFx />
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
+        {children}
         <Analytics />
       </body>
     </html>
