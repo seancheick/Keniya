@@ -1,9 +1,11 @@
 # Handoff: Keniya Admin (`/admin`)
 
-**Status, Oct 5 2026.**
-- The code for phases 1–5 of the plan is written, tested locally and merged to `main`.
-- **Production is not set up yet.** Migrations 0006/0007 have not been applied to the live Supabase project, and the workbook has not been imported.
-- Until that happens, every `/admin` page in production errors after login. The public site, checkout and the webhook keep working: the webhook's fee update logs an error and carries on.
+**Status, Oct 4 2026 (production set up).**
+- The code for phases 1–5 of the plan is written, tested locally and merged to `main`; production runs it (Vercel deploy of `7b8194e`).
+- **Live Supabase is set up.** Migrations 0006/0007 were applied by the owner and verified object by object: a catalog fingerprint of the live DB (349 columns, constraints, indexes, triggers, function bodies, grants, RLS, seeds, buckets) is identical to a fresh Postgres 17 built from `supabase/migrations/*`.
+- **Workbook imported** from `ops/keniya-box-builder.xlsx` (v5): 97 products, Approved 11 / Candidate 84 / Rejected 2, 95 estimate prices, 3 active lineups of 14, 26 watchlist rows. Read back from the DB and spot-checked against the cells.
+- The importer now finds Products columns by header (v5 inserted six stock columns after "Your quote $"; the old fixed letters read e.g. calories from "On hand"). v4 and v5 parse to byte-identical data.
+- Smoke test: every `/admin` page renders 200 against live data with no server errors (local `next start` + live DB, throwaway password). Production: logged-out redirects, `noindex`, `robots.txt`, and anon REST/storage reads return nothing.
 
 Read `ADMIN.md` (the operator guide) and `AGENTS.md` (Next 16 is different from what you know; read `node_modules/next/dist/docs/`) before changing code.
 
@@ -19,7 +21,7 @@ The previous session ran in a cloud container. It had no access to the owner's `
 | `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_SUPABASE_URL` | Owner's `.env.local` | Import script and the app |
 | `ADMIN_PASSWORD` | Vercel: set for **Production and Preview**. Owner says Production is done. Check Preview. | Admin login |
 | `USDA_API_KEY` | Vercel. Owner says done. | Barcode lookups. `DEMO_KEY` is a rate-limited fallback. |
-| Workbook | Owner's `ops/keniya-box-builder_v4.xlsx` (gitignored; never commit it, the repo is public) | Import |
+| Workbook | Owner's `ops/keniya-box-builder.xlsx` (gitignored; never commit it, the repo is public) | Import |
 
 Steps:
 1. Apply the migrations: `SUPABASE_ACCESS_TOKEN=... pnpm db:migrate`.
@@ -29,7 +31,7 @@ Steps:
    - Direct Postgres (port 5432/6543) was blocked from the cloud container. The HTTPS Management API was reachable.
    - The alternative is to paste the two SQL files into the Supabase SQL editor.
 2. Import the workbook:
-   - Dry run first: `pnpm import:workbook ops/keniya-box-builder_v4.xlsx --dry-run`. Expected: **97 products, 12 missing nutrition, 2 no cost, Approved 11 / Candidate 84 / Rejected 2, all three boxes READY**. Landed cost: Pregnancy ≈ $34.41, Carb ≈ $38.22, Heart ≈ $35.44. Pregnancy was verified by hand against the Price Calculator.
+   - Dry run first: `pnpm import:workbook ops/keniya-box-builder.xlsx --dry-run`. Expected: **97 products, 12 missing nutrition, 2 no cost, Approved 11 / Candidate 84 / Rejected 2, all three boxes READY**. Landed cost: Pregnancy ≈ $34.41, Carb ≈ $38.22, Heart ≈ $35.44. Pregnancy was verified by hand against the Price Calculator.
    - Then run it without `--dry-run`. Re-running is safe; `--force` overwrites settings, rules and lineups.
 3. Smoke-test production `/admin` (§4) and confirm with the owner.
 
@@ -62,8 +64,9 @@ Steps:
 ## 3. Not done / gaps (prioritized)
 
 **P0: production readiness**
-1. §1 setup (migrations, import, env on Preview).
-2. Not tested against real Supabase, live USDA (shared DEMO_KEY was rate-limited, own key not available in the container), live Stripe balance-transaction lookup, real phone camera scanning (BarcodeDetector on Android, ZXing fallback on iOS), real Supabase Storage uploads, or a real Pirate Ship CSV. Header matching is pattern-based and was tested only on a synthetic CSV; get a real export from the owner and adjust `readLabelCsv`.
+1. §1 setup is done except `ADMIN_PASSWORD` on Vercel **Preview** (could not be checked: Vercel API returns 403 for env listing). Owner: confirm in Vercel → Settings → Environment Variables.
+   - New in v5, not enforced: Settings "Min days to expiry when packing" (90). `pack_shipment` uses FEFO regardless of expiry; add a min-days setting and skip near-expiry lots (needs an RPC change).
+2. Not tested against live USDA (shared DEMO_KEY was rate-limited, own key not available in the container), live Stripe balance-transaction lookup, real phone camera scanning (BarcodeDetector on Android, ZXing fallback on iOS), real Supabase Storage uploads, or a real Pirate Ship CSV. Header matching is pattern-based and was tested only on a synthetic CSV; get a real export from the owner and adjust `readLabelCsv`.
 3. Add `error.tsx` under `src/app/admin/(protected)/`. Loaders throw on Supabase errors (`must()`), and `createShipmentForPreorder` throws (it's a form action). Today the user sees the generic error page.
 
 **P1: correctness / robustness**
@@ -90,9 +93,9 @@ Steps:
 
 ## 4. Audit checklist (do this before calling it done)
 
-- [ ] `pnpm lint && npx tsc --noEmit && pnpm test && pnpm build` all pass. `next build` typechecks `scripts/` too.
-- [ ] `pnpm db:migrate --check` reports everything ✓ on production.
-- [ ] With the anon key: `select` on `products`, `purchase_lots`, `shipments` returns nothing, and `rpc('pack_shipment')` is denied.
+- [x] `pnpm lint && npx tsc --noEmit && pnpm test && pnpm build` all pass. `next build` typechecks `scripts/` too.
+- [x] `pnpm db:migrate --check` reports everything ✓ on production.
+- [x] With the anon key: `select` on `products`, `purchase_lots`, `shipments` returns nothing, and `rpc('pack_shipment')` is denied.
 - [ ] Photo bucket `keniya-admin` is private, and photos load only via signed URLs (product page).
 - [ ] Logged out: `/admin/*` and `/admin/reports/export?table=preorders` redirect to login. POSTing a server action without the cookie redirects and does not mutate.
 - [ ] Headers: `/admin` has `camera=(self)` and `X-Robots-Tag: noindex`; the public site still has `camera=()`. `robots.txt` disallows `/admin`.
