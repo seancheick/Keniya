@@ -288,7 +288,9 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
       { name: "Comfort", min: 3, max: 5 },
       { name: "Protein", min: 2, max: 4 },
       { name: "Sweet", min: 2, max: 4 },
-      { name: "Hydration", min: 1, max: 2 },
+      // Two sips, as the public card promises; a second hydration product also removes the
+      // single point of failure the feasibility check found.
+      { name: "Hydration", min: 2, max: 2 },
       { name: "Savory", min: 1, max: 3 },
     ],
     substantialMin: 8,
@@ -352,7 +354,7 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
       { name: "Protein", min: 3, max: 5 },
       { name: "Savory", min: 3, max: 6 },
       { name: "Sweet", min: 2, max: 3 },
-      { name: "Hydration", min: 1, max: 2 },
+      { name: "Hydration", min: 2, max: 2 },
     ],
     substantialMin: 8,
     miniMax: 4,
@@ -395,9 +397,7 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
       { name: "Protein", min: 3, max: 5 },
       { name: "Savory", min: 2, max: 4 },
       { name: "Sweet", min: 2, max: 4 },
-      // Only one hydration product is past pre-screen today (the ginger teas are a clinician
-      // call); the range opens to 1 so the box can be built, and prefers more when available.
-      { name: "Hydration", min: 1, max: 3 },
+      { name: "Hydration", min: 2, max: 3 },
     ],
     substantialMin: 8,
     miniMax: 4,

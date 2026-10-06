@@ -245,6 +245,8 @@ export function LogPurchase({
           }
         >
           <p className="font-semibold">New product</p>
+          {/* creating.upc is only ever set from a scan, so the package itself verifies the barcode. */}
+          {creating.upc && <input type="hidden" name="upc_source" value="scan" />}
           {creating.draft && <DraftNotice draft={creating.draft} />}
           <Field label="Name">
             <input name="name" required defaultValue={creating.name} className={fieldClass} />

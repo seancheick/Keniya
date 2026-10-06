@@ -44,6 +44,10 @@ export type ProductRow = {
   name: string;
   brand: string | null;
   upc: string | null;
+  /** Barcode identity (not the label): see src/lib/admin/barcode.ts. */
+  barcode_status?: "unverified" | "candidate" | "provisional" | "high" | "conflict" | "verified";
+  barcode_sources?: unknown[];
+  barcode_checked_at?: string | null;
   type: ProductType;
   form: Form;
   categories: string[];

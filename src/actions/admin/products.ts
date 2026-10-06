@@ -30,9 +30,11 @@ export async function createProduct(_prev: FormState, fd: FormData): Promise<For
   const parsed = parse(fd);
   if ("error" in parsed) return { error: parsed.error };
   const vendorId = await ensureVendor(String(fd.get("vendor") ?? ""), admin.name);
+  // A product created from a scan on the receiving screen has its identity verified by the package itself.
+  const scanned = fd.get("upc_source") === "scan" && parsed.product.upc ? { barcode_status: "verified", barcode_checked_at: new Date().toISOString(), barcode_sources: [{ source: "package", gtin: parsed.product.upc, exact_variant: true, checked_at: new Date().toISOString(), note: `Scanned while logging a purchase by ${admin.name}` }] } : {};
   const ins = await db()
     .from("products")
-    .insert({ ...parsed.product, code: "", default_vendor_id: vendorId, created_by: admin.name })
+    .insert({ ...parsed.product, ...scanned, code: "", default_vendor_id: vendorId, created_by: admin.name })
     .select("id")
     .single();
   if (ins.error) return { error: dupUpc(ins.error.message) ? "A product with this UPC already exists." : ins.error.message };

@@ -68,10 +68,15 @@ export async function verifyPackage(_prev: VerifyState, fd: FormData): Promise<V
   }
   if (problems.length) return { problems };
 
+  // The scanned package is the authority on identity: barcode_status becomes "verified".
+  const prior = (must(await db().from("products").select("barcode_sources").eq("id", product.id).single(), "barcode sources") as { barcode_sources: unknown[] | null }).barcode_sources ?? [];
   const up = await db()
     .from("products")
     .update({
       upc: product.upc ?? upc,
+      barcode_status: "verified",
+      barcode_sources: [...prior, { source: "package", gtin: upc, exact_variant: true, checked_at: new Date().toISOString(), note: `Scanned on the Verify screen by ${admin.name}` }],
+      barcode_checked_at: new Date().toISOString(),
       notes: withLine(product.notes, `Package verified ${today} by ${admin.name}: UPC ${upc}, label and serving match, expires ${f.expires_on}.`),
       updated_at: new Date().toISOString(),
     })
