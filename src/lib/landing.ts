@@ -84,12 +84,12 @@ export const landings: BoxLanding[] = [
     slug: "blood_sugar",
     path: "/blood-sugar-snack-box",
     redirectFrom: ["/balanced-blood-sugar-snack-box", "/carb-conscious-snack-box"],
-    title: "Blood Sugar Snack Box: Under {{blood_sugar.carbsMax}} g Carbs Per Pack",
+    title: "Blood Sugar Snack Box: At or below {{blood_sugar.carbsMax}} g Carbs Per Pack",
     description:
-      "14 snacks for type 1, type 2 and prediabetes, every pack under {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar: protein-forward, fiber-forward, nuts and seeds, portioned treats. $47, free shipping.",
+      "14 snacks for type 1, type 2 and prediabetes, every pack at or below {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar: protein-forward, fiber-forward, nuts and seeds, portioned treats. $47, free shipping.",
     h1: "Snacks for blood sugar, with the carb count already checked.",
     intro:
-      "Built by a founder with a lifetime of label-reading for type 1 diabetes. Every pack stays under {{blood_sugar.carbsMax}} g total carbohydrate and {{blood_sugar.addedSugarMax}} g added sugar, then has to earn its place through protein, fiber, whole-food fats or a small, portioned treat.",
+      "Built by a founder with a lifetime of label-reading for type 1 diabetes. Every pack stays at or below {{blood_sugar.carbsMax}} g total carbohydrate and {{blood_sugar.addedSugarMax}} g added sugar, then has to earn its place through protein, fiber, whole-food fats or a small, portioned treat.",
     forWho: [
       "People with type 1 or type 2 diabetes or prediabetes",
       "Anyone keeping carbs and added sugar in check",
@@ -97,7 +97,7 @@ export const landings: BoxLanding[] = [
     ],
     screening: [
       {
-        title: "Under {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar, every pack",
+        title: "At or below {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar, every pack",
         body: "Total carbohydrate, never \"net carbs\". A snack over either number can't go in, whatever else it has going for it.",
       },
       {
@@ -141,10 +141,10 @@ export const landings: BoxLanding[] = [
     path: "/heart-healthy-snack-box",
     title: "Heart & Blood Pressure Snack Box: {{heart.sodiumMax}} mg Sodium Max",
     description:
-      "14 snacks for high blood pressure, cholesterol and heart-conscious eating, every pack under {{heart.sodiumMax}} mg sodium: nuts and seeds, whole grains, fruit and portioned treats. $47, free shipping.",
+      "14 snacks for high blood pressure, cholesterol and heart-conscious eating, every pack at or below {{heart.sodiumMax}} mg sodium: nuts and seeds, whole grains, fruit and portioned treats. $47, free shipping.",
     h1: "Heart and blood-pressure snacking without the label math.",
     intro:
-      "“Watch your sodium” shouldn't mean giving up on snacks. Every pack in this box stays under {{heart.sodiumMax}} mg sodium and {{heart.satFatMax}} g saturated fat, built around nuts, seeds, whole grains and fruit, with at most {{heart.treatMax}} portioned treats that pass the same checks.",
+      "“Watch your sodium” shouldn't mean giving up on snacks. Every pack in this box stays at or below {{heart.sodiumMax}} mg sodium and {{heart.satFatMax}} g saturated fat, built around nuts, seeds, whole grains and fruit, with at most {{heart.treatMax}} portioned treats that pass the same checks.",
     forWho: [
       "People with high blood pressure or high cholesterol",
       "Anyone following a heart-conscious or lower-sodium plan from their doctor",
@@ -152,15 +152,15 @@ export const landings: BoxLanding[] = [
     ],
     screening: [
       {
-        title: "Under {{heart.sodiumMax}} mg sodium, every pack",
+        title: "At or below {{heart.sodiumMax}} mg sodium, every pack",
         body: "The FDA's \"low sodium\" line and the American Heart Association's snack guidance. A snack over it can't go in, and the exact number is on its label.",
       },
       {
-        title: "Saturated fat under {{heart.satFatMax}} g",
+        title: "Saturated fat at or below {{heart.satFatMax}} g",
         body: "Nuts and seeds get up to {{heart.satFatNutMax}} g when the fat is their own; a snack with added palm or coconut oil doesn't get that allowance.",
       },
       {
-        title: "Added sugar under {{heart.addedSugarMax}} g on core picks",
+        title: "Added sugar at or below {{heart.addedSugarMax}} g on core picks",
         body: "A portioned treat may have up to {{heart.treatAddedSugarMax}} g, and there are at most {{heart.treatMax}} in a box.",
       },
       {
@@ -171,7 +171,7 @@ export const landings: BoxLanding[] = [
     faqs: [
       {
         q: "Is every snack low-sodium?",
-        a: "Yes. Every pack is under {{heart.sodiumMax}} mg sodium, which is the FDA's definition of \"low sodium\" per serving, and every snack ships with its label so you can see the exact number.",
+        a: "Yes. Every pack is at or below {{heart.sodiumMax}} mg sodium, which is the FDA's definition of \"low sodium\" per serving, and every snack ships with its label so you can see the exact number.",
       },
       {
         q: "Is this box for high blood pressure?",
@@ -194,12 +194,12 @@ export const landings: BoxLanding[] = [
   {
     slug: "gestational_diabetes",
     path: "/gestational-diabetes-snack-box",
-    title: "Gestational Diabetes Snack Box: Pregnancy-Screened, Under {{gestational_diabetes.carbsMax}} g Carbs",
+    title: "Gestational Diabetes Snack Box: Pregnancy-Screened, At or below {{gestational_diabetes.carbsMax}} g Carbs",
     description:
-      "14 snacks that pass both Keniya Pregnancy Screening and the Blood Sugar standard: under {{gestational_diabetes.carbsMax}} g carbs and {{gestational_diabetes.addedSugarMax}} g added sugar per pack, fully cooked, caffeine limited. $47, free shipping.",
+      "14 snacks that pass both Keniya Pregnancy Screening and the Blood Sugar standard: at or below {{gestational_diabetes.carbsMax}} g carbs and {{gestational_diabetes.addedSugarMax}} g added sugar per pack, fully cooked, caffeine limited. $47, free shipping.",
     h1: "Snacks that pass the pregnancy checks and the carb count.",
     intro:
-      "Gestational diabetes means two sets of rules at once. Every snack here has to pass Keniya Pregnancy Screening and stay under {{gestational_diabetes.carbsMax}} g total carbohydrate and {{gestational_diabetes.addedSugarMax}} g added sugar per pack, then earn its place through protein, fiber or whole-food fats.",
+      "Gestational diabetes means two sets of rules at once. Every snack here has to pass Keniya Pregnancy Screening and stay at or below {{gestational_diabetes.carbsMax}} g total carbohydrate and {{gestational_diabetes.addedSugarMax}} g added sugar per pack, then earn its place through protein, fiber or whole-food fats.",
     forWho: [
       "Anyone pregnant with gestational diabetes",
       "Anyone pregnant who is keeping carbs in check on their care team's advice",
@@ -212,7 +212,7 @@ export const landings: BoxLanding[] = [
       },
       {
         title: "Then the Blood Sugar standard",
-        body: "Under {{gestational_diabetes.carbsMax}} g total carbohydrate and {{gestational_diabetes.addedSugarMax}} g added sugar per pack. Total carbs, never \"net carbs\".",
+        body: "At or below {{gestational_diabetes.carbsMax}} g total carbohydrate and {{gestational_diabetes.addedSugarMax}} g added sugar per pack. Total carbs, never \"net carbs\".",
       },
       {
         title: "Both, or it doesn't go in",
@@ -243,10 +243,10 @@ export const landings: BoxLanding[] = [
     path: "/glp1-snack-box",
     title: "GLP-1 Companion Snack Box: Protein-Forward, Small Portions",
     description:
-      "14 snacks for people on GLP-1 medications: protein-forward, under {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar per pack, small portions, unsweetened sips and gentle comfort picks. $47, free shipping.",
+      "14 snacks for people on GLP-1 medications: protein-forward, at or below {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar per pack, small portions, unsweetened sips and gentle comfort picks. $47, free shipping.",
     h1: "Small appetite, protein first: a snack box for GLP-1 days.",
     intro:
-      "When you're eating less, every bite has to count. Every snack here leads with protein, fiber or whole-food fats, stays under {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar, and the box carries unsweetened sips and gentle comfort picks for the queasy days.",
+      "When you're eating less, every bite has to count. Every snack here leads with protein, fiber or whole-food fats, stays at or below {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar, and the box carries unsweetened sips and gentle comfort picks for the queasy days.",
     forWho: [
       "People taking a GLP-1 medication for weight or blood sugar",
       "Anyone eating smaller meals who wants protein in every snack",
@@ -258,7 +258,7 @@ export const landings: BoxLanding[] = [
         body: "2025 joint guidance for GLP-1 nutrition emphasizes adequate protein and nutrient-dense foods, so every box carries at least {{glp1.proteinOrFiberMin}} protein- or fiber-forward picks.",
       },
       {
-        title: "Under {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar per pack",
+        title: "At or below {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar per pack",
         body: "Small portions that don't spend your appetite on sugar.",
       },
       {

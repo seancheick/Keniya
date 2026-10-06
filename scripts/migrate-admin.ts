@@ -61,6 +61,10 @@ const MIGRATIONS: { file: string; applied: string }[] = [
     file: "supabase/migrations/20261007000000_purchase_packs.sql",
     applied: "select to_regclass('public.purchase_packs') is not null and position('purchase_packs' in pg_get_functiondef('public.pack_shipment(uuid,text,integer,integer,numeric,integer)'::regprocedure)) > 0 as ok",
   },
+  {
+    file: "supabase/migrations/20261007010000_barcode_trigger_fix.sql",
+    applied: "select position('normalized' in pg_get_functiondef('public.barcode_one_meaning()'::regprocedure)) > 0 as ok",
+  },
 ];
 
 const TABLES = [

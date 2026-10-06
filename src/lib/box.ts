@@ -71,7 +71,7 @@ const raw: Omit<Box, "founding">[] = [
     shortName: "Blood Sugar",
     forWho: "For type 1, type 2 and prediabetes, and anyone keeping carbs in check.",
     caution: "Pregnant? Choose the Gestational Diabetes box.",
-    why: "Every pack under {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar.",
+    why: "Every pack at or below {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar.",
     composition: {
       Savory: { name: "Savory crunch", note: "picks such as chickpeas, seeds, popcorn and crackers, each within the carb limit" },
       Protein: { name: "Protein", note: "picks such as nut butters, nuts, jerky and bars that lead with protein" },
@@ -90,7 +90,7 @@ const raw: Omit<Box, "founding">[] = [
     forWho: "For high blood pressure, high cholesterol, and anyone eating for their heart.",
     why: "Sodium capped at {{heart.sodiumMax}} mg on every pack; saturated fat and added sugar checked.",
     composition: {
-      Savory: { name: "Savory crunch", note: "picks such as nuts, seeds, whole-grain crackers and popcorn, each under {{heart.sodiumMax}} mg sodium" },
+      Savory: { name: "Savory crunch", note: "picks such as nuts, seeds, whole-grain crackers and popcorn, each with {{heart.sodiumMax}} mg sodium or less" },
       Sweet: { name: "Fruit & treats", note: "fruit such as dried fruit and fruit bars, and at most {{heart.treatMax}} portioned treats" },
       Protein: { name: "Protein", note: "picks such as nut and seed butters and nuts" },
       Hydration: { name: "Sips", note: "unsweetened drink mixes and water enhancers" },
@@ -105,7 +105,7 @@ const raw: Omit<Box, "founding">[] = [
     name: "Gestational Diabetes Box",
     shortName: "Gestational",
     forWho: "For gestational diabetes: pregnancy screening and the Blood Sugar standard, both.",
-    why: "Every snack passes our Pregnancy checks and stays under {{gestational_diabetes.carbsMax}} g carbs and {{gestational_diabetes.addedSugarMax}} g added sugar.",
+    why: "Every snack passes our Pregnancy checks and stays at or below {{gestational_diabetes.carbsMax}} g carbs and {{gestational_diabetes.addedSugarMax}} g added sugar.",
     composition: {
       Protein: { name: "Protein & staying power", note: "picks such as nuts, seeds and nut butters that lead with protein" },
       Savory: { name: "Savory crunch", note: "portioned savory picks, each within the carb limit" },
