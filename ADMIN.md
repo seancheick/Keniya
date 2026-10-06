@@ -17,6 +17,7 @@
 2. **Database.** Apply the migrations in order (Supabase SQL editor or `supabase db push`):
    - `supabase/migrations/0006_admin.sql` adds products (versioned), lots, the ledger, FEFO packing, lineups and shipments.
    - `supabase/migrations/0007_admin_storage_and_fees.sql` adds the private `keniya-admin` photo bucket and the Stripe fee columns.
+   - Apply the later pre-screen migrations and `20261006025542_packing_safeguards.sql` for checked-lot packing, atomic lineup/package saves, manual-shipment avoid lists and recorded expiry corrections. Apply `20261006030933_admin_function_hardening.sql` afterwards to pin function search paths and restrict maintenance-function access.
 
    To check the migrations against a scratch database: `psql -d <scratch> -f supabase/tests/fefo.sql`.
 
@@ -51,7 +52,7 @@
   - Pre-approve (pre-screen), Approve (clinician; re-attest legacy approvals), reject (reason required) or retire.
   - Photos: front, nutrition facts, ingredients and barcode.
   - A provenance record ("Verified on · source · by").
-  - "Reformulated?" saves a new formula version, so past shipments keep the nutrition they actually had.
+  - "Reformulated?" saves a new formula version, so past shipments keep the nutrition they actually had. Label/formula edits clear approval and package verification; metadata-only edits preserve them. Verify again with the package in hand.
 - **Boxes**
   - **Build box** fills all picks in one click (objective, allergen "Leave out", optional one-off snack mix).
   - **Products table** under the lineup: one row per product with stock, ✓ per box, approval, package check and expiry. **Add** puts it in a category with room; **Remove** takes it out; tap a row for the evidence (eligibility reasons, nutrition, allergens, pre-screen finding, links to the product and Verify). By default it shows only products eligible for this box.
@@ -60,12 +61,13 @@
   - Save & activate creates a new lineup version.
 - **Orders**
   1. **Plan.** Paid Stripe preorders become planned shipments. Avoid-list conflicts are swapped automatically when possible.
-  2. **Pack.** Stock is deducted earliest-expiry-first (FEFO) and the actual costs are captured. **Unpack** returns the stock.
+  2. **Pack.** Open the shipment, select its package, and pull the lots shown on its checklist. Check off each sealed pack; save swaps before checking. Optional scale weight is used for the shipping label. Packing requires current-formula lots with at least 90 days left, named clinician approval and package verification. Changed lots/items require a fresh checklist. Stock is deducted FEFO and costs are captured. **Unpack** returns stock and clears the old label/weight snapshots.
   3. **Pirate Ship.** Export the packed boxes and use Pirate Ship's *Import spreadsheet* (Order ID = `KEN-######`). Buy the labels there, then import Pirate Ship's shipment-history CSV back here. The actual label cost and tracking fill in and the boxes move to Shipped. You can also type them in on a shipment.
-  - Gifts, samples and replacements are $0-revenue shipments, packed the same way.
+  - Gifts, samples and replacements are $0-revenue shipments, packed the same way; enter their allergies / foods to avoid when planning.
 - **Purchasing.** A run planner merged across boxes: required + buffer − on hand, at the cheapest recent vendor price. Log shelf prices and quotes on a product's page.
 - **Inventory**
-  - Lots in FEFO order, with 30/60/90-day expiry tiers.
+  - Lots in FEFO order, with 30/60/90-day expiry tiers. Physical inventory includes held lots; builder capacity and purchasing count only current-formula units with at least 90 days left. Filter **Held — needs attention** to review blocked stock.
+  - **Record / correct expiry** saves the printed date with a reason and audit note, without logging another purchase.
   - Waste, count corrections and returns, each with a reason. Every change is in the ledger.
   - **Recall / trace**: lot → shipments → customers, with a CSV export.
 - **Reports**
@@ -77,3 +79,9 @@
 - **Postage estimates learn.** Once 5 real labels exist in a weight band, the estimate becomes their median, so surcharges show up on their own.
 
 Curation aid only, not medical advice: final lineups need clinical sign-off.
+
+The findings and validation boundary are recorded in [the stock and packing audit](docs/admin-stock-audit.md).
+
+### Clinician export
+
+Products → Export for clinician downloads an Excel snapshot. Start here gives instructions; Review prioritizes Pre-approved and legacy approvals with four yellow input columns (Decision, Comments, Reviewer, Review date). Clicking a product opens its evidence row on Details. Details includes all products, nutrition, Pregnancy checks, sources, product and label-version IDs. Legend explains current configured limits. Editing the workbook does not update approval in the admin: record returned decisions manually after checking the label version is still current. Product verification is not shipment readiness.

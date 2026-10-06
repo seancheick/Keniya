@@ -83,9 +83,10 @@ export async function savePackage(_prev: SettingsState, fd: FormData): Promise<S
   const parsed = pkgSchema.safeParse(Object.fromEntries(fd));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const { id, cost, is_default, ...rest } = parsed.data;
-  const row = { ...rest, cost_cents: dollarsToCents(cost) ?? 0, is_default: is_default === "on" };
-  if (row.is_default) await db().from("package_profiles").update({ is_default: false }).eq("is_default", true);
-  const res = id ? await db().from("package_profiles").update(row).eq("id", id) : await db().from("package_profiles").insert(row);
+  const costCents = dollarsToCents(cost);
+  if (costCents === null || costCents < 0) return { error: "Package cost must be a dollar amount of zero or more" };
+  const row = { ...rest, cost_cents: costCents, is_default: is_default === "on" };
+  const res = await db().rpc("save_package_profile", { p_id: id || null, p_profile: row });
   if (res.error) return { error: res.error.message };
   revalidatePath("/admin", "layout");
   return { ok: true };

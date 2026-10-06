@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { db, PHOTO_BUCKET } from "@/lib/admin/db";
 import { dollarsToCents } from "@/lib/admin/forms";
+import { isIsoDate } from "@/lib/admin/verify";
 import { ensureVendor } from "@/lib/admin/vendors";
 
 export type PurchaseState = {
@@ -13,6 +14,7 @@ export type PurchaseState = {
   lotId?: string;
   unitCostCents?: number;
   qty?: number;
+  warning?: string;
 };
 
 const purchaseSchema = z.object({
@@ -20,8 +22,8 @@ const purchaseSchema = z.object({
   vendor: z.string().trim().min(1, "Where did you buy it?").max(120),
   qty: z.coerce.number().int("Whole units only").min(1, "How many units?").max(100_000),
   total: z.string().min(1, "What did you pay in total?"),
-  purchased_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  expires_on: z.union([z.literal(""), z.string().regex(/^\d{4}-\d{2}-\d{2}$/)]).optional(),
+  purchased_at: z.string().refine(isIsoDate, "Enter a valid date"),
+  expires_on: z.union([z.literal(""), z.string().refine(isIsoDate, "Enter a valid date")]).optional(),
   lot_code: z.string().max(60).optional(),
   note: z.string().max(500).optional(),
 });
@@ -35,6 +37,12 @@ export async function logPurchase(_prev: PurchaseState, fd: FormData): Promise<P
   const total = dollarsToCents(d.total);
   if (total === null || total < 0) return { error: "Total paid should be a dollar amount, e.g. 11.99" };
 
+  const receipt = fd.get("receipt");
+  if (receipt instanceof File && receipt.size > 0) {
+    if (!receipt.type.startsWith("image/") && receipt.type !== "application/pdf") return { error: "Receipt must be a photo or PDF" };
+    if (receipt.size > 3_000_000) return { error: "Receipt must be under 3 MB" };
+  }
+  if (d.expires_on && d.expires_on < d.purchased_at) return { error: "Expiry cannot be before the purchase date" };
   const version = await db().from("product_versions").select("id").eq("product_id", d.product_id).eq("is_current", true).maybeSingle();
   if (!version.data) return { error: "That product has no current formula version." };
   const vendorId = await ensureVendor(d.vendor, admin.name);
@@ -58,17 +66,20 @@ export async function logPurchase(_prev: PurchaseState, fd: FormData): Promise<P
     .single();
   if (lot.error) return { error: lot.error.message };
 
-  const receipt = fd.get("receipt");
+  let warning: string | undefined;
   if (receipt instanceof File && receipt.size > 0) {
-    if (!receipt.type.startsWith("image/") && receipt.type !== "application/pdf") return { error: "Receipt must be a photo or PDF (purchase saved)." };
     const ext = receipt.type === "application/pdf" ? "pdf" : "jpg";
     const path = `receipts/${lot.data.id}.${ext}`;
     const up = await db().storage.from(PHOTO_BUCKET).upload(path, receipt, { contentType: receipt.type, upsert: true });
-    if (!up.error) await db().from("purchase_lots").update({ receipt_path: path }).eq("id", lot.data.id);
+    if (up.error) warning = "Purchase saved, but receipt upload failed. Do not log the purchase again.";
+    else {
+      const saved = await db().from("purchase_lots").update({ receipt_path: path }).eq("id", lot.data.id);
+      if (saved.error) warning = "Purchase saved, but receipt attachment failed. Do not log the purchase again.";
+    }
   }
 
   revalidatePath("/admin", "layout");
-  return { ok: true, lotId: lot.data.id, unitCostCents: Number(lot.data.unit_cost_cents), qty: d.qty };
+  return { ok: true, lotId: lot.data.id, unitCostCents: Number(lot.data.unit_cost_cents), qty: d.qty, warning };
 }
 
 const adjustSchema = z.object({
@@ -88,6 +99,17 @@ export async function adjustLot(_prev: SimpleState, fd: FormData): Promise<Simpl
   // Waste and returns always remove stock; the sign is implied.
   const delta = d.kind === "adjust" ? d.delta : -Math.abs(d.delta);
   const res = await db().rpc("adjust_lot", { p_lot: d.lot_id, p_delta: delta, p_kind: d.kind, p_reason: d.reason, p_actor: admin.name });
+  if (res.error) return { error: res.error.message };
+  revalidatePath("/admin", "layout");
+  return { ok: true };
+}
+
+/** Correct the recorded expiry from the physical package, without receiving stock again. */
+export async function setLotExpiry(_prev: SimpleState, fd: FormData): Promise<SimpleState> {
+  const admin = await requireAdmin();
+  const parsed = z.object({ lot_id: z.uuid(), expires_on: z.string().refine(isIsoDate, "Enter the date printed on the package"), reason: z.string().trim().min(2, "Give a reason for the correction").max(300) }).safeParse(Object.fromEntries(fd));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const res = await db().rpc("set_lot_expiry", { p_lot: parsed.data.lot_id, p_expires_on: parsed.data.expires_on, p_reason: parsed.data.reason, p_actor: admin.name });
   if (res.error) return { error: res.error.message };
   revalidatePath("/admin", "layout");
   return { ok: true };

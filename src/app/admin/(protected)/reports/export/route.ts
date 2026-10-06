@@ -5,7 +5,7 @@ import { clinicalWorkbook } from "@/lib/admin/clinical-xlsx";
 import { toCsv } from "@/lib/admin/recall";
 import { eligibleFor } from "@/lib/admin/rules";
 import { loadAdminContext } from "@/lib/admin/summary";
-import { BOX_SLUGS } from "@/lib/admin/types";
+import { BOX_LABEL, BOX_SLUGS } from "@/lib/admin/types";
 
 const TABLES = {
   shipments: "shipments",
@@ -23,19 +23,21 @@ const TABLES = {
 export async function GET(request: Request) {
   await requireAdmin();
   const t = new URL(request.url).searchParams.get("table") as keyof typeof TABLES | "clinical_review" | null;
-  if (t === "clinical_review")
-    return new Response(new Uint8Array(await clinicalWorkbook(await clinicalReview())), {
+  if (t === "clinical_review") {
+    const review = await clinicalReview();
+    return new Response(new Uint8Array(await clinicalWorkbook(review.rows, review.ruleSummary)), {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition": `attachment; filename="keniya-clinician-review-${new Date().toISOString().slice(0, 10)}.xlsx"`,
         "Cache-Control": "no-store",
       },
     });
+  }
   if (!t || !(t in TABLES)) return new Response("Unknown table", { status: 400 });
   const rows: Record<string, unknown>[] = [];
   // Page through (PostgREST caps responses at 1000 rows).
   for (let from = 0; ; from += 1000) {
-    const page = must(await db().from(TABLES[t]).select("*").range(from, from + 999), t) as Record<string, unknown>[];
+    const page = must(await db().from(TABLES[t]).select("*").order("id").range(from, from + 999), t) as Record<string, unknown>[];
     rows.push(...page.map((r) => Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v !== null && typeof v === "object" ? JSON.stringify(v) : v]))));
     if (page.length < 1000) break;
   }
@@ -46,13 +48,14 @@ async function clinicalReview() {
   const ctx = await loadAdminContext();
   const { products, versions, snacks } = ctx.catalog;
   const prod = new Map(products.map((p) => [p.id, p]));
-  return clinicalReviewRows(
+  const rows = clinicalReviewRows(
     snacks,
     (id) => {
       const p = prod.get(id);
       const v = versions.get(id);
       if (!p) return undefined;
       return {
+        versionId: v?.id ?? null,
         upc: p.upc,
         form: p.form,
         shelfLife: v?.shelf_life ?? null,
@@ -67,9 +70,15 @@ async function clinicalReview() {
         notes: p.notes,
       };
     },
-    (id) => BOX_SLUGS.filter((b) => ctx.boxes[b].picks.some((x) => x.snack.id === id)),
+    (id) => BOX_SLUGS.filter((b) => ctx.boxes[b].picks.some((x) => x.snack.id === id) || ctx.boxes[b].extras.some((x) => x.id === id)),
     (slug, s) => eligibleFor(slug, s, ctx.rules[slug], ctx.settings.policy, s.rejectReason),
   );
+  const ruleSummary = BOX_SLUGS.map((slug) => {
+    const r = ctx.rules[slug];
+    const limits = [["Total carbs (g)", r.carbsMax], ["Added sugar (g)", r.addedSugarMax], ["Sodium (mg)", r.sodiumMax], ["Saturated fat (g)", r.satFatMax], ["Saturated fat for nuts/seeds (g)", r.satFatNutMax]];
+    return `${BOX_LABEL[slug]} per-pack limits: ${limits.map(([label, value]) => `${label}: ${value === null ? "no configured limit" : `maximum ${value}`}`).join("; ")}.`;
+  });
+  return { rows, ruleSummary };
 }
 
 function csv(t: string, rows: Record<string, unknown>[]) {

@@ -1,5 +1,6 @@
 import "server-only";
 import { getSupabaseAdminStrict } from "@/lib/supabase";
+import { lotHold } from "./stock";
 import { effectiveUnitCost } from "./costing";
 import type { PostageSample } from "./postage";
 import {
@@ -22,6 +23,17 @@ export const db = () => getSupabaseAdminStrict();
 export function must<T>(res: { data: T | null; error: { message: string } | null }, what: string): T {
   if (res.error) throw new Error(`${what}: ${res.error.message}`);
   return res.data as T;
+}
+
+/** Page through the Data API rather than silently dropping rows at its row limit. */
+export async function allRows<T>(page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>, what: string): Promise<T[]> {
+  const rows: T[] = [];
+  const size = 500;
+  for (let from = 0; ; from += size) {
+    const batch = must(await page(from, from + size - 1), what);
+    rows.push(...batch);
+    if (batch.length < size) return rows;
+  }
 }
 
 export type ProductRow = {
@@ -190,10 +202,10 @@ export const packagingOz = (settings: Settings, pkg: PackageProfile | null) =>
 export function toSnack(
   p: ProductRow,
   v: VersionRow | undefined,
-  lots: Pick<LotRow, "qty_remaining" | "unit_cost_cents" | "expires_on">[],
+  lots: Pick<LotRow, "qty_remaining" | "unit_cost_cents" | "expires_on" | "product_version_id">[],
   latestSeenCents: number | null,
 ): Snack {
-  const live = lots.filter((l) => l.qty_remaining > 0);
+  const live = lots.filter((l) => l.qty_remaining > 0 && !lotHold(l, v?.id));
   const expiries = live.map((l) => l.expires_on).filter((d): d is string => Boolean(d)).sort();
   return {
     id: p.id,
@@ -218,6 +230,7 @@ export function toSnack(
     pregnancy_checks: v?.pregnancy_checks ?? {},
     roles: v?.roles ?? {},
     allergens: v?.allergens ?? null,
+    ingredients: v?.ingredients ?? null,
     freeFrom: v?.free_from ?? {},
     unitCostCents: effectiveUnitCost({
       lots: live.map((l) => ({ qty_remaining: l.qty_remaining, unit_cost_cents: Number(l.unit_cost_cents) })),
@@ -245,16 +258,15 @@ export type Catalog = {
 
 /** Everything the builder, dashboard and purchasing need, in four queries. */
 export async function loadCatalog(): Promise<Catalog> {
-  const [products, versions, lots, prices] = await Promise.all([
-    db().from("products").select("*").order("code"),
-    db().from("product_versions").select("*").eq("is_current", true),
-    db().from("purchase_lots").select("*").gt("qty_remaining", 0),
-    db().from("vendor_prices").select("*").order("seen_at", { ascending: false }).order("created_at", { ascending: false }),
+  const [P, versionRows, lotRows, priceRows] = await Promise.all([
+    allRows<ProductRow>((from, to) => db().from("products").select("*").order("code").order("id").range(from, to), "products"),
+    allRows<VersionRow>((from, to) => db().from("product_versions").select("*").eq("is_current", true).order("id").range(from, to), "versions"),
+    allRows<LotRow>((from, to) => db().from("purchase_lots").select("*").gt("qty_remaining", 0).order("id").range(from, to), "lots"),
+    allRows<VendorPriceRow>((from, to) => db().from("vendor_prices").select("*").order("seen_at", { ascending: false }).order("created_at", { ascending: false }).order("id").range(from, to), "prices"),
   ]);
-  const P = must(products, "products") as ProductRow[];
-  const V = new Map((must(versions, "versions") as VersionRow[]).map((v) => [v.product_id, v]));
-  const L = (must(lots, "lots") as LotRow[]).map((l) => ({ ...l, unit_cost_cents: Number(l.unit_cost_cents) }));
-  const PR = (must(prices, "prices") as VendorPriceRow[]).map((p) => ({ ...p, unit_cost_cents: Number(p.unit_cost_cents) }));
+  const V = new Map(versionRows.map((v) => [v.product_id, v]));
+  const L = lotRows.map((l) => ({ ...l, unit_cost_cents: Number(l.unit_cost_cents) }));
+  const PR = priceRows.map((p) => ({ ...p, unit_cost_cents: Number(p.unit_cost_cents) }));
   const lotsBy = new Map<string, LotRow[]>();
   for (const l of L) lotsBy.set(l.product_id, [...(lotsBy.get(l.product_id) ?? []), l]);
   const latestSeen = new Map<string, number>();

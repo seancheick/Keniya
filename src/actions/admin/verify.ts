@@ -55,6 +55,11 @@ export async function verifyPackage(_prev: VerifyState, fd: FormData): Promise<V
     today,
   });
 
+  if (f.nutrition_ok === "no" || f.ingredients_ok === "no") {
+    const invalidated = await db().from("product_versions").update({ verified_at: null, verified_by: null }).eq("id", version.id);
+    if (invalidated.error) return { error: invalidated.error.message };
+    revalidatePath("/admin", "layout");
+  }
   if (f.single_serve === "no") {
     // A real finding from the package: record it so eligibility drops the product.
     await db().from("product_versions").update({ pregnancy_checks: { ...checks, P8: "FAIL" }, verified_at: null, verified_by: null }).eq("id", version.id);

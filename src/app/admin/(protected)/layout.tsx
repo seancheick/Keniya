@@ -9,7 +9,7 @@ export default async function AdminShell({ children }: Readonly<{ children: Reac
   const admin = await requireAdmin();
   return (
     <>
-      <header className="sticky top-0 z-30 border-b bg-card/95 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b print:hidden bg-card/95 backdrop-blur">
         <div className="flex items-center gap-3 px-4 pt-3 sm:px-6">
           <Link href="/admin" className="font-display inline-flex min-h-11 items-center text-lg">
             Keniya <span className="text-muted-foreground">Admin</span>
@@ -29,9 +29,8 @@ export default async function AdminShell({ children }: Readonly<{ children: Reac
         </div>
         <AdminNav />
       </header>
-      {/* [&_.grid>*]:min-w-0: a grid track otherwise grows to its widest child (a wide table, a long badge) and pushes the page past a phone's width. */}
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 [&_.grid>*]:min-w-0">{children}</main>
-      <footer className="px-4 pb-6 text-xs text-muted-foreground sm:px-6">
+      <footer className="print:hidden px-4 pb-6 text-xs text-muted-foreground sm:px-6">
         Signed in as {admin.name} ·{" "}
         <form action={logout} className="inline">
           <button type="submit" className="inline-flex min-h-11 items-center underline sm:min-h-0">

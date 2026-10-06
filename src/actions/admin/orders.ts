@@ -4,12 +4,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { avoidConflict } from "@/lib/admin/avoid";
-import { db, must } from "@/lib/admin/db";
+import { db, must, allRows } from "@/lib/admin/db";
 import { optimize } from "@/lib/admin/optimizer";
 import { matchLabel, readLabelCsv } from "@/lib/admin/pirateship";
 import { estimatePostage } from "@/lib/admin/postage";
 import { stripeFeeForSession } from "@/lib/stripe-fee";
-import { packBlockers } from "@/lib/admin/rules";
+import { packingProblems } from "@/lib/admin/packing";
+import { stockPickList, stockSnapshot } from "@/lib/admin/stock";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_SLUGS, type BoxSlug } from "@/lib/admin/types";
 
@@ -27,6 +28,7 @@ type Preorder = {
   avoid: string | null;
   stripe_fee_cents: number | null;
   stripe_session_id: string;
+  status: string;
 };
 
 /**
@@ -41,6 +43,8 @@ async function planItems(slug: BoxSlug, avoid: string | null) {
     .map((s) => ({ s, why: avoidConflict({ ...s, ingredients: ctx.catalog.versions.get(s.id)?.ingredients }, avoid) }))
     .filter((x) => x.why);
   const hit = box.picks.filter((p) => conflicts.some((c) => c.s.id === p.snack.id));
+  const extraHit = box.extras.filter((e) => conflicts.some((c) => c.s.id === e.id));
+  if (extraHit.length) return { error: `Avoid “${avoid}” conflicts with extras: ${extraHit.map((e) => e.name).join(", ")}. Update the box extras first.` } as const;
   let picks = box.picks;
   let note: string | null = null;
   if (hit.length) {
@@ -67,6 +71,7 @@ export async function createShipmentForPreorder(fd: FormData): Promise<void> {
   const admin = await requireAdmin();
   const id = z.uuid().parse(fd.get("preorder_id"));
   const pre = must(await db().from("preorders").select("*").eq("id", id).single(), "preorder") as Preorder;
+  if (pre.status !== "paid") throw new Error("Only paid preorders can be planned");
   const slug = BOX_SLUGS.find((s) => s === pre.box_slug);
   if (!slug) throw new Error("Preorder has no known box");
   const plan = await planItems(slug, pre.avoid);
@@ -104,8 +109,8 @@ export async function createShipmentForPreorder(fd: FormData): Promise<void> {
 /** Create shipments for every paid preorder that doesn't have one yet. */
 export async function createAllShipments(): Promise<OrderState> {
   await requireAdmin();
-  const pres = must(await db().from("preorders").select("id, box_slug").eq("status", "paid"), "preorders") as { id: string; box_slug: string | null }[];
-  const existing = new Set((must(await db().from("shipments").select("preorder_id").not("preorder_id", "is", null), "shipments") as { preorder_id: string }[]).map((s) => s.preorder_id));
+  const pres = await allRows<{ id: string; box_slug: string | null }>((from, to) => db().from("preorders").select("id, box_slug").eq("status", "paid").order("id").range(from, to), "preorders");
+  const existing = new Set((await allRows<{ preorder_id: string }>((from, to) => db().from("shipments").select("preorder_id").not("preorder_id", "is", null).order("id").range(from, to), "shipments")).map((s) => s.preorder_id));
   let made = 0;
   const errors: string[] = [];
   for (const p of pres.filter((x) => !existing.has(x.id))) {
@@ -134,6 +139,7 @@ const manualSchema = z.object({
   state: z.string().max(50).optional(),
   postal_code: z.string().max(20).optional(),
   notes: z.string().max(500).optional(),
+  avoid: z.string().trim().max(500).optional(),
 });
 
 /** Gifts, samples, influencer boxes, replacements: $0 revenue, same packing and costs. */
@@ -142,7 +148,7 @@ export async function createManualShipment(_prev: OrderState, fd: FormData): Pro
   const parsed = manualSchema.safeParse(Object.fromEntries(fd));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const d = parsed.data;
-  const plan = await planItems(d.box_slug, null);
+  const plan = await planItems(d.box_slug, d.avoid || null);
   if ("error" in plan) return { error: plan.error };
   const res = await db()
     .from("shipments")
@@ -159,7 +165,8 @@ export async function createManualShipment(_prev: OrderState, fd: FormData): Pro
       stripe_fee_cents: 0,
       carrier: plan.ctx.settings.shipping.defaultCarrier,
       service: plan.ctx.settings.shipping.defaultService,
-      notes: d.notes || null,
+      notes: [plan.note, d.notes].filter(Boolean).join(" · ") || null,
+      avoid: d.avoid || null,
       created_by: admin.name,
     })
     .select("id")
@@ -169,66 +176,97 @@ export async function createManualShipment(_prev: OrderState, fd: FormData): Pro
   return { ok: true, id: res.data.id };
 }
 
+export async function setShipmentPackage(_prev: OrderState, fd: FormData): Promise<OrderState> {
+  await requireAdmin();
+  const parsed = z.object({ id: z.uuid(), package_profile_id: z.uuid() }).safeParse(Object.fromEntries(fd));
+  if (!parsed.success) return { error: "Select a package" };
+  const pkg = await db().from("package_profiles").select("id").eq("id", parsed.data.package_profile_id).eq("active", true).maybeSingle();
+  if (pkg.error) return { error: pkg.error.message };
+  if (!pkg.data) return { error: "That package is no longer active" };
+  const res = await db().from("shipments").update({ package_profile_id: parsed.data.package_profile_id }).eq("id", parsed.data.id).eq("status", "planned").select("id").maybeSingle();
+  if (res.error) return { error: res.error.message };
+  if (!res.data) return { error: "Only a planned shipment's package can be changed" };
+  refresh();
+  return { ok: true, message: "Package saved; packing costs and weight updated" };
+}
+
 /** Swap planned items before packing. */
 export async function setPlannedItems(shipmentId: string, productIds: string[]): Promise<OrderState> {
   await requireAdmin();
   const ids = z.array(z.uuid()).min(1).max(40).safeParse(productIds);
   if (!ids.success) return { error: "Invalid items" };
-  const res = await db().from("shipments").update({ planned_items: ids.data }).eq("id", shipmentId).eq("status", "planned");
+  if (!z.uuid().safeParse(shipmentId).success) return { error: "Invalid shipment" };
+  const current = must(await db().from("shipments").select("planned_items, status").eq("id", shipmentId).maybeSingle(), "shipment") as { planned_items: string[]; status: string } | null;
+  if (!current || current.status !== "planned") return { error: "This shipment is no longer planned. Refresh before editing." };
+  if (ids.data.length !== current.planned_items.length) return { error: "Swap one item per slot; the number of items must stay the same" };
+  const { problems } = await preparePack(shipmentId, ids.data, false);
+  if (problems.length) return { error: problems.join("; ") };
+  const res = await db().from("shipments").update({ planned_items: ids.data }).eq("id", shipmentId).eq("status", "planned").select("id").maybeSingle();
   if (res.error) return { error: res.error.message };
+  if (!res.data) return { error: "This shipment changed. Refresh before editing." };
   refresh();
   return { ok: true };
 }
 
+async function preparePack(id: string, replacement?: string[], requireStock = true) {
+  const ship = must(await db().from("shipments").select("box_slug, planned_items, package_profile_id, zone, status, preorder_id, lineup_id, avoid").eq("id", id).single(), "shipment") as { box_slug: BoxSlug; planned_items: string[]; package_profile_id: string | null; zone: number | null; status: string; preorder_id: string | null; lineup_id: string | null; avoid: string | null };
+  const ctx = await loadAdminContext();
+  const [pre, extra] = await Promise.all([
+    ship.preorder_id ? db().from("preorders").select("avoid, status").eq("id", ship.preorder_id).single() : Promise.resolve({ data: null, error: null }),
+    ship.lineup_id ? db().from("lineup_items").select("id").eq("lineup_id", ship.lineup_id).eq("is_extra", true) : Promise.resolve({ data: [], error: null }),
+  ]);
+  const preorder = must(pre, "preorder");
+  const extraCount = must(extra, "extras").length;
+  const pkg = ctx.packages.find((p) => p.id === ship.package_profile_id && p.active);
+  const problems: string[] = [];
+  if (ship.status !== "planned") problems.push("This shipment is no longer planned");
+  if (preorder && preorder.status !== "paid") problems.push("Order is no longer paid — check its payment before packing");
+  if (!pkg) problems.push("Select an active package profile before packing");
+  const ids = (replacement ?? ship.planned_items) as string[];
+  const slug = BOX_SLUGS.find((x) => x === ship.box_slug);
+  const packOz = (pkg?.empty_weight_oz ?? 0) + ctx.settings.packaging.reduce((s, p) => s + p.weightOz, 0);
+  const products = new Map(ctx.catalog.snacks.map((snack) => [snack.id, {
+    snack, upc: ctx.catalog.products.find((p) => p.id === snack.id)?.upc ?? null,
+    verifiedAt: ctx.catalog.versions.get(snack.id)?.verified_at ?? null,
+    ingredients: ctx.catalog.versions.get(snack.id)?.ingredients,
+  }]));
+  if (!slug) problems.push("Unknown box");
+  else problems.push(...packingProblems({ slug, ids, products, rules: ctx.rules[slug], settings: ctx.settings, packagingOz: packOz, extraCount, avoid: preorder?.avoid ?? ship.avoid ?? null }));
+  const stock = stockPickList(ids, ctx.catalog.lots, ctx.catalog.versions);
+  if (requireStock) for (const row of stock) if (row.short) problems.push(`${ctx.catalog.byId.get(row.productId)?.name ?? row.productId}: short ${row.short} packable unit(s)`);
+  return { ship, ctx, pkg, ids, packOz, problems, stock };
+}
+
 export async function packShipment(_prev: OrderState, fd: FormData): Promise<OrderState> {
   const admin = await requireAdmin();
-  const id = z.uuid().parse(fd.get("id"));
-  const ship = must(await db().from("shipments").select("box_slug, planned_items, package_profile_id, zone").eq("id", id).single(), "shipment") as {
-    box_slug: BoxSlug;
-    planned_items: string[];
-    package_profile_id: string | null;
-    zone: number | null;
-  };
-  const ctx = await loadAdminContext();
-  const prodBy = new Map(ctx.catalog.products.map((p) => [p.id, p]));
-  const blockers = packBlockers(
-    ship.box_slug,
-    ship.planned_items.flatMap((pid) => {
-      const snack = ctx.catalog.byId.get(pid);
-      return snack ? [{ snack, upc: prodBy.get(pid)?.upc ?? null, verifiedAt: ctx.catalog.versions.get(pid)?.verified_at ?? null }] : [];
-    }),
-    ctx.rules[ship.box_slug],
-    ctx.settings.policy,
-  );
-  if (blockers.length) return { error: `Can't pack yet. ${blockers.length} pick(s) need attention: ${blockers.join("; ")}` };
-  const pkg = ctx.packages.find((p) => p.id === ship.package_profile_id) ?? ctx.pkg;
-  const packOz = (pkg?.empty_weight_oz ?? 0) + ctx.settings.packaging.reduce((s, p) => s + p.weightOz, 0);
-  const weight = ship.planned_items.reduce((s, pid) => s + (ctx.catalog.byId.get(pid)?.unit_wt_oz ?? 0), 0) + packOz;
+  const parsed = z.uuid().safeParse(fd.get("id"));
+  if (!parsed.success) return { error: "Invalid shipment" };
+  const id = parsed.data;
+  const { ship, ctx, pkg, ids, packOz, problems, stock } = await preparePack(id);
+  const expected = fd.get("expected_items");
+  const expectedLots = fd.get("expected_lots");
+  if (!expectedLots || expectedLots !== JSON.stringify(stockSnapshot(stock))) return { error: "Stock lots changed. Refresh and check the new lots before packing." };
+  if (fd.get("expected_package") !== ship.package_profile_id) return { error: "Package changed. Refresh before packing." };
+  if (expected !== ids.join(",")) return { error: "Items changed. Refresh and check the new pick list before packing." };
+  if (problems.length) return { error: `Can't pack yet: ${problems.join("; ")}` };
+  const measured = String(fd.get("measured_weight_oz") ?? "").trim();
+  const weight = measured ? Number(measured) : ids.reduce((s, pid) => s + (ctx.catalog.byId.get(pid)?.unit_wt_oz ?? 0), 0) + packOz;
+  if (!Number.isFinite(weight) || weight <= 0 || weight > ctx.settings.policy.maxBoxOz) return { error: `Packed weight must be above zero and no more than ${ctx.settings.policy.maxBoxOz} oz` };
   const packaging = (pkg?.cost_cents ?? 0) + ctx.settings.packaging.reduce((s, p) => s + p.cents, 0);
   const overhead = ctx.settings.overheads.reduce((s, o) => s + o.cents, 0);
-  const history = must(
-    await db().from("shipments").select("packed_weight_oz, label_cost_cents, package_profile_id, zone").not("label_cost_cents", "is", null).limit(500),
-    "history",
-  ) as { packed_weight_oz: number | null; label_cost_cents: number | null; package_profile_id: string | null; zone: number | null }[];
+  const history = must(await db().from("shipments").select("packed_weight_oz, label_cost_cents, package_profile_id, zone").not("label_cost_cents", "is", null).order("shipped_at", { ascending: false }).limit(500), "history");
   const est = estimatePostage({ settings: ctx.settings, slug: ship.box_slug, weightOz: weight, packageProfileId: pkg?.id, zone: ship.zone, history });
-
-  const res = await db().rpc("pack_shipment", {
-    p_shipment: id,
-    p_actor: admin.name,
-    p_packaging_cents: packaging,
-    p_overhead_cents: overhead,
-    p_weight_oz: Math.round(weight * 10) / 10,
-    p_est_postage_cents: est.cents,
+  const res = await db().rpc("pack_shipment_checked", {
+    p_shipment: id, p_expected_items: ids, p_expected_lots: stockSnapshot(stock), p_expected_package: ship.package_profile_id, p_actor: admin.name,
+    p_packaging_cents: packaging, p_overhead_cents: overhead,
+    p_weight_oz: Math.round(weight * 10) / 10, p_est_postage_cents: est.cents,
   });
   if (res.error) {
-    if (res.error.message === "SHORTAGE") {
-      const short = JSON.parse(res.error.details ?? "[]") as { product_id: string; short: number }[];
-      return { error: `Not enough stock: ${short.map((s) => `${ctx.catalog.byId.get(s.product_id)?.name ?? "?"} (short ${s.short})`).join(", ")}` };
-    }
+    if (res.error.message === "SHORTAGE") return { error: "Not enough packable stock. Refresh the pick list to see the shortage." };
     return { error: res.error.message };
   }
   refresh();
-  return { ok: true, message: "Packed: stock deducted (earliest expiry first)" };
+  return { ok: true, message: "Packed: stock deducted from the listed lots" };
 }
 
 export async function unpackShipment(_prev: OrderState, fd: FormData): Promise<OrderState> {
@@ -256,8 +294,9 @@ export async function saveLabel(_prev: OrderState, fd: FormData): Promise<OrderS
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const d = parsed.data;
   const cost = d.label_cost ? Math.round(Number(d.label_cost.replace(/[$,\s]/g, "")) * 100) : null;
-  if (d.label_cost && !Number.isFinite(cost)) return { error: "Label cost should be a dollar amount" };
-  const zone = d.zone ? Number.parseInt(d.zone, 10) : null;
+  if (d.label_cost && (cost === null || !Number.isFinite(cost) || cost < 0)) return { error: "Label cost should be a dollar amount" };
+  const zone = d.zone ? Number(d.zone) : null;
+  if (zone !== null && (!Number.isInteger(zone) || zone < 1 || zone > 9)) return { error: "Zone must be a whole number from 1 to 9" };
   const patch: Record<string, unknown> = {
     carrier: d.carrier || null,
     service: d.service || null,
@@ -271,7 +310,10 @@ export async function saveLabel(_prev: OrderState, fd: FormData): Promise<OrderS
     if (cost === null || !patch.tracking) return { error: "Enter the label cost and tracking number to mark it shipped" };
     Object.assign(patch, { status: "shipped", shipped_at: new Date().toISOString() });
   }
-  const res = await db().from("shipments").update(patch).eq("id", d.id);
+  let update = db().from("shipments").update(patch).eq("id", d.id).in("status", ["packed", "shipped", "delivered", "issue"]);
+  if (d.ship === "on") update = update.eq("status", "packed");
+  const res = await update.select("id").maybeSingle();
+  if (!res.error && !res.data) return { error: "Shipment changed. Refresh and try again." };
   if (res.error) return { error: res.error.message };
   refresh();
   return { ok: true, message: d.ship === "on" ? "Marked shipped" : "Saved" };
@@ -293,7 +335,8 @@ export async function setShipmentStatus(_prev: OrderState, fd: FormData): Promis
     d.to === "delivered"
       ? { status: "delivered", delivered_at: new Date().toISOString() }
       : { status: "issue", issue: d.issue ?? "other", issue_note: d.issue_note || null };
-  const res = await db().from("shipments").update(patch).eq("id", d.id).in("status", ["shipped", "delivered", "issue"]);
+  const res = await db().from("shipments").update(patch).eq("id", d.id).in("status", ["shipped", "delivered", "issue"]).select("id").maybeSingle();
+  if (!res.error && !res.data) return { error: "Ship the box before recording delivery or an issue" };
   if (res.error) return { error: res.error.message };
   refresh();
   return { ok: true, message: d.to === "delivered" ? "Delivered" : "Issue recorded" };
@@ -307,25 +350,27 @@ export async function importPirateShip(_prev: OrderState, fd: FormData): Promise
   if (file.size > 3_000_000) return { error: "File too large" };
   const { rows, missing } = readLabelCsv(await file.text());
   if (missing.length) return { error: `Couldn't find column(s): ${missing.join(", ")}` };
-  const ships = must(await db().from("shipments").select("id, code, tracking, status"), "shipments") as { id: string; code: string; tracking: string | null; status: string }[];
+  const ships = await allRows<{ id: string; code: string; tracking: string | null; status: string }>((from, to) => db().from("shipments").select("id, code, tracking, status").order("id").range(from, to), "shipments");
   let updated = 0;
   let unmatched = 0;
   for (const r of rows) {
     const id = matchLabel(r, ships);
-    if (!id || r.costCents === null) {
+    if (!id || r.costCents === null || r.costCents < 0) {
       unmatched++;
       continue;
     }
     const s = ships.find((x) => x.id === id)!;
+    if (s.status === "planned" || (s.status === "packed" && !r.tracking && !s.tracking)) { unmatched++; continue; }
     const patch: Record<string, unknown> = { label_cost_cents: r.costCents };
     if (r.tracking) patch.tracking = r.tracking;
     if (r.carrier) patch.carrier = r.carrier;
     if (r.service) patch.service = r.service;
     if (r.zone) patch.zone = r.zone;
     if (s.status === "packed") Object.assign(patch, { status: "shipped", shipped_at: new Date().toISOString() });
-    const res = await db().from("shipments").update(patch).eq("id", id);
-    if (!res.error) updated++;
+    const res = await db().from("shipments").update(patch).eq("id", id).eq("status", s.status).select("id").maybeSingle();
+    if (!res.error && res.data) updated++;
+    else unmatched++;
   }
   refresh();
-  return { ok: true, message: `${updated} label(s) recorded${unmatched ? `, ${unmatched} row(s) didn't match a shipment (put the KEN- code in Pirate Ship's Order ID / reference)` : ""}` };
+  return { ok: true, message: `${updated} label(s) recorded${unmatched ? `, ${unmatched} row(s) skipped (check KEN- reference, packed status, cost and tracking)` : ""}` };
 }

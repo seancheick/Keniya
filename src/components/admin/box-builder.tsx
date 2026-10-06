@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { fmt$, landedCost } from "@/lib/admin/costing";
 import { canBuild, daysUntil, optimize } from "@/lib/admin/optimizer";
 import { estimatePostage, type PostageSample } from "@/lib/admin/postage";
-import { checkLineup, eligibleFor, isReady, lineupStage, packedWeightOz, type Pick } from "@/lib/admin/rules";
+import { checkLineup, eligibleFor, isReady, isReadyToPack, lineupStage, packedWeightOz, type Pick } from "@/lib/admin/rules";
 import { BOX_LABEL, OBJECTIVES, OBJECTIVE_LABEL, type BoxRules, type BoxSlug, type Objective, type Settings, type Snack } from "@/lib/admin/types";
 import { avoidConflict } from "@/lib/admin/avoid";
 import { cn } from "@/lib/utils";
@@ -24,6 +24,7 @@ type Props = {
   rules: BoxRules;
   settings: Settings;
   snacks: Snack[];
+  extras: Snack[];
   initial: { product_id: string; category: string | null }[];
   packagingOz: number;
   mailer: { id: string; name: string; cents: number } | null;
@@ -35,7 +36,7 @@ type Props = {
   findings: Record<string, string>;
 };
 
-export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz, mailer, history, allRules, photos, findings }: Props) {
+export function BoxBuilder({ slug, rules, settings, snacks, extras, initial, packagingOz, mailer, history, allRules, photos, findings }: Props) {
   const router = useRouter();
   const byId = useMemo(() => new Map(snacks.map((s) => [s.id, s])), [snacks]);
   const [picks, setPicks] = useState<Pick[]>(() =>
@@ -45,6 +46,7 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
   const [source, setSource] = useState<Objective | "manual">("manual");
   // Nothing logged yet → building from stock would return an empty box, so start unticked.
   const [requireStock, setRequireStock] = useState(() => snacks.some((s) => s.onHand > 0));
+  const [requireReady, setRequireReady] = useState(false);
   // Snack mix for this build only (the saved recipe is the "Box recipe" form below).
   // null = let Build box choose within the recipe's ranges; otherwise exact counts per kind.
   const [counts, setCounts] = useState<Record<string, number> | null>(null);
@@ -67,20 +69,22 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
     return m;
   }, [snacks, avoidText]);
 
-  const checks = useMemo(() => checkLineup(slug, buildRules, picks, settings, packagingOz), [slug, buildRules, picks, settings, packagingOz]);
-  const weight = packedWeightOz(picks, packagingOz);
+  const extraOz = extras.reduce((n, s) => n + (s.unit_wt_oz ?? 0), 0);
+  const checks = useMemo(() => checkLineup(slug, buildRules, picks, settings, packagingOz + extraOz), [slug, buildRules, picks, settings, packagingOz, extraOz]);
+  const weight = packedWeightOz(picks, packagingOz + extraOz);
   const postage = estimatePostage({ settings, slug, weightOz: weight, packageProfileId: mailer?.id, history });
   const cost = landedCost({
     slug,
     settings,
     pickCosts: picks.map((p) => p.snack.unitCostCents),
+    extraCosts: extras.map((s) => s.unitCostCents),
     mailer: mailer ? { name: mailer.name, cents: mailer.cents } : null,
     postageCents: postage.cents,
     postageNote: postage.note,
   });
-  const build = canBuild(picks);
-  const ready = picks.length > 0 && isReady(checks);
-  const stage = lineupStage(picks, ready);
+  const build = canBuild([...picks, ...extras.map((snack) => ({ snack, category: null }))]);
+  const ready = picks.length > 0 && isReady(checks) && !picks.some((p) => conflict.has(p.snack.id)) && extras.every((s) => eligibleFor(slug, s, rules, settings.policy, s.rejectReason).fits && !conflict.has(s.id));
+  const stage = lineupStage([...picks, ...extras.map((snack) => ({ snack }))], ready);
   const cats = mix.map((c) => c.name);
 
   function startCustom() {
@@ -93,7 +97,7 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
       toast.error(`Your snack mix adds up to ${countTotal}; make it ${rules.total} first.`);
       return;
     }
-    const r = optimize({ slug, rules: buildRules, settings, snacks, objective, packagingOz, runSize, requireStock, excludeIds: [...conflict.keys()] });
+    const r = optimize({ slug, rules: buildRules, settings, snacks: requireReady ? snacks.filter(isReadyToPack) : snacks, objective, packagingOz: packagingOz + extraOz, runSize, requireStock, excludeIds: [...conflict.keys()] });
     setPicks(r.picks);
     setSource(objective);
     if (r.picks.length < rules.total) toast.warning(`Only ${r.picks.length} eligible picks found (${r.candidates} candidates). Add stock or products.`);
@@ -123,7 +127,7 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
             .filter(Boolean)
             .join(" · ") || null,
         activate,
-        items: picks.map((p) => ({ product_id: p.snack.id, category: p.category, is_extra: false })),
+        items: [...picks.map((p) => ({ product_id: p.snack.id, category: p.category, is_extra: false })), ...extras.map((s) => ({ product_id: s.id, category: null, is_extra: true }))],
       });
       if (res.error) toast.error(res.error);
       else {
@@ -137,6 +141,7 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
 
   return (
     <div className="space-y-4">
+      {extras.length > 0 && <p className="text-sm text-muted-foreground">Extras included in stock, weight and cost: {extras.map((s) => s.name).join(", ")}</p>}
       <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
         <div className="space-y-4">
           <div className="space-y-4 rounded-xl border bg-card p-4">
@@ -154,6 +159,9 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
               </label>
               <label className="flex items-center gap-2 pb-2 text-sm">
                 <input type="checkbox" checked={requireStock} onChange={(e) => setRequireStock(e.target.checked)} /> Only snacks in stock
+              </label>
+              <label className="flex min-h-11 items-center gap-2 text-sm">
+                <input type="checkbox" checked={requireReady} onChange={(e) => setRequireReady(e.target.checked)} /> Only approved &amp; package-verified
               </label>
               <Button size="lg" onClick={runOptimizer}>
                 Build box
@@ -175,7 +183,7 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
               </div>
               {avoidText && (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {`${conflict.size} products left out. Matches allergen labels, "made in a facility with" warnings and product names; we have no ingredient lists yet, so check the labels.`}
+                  {`${conflict.size} products left out. Matches recorded ingredients, allergen labels, cross-contact warnings and product names. Check the package for anything not on file.`}
                 </p>
               )}
             </div>
@@ -325,13 +333,13 @@ export function BoxBuilder({ slug, rules, settings, snacks, initial, packagingOz
           </div>
           <div className="space-y-2 rounded-xl border bg-card p-4">
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Notes for this version (optional)" className={cn(fieldClass, "h-auto")} />
-            <Button className="w-full" disabled={saving || !picks.length} onClick={() => save(true)}>
+            <Button className="w-full" disabled={saving || !ready} onClick={() => save(true)}>
               {saving ? "Saving…" : "Save & activate"}
             </Button>
             <Button className="w-full" variant="outline" disabled={saving || !picks.length} onClick={() => save(false)}>
               Save as draft
             </Button>
-            {!ready && picks.length > 0 && <p className="text-xs text-amber-700">Not READY yet: you can still save, but fix the failing checks before packing.</p>}
+            {!ready && picks.length > 0 && <p className="text-xs text-amber-700">Fix the failing checks before activating. You can save your work as a draft.</p>}
           </div>
         </aside>
       </div>

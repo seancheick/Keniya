@@ -5,7 +5,7 @@ import { Badge, Card, Empty, PageHeader, Table, type Tone } from "@/components/a
 import { createShipmentForPreorder } from "@/actions/admin/orders";
 import { Button } from "@/components/ui/button";
 import { fmt$, shipmentProfit } from "@/lib/admin/costing";
-import { db, must } from "@/lib/admin/db";
+import { db, allRows } from "@/lib/admin/db";
 import { BOX_LABEL, isBoxSlug } from "@/lib/admin/types";
 
 export const metadata: Metadata = { title: "Orders" };
@@ -43,13 +43,12 @@ const TABS = [
 const box = (s: string | null) => (s && isBoxSlug(s) ? BOX_LABEL[s] : (s ?? "—"));
 
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-  const { tab = "planned" } = await searchParams;
-  const [preRes, shipRes] = await Promise.all([
-    db().from("preorders").select("id, created_at, email, customer_name, amount_total, box_slug, avoid, craving, status, shipping").order("created_at"),
-    db().from("shipments").select("*").order("created_at", { ascending: false }).limit(1000),
+  const sp = await searchParams;
+  const tab = TABS.some(([k]) => k === sp.tab) ? sp.tab! : "planned";
+  const [pres, ships] = await Promise.all([
+    allRows<Pre>((from, to) => db().from("preorders").select("id, created_at, email, customer_name, amount_total, box_slug, avoid, craving, status, shipping").order("created_at").order("id").range(from, to), "preorders"),
+    allRows<Ship>((from, to) => db().from("shipments").select("*").order("created_at", { ascending: false }).order("id").range(from, to), "shipments"),
   ]);
-  const pres = must(preRes, "preorders") as Pre[];
-  const ships = must(shipRes, "shipments") as Ship[];
   const planned = new Set(ships.map((s) => s.preorder_id).filter(Boolean));
   const todo = pres.filter((p) => p.status === "paid" && !planned.has(p.id));
   const count = (k: string) =>

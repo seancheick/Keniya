@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { adjustLot } from "@/actions/admin/inventory";
+import { adjustLot, setLotExpiry } from "@/actions/admin/inventory";
 import { Button } from "@/components/ui/button";
 import { fieldClass } from "@/components/admin/ui";
 
@@ -37,9 +37,26 @@ export function AdjustLot({ lotId, remaining }: { lotId: string; remaining: numb
       <Button size="xs" disabled={pending}>
         Save
       </Button>
-      <Button size="xs" variant="ghost" type="button" onClick={() => setOpen(false)}>
+      <Button size="xs" variant="ghost" type="button" aria-label="Cancel stock adjustment" onClick={() => setOpen(false)}>
         ✕
       </Button>
     </form>
   );
+}
+
+export function LotExpiryForm({ lotId, expiresOn }: { lotId: string; expiresOn: string | null }) {
+  const [state, action, pending] = useActionState(setLotExpiry, {});
+  useEffect(() => {
+    if (state.error) toast.error(state.error);
+    if (state.ok) toast.success("Expiry corrected; packable stock updated");
+  }, [state]);
+  return <details className="mt-2 text-xs print:hidden">
+    <summary className="cursor-pointer py-2">Record / correct expiry</summary>
+    <form action={action} className="mt-2 min-w-48 space-y-2">
+      <input type="hidden" name="lot_id" value={lotId} />
+      <label className="block">Date on this lot&apos;s package<input name="expires_on" type="date" required defaultValue={expiresOn ?? ""} className={`${fieldClass} mt-1`} /></label>
+      <input name="reason" required placeholder="Reason, e.g. date checked on package" aria-label="Reason for expiry correction" className={fieldClass} />
+      <Button type="submit" variant="outline" disabled={pending}>{pending ? "Saving…" : "Save expiry"}</Button>
+    </form>
+  </details>;
 }

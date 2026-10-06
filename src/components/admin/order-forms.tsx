@@ -10,6 +10,7 @@ import {
   packShipment,
   saveLabel,
   setShipmentStatus,
+  setShipmentPackage,
   unpackShipment,
   type OrderState,
 } from "@/actions/admin/orders";
@@ -97,6 +98,9 @@ export function ManualShipmentForm() {
       <Field label="ZIP">
         <input name="postal_code" className={fieldClass} />
       </Field>
+      <Field label="Allergies / foods to avoid" className="sm:col-span-2">
+        <input name="avoid" placeholder="e.g. peanuts, dairy, sesame" className={fieldClass} />
+      </Field>
       <Field label="Notes" className="sm:col-span-2">
         <input name="notes" className={fieldClass} />
       </Field>
@@ -107,16 +111,22 @@ export function ManualShipmentForm() {
   );
 }
 
-export function PackButtons({ id, status }: { id: string; status: string }) {
+export function PackButtons({ id, status, disabled = false, expectedItems, expectedLots, expectedPackage }: { id: string; status: string; disabled?: boolean; expectedItems?: string[]; expectedLots?: string; expectedPackage?: string | null }) {
   const [packState, pack, packing] = useActionState(packShipment, {});
   const [unpackState, unpack, unpacking] = useActionState(unpackShipment, {});
   useResult(packState);
   useResult(unpackState);
   if (status === "planned")
     return (
-      <form action={pack}>
+      <form action={pack} className="space-y-3">
+        <Field label="Scale weight in oz (optional)" hint="Leave blank to use snack + packaging weight. Enter the sealed box weight for your shipping label.">
+          <input name="measured_weight_oz" type="number" min="0.1" step="0.1" inputMode="decimal" className={`${fieldClass} max-w-40`} />
+        </Field>
         <input type="hidden" name="id" value={id} />
-        <Button disabled={packing}>{packing ? "Packing…" : "Mark packed (deduct stock)"}</Button>
+        <input type="hidden" name="expected_lots" value={expectedLots ?? ""} />
+        <input type="hidden" name="expected_package" value={expectedPackage ?? ""} />
+        <input type="hidden" name="expected_items" value={expectedItems?.join(",") ?? ""} />
+        <Button disabled={packing || disabled}>{packing ? "Packing…" : "Mark packed (deduct stock)"}</Button>
       </form>
     );
   if (status === "packed")
@@ -211,4 +221,19 @@ export function DeliveryForm({ id }: { id: string }) {
       </form>
     </div>
   );
+}
+
+export function ShipmentPackageForm({ id, initialId, packages }: { id: string; initialId: string | null; packages: { id: string; name: string }[] }) {
+  const [state, action, pending] = useActionState(setShipmentPackage, {});
+  useResult(state);
+  return <form action={action} className="space-y-2 print:hidden">
+    <input type="hidden" name="id" value={id} />
+    <Field label="Packing box / mailer">
+      <select name="package_profile_id" defaultValue={initialId ?? ""} className={fieldClass} required>
+        <option value="" disabled>Select a package</option>
+        {packages.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+      </select>
+    </Field>
+    <Button variant="outline" disabled={pending || !packages.length}>{pending ? "Saving…" : "Save package"}</Button>
+  </form>;
 }

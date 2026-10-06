@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Badge, Card, PageHeader, Stat, TextLink, expiryTone } from "@/components/admin/ui";
 import { fmt$, fmtPct, shipmentProfit } from "@/lib/admin/costing";
-import { db, must } from "@/lib/admin/db";
+import { db, allRows } from "@/lib/admin/db";
+import { lotHold } from "@/lib/admin/stock";
 import { daysUntil } from "@/lib/admin/optimizer";
 import { blockingFailures, eligibleFor, isClinicianApproved, lineupStage, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
 import { loadAdminContext } from "@/lib/admin/summary";
@@ -24,13 +25,11 @@ type Ship = {
 };
 
 export default async function Dashboard() {
-  const [ctx, shipsRes, presRes] = await Promise.all([
+  const [ctx, ships, paid] = await Promise.all([
     loadAdminContext(),
-    db().from("shipments").select("status, preorder_id, packed_at, revenue_cents, stripe_fee_cents, snack_cost_cents, packaging_cost_cents, overhead_cents, label_cost_cents, est_postage_cents"),
-    db().from("preorders").select("id").eq("status", "paid"),
+    allRows<Ship>((from, to) => db().from("shipments").select("status, preorder_id, packed_at, revenue_cents, stripe_fee_cents, snack_cost_cents, packaging_cost_cents, overhead_cents, label_cost_cents, est_postage_cents").order("id").range(from, to), "shipments"),
+    allRows<{ id: string }>((from, to) => db().from("preorders").select("id").eq("status", "paid").order("id").range(from, to), "preorders"),
   ]);
-  const ships = must(shipsRes, "shipments") as Ship[];
-  const paid = must(presRes, "preorders") as { id: string }[];
   const { catalog, settings, boxes, rules } = ctx;
   const eligible = (b: BoxSlug, s: (typeof catalog.snacks)[number]) => eligibleFor(b, s, rules[b], settings.policy, s.rejectReason).fits;
   const tiers = settings.expiryTiersDays;
@@ -49,7 +48,7 @@ export default async function Dashboard() {
     .filter((x) => x.d !== null && x.d < tiers[2])
     .sort((a, b) => a.d! - b.d!);
   const atRisk = (max: number) => expiring.filter((x) => x.d! < max).reduce((t, x) => t + x.l.qty_remaining * x.l.unit_cost_cents, 0);
-  const lowStock = BOX_SLUGS.flatMap((b) => boxes[b].picks.filter((p) => p.snack.onHand < settings.runSize[b]).map((p) => p.snack.id));
+  const lowStock = BOX_SLUGS.flatMap((b) => [...boxes[b].picks.map((p) => p.snack), ...boxes[b].extras].filter((s) => s.onHand < settings.runSize[b]).map((s) => s.id));
   const warnings = new Set(lowStock).size + expiring.filter((x) => x.d! < tiers[0]).length;
 
   // This month (by pack date: that's when cost is known)
@@ -103,8 +102,8 @@ export default async function Dashboard() {
               <Card className="h-full hover:border-primary">
                 <div className="mb-3 flex items-center gap-2">
                   <p className="font-display text-lg">{BOX_LABEL[slug]}</p>
-                  <Badge tone={b.lineup ? lineupStage(b.picks, b.ready).tone : "bad"} className="ml-auto" title={lineupStage(b.picks, b.ready).detail}>
-                    {!b.lineup ? "No lineup" : !b.ready ? "FIX ⚠" : lineupStage(b.picks, b.ready).label}
+                  <Badge tone={b.lineup ? lineupStage([...b.picks, ...b.extras.map((snack) => ({ snack }))], b.ready).tone : "bad"} className="ml-auto" title={lineupStage([...b.picks, ...b.extras.map((snack) => ({ snack }))], b.ready).detail}>
+                    {!b.lineup ? "No lineup" : !b.ready ? "FIX ⚠" : lineupStage([...b.picks, ...b.extras.map((snack) => ({ snack }))], b.ready).label}
                   </Badge>
                 </div>
                 {b.cost ? (
@@ -135,16 +134,14 @@ export default async function Dashboard() {
             <ul className="mt-4 space-y-2 text-sm">
               {expiring.slice(0, 6).map(({ l, d, s }) => {
                 const tone = expiryTone(d, tiers);
-                const usedBy = BOX_SLUGS.filter((b) => boxes[b].picks.some((p) => p.snack.id === s.id));
-                const fits = BOX_SLUGS.filter((b) => eligible(b, s));
-                const target = usedBy[0] ?? fits[0];
+                const hold = lotHold(l, catalog.versions.get(l.product_id)?.id);
                 return (
                   <li key={l.id} className="flex flex-wrap items-center gap-2">
                     {tone && <Badge tone={tone}>{d! < 0 ? "expired" : `${d} d`}</Badge>}
                     <TextLink href={`/admin/products/${s.id}`}>{s.name}</TextLink>
                     <span className="text-muted-foreground">
                       {l.qty_remaining} left · {fmt$(l.qty_remaining * l.unit_cost_cents)}
-                      {target ? ` → prioritize in the next ${l.qty_remaining} ${BOX_LABEL[target]} boxes` : " → fits no box: use as a gift extra"}
+                      {hold ? ` · Held: ${hold}` : " · Packable: use earliest expiry first"}
                     </span>
                   </li>
                 );

@@ -51,6 +51,8 @@ const MIGRATIONS: { file: string; applied: string }[] = [
     file: "supabase/migrations/0009_product_prescreen_audit.sql",
     applied: "select exists (select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='prescreened_by') as ok",
   },
+  { file: "supabase/migrations/20261006025542_packing_safeguards.sql", applied: "select to_regprocedure('public.pack_shipment_checked(uuid,uuid[],jsonb,uuid,text,integer,integer,numeric,integer)') is not null as ok" },
+  { file: "supabase/migrations/20261006030933_admin_function_hardening.sql", applied: "select not exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in ('products_assign_code','purchase_lots_received','adjust_lot','pack_shipment','unpack_shipment','pack_shipment_checked','activate_box_lineup','save_box_lineup','save_package_profile','set_lot_expiry') and not coalesce(p.proconfig @> array['search_path=pg_catalog, public, pg_temp'],false)) and not coalesce(has_function_privilege('anon',to_regprocedure('public.rls_auto_enable()'),'execute'),false) as ok" },
 ];
 
 const TABLES = [
@@ -66,16 +68,16 @@ async function verify() {
     where n.nspname='public' and c.relname = any(array[${TABLES.map((t) => `'${t}'`).join(",")}])`);
   const missing = TABLES.filter((t) => !rows.some((r) => r.relname === t));
   const open = rows.filter((r) => !r.rls || r.policies > 0);
-  const fns = await sql<{ proname: string; anon: boolean }>(`
-    select proname, has_function_privilege('anon', p.oid, 'execute') as anon
+  const fns = await sql<{ proname: string; anon: boolean; authenticated: boolean }>(`
+    select proname, has_function_privilege('anon', p.oid, 'execute') as anon, has_function_privilege('authenticated', p.oid, 'execute') as authenticated
     from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-    where n.nspname='public' and proname in ('pack_shipment','unpack_shipment','adjust_lot')`);
+    where n.nspname='public' and proname in ('pack_shipment','unpack_shipment','adjust_lot','pack_shipment_checked','activate_box_lineup','save_box_lineup','save_package_profile','set_lot_expiry')`);
   const bucket = await sql<{ public: boolean }>("select public from storage.buckets where id='keniya-admin'");
   console.log(`Tables: ${rows.length}/${TABLES.length}${missing.length ? ` (missing: ${missing.join(", ")})` : ""}`);
   console.log(`RLS on, no public policies: ${open.length ? `NO → ${open.map((r) => r.relname).join(", ")}` : "yes"}`);
-  console.log(`RPCs: ${fns.length}/3, callable by anon: ${fns.some((f) => f.anon) ? "YES (bad)" : "no"}`);
+  console.log(`RPCs: ${fns.length}/8, callable by public API roles: ${fns.some((f) => f.anon || f.authenticated) ? "YES (bad)" : "no"}`);
   console.log(`Private photo bucket: ${bucket[0] ? (bucket[0].public ? "PUBLIC (bad)" : "yes") : "missing"}`);
-  return !missing.length && !open.length && fns.length === 3 && !fns.some((f) => f.anon) && bucket[0]?.public === false;
+  return !missing.length && !open.length && fns.length === 8 && !fns.some((f) => f.anon || f.authenticated) && bucket[0]?.public === false;
 }
 
 async function main() {

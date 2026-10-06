@@ -31,7 +31,7 @@ export const nutritionComplete = (p: RuleInput) => missingNutrients(p).length ==
 
 export function shipsUnderPolicy(p: RuleInput, policy: Settings["policy"]): { ok: boolean; reason?: string } {
   if (!policy.allowedForms.includes(p.form)) return { ok: false, reason: `${p.form} doesn't ship (policy)` };
-  if (!num(p.unit_wt_oz)) return { ok: false, reason: "No unit weight" };
+  if (!num(p.unit_wt_oz) || p.unit_wt_oz <= 0) return { ok: false, reason: "No unit weight" };
   if (p.unit_wt_oz > policy.maxItemOz)
     return { ok: false, reason: `${p.unit_wt_oz} oz is over the ${policy.maxItemOz} oz item limit` };
   return { ok: true };

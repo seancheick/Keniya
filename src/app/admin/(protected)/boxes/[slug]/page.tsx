@@ -60,6 +60,7 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
         rules={ctx.rules[slug]}
         settings={ctx.settings}
         snacks={ctx.catalog.snacks}
+        extras={b.extras}
         initial={b.picks.map((p) => ({ product_id: p.snack.id, category: p.category }))}
         packagingOz={ctx.packOz}
         mailer={ctx.pkg ? { id: ctx.pkg.id, name: ctx.pkg.name, cents: ctx.pkg.cost_cents } : null}

@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
-import { db } from "@/lib/admin/db";
+import { db, must } from "@/lib/admin/db";
+import { loadAdminContext } from "@/lib/admin/summary";
+import { blockingFailures, checkLineup, eligibleFor } from "@/lib/admin/rules";
 import { BOX_SLUGS, OBJECTIVES, boxRulesSchema } from "@/lib/admin/types";
 
 export type BoxState = { error?: string; ok?: boolean; id?: string };
@@ -25,40 +27,37 @@ export async function saveLineup(input: z.input<typeof lineupSchema>): Promise<B
   const parsed = lineupSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const d = parsed.data;
-  const latest = await db().from("box_lineups").select("version").eq("box_slug", d.slug).order("version", { ascending: false }).limit(1).maybeSingle();
-  const ins = await db()
-    .from("box_lineups")
-    .insert({ box_slug: d.slug, version: (latest.data?.version ?? 0) + 1, status: "draft", objective: d.objective, notes: d.notes, created_by: admin.name })
-    .select("id")
-    .single();
-  if (ins.error) return { error: ins.error.message };
-  const items = await db()
-    .from("lineup_items")
-    .insert(d.items.map((it, i) => ({ lineup_id: ins.data.id, position: i + 1, product_id: it.product_id, category: it.category, is_extra: it.is_extra })));
-  if (items.error) {
-    await db().from("box_lineups").delete().eq("id", ins.data.id);
-    return { error: items.error.message };
-  }
   if (d.activate) {
-    const act = await activate(ins.data.id, d.slug);
-    if (act.error) return act;
+    const error = await activationProblem(d.slug, d.items);
+    if (error) return { error };
   }
+  const ins = await db().rpc("save_box_lineup", { p_slug: d.slug, p_objective: d.objective, p_notes: d.notes, p_activate: d.activate, p_actor: admin.name, p_items: d.items });
+  if (ins.error) return { error: ins.error.message };
   revalidatePath("/admin", "layout");
-  return { ok: true, id: ins.data.id };
+  return { ok: true, id: ins.data as string };
 }
 
-async function activate(id: string, slug: string): Promise<BoxState> {
-  const old = await db().from("box_lineups").update({ status: "archived" }).eq("box_slug", slug).eq("status", "active");
-  if (old.error) return { error: old.error.message };
-  const res = await db().from("box_lineups").update({ status: "active", activated_at: new Date().toISOString() }).eq("id", id);
-  return res.error ? { error: res.error.message } : { ok: true };
+async function activationProblem(slug: typeof BOX_SLUGS[number], items: { product_id: string; category: string | null; is_extra: boolean }[]): Promise<string | null> {
+  const ctx = await loadAdminContext();
+  if (items.some((i) => !ctx.catalog.byId.has(i.product_id))) return "Lineup contains an unknown product";
+  const picks = items.filter((i) => !i.is_extra).map((i) => ({ snack: ctx.catalog.byId.get(i.product_id)!, category: i.category }));
+  if (picks.some((p) => p.category && !p.snack.categories.includes(p.category))) return "A selected snack does not belong to its assigned category";
+  const extras = items.filter((i) => i.is_extra).map((i) => ctx.catalog.byId.get(i.product_id)!);
+  const invalidExtra = extras.find((s) => !eligibleFor(slug, s, ctx.rules[slug], ctx.settings.policy, s.rejectReason).fits);
+  if (invalidExtra) return `Extra ${invalidExtra.name} is not eligible for this box`;
+  const fails = blockingFailures(checkLineup(slug, ctx.rules[slug], picks, ctx.settings, ctx.packOz + extras.reduce((s, e) => s + (e.unit_wt_oz ?? 0), 0)));
+  return fails.length ? `Save as a draft first: ${fails.map((c) => `${c.label}: ${c.value}`).join("; ")}` : null;
 }
 
 export async function activateLineup(fd: FormData) {
   await requireAdmin();
   const id = z.uuid().parse(fd.get("id"));
-  const row = await db().from("box_lineups").select("box_slug").eq("id", id).single();
-  if (row.data) await activate(id, row.data.box_slug);
+  const row = must(await db().from("box_lineups").select("box_slug").eq("id", id).single(), "lineup") as { box_slug: typeof BOX_SLUGS[number] };
+  const items = must(await db().from("lineup_items").select("product_id, category, is_extra").eq("lineup_id", id), "items");
+  const error = await activationProblem(row.box_slug, items);
+  if (error) throw new Error(error);
+  const res = await db().rpc("activate_box_lineup", { p_id: id });
+  if (res.error) throw new Error(res.error.message);
   revalidatePath("/admin", "layout");
 }
 

@@ -83,7 +83,7 @@ export function Badge({ tone = "muted", title, className, children }: { tone?: T
   return (
     <span
       title={title}
-      className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap", TONE_BADGE[tone], className)}
+      className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium max-w-full whitespace-normal break-words", TONE_BADGE[tone], className)}
     >
       {children}
     </span>

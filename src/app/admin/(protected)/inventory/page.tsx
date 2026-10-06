@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AdjustLot } from "@/components/admin/adjust-lot";
+import { AdjustLot, LotExpiryForm } from "@/components/admin/adjust-lot";
 import { Badge, Card, Empty, PageHeader, Stat, Table, TextLink, expiryTone, fieldClass } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { fmt$ } from "@/lib/admin/costing";
 import { db, loadCatalog, loadSettings, loadVendors, must } from "@/lib/admin/db";
+import { lotHold } from "@/lib/admin/stock";
 import { daysUntil } from "@/lib/admin/optimizer";
 
 export const metadata: Metadata = { title: "Inventory" };
@@ -13,7 +14,7 @@ type Movement = { id: number; created_at: string; lot_id: string; product_id: st
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ q?: string; show?: string }> }) {
   const sp = await searchParams;
-  const [{ lots, products }, settings, vendors, movesRes] = await Promise.all([
+  const [{ lots, products, versions, snacks }, settings, vendors, movesRes] = await Promise.all([
     loadCatalog(),
     loadSettings(),
     loadVendors(),
@@ -25,10 +26,12 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   const tiers = settings.expiryTiersDays;
 
   const rows = lots
-    .map((l) => ({ l, p: productBy.get(l.product_id)!, days: daysUntil(l.expires_on) }))
-    .filter(({ p, days }) => {
+    .map((l) => ({ l, p: productBy.get(l.product_id)!, days: daysUntil(l.expires_on), hold: lotHold(l, versions.get(l.product_id)?.id) }))
+    .filter(({ p, days, hold }) => {
       if (sp.q && !`${p.code} ${p.name} ${p.brand ?? ""}`.toLowerCase().includes(sp.q.toLowerCase())) return false;
       if (sp.show === "expiring" && (days === null || days >= tiers[2])) return false;
+      if (sp.show === "held" && !hold) return false;
+      if (sp.show === "packable" && hold) return false;
       return true;
     })
     .sort((a, b) => (a.l.expires_on ?? "9999").localeCompare(b.l.expires_on ?? "9999") || a.p.code.localeCompare(b.p.code));
@@ -45,7 +48,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
     <>
       <PageHeader
         title="Inventory"
-        description="Every purchase is a lot. Packing uses the earliest-expiring lot first (FEFO)."
+        description="Packing uses current-formula lots with at least 90 days left, earliest expiry first. Held lots stay visible until you review or dispose of them."
         actions={
           <>
             <Button asChild variant="outline">
@@ -59,7 +62,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       />
       <Card className="mb-4">
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
-          <Stat label="Units on hand" value={units.toLocaleString()} />
+          <Stat label="Units on hand" value={units.toLocaleString()} hint={`${snacks.reduce((s, p) => s + p.onHand, 0)} packable · ${units - snacks.reduce((s, p) => s + p.onHand, 0)} held`} />
           <Stat label="Inventory value" value={fmt$(value)} />
           <Stat label={`Expiring < ${tiers[0]} d`} value={fmt$(atRisk(tiers[0]))} tone={atRisk(tiers[0]) ? "bad" : undefined} />
           <Stat label={`Expiring < ${tiers[1]} d`} value={fmt$(atRisk(tiers[1]))} tone={atRisk(tiers[1]) ? "orange" : undefined} />
@@ -72,6 +75,8 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
           <input name="q" defaultValue={sp.q} placeholder="Search product" className={`${fieldClass} max-w-xs`} aria-label="Search" />
           <select name="show" defaultValue={sp.show ?? ""} className={`${fieldClass} w-auto`} aria-label="Show">
             <option value="">All lots with stock</option>
+            <option value="packable">Packable lots</option>
+            <option value="held">Held — needs attention</option>
             <option value="expiring">Expiring within {tiers[2]} days</option>
           </select>
           <Button variant="secondary">Filter</Button>
@@ -79,7 +84,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       </Card>
 
       {rows.length === 0 ? (
-        <Empty action={<Button asChild><Link href="/admin/inventory/log">Log your first purchase</Link></Button>}>No stock yet.</Empty>
+        <Empty action={<Button asChild><Link href="/admin/inventory/log">Log your first purchase</Link></Button>}>{lots.length ? "No lots match these filters. Clear the filters to see all stock." : "No stock yet."}</Empty>
       ) : (
         <Card title="Lots with stock (FEFO order)">
           <Table>
@@ -96,7 +101,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ l, p, days }) => {
+              {rows.map(({ l, p, days, hold }) => {
                 const tone = expiryTone(days, tiers);
                 return (
                   <tr key={l.id}>
@@ -105,6 +110,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                         {p.name}
                       </Link>
                       <div className="text-xs text-muted-foreground">{p.code}</div>
+                      {hold && <span className="block text-xs text-amber-900">Held: {hold}</span>}
                     </td>
                     <td>
                       {l.expires_on ?? "—"} {tone && <Badge tone={tone}>{days! < 0 ? "expired" : `${days} d`}</Badge>}
@@ -123,6 +129,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
                     </td>
                     <td>
                       <AdjustLot lotId={l.id} remaining={l.qty_remaining} />
+                      <LotExpiryForm key={l.expires_on} lotId={l.id} expiresOn={l.expires_on} />
                     </td>
                   </tr>
                 );

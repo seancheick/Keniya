@@ -1,5 +1,5 @@
 import { requireAdmin } from "@/lib/admin/auth";
-import { db, loadPackageProfiles, must } from "@/lib/admin/db";
+import { db, loadPackageProfiles, allRows } from "@/lib/admin/db";
 import { exportRows, type ExportShipment } from "@/lib/admin/pirateship";
 import { toCsv } from "@/lib/admin/recall";
 import { BOX_LABEL, isBoxSlug } from "@/lib/admin/types";
@@ -7,19 +7,12 @@ import { BOX_LABEL, isBoxSlug } from "@/lib/admin/types";
 /** Packed, not-yet-shipped boxes as a CSV for Pirate Ship's "Import spreadsheet". */
 export async function GET() {
   await requireAdmin();
-  const [rows, packages] = await Promise.all([
-    db().from("shipments").select("code, recipient_name, recipient_email, ship_to, packed_weight_oz, package_profile_id, box_slug").eq("status", "packed").order("packed_at"),
+  type PackedRow = { code: string; recipient_name: string | null; recipient_email: string | null; ship_to: { address?: ExportShipment["address"] } | null; packed_weight_oz: number | null; package_profile_id: string | null; box_slug: string };
+  const [list, packages] = await Promise.all([
+    allRows<PackedRow>((from, to) => db().from("shipments").select("code, recipient_name, recipient_email, ship_to, packed_weight_oz, package_profile_id, box_slug").eq("status", "packed").order("packed_at").order("id").range(from, to), "shipments"),
     loadPackageProfiles(),
   ]);
-  const list = must(rows, "shipments") as {
-    code: string;
-    recipient_name: string | null;
-    recipient_email: string | null;
-    ship_to: { address?: ExportShipment["address"] } | null;
-    packed_weight_oz: number | null;
-    package_profile_id: string | null;
-    box_slug: string;
-  }[];
+
   const csv = toCsv(
     exportRows(
       list.map((s) => {

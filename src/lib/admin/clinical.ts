@@ -14,6 +14,7 @@ import {
 } from "./types";
 
 export type ClinicalExtra = {
+  versionId?: string | null;
   upc: string | null;
   form: string;
   shelfLife: string | null;
@@ -31,7 +32,7 @@ export type ClinicalExtra = {
 /** Last two rungs of the ladder: clinician approval (named) and package verification. */
 function readyToPack(s: Snack, x: ClinicalExtra | undefined): string {
   const missing = [
-    s.status !== "Approved" ? "clinician approval" : !x?.reviewedBy ? "clinician re-attestation" : null,
+    s.status !== "Approved" ? "clinician approval" : !x?.reviewedBy?.trim() ? "clinician re-attestation" : null,
     !x?.upc ? "UPC" : null,
     !x?.verifiedAt ? "label checked in hand" : null,
   ].filter(Boolean);
@@ -73,7 +74,9 @@ export function clinicalReviewRows(
       [CLINICIAN_VERDICT]: "",
       [CLINICIAN_COMMENTS]: "",
       "In active box lineup": inLineup(s.id).map((b) => BOX_LABEL[b]).join("; "),
-      "Ready to pack": readyToPack(s, x),
+      "Product verification": readyToPack(s, x),
+      "Product ID": s.id,
+      "Label version ID": x?.versionId,
     };
     for (const b of BOX_SLUGS) {
       const e = eligible(b, s);
@@ -88,7 +91,7 @@ export function clinicalReviewRows(
     });
     for (const k of FREE_FROM_KEYS) row[k.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())] = yn(s.freeFrom[k]);
     Object.assign(row, {
-      "Serving weight (oz)": s.unit_wt_oz,
+      "Pack weight (oz)": s.unit_wt_oz,
       Calories: s.calories,
       "Protein (g)": s.protein_g,
       "Fiber (g)": s.fiber_g,

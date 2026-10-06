@@ -103,12 +103,14 @@ export type Snack = RuleInput & {
   categories: string[];
   rejectReason: string | null;
   allergens: string | null;
+  ingredients?: string | null;
   freeFrom: Partial<Record<FreeFromKey, boolean>>;
   /** Effective unit cost in cents (fractional), null when nothing is known. */
   unitCostCents: number | null;
   retailCents: number | null;
+  /** Current-formula units with at least 90 days left (physical held stock stays in lots). */
   onHand: number;
-  /** Earliest expiry among lots with stock (ISO date), null when none recorded. */
+  /** Earliest expiry among packable lots (ISO date), null when none recorded. */
   earliestExpiry: string | null;
   /** Share of ratings that were "loved" (Phase 6); null when unrated. */
   loveRate: number | null;

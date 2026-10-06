@@ -64,11 +64,13 @@ export function LogPurchase({
   if (state !== lastState) {
     setLastState(state);
     if (state.error) toast.error(state.error);
+    if (state.warning) toast.warning(state.warning, { duration: 10000 });
     if (state.ok && selected && state.unitCostCents !== undefined && state.qty) {
       const newOnHand = selected.onHand + state.qty;
       const avg = ((selected.lotAvgCents ?? 0) * selected.onHand + state.unitCostCents * state.qty) / newOnHand;
       const updated = { ...selected, onHand: newOnHand, lotAvgCents: avg, unitCostCents: avg };
       setList((l) => l.map((p) => (p.id === updated.id ? updated : p)));
+      setSelected(updated);
       setDone({ product: updated, unit: state.unitCostCents, qty: state.qty });
       setQty("");
       setTotal("");
@@ -339,9 +341,12 @@ export function LogPurchase({
               const f = fd.get("receipt");
               if (f instanceof File && f.size && f.type.startsWith("image/")) {
                 setReceiptBusy(true);
-                fd.set("receipt", await compressImage(f));
-                setReceiptBusy(false);
+                try { fd.set("receipt", await compressImage(f)); }
+                catch { toast.error("Could not prepare the receipt. Try a smaller photo."); return; }
+                finally { setReceiptBusy(false); }
               }
+              const prepared = fd.get("receipt");
+              if (prepared instanceof File && prepared.size > 3_000_000) { toast.error("Receipt must be under 3 MB. Try a smaller file."); return; }
               action(fd);
             }}
           >

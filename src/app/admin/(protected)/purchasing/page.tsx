@@ -41,7 +41,7 @@ export default async function PurchasingPage({ searchParams }: { searchParams: P
 
   return (
     <>
-      <PageHeader title="Purchasing" description="What to buy for the next run, merged across boxes, minus what you already have, at the cheapest recent price." />
+      <PageHeader title="Purchasing" description="What to buy for the next run, merged across boxes, minus packable stock (current formula, at least 90 days left), at the cheapest recent price." />
       <Card className="mb-4">
         <form className="flex flex-wrap items-end gap-3">
           {BOX_SLUGS.map((b) => (
@@ -78,7 +78,7 @@ export default async function PurchasingPage({ searchParams }: { searchParams: P
                 <th>Boxes</th>
                 <th className="num">Required</th>
                 <th className="num">Buffer</th>
-                <th className="num">On hand</th>
+                <th className="num">Packable</th>
                 <th className="num">Buy</th>
                 <th>Cheapest recent</th>
                 <th className="num">Last paid</th>

@@ -24,7 +24,7 @@ export default async function LogPurchasePage({ searchParams }: { searchParams: 
         brand: s.brand,
         upc: upc.get(s.id) ?? null,
         status: s.status,
-        onHand: s.onHand,
+        onHand: units,
         lotAvgCents: units ? mine.reduce((t, l) => t + l.qty_remaining * l.unit_cost_cents, 0) / units : null,
         unitCostCents: s.unitCostCents,
         fits: eligibleBoxes(s, rules, settings.policy, s.rejectReason),

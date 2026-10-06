@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { db, PHOTO_BUCKET } from "@/lib/admin/db";
 import { ensureVendor } from "@/lib/admin/vendors";
 import { dollarsToFractionalCents, productSchema, readProductForm, versionSchema } from "@/lib/admin/forms";
+import { packageLabelChanged } from "@/lib/admin/verify";
 import { STATUSES } from "@/lib/admin/types";
 
 export type FormState = { error?: string; ok?: boolean; id?: string };
@@ -37,7 +38,7 @@ export async function createProduct(_prev: FormState, fd: FormData): Promise<For
   if (ins.error) return { error: dupUpc(ins.error.message) ? "A product with this UPC already exists." : ins.error.message };
   const ver = await db()
     .from("product_versions")
-    .insert({ ...parsed.version, product_id: ins.data.id, version: 1, verified_by: parsed.version.verified_at ? admin.name : null, created_by: admin.name });
+    .insert({ ...parsed.version, verified_at: null, product_id: ins.data.id, version: 1, verified_by: null, created_by: admin.name });
   if (ver.error) {
     await db().from("products").delete().eq("id", ins.data.id);
     return { error: ver.error.message };
@@ -55,16 +56,25 @@ export async function updateProduct(id: string, _prev: FormState, fd: FormData):
   const admin = await requireAdmin();
   const parsed = parse(fd);
   if ("error" in parsed) return { error: parsed.error };
+  const [previous, current] = await Promise.all([
+    db().from("products").select("upc, type, form").eq("id", id).single(),
+    db().from("product_versions").select("*").eq("product_id", id).eq("is_current", true).maybeSingle(),
+  ]);
+  if (previous.error) return { error: previous.error.message };
+  if (current.error) return { error: current.error.message };
+  const changed = fd.get("new_version") === "on" || !current.data || packageLabelChanged(current.data, parsed.version) ||
+    previous.data.upc !== parsed.product.upc || previous.data.type !== parsed.product.type || previous.data.form !== parsed.product.form;
+  // Only the package-in-hand Verify workflow may establish verification. Metadata edits
+  // retain it; a label/formula change must be reviewed and checked again.
+  parsed.version.verified_at = changed ? null : current.data?.verified_at ?? null;
+  const verifiedBy = changed ? null : current.data?.verified_by ?? null;
   const vendorId = await ensureVendor(String(fd.get("vendor") ?? ""), admin.name);
-  const up = await db()
-    .from("products")
-    .update({ ...parsed.product, default_vendor_id: vendorId, updated_at: new Date().toISOString() })
-    .eq("id", id);
+  const up = await db().from("products").update({
+    ...parsed.product, default_vendor_id: vendorId, updated_at: new Date().toISOString(),
+    ...(changed ? { status: "Candidate", reviewed_by: null, reviewed_at: null } : {}),
+  }).eq("id", id);
   if (up.error) return { error: dupUpc(up.error.message) ? "A product with this UPC already exists." : up.error.message };
 
-  const current = await db().from("product_versions").select("id, version, verified_at, verified_by").eq("product_id", id).eq("is_current", true).maybeSingle();
-  const verifiedBy =
-    parsed.version.verified_at && parsed.version.verified_at !== current.data?.verified_at ? admin.name : (current.data?.verified_by ?? null);
   if (fd.get("new_version") === "on" || !current.data) {
     const today = new Date().toISOString().slice(0, 10);
     const latest = await db().from("product_versions").select("version").eq("product_id", id).order("version", { ascending: false }).limit(1).maybeSingle();

@@ -3,14 +3,14 @@
 -- Rolls back at the end; raises on the first failed expectation.
 begin;
 
-insert into public.products (name) values ('Test almonds') returning id \gset p_
-insert into public.product_versions (product_id) values (:'p_id') returning id \gset v_
+insert into public.products (name, status, reviewed_by, upc) values ('Test almonds', 'Approved', 'Test Clinician', '123456789012') returning id \gset p_
+insert into public.product_versions (product_id, verified_at) values (:'p_id', current_date) returning id \gset v_
 
 -- Lot A: bought Jan, expires Jun.  Lot B: bought Feb, expires May.  FEFO must use B first.
 insert into public.purchase_lots (product_id, product_version_id, purchased_at, qty, total_paid_cents, qty_remaining, expires_on, created_by)
-values (:'p_id', :'v_id', '2026-01-01', 24, 1199, 24, '2026-06-30', 'test') returning id \gset a_
+values (:'p_id', :'v_id', '2026-01-01', 24, 1199, 24, current_date + 180, 'test') returning id \gset a_
 insert into public.purchase_lots (product_id, product_version_id, purchased_at, qty, total_paid_cents, qty_remaining, expires_on, created_by)
-values (:'p_id', :'v_id', '2026-02-01', 3, 300, 3, '2026-05-31', 'test') returning id \gset b_
+values (:'p_id', :'v_id', '2026-02-01', 3, 300, 3, current_date + 120, 'test') returning id \gset b_
 
 do $$ begin
   assert (select code from public.products where name = 'Test almonds') = 'P001', 'auto code';

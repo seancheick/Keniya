@@ -219,8 +219,8 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
                 ))}
               </select>
             </Field>
-            <Field label="Verified on" hint="The date you last checked the label.">
-              <input name="verified_at" type="date" defaultValue={v(ver?.verified_at)} className={fieldClass} />
+            <Field label="Package verified on" hint="Recorded in Verify with the package in hand. Label edits require a new check.">
+              <input name="verified_at" type="date" readOnly defaultValue={v(ver?.verified_at)} className={fieldClass} />
             </Field>
           </div>
           <Field label="Ingredients" className="mt-3">

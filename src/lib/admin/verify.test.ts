@@ -28,3 +28,20 @@ describe("verifyProblems", () => {
     expect(verifyProblems({ ...ok, scannedUpc: "123" })[0]).toMatch(/8–14 digits/);
   });
 });
+
+import { isIsoDate, packageLabelChanged } from "./verify";
+
+describe("package verification invalidation", () => {
+  it("rejects impossible dates", () => {
+    expect(isIsoDate("2026-02-31")).toBe(false);
+    expect(isIsoDate("2026-02-28")).toBe(true);
+    expect(isIsoDate("2026-13-01")).toBe(false);
+  });
+  it("invalidates label changes while retaining checks for metadata-only edits", () => {
+    const previous = { calories: "100", ingredients: "oats", free_from: { soy_free: true, dairy_free: true } };
+    expect(packageLabelChanged(previous, { ...previous, calories: 100, free_from: { dairy_free: true, soy_free: true } })).toBe(false);
+    expect(packageLabelChanged(previous, { ...previous, calories: 150 })).toBe(true);
+    expect(packageLabelChanged(previous, { ...previous, ingredients: "oats, milk" })).toBe(true);
+    expect(packageLabelChanged(previous, { ...previous, free_from: { soy_free: false } })).toBe(true);
+  });
+});

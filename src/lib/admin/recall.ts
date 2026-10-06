@@ -1,5 +1,5 @@
 import "server-only";
-import { db, must } from "./db";
+import { db, allRows } from "./db";
 
 export type RecallRow = {
   shipment: string;
@@ -38,13 +38,14 @@ const addr = (a?: Record<string, string | null>) =>
 
 /** Who received units from a lot (or any lot of a product). */
 export async function recallRows(by: { lot?: string; product?: string }): Promise<RecallRow[]> {
-  let q = db()
-    .from("shipment_items")
-    .select("qty, lot_id, products(name), purchase_lots(lot_code), shipments(id, code, status, packed_at, shipped_at, recipient_name, recipient_email, ship_to)");
-  if (by.lot) q = q.eq("lot_id", by.lot);
-  else if (by.product) q = q.eq("product_id", by.product);
-  else return [];
-  const rows = must(await q, "recall") as unknown as Raw[];
+  if (!by.lot && !by.product) return [];
+  const rows = await allRows<Raw>(async (from, to) => {
+    let q = db().from("shipment_items")
+      .select("qty, lot_id, products(name), purchase_lots(lot_code), shipments(id, code, status, packed_at, shipped_at, recipient_name, recipient_email, ship_to)");
+    q = by.lot ? q.eq("lot_id", by.lot) : q.eq("product_id", by.product!);
+    const res = await q.order("id").range(from, to);
+    return { ...res, data: res.data as unknown as Raw[] | null };
+  }, "recall");
   return rows
     .filter((r) => r.shipments)
     .map((r) => ({

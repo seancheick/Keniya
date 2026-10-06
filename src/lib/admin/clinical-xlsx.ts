@@ -1,5 +1,4 @@
-// Clinician review workbook: the rows from clinical.ts as a formatted Excel file (widths,
-// wrapped text, frozen header, colored status) plus a Legend sheet explaining P1–P9 and statuses.
+// Short clinician decision queue with separate full evidence and current-rule guidance.
 import ExcelJS from "exceljs";
 import { CLINICIAN_COMMENTS, CLINICIAN_VERDICT } from "./clinical";
 import { PREGNANCY_BLOCKING, PREGNANCY_CHECK_KEYS, PREGNANCY_CHECK_LABEL, STATUSES, STATUS_MEANING, type Status } from "./types";
@@ -18,7 +17,7 @@ function widthFor(header: string): number {
   if (header === "Product" || header === "Pre-screen finding (what to check)") return header === "Product" ? 34 : 60;
   if (header === CLINICIAN_COMMENTS || header === "Ingredients" || header === "Other notes") return 48;
   if (header === CLINICIAN_VERDICT) return 18;
-  if (header === "Ready to pack") return 30;
+  if (header === "Product verification") return 30;
   if (/: why$|Nutrition source|Allergens/.test(header)) return 34;
   if (/^P\d/.test(header)) return 14;
   if (/^(Eligible |Role: )/.test(header)) return 11;
@@ -29,11 +28,46 @@ function widthFor(header: string): number {
 
 const fill = (argb: string): ExcelJS.Fill => ({ type: "pattern", pattern: "solid", fgColor: { argb } });
 
-export async function clinicalWorkbook(rows: Record<string, unknown>[]): Promise<Buffer> {
+export async function clinicalWorkbook(rows: Record<string, unknown>[], ruleSummary: string[] = []): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.created = new Date();
-  const ws = wb.addWorksheet("Review", { views: [{ state: "frozen", xSplit: 2, ySplit: 1 }] });
-  const headers = Object.keys(rows[0] ?? {});
+  wb.creator = "Keniya";
+  const start = wb.addWorksheet("Start here");
+  start.columns = [{ width: 28 }, { width: 100 }];
+  const instructions = [
+    ["Keniya clinician review", `Exported ${new Date().toISOString().slice(0, 10)}. ${rows.length} products. This is a snapshot.`],
+    ["1. Open Review", "Start with Awaiting clinician and Re-attest legacy approval. Active lineup products appear first within each group."],
+    ["2. Check the evidence", "Click the product name to open its row on Details, or use the same product code to check ingredients, allergens, per-pack nutrition, sources and Pregnancy checks. Blank values mean not recorded, not zero or safe."],
+    ["3. Record your decision", "Fill the yellow Decision, Comments, Reviewer and Review date cells. Use Approve, Changes needed or Reject. State which boxes your decision covers and any corrections or restrictions in Comments."],
+    ["4. Return this file", "Send the completed file to the operator. Editing the workbook does not update the admin or approve a product automatically. The operator records your decision against the current product label, checking the Product ID and Label version ID on Details for changes since export."],
+    ["Before packing", "Product verification is only clinician approval, UPC and package-in-hand verification. Box rules, customer restrictions, current lot availability and expiry are checked separately when packing."],
+    ["Review groups", "Awaiting clinician = Pre-approved. Re-attest legacy approval = Approved without a named reviewer. Label / initial review = Candidate. Rejected and Retired remain in Details."],
+    ["Review total", String(rows.filter((r) => !["Rejected", "Retired"].includes(String(r.Status))).length)],
+  ];
+  for (const values of instructions) { const r = start.addRow(values); r.height = 60; r.alignment = { wrapText: true, vertical: "top" }; r.getCell(1).font = { bold: true }; }
+  start.getRow(1).fill = fill(HEADER_FILL);
+  const review = wb.addWorksheet("Review", { views: [{ state: "frozen", xSplit: 2, ySplit: 1 }] });
+  const reviewHeaders = ["Code", "Product", "Review group", "In active box lineup", "Pre-screen finding (what to check)", "Decision", "Comments", "Reviewer", "Review date"];
+  review.columns = reviewHeaders.map((header) => ({ header, key: header, width: header === "Product" ? 34 : header === "Comments" || header.startsWith("Pre-screen") ? 48 : header === "Code" ? 12 : 24 }));
+  const group = (r: Record<string, unknown>) => r.Status === "Pre-approved" ? "Awaiting clinician" : r.Status === "Approved" && (!r["Clinician decision by"] || String(r["Clinician decision by"]).startsWith("Legacy workbook")) ? "Re-attest legacy approval" : r.Status === "Candidate" ? "Label / initial review" : "Already approved";
+  const rank = ["Awaiting clinician", "Re-attest legacy approval", "Label / initial review", "Already approved"];
+  const queue = rows.filter((r) => !["Rejected", "Retired"].includes(String(r.Status))).sort((a, b) => rank.indexOf(group(a)) - rank.indexOf(group(b)) || Number(Boolean(b["In active box lineup"])) - Number(Boolean(a["In active box lineup"])) || String(a.Product).localeCompare(String(b.Product)));
+  for (const r of queue) {
+    const row = review.addRow([r.Code, r.Product, group(r), r["In active box lineup"] || null, r["Pre-screen finding (what to check)"] || null, null, null, null, null]);
+    row.height = Math.min(409, Math.max(60, Math.ceil(String(r["Pre-screen finding (what to check)"] ?? "").length / 46) * 15 + 15));
+    row.alignment = { wrapText: true, vertical: "top" };
+    for (let c = 6; c <= 9; c++) row.getCell(c).fill = fill(INPUT_FILL);
+    row.getCell(6).dataValidation = { type: "list", allowBlank: true, formulae: ['"Approve,Changes needed,Reject"'], showErrorMessage: true, errorStyle: "stop", errorTitle: "Choose a decision", error: "Choose Approve, Changes needed or Reject." };
+    row.getCell(9).numFmt = "yyyy-mm-dd";
+    row.getCell(9).dataValidation = { type: "date", operator: "between", allowBlank: true, formulae: [new Date("2000-01-01T00:00:00Z"), new Date("2100-12-31T00:00:00Z")], showErrorMessage: true, errorStyle: "stop", error: "Enter a calendar date." };
+  }
+  review.getRow(1).height = 48;
+  review.getRow(1).font = { bold: true };
+  review.getRow(1).fill = fill(HEADER_FILL);
+  review.getRow(1).alignment = { wrapText: true, vertical: "top" };
+  review.autoFilter = { from: "A1", to: `I${Math.max(1, queue.length + 1)}` };
+  const ws = wb.addWorksheet("Details", { views: [{ state: "frozen", xSplit: 2, ySplit: 1 }] });
+  const headers = Object.keys(rows[0] ?? { Code: null, Product: null, Status: null }).filter((h) => ![CLINICIAN_VERDICT, CLINICIAN_COMMENTS].includes(h));
   ws.columns = headers.map((h) => ({ header: h, key: h, width: widthFor(h) }));
   // Blanks stay truly empty: an "" cell is stored as a shared string, which some viewers show as its index.
   for (const r of rows) ws.addRow(headers.map((h) => (r[h] === null || r[h] === undefined || r[h] === "" ? null : r[h])));
@@ -45,18 +79,24 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[]): Promise
     c.fill = fill(HEADER_FILL);
     c.alignment = { wrapText: true, vertical: "top" };
   });
+  const detailRowByCode = new Map(rows.map((r, i) => [String(r.Code), i + 2]));
+  review.eachRow((row, i) => {
+    if (i === 1) return;
+    const detailRow = detailRowByCode.get(String(row.getCell(1).value));
+    if (detailRow) { row.getCell(2).value = { text: String(row.getCell(2).value), hyperlink: `#'Details'!A${detailRow}` }; row.getCell(2).font = { color: { argb: "FF2563EB" }, underline: true }; }
+  });
   const col = (h: string) => headers.indexOf(h) + 1;
   ws.eachRow((row, i) => {
     if (i === 1) return;
     row.alignment = { wrapText: true, vertical: "top" };
     const status = String(row.getCell(col("Status")).value) as Status;
     if (STATUS_FILL[status]) row.getCell(col("Status")).fill = fill(STATUS_FILL[status]);
-    for (const h of [CLINICIAN_VERDICT, CLINICIAN_COMMENTS]) row.getCell(col(h)).fill = fill(INPUT_FILL);
+    row.height = 100;
     row.eachCell((c) => {
       if (c.value === "FAIL" || (c.value === "no" && String(ws.getRow(1).getCell(c.col).value).startsWith("Eligible "))) c.font = { color: { argb: "FFB91C1C" }, bold: true };
     });
   });
-  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: headers.length } };
+  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(1, rows.length + 1), column: headers.length } };
 
   const lg = wb.addWorksheet("Legend");
   lg.columns = [{ width: 26 }, { width: 100 }, { width: 14 }];
@@ -68,11 +108,12 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[]): Promise
   const line = (a: string, b: string, c = "") => {
     const r = lg.addRow(c ? [a, b, c] : [a, b]);
     r.alignment = { wrapText: true, vertical: "top" };
+    r.height = Math.max(45, Math.ceil(b.length / 95) * 15 + 15);
   };
   section("How to review");
-  line("1", "On the Review sheet, filter Status to Pre-approved (amber). These passed an automated pre-screen and need your confirmation.");
+  line("1", "Start here explains the workflow. Review has the short decision queue; Details contains every product and all evidence.");
   line("2", "Read 'Pre-screen finding (what to check)': it says what was found, what was corrected and the source used.");
-  line("3", "Fill the two yellow columns: your verdict (OK / change / reject) and any comment. Then send the file back.");
+  line("3", "Fill the four yellow columns on Review: Decision, Comments, Reviewer and Review date. Return the file for manual recording in the admin.");
   line("4", "Candidate rows need a label check or your decision first; their finding says why.");
   lg.addRow([]);
   section("Status");
@@ -85,15 +126,15 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[]): Promise
   section("Pregnancy checks (Keniya Pregnancy Standard, revised v3)");
   lg.addRow(["Check", "Meaning", "Blocks?"]).font = { bold: true };
   for (const k of PREGNANCY_CHECK_KEYS) line(k, PREGNANCY_CHECK_LABEL[k], (PREGNANCY_BLOCKING as readonly string[]).includes(k) ? "yes" : "no (info)");
-  line("Pregnancy fit", "Nutrition complete + a caffeine value present + all 10 blocking checks PASS + not Rejected. Blank means not checked yet.");
+  line("Pregnancy fit", "See Pregnancy: why on Details for the actual checks and eligibility result. Blank checks mean not recorded.");
   lg.addRow([]);
   section("Other columns");
   line("Eligible <box>", "The nutrition rules qualify it AND it passes the box's hard limits, the shipping policy (no liquids, max item weight), single-serve (P8 must be PASS: blank means not yet confirmed) and status (not Rejected/Retired).");
-  line("Ready to pack", "The last steps after eligibility: approved by a named clinician (legacy workbook approvals need re-attestation), UPC on file, and the label checked with the package in hand. Packing is blocked until every pick is ready.");
+  line("Product verification", "The last steps after eligibility: approved by a named clinician (legacy workbook approvals need re-attestation), UPC on file, and the label checked with the package in hand. Shipment readiness also requires box rules, customer restrictions and packable stock.");
   line("Ladder", "Candidate → Pre-approved (pre-screen passed) → Approved (clinician) → Package verified → Ready to pack. Candidates can't be in a lineup; a lineup with Pre-approved or unverified picks is PROVISIONAL.");
   line("<box>: why", "If eligible: the qualifying pathway. If not: every reason, nutrition rule or hard limit (e.g. '2142 mg sodium (max 230 mg)').");
   line("Nutrition rules alone", "Whether the label numbers and roles qualify it before the hard limits and status; shown for transparency only.");
-  line("Hard limits", "Carb Conscious: ≤20 g total carbs and ≤5 g added sugar per pack. Heart: ≤230 mg sodium and ≤2 g saturated fat per pack (≤4 g when the fat comes from nuts/seeds). Founder defaults 2026-10-05; clinician to confirm or change.");
+  line("Current rules", ruleSummary.length ? ruleSummary.join("\n") : "Eligibility reasons on Details reflect the rules supplied for this export. Consult current admin settings for the configured limits.");
   line("Pre-screened by/on", "Who ran the source and ingredient pre-screen. Not a clinical decision.");
   line("Clinician decision by/on", "Who approved or rejected it clinically. Blank until the clinician decides.");
   line("Free-from columns", "yes = free from it; no = contains it or may contain it (cross-contact counts as 'no'); unknown = not recorded.");

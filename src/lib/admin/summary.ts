@@ -3,7 +3,7 @@ import { landedCost, type LandedCost } from "./costing";
 import { defaultPackage, loadActiveLineups, loadBoxRules, loadCatalog, loadPackageProfiles, loadPostageHistory, loadSettings, packagingOz, type Catalog, type LineupRow, type PackageProfile } from "./db";
 import { canBuild } from "./optimizer";
 import { estimatePostage } from "./postage";
-import { checkLineup, isReady, packedWeightOz, type Check, type Pick } from "./rules";
+import { checkLineup, eligibleFor, isReady, packedWeightOz, type Check, type Pick } from "./rules";
 import { BOX_SLUGS, type BoxRules, type BoxSlug, type Settings, type Snack } from "./types";
 
 export type BoxSummary = {
@@ -48,8 +48,12 @@ export async function loadAdminContext(): Promise<AdminContext> {
       .filter((i) => !i.is_extra && catalog.byId.has(i.product_id))
       .map((i) => ({ snack: catalog.byId.get(i.product_id)!, category: i.category }));
     const extras = (active?.items ?? []).filter((i) => i.is_extra && catalog.byId.has(i.product_id)).map((i) => catalog.byId.get(i.product_id)!);
-    const checks = checkLineup(slug, rules[slug], picks, settings, packOz);
-    const weightOz = packedWeightOz(picks, packOz);
+    const checks = checkLineup(slug, rules[slug], picks, settings, packOz + extras.reduce((s, e) => s + (e.unit_wt_oz ?? 0), 0));
+    for (const extra of extras) {
+      const fit = eligibleFor(slug, extra, rules[slug], settings.policy, extra.rejectReason);
+      checks.push({ key: `extra:${extra.id}`, label: `Extra: ${extra.name}`, value: fit.fits ? "Eligible" : fit.reasons.join("; "), level: "block", pass: fit.fits, deficit: fit.fits ? 0 : 1 });
+    }
+    const weightOz = packedWeightOz(picks, packOz + extras.reduce((s, e) => s + (e.unit_wt_oz ?? 0), 0));
     const postage = estimatePostage({ settings, slug, weightOz, packageProfileId: pkg?.id, history });
     boxes[slug] = {
       slug,
@@ -70,7 +74,7 @@ export async function loadAdminContext(): Promise<AdminContext> {
           })
         : null,
       weightOz,
-      canBuild: canBuild(picks),
+      canBuild: canBuild([...picks, ...extras.map((snack) => ({ snack, category: null }))]),
       postageNote: postage.note,
     };
   }

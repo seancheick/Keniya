@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DeliveryForm, LabelForm, PackButtons } from "@/components/admin/order-forms";
+import { DeliveryForm, LabelForm, PackButtons, ShipmentPackageForm } from "@/components/admin/order-forms";
 import { PlannedItems } from "@/components/admin/planned-items";
 import { PrintButton } from "@/components/admin/print-button";
 import { Badge, Card, PageHeader, Table, type Tone } from "@/components/admin/ui";
 import { fmt$, fmtPct, shipmentProfit } from "@/lib/admin/costing";
-import { db, loadBoxRules, loadCatalog, loadSettings, must } from "@/lib/admin/db";
-import { eligibleFor } from "@/lib/admin/rules";
+import { db, loadBoxRules, loadCatalog, loadSettings, loadPackageProfiles, must } from "@/lib/admin/db";
+import { avoidConflict } from "@/lib/admin/avoid";
+import { packingProblems } from "@/lib/admin/packing";
+import { stockPickList, stockSnapshot, type LotPull } from "@/lib/admin/stock";
+import { eligibleFor, packBlockers } from "@/lib/admin/rules";
 import { BOX_LABEL, isBoxSlug, type BoxSlug } from "@/lib/admin/types";
 
 export const metadata: Metadata = { title: "Shipment" };
@@ -19,25 +22,42 @@ type Item = { id: string; qty: number; unit_cost_cents: number; lot_id: string; 
 export default async function ShipmentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const res = await db().from("shipments").select("*").eq("id", id).maybeSingle();
+  if (res.error) throw new Error(res.error.message);
   if (!res.data) notFound();
   const s = res.data;
-  const [catalog, itemsRes, preRes, settings, rules] = await Promise.all([
+  const [catalog, itemsRes, preRes, settings, rules, packages, extrasRes] = await Promise.all([
     loadCatalog(),
     db().from("shipment_items").select("id, qty, unit_cost_cents, lot_id, product_id, purchase_lots(lot_code, expires_on)").eq("shipment_id", id),
-    s.preorder_id ? db().from("preorders").select("avoid, craving, created_at, email").eq("id", s.preorder_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    s.preorder_id ? db().from("preorders").select("avoid, craving, created_at, email, status").eq("id", s.preorder_id).maybeSingle() : Promise.resolve({ data: null, error: null }),
     loadSettings(),
     loadBoxRules(),
+    loadPackageProfiles(),
+    s.lineup_id ? db().from("lineup_items").select("id").eq("lineup_id", s.lineup_id).eq("is_extra", true) : Promise.resolve({ data: [], error: null }),
   ]);
   const items = must(itemsRes, "items") as unknown as Item[];
-  const pre = preRes.data as { avoid: string | null; craving: string | null; created_at: string; email: string } | null;
+  const pre = must(preRes, "preorder") as { avoid: string | null; craving: string | null; created_at: string; email: string; status: string } | null;
   const slug: BoxSlug | null = isBoxSlug(s.box_slug) ? s.box_slug : null;
   const p = shipmentProfit({ ...s, snack_cost_cents: s.snack_cost_cents === null ? null : Number(s.snack_cost_cents) });
   const name = (pid: string) => catalog.byId.get(pid)?.name ?? "?";
   const addr = s.ship_to?.address as Record<string, string | null> | undefined;
-  const options = catalog.snacks
-    .filter((x) => x.status !== "Retired")
-    .map((x) => ({ id: x.id, label: `${x.name} · ${x.onHand} on hand`, ok: slug ? eligibleFor(slug, x, rules[slug], settings.policy, x.rejectReason).fits : true }))
-    .sort((a, b) => Number(b.ok) - Number(a.ok) || a.label.localeCompare(b.label));
+  const packingProducts = new Map(catalog.snacks.map((snack) => [snack.id, { snack, upc: catalog.products.find((p) => p.id === snack.id)?.upc ?? null, verifiedAt: catalog.versions.get(snack.id)?.verified_at ?? null, ingredients: catalog.versions.get(snack.id)?.ingredients }]));
+  const pkg = packages.find((p) => p.id === s.package_profile_id && p.active);
+  const packagingOz = (pkg?.empty_weight_oz ?? 0) + settings.packaging.reduce((n, x) => n + x.weightOz, 0);
+  const stock = stockPickList(s.planned_items, catalog.lots, catalog.versions);
+  const unitPulls = new Map(stock.map((p) => [p.productId, p.pulls.flatMap((pull) => Array.from({ length: pull.qty }, () => ({ ...pull, qty: 1 }))) ]));
+  const slotPulls: LotPull[][] = (s.planned_items as string[]).map((pid) => { const unit = unitPulls.get(pid)?.shift(); return unit ? [unit] : []; });
+  const blockers = slug ? packingProblems({ slug, ids: s.planned_items, products: packingProducts, rules: rules[slug], settings, packagingOz, extraCount: must(extrasRes, "extras").length, avoid: pre?.avoid ?? s.avoid ?? null }) : ["Unknown box"];
+  if (pre && pre.status !== "paid") blockers.push("Order is no longer paid — check its payment before packing");
+  if (!pkg) blockers.push("No active package profile selected. Configure a default package in Settings.");
+  for (const row of stock) if (row.short) blockers.push(`${name(row.productId)}: short ${row.short} packable unit(s)`);
+  const options = catalog.snacks.map((x) => {
+    const item = packingProducts.get(x.id)!;
+    const fit = slug ? eligibleFor(slug, x, rules[slug], settings.policy, x.rejectReason) : null;
+    const conflict = avoidConflict({ ...x, ingredients: item.ingredients }, pre?.avoid ?? s.avoid);
+    const why = [conflict, ...(slug ? packBlockers(slug, [item], rules[slug], settings.policy) : [])].filter(Boolean).join("; ");
+    const pull = stockPickList([x.id], catalog.lots, catalog.versions)[0];
+    return { id: x.id, label: `${x.code} ${x.name}${x.brand ? ` · ${x.brand}` : ""} · ${x.onHand} packable`, ok: Boolean(fit?.fits && !why), reason: why || null, pulls: pull.pulls, short: pull.short };
+  }).sort((a, b) => Number(b.ok && b.short === 0) - Number(a.ok && a.short === 0) || a.label.localeCompare(b.label));
 
   return (
     <>
@@ -53,7 +73,7 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
         actions={
           <>
             <PrintButton />
-            <PackButtons id={id} status={s.status} />
+            {s.status !== "planned" && <PackButtons id={id} status={s.status} />}
           </>
         }
       />
@@ -62,7 +82,7 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
         <div className="space-y-4 lg:col-span-2">
           <Card title={s.status === "planned" ? `Planned items (${s.planned_items.length})` : "Pick list: what was packed"}>
             {s.status === "planned" ? (
-              <PlannedItems shipmentId={id} items={s.planned_items} options={options} />
+              <PlannedItems key={`${s.planned_items.join(",")}:${JSON.stringify(stockSnapshot(stock))}:${s.package_profile_id}`} shipmentId={id} items={s.planned_items} options={options} blockers={blockers} expectedLots={JSON.stringify(stockSnapshot(stock))} expectedPackage={s.package_profile_id} slotPulls={slotPulls} />
             ) : (
               <Table>
                 <thead>
@@ -104,6 +124,7 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
           )}
         </div>
         <div className="space-y-4">
+          {s.status === "planned" && <Card title="Package"><ShipmentPackageForm key={s.package_profile_id} id={id} initialId={s.package_profile_id} packages={packages.filter((p) => p.active)} /><Link className="mt-2 inline-block text-xs underline" href="/admin/settings">Manage package sizes</Link></Card>}
           <Card title="Ship to">
             <p className="font-medium">{s.recipient_name ?? "—"}</p>
             {addr && (
@@ -115,6 +136,7 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
               </p>
             )}
             <p className="text-sm text-muted-foreground">{s.recipient_email}</p>
+            {!pre && s.avoid && <Badge tone="warn">Avoid: {s.avoid}</Badge>}
             {pre && (
               <div className="mt-2 space-y-1 text-sm">
                 {pre.avoid && <Badge tone="warn">Avoid: {pre.avoid}</Badge>}

@@ -17,7 +17,7 @@ export default async function BoxesPage() {
         {BOX_SLUGS.map((slug) => {
           const b = boxes[slug];
           const fails = blockingFailures(b.checks);
-          const stage = lineupStage(b.picks, b.ready);
+          const stage = lineupStage([...b.picks, ...b.extras.map((snack) => ({ snack }))], b.ready);
           return (
             <Link key={slug} href={`/admin/boxes/${slug}`} className="block">
               <Card className="h-full transition-colors hover:border-primary">
