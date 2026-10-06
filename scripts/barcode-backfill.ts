@@ -15,7 +15,7 @@
  * = high, disagreement = conflict (left for GS1 / manufacturer / the package).
  */
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { barcodeVerdict, cleanBarcode, validCheckDigit, type BarcodeSource } from "../src/lib/admin/barcode";
+import { barcodeVerdict, cleanBarcode, gtin14, printedForm, validCheckDigit, type BarcodeSource } from "../src/lib/admin/barcode";
 import { db } from "../src/lib/admin/db";
 import type { FdcFood } from "../src/lib/admin/fdc";
 
@@ -150,7 +150,14 @@ async function main() {
     for (const s of sources) console.log(`      ${s.source}: ${s.gtin} ${s.exact_variant ? "[exact]" : ""} ${s.note ?? ""}`);
     if (!apply) continue;
     const write: Record<string, unknown> = { barcode_status: v.status, barcode_sources: sources, barcode_checked_at: at };
-    if ((v.status === "provisional" || v.status === "high") && !p.upc) write.upc = v.gtin!.replace(/^0+/, "");
+    if ((v.status === "provisional" || v.status === "high") && !p.upc) {
+      // Store the code as printed (from the agreeing source), never a zero-stripped form; and
+      // never a code already registered as an outer purchase pack.
+      const printed = printedForm(sources.find((s) => gtin14(s.gtin) === v.gtin)!.gtin);
+      const isPack = (await db().from("purchase_packs").select("id").eq("gtin14", v.gtin!).maybeSingle()).data;
+      if (printed && validCheckDigit(printed) && !isPack) write.upc = printed;
+      else console.log(`      not written: ${isPack ? "that code is an outer purchase pack" : "no valid printed form"}`);
+    }
     const r = await db().from("products").update(write).eq("id", p.id);
     if (r.error) console.log(`      ERROR ${r.error.message}`);
   }

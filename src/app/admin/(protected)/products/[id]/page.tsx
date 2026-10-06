@@ -16,6 +16,7 @@ import {
   toSnack,
   type LotRow,
   type ProductRow,
+  type PurchasePackRow,
   type VendorPriceRow,
   type VersionRow,
 } from "@/lib/admin/db";
@@ -45,6 +46,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   if (!pr.data) notFound();
   const p = pr.data as ProductRow;
 
+  const packs = must(await db().from("purchase_packs").select("*").eq("product_id", id), "purchase packs") as PurchasePackRow[];
   const [versionsRes, lotsRes, pricesRes, photosRes, usageRes, shippedRes, vendors, settings, rules] = await Promise.all([
     db().from("product_versions").select("*").eq("product_id", id).order("version", { ascending: false }),
     db().from("purchase_lots").select("*").eq("product_id", id).order("purchased_at", { ascending: false }),
@@ -65,7 +67,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   );
   const shippedUnits = (must(shippedRes, "shipped") as { qty: number }[]).reduce((s, r) => s + r.qty, 0);
   const current = versions.find((v) => v.is_current);
-  const snack = toSnack(p, current, lots, prices[0]?.unit_cost_cents ?? null);
+  const snack = toSnack(p, current, lots, prices[0]?.unit_cost_cents ?? null, packs);
   const fits = eligibleBoxes(snack, rules, settings.policy, p.reject_reason);
   const ships = shipsUnderPolicy(snack, settings.policy);
   const urls = await signedUrls(photos.map((x) => x.path));
@@ -79,7 +81,14 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           <span className="flex flex-wrap items-center gap-2">
             <span className="font-mono">{p.code}</span>
             {p.brand && <span>· {p.brand}</span>}
-            {p.upc && <span>· UPC {p.upc}</span>}
+            <span title="Barcode identity (who says this code is this exact pack), separate from the label check">
+              · {p.upc ? `UPC ${p.upc}` : "No barcode of its own"} ({p.barcode_status ?? "unverified"})
+            </span>
+            {packs.map((x) => (
+              <span key={x.id} title={x.description ?? undefined}>
+                · Box {x.gtin} = {x.units_per_pack} units ({x.barcode_status})
+              </span>
+            ))}
             <span>
               · {p.type} · {p.form}
             </span>

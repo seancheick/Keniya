@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import { env } from "@/lib/env";
 import { site } from "@/lib/site";
-import { UPDATES_INTEREST, type Box } from "@/lib/box";
+import { UPDATES_INTEREST, type PublicBox as Box } from "@/lib/box";
 import type { OrderEmailProps } from "@/emails/OrderConfirmEmail";
 import type { OrderAlertProps } from "@/emails/OrderAlertEmail";
 

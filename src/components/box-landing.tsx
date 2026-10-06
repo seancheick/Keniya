@@ -183,7 +183,7 @@ export async function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
               <span className="font-display text-3xl leading-none text-terracotta-deep">{cat.count}×</span>
               <span>
                 <strong className="block text-ink">{cat.name}</strong>
-                <span className="text-sm text-ink-soft">{l.categoryWhy[cat.name] ?? cat.note}</span>
+                <span className="text-sm text-ink-soft">{cat.note.charAt(0).toUpperCase() + cat.note.slice(1)}.</span>
               </span>
             </li>
           ))}

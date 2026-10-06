@@ -2,7 +2,7 @@
 // actual package confirms the UPC, the label, the serving format and the expiry date.
 import { sameUpc } from "./fdc";
 
-/** P9: a package needs at least this many days left (3-month ship + shelf window). */
+/** P9 (lot/package level): a package needs at least this many days left (3-month ship + shelf window). */
 export const MIN_DAYS_TO_EXPIRY = 90;
 
 /** Earliest acceptable expiry date for a package checked today (ISO date). */

@@ -126,7 +126,7 @@ export function Panel({
 export function CategoryList({
   categories,
 }: {
-  categories: { name: string; count: number; note: string }[];
+  categories: { name: string; count: string; note: string }[];
 }) {
   return (
     <table role="presentation" width="100%" cellPadding={0} cellSpacing={0}>

@@ -133,10 +133,12 @@ export function heartFit(p: RuleInput, rejectReason?: string | null): BoxFit {
   // Sodium is held by the box's hard limit like every other pick.
   if (p.type === "Beverage" && p.added_sugar_g === 0) via.push("Unsweetened drink");
   if (via.length) return { box: "heart", fits: true, via, reasons: [] };
-  const why = p.roles.CT
-    ? `Treat with ${p.added_sugar_g} g added sugar (max 8 g)`
-    : "No heart role: needs a judged role (unsaturated fat, nut/seed, whole grain, fruit), fiber ≥3 g, " +
-      "a controlled treat ≤8 g added sugar, or an unsweetened drink";
+  const why = p.type === "Beverage"
+    ? `Drink with ${p.added_sugar_g} g added sugar: a drink qualifies only unsweetened (0 g added sugar), whatever the per-pack sugar limit`
+    : p.roles.CT
+      ? `Treat with ${p.added_sugar_g} g added sugar (max 8 g)`
+      : "No heart role: needs a judged role (unsaturated fat, nut/seed, whole grain, fruit), fiber ≥3 g, " +
+        "a controlled treat ≤8 g added sugar, or an unsweetened drink";
   return { box: "heart", fits: false, via: [], reasons: [why] };
 }
 
@@ -169,8 +171,10 @@ export function glp1Fit(p: RuleInput, rejectReason?: string | null): BoxFit {
     fits: false,
     via: [],
     reasons: [
-      `${p.protein_g} g protein, ${p.fiber_g} g fiber, ${p.calories} cal: needs protein ≥5 g, fiber ≥3 g with a protein or nut/seed anchor, ` +
-        "whole-food, a small portioned treat (≤150 cal, ≤8 g added sugar), or an unsweetened drink",
+      p.type === "Beverage"
+        ? `Drink with ${p.added_sugar_g} g added sugar: a drink qualifies only unsweetened (0 g added sugar)`
+        : `${p.protein_g} g protein, ${p.fiber_g} g fiber, ${p.calories} cal: needs protein ≥5 g, fiber ≥3 g with a protein or nut/seed anchor, ` +
+          "whole-food, a small portioned treat (≤150 cal, ≤8 g added sugar), or an unsweetened drink",
     ],
   };
 }

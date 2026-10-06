@@ -15,8 +15,6 @@ export type BoxLanding = {
   h1: string;
   intro: string;
   forWho: string[];
-  /** Keyed by Box.categories[].name — the longer "why this category" line. */
-  categoryWhy: Record<string, string>;
   screening: { title: string; body: string }[];
   faqs: { q: string; a: string }[];
 };
@@ -36,13 +34,6 @@ export const landings: BoxLanding[] = [
       "Partners, parents and friends who want to send something useful",
       "People tired of checking caffeine, cooking and ingredients on every snack",
     ],
-    categoryWhy: {
-      Comfort: "Plain, gentle, low-effort picks for the days when nothing sounds good.",
-      "Protein & staying power": "Nuts, seeds and savory crunch that keep you going between meals.",
-      "Sweet treats": "Fruit and chocolate. This box is about comfort, not restriction.",
-      Sips: "Caffeine-free tea and a hydration mix for when plain water is a hard sell.",
-      "Salty snack": "One classic salty, crunchy pick for that specific craving.",
-    },
     screening: [
       { title: "Fully cooked or pasteurized", body: "No raw or unpasteurized ingredients." },
       {
@@ -81,7 +72,7 @@ export const landings: BoxLanding[] = [
       },
       {
         q: "Is this box for after the baby arrives?",
-        a: "This box is built for pregnancy. For the fourth trimester, the Postpartum & Nursing Box keeps the same food-safety checks with more hydration and one-handed snacks.",
+        a: "This box is built for pregnancy. For the fourth trimester, the Postpartum & Nursing Box keeps the same food-safety checks, with a caffeine limit set for nursing and one-handed snacks.",
       },
       {
         q: "Can I send it to someone?",
@@ -104,13 +95,6 @@ export const landings: BoxLanding[] = [
       "Anyone keeping carbs and added sugar in check",
       "Family and friends who want to send snacks that fit",
     ],
-    categoryWhy: {
-      "Protein & fiber": "The core of the box: filling picks that lead with protein or fiber.",
-      "Nuts & seeds": "Whole-food fats and protein with nothing sugary added.",
-      "Smarter sweets": "Real treats, portioned, with less added sugar.",
-      Sips: "A sugar-free electrolyte drink mix instead of a sugary drink.",
-      "Salty snack": "A portioned savory crunch.",
-    },
     screening: [
       {
         title: "Under {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar, every pack",
@@ -122,7 +106,7 @@ export const landings: BoxLanding[] = [
       },
       {
         title: "The box balances across all four",
-        body: "Several protein and fiber picks, a few whole-food picks and at most {{blood_sugar.treatMax}} treat-only picks, so it isn't all one kind of snack.",
+        body: "At least {{blood_sugar.proteinOrFiberMin}} protein- or fiber-forward picks, at least {{blood_sugar.wholeFoodMin}} whole-food picks and at most {{blood_sugar.treatMax}} treat-only picks, so it isn't all one kind of snack.",
       },
       {
         title: "The numbers ship with the snack",
@@ -157,22 +141,15 @@ export const landings: BoxLanding[] = [
     path: "/heart-healthy-snack-box",
     title: "Heart & Blood Pressure Snack Box: {{heart.sodiumMax}} mg Sodium Max",
     description:
-      "14 snacks for high blood pressure, cholesterol and heart-conscious eating, every pack under {{heart.sodiumMax}} mg sodium: nuts and seeds, whole grains, fruit and one treat. $47, free shipping.",
+      "14 snacks for high blood pressure, cholesterol and heart-conscious eating, every pack under {{heart.sodiumMax}} mg sodium: nuts and seeds, whole grains, fruit and portioned treats. $47, free shipping.",
     h1: "Heart and blood-pressure snacking without the label math.",
     intro:
-      "“Watch your sodium” shouldn't mean giving up on snacks. Every pack in this box stays under {{heart.sodiumMax}} mg sodium and {{heart.satFatMax}} g saturated fat, built around nuts, seeds, whole grains and fruit, with one treat that has to pass the same checks.",
+      "“Watch your sodium” shouldn't mean giving up on snacks. Every pack in this box stays under {{heart.sodiumMax}} mg sodium and {{heart.satFatMax}} g saturated fat, built around nuts, seeds, whole grains and fruit, with at most {{heart.treatMax}} portioned treats that pass the same checks.",
     forWho: [
       "People with high blood pressure or high cholesterol",
       "Anyone following a heart-conscious or lower-sodium plan from their doctor",
       "Households who want snacks everyone can share",
     ],
-    categoryWhy: {
-      "Nuts & seeds": "Single servings of nuts, seeds and other unsaturated-fat sources.",
-      "Whole grains & fiber": "Crackers, bars and crunch built on whole grains and fiber.",
-      Fruit: "Dried and freeze-dried fruit and fruit bars.",
-      Sips: "A sugar-free electrolyte drink mix and a caffeine-free tea. Light to ship, easy to carry.",
-      Treat: "One dark-chocolate treat, sodium checked like everything else.",
-    },
     screening: [
       {
         title: "Under {{heart.sodiumMax}} mg sodium, every pack",
@@ -184,11 +161,11 @@ export const landings: BoxLanding[] = [
       },
       {
         title: "Added sugar under {{heart.addedSugarMax}} g on core picks",
-        body: "The one dark-chocolate treat may have up to {{heart.treatAddedSugarMax}} g, and it's capped at that.",
+        body: "A portioned treat may have up to {{heart.treatAddedSugarMax}} g, and there are at most {{heart.treatMax}} in a box.",
       },
       {
         title: "Every snack plays a role",
-        body: "At least 4 nut and seed picks, at least 3 fiber-forward picks, whole grains and fruit. No filler.",
+        body: "At least {{heart.nutSeedMin}} nut and seed picks, at least {{heart.fiberMin}} fiber-forward picks, whole grains and fruit. No filler.",
       },
     ],
     faqs: [
@@ -228,13 +205,6 @@ export const landings: BoxLanding[] = [
       "Anyone pregnant who is keeping carbs in check on their care team's advice",
       "Partners and family who want to send snacks that fit",
     ],
-    categoryWhy: {
-      "Protein & fiber": "The core of the box: filling picks that lead with protein or fiber.",
-      Comfort: "Plain, gentle picks for the days when nothing sounds good.",
-      "Smarter sweets": "Real treats, portioned, with less added sugar.",
-      Sips: "Caffeine-free tea and a sugar-free hydration mix.",
-      "Salty snacks": "Portioned savory crunch for that craving.",
-    },
     screening: [
       {
         title: "Keniya Pregnancy Screening first",
@@ -273,26 +243,19 @@ export const landings: BoxLanding[] = [
     path: "/glp1-snack-box",
     title: "GLP-1 Companion Snack Box: Protein-Forward, Small Portions",
     description:
-      "14 snacks for people on GLP-1 medications: protein-forward, under {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar per pack, small portions, hydration and ginger for queasy days. $47, free shipping.",
+      "14 snacks for people on GLP-1 medications: protein-forward, under {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar per pack, small portions, unsweetened sips and gentle comfort picks. $47, free shipping.",
     h1: "Small appetite, protein first: a snack box for GLP-1 days.",
     intro:
-      "When you're eating less, every bite has to count. Every snack here leads with protein, fiber or whole-food fats, stays under {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar, and the box carries hydration and ginger or peppermint comfort picks for the queasy days.",
+      "When you're eating less, every bite has to count. Every snack here leads with protein, fiber or whole-food fats, stays under {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar, and the box carries unsweetened sips and gentle comfort picks for the queasy days.",
     forWho: [
       "People taking a GLP-1 medication for weight or blood sugar",
       "Anyone eating smaller meals who wants protein in every snack",
       "Family and friends who want to send something that actually helps",
     ],
-    categoryWhy: {
-      "Protein-forward": "Small packs that lead with protein, to help keep muscle while eating less.",
-      "Savory crunch": "Portioned, lower-carb savory picks.",
-      Comfort: "Ginger and peppermint, the two most-cited comforts for nausea.",
-      Sips: "Sugar-free hydration and caffeine-free tea, because fluids matter more when you eat less.",
-      "Small sweet": "One portioned treat, because a treat is still allowed.",
-    },
     screening: [
       {
-        title: "Protein or fiber in most picks",
-        body: "2025 joint guidance for GLP-1 nutrition emphasizes adequate protein and nutrient-dense foods. Most of the box leads with protein or fiber.",
+        title: "At least {{glp1.proteinOrFiberMin}} picks lead with protein or fiber",
+        body: "2025 joint guidance for GLP-1 nutrition emphasizes adequate protein and nutrient-dense foods, so every box carries at least {{glp1.proteinOrFiberMin}} protein- or fiber-forward picks.",
       },
       {
         title: "Under {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar per pack",
@@ -300,11 +263,11 @@ export const landings: BoxLanding[] = [
       },
       {
         title: "Easy on the stomach",
-        body: "Smaller packs, no greasy or heavy items, and ginger or peppermint comfort picks.",
+        body: "Smaller packs and gentle comfort picks; nothing over {{glp1.carbsMax}} g carbs or {{glp1.addedSugarMax}} g added sugar.",
       },
       {
         title: "Hydration built in",
-        body: "Fluids are easy to forget when you're not hungry, so the box carries a sugar-free electrolyte mix and tea.",
+        body: "Fluids are easy to forget when you're not hungry, so every box carries at least {{glp1.cat.Hydration.min}} unsweetened sip.",
       },
     ],
     faqs: [
@@ -314,7 +277,7 @@ export const landings: BoxLanding[] = [
       },
       {
         q: "Will it help with nausea?",
-        a: "We can't promise that. Ginger and peppermint are the comfort picks most often suggested for queasiness, so the box includes them, and everything is portioned small.",
+        a: "We can't promise that. Everything is portioned small, and the box includes gentle comfort picks.",
       },
       {
         q: "Is it low-calorie?",
@@ -327,22 +290,15 @@ export const landings: BoxLanding[] = [
     path: "/postpartum-snack-box",
     title: "Postpartum & Nursing Snack Box: One-Handed, No-Prep",
     description:
-      "14 snacks for the fourth trimester: the same food-safety checks as our Pregnancy box, caffeine limited, more hydration, everything one-handed. $47, free shipping.",
+      "14 snacks for the fourth trimester: the same food-safety checks as our Pregnancy box, caffeine limited, at least {{postpartum.cat.Hydration.min}} sips, everything one-handed. $47, free shipping.",
     h1: "The fourth trimester, fed one-handed.",
     intro:
-      "Someone in your house is eating at 3 a.m. with one hand. Every snack here passes the same food-safety checks as our Pregnancy box, keeps caffeine known and limited, and the box leans into hydration and protein because nursing is hungry, thirsty work.",
+      "Someone in your house is eating at 3 a.m. with one hand. Every snack here passes the same food-safety checks as our Pregnancy box, keeps caffeine known and limited, and every box carries at least {{postpartum.cat.Protein.min}} protein picks and {{postpartum.cat.Hydration.min}} sips because nursing is hungry, thirsty work.",
     forWho: [
       "Anyone in the first months after birth, nursing or not",
       "Partners, parents and friends bringing food to a new parent",
       "Anyone who wants snacks that need no plate, no prep and no second hand",
     ],
-    categoryWhy: {
-      "Protein & staying power": "Nuts, seeds, jerky and savory crunch to get through a feed and a nap.",
-      Comfort: "Gentle, easy picks for long nights.",
-      "Sweet treats": "Fruit and chocolate. Recovery is not the time for restriction.",
-      Sips: "A hydration mix and tea, because nursing is thirsty work.",
-      "Salty snack": "One classic salty, crunchy pick.",
-    },
     screening: [
       {
         title: "The Pregnancy food-safety checks, kept",
@@ -350,11 +306,11 @@ export const landings: BoxLanding[] = [
       },
       {
         title: "Caffeine known and limited",
-        body: "Nursing allows more caffeine than pregnancy, so the limit is looser, but every pack's caffeine is known and tea stays caffeine-free.",
+        body: "Nursing allows more caffeine than pregnancy, so the limit is looser: every pack's caffeine is known and no more than {{postpartum.caffeineMax}} mg.",
       },
       {
-        title: "Hydration and protein first",
-        body: "More sips and protein picks than the Pregnancy box, for the appetite and thirst that come with nursing.",
+        title: "Protein and sips in every box",
+        body: "At least {{postpartum.cat.Protein.min}} protein picks and {{postpartum.cat.Hydration.min}} sips, for the appetite and thirst that come with nursing.",
       },
       {
         title: "One-handed, no prep",
@@ -368,11 +324,11 @@ export const landings: BoxLanding[] = [
       },
       {
         q: "How does caffeine work for nursing?",
-        a: "Guidance from ACOG and the CDC puts moderate caffeine while nursing around 200 to 300 mg a day. Our per-pack limit stays well under that, every pack's caffeine is known, and the tea is caffeine-free. Ask your pediatrician if your baby was born early.",
+        a: "Guidance from ACOG and the CDC puts moderate caffeine while nursing around 200 to 300 mg a day. Our per-pack limit of {{postpartum.caffeineMax}} mg stays well under that and every pack's caffeine is known. Ask your pediatrician if your baby was born early.",
       },
       {
         q: "How is it different from the Pregnancy box?",
-        a: "Same food-safety checks, a looser caffeine limit, and a recipe with more hydration and protein. If you're still pregnant, choose the Pregnancy Comfort Box.",
+        a: "Same food-safety checks, a looser caffeine limit ({{postpartum.caffeineMax}} mg per pack instead of {{pregnancy_comfort.caffeineMax}} mg), and a recipe with at least {{postpartum.cat.Protein.min}} protein picks. If you're still pregnant, choose the Pregnancy Comfort Box.",
       },
     ],
   },

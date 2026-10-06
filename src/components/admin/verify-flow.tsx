@@ -19,6 +19,8 @@ export type VerifyItem = {
   status: string;
   clinicianApproved: boolean;
   upc: string | null;
+  /** Registered outer boxes this product comes in (scanning one identifies the product). */
+  packs: { gtin: string; units: number }[];
   verifiedAt: string | null;
   verifiedBy: string | null;
   inBoxes: string[];
@@ -31,7 +33,8 @@ export type VerifyItem = {
   nutritionPhoto: string | null;
 };
 
-const isVerified = (i: VerifyItem) => Boolean(i.verifiedAt && i.upc);
+const boxOf = (i: VerifyItem, code: string) => i.packs.find((p) => sameBarcode(p.gtin, code)) ?? null;
+const isVerified = (i: VerifyItem) => Boolean(i.verifiedAt && (i.upc || i.packs.length));
 
 export function VerifyFlow({ items, minDays, minDate }: { items: VerifyItem[]; minDays: number; minDate: string }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -46,7 +49,7 @@ export function VerifyFlow({ items, minDays, minDate }: { items: VerifyItem[]; m
     if (code.length < 8) return;
     setCamera(false);
     setScanned(code);
-    const hit = items.find((i) => sameBarcode(i.upc, code));
+    const hit = items.find((i) => sameBarcode(i.upc, code) || boxOf(i, code));
     if (hit) {
       setUnknown(null);
       setSelectedId(hit.id);
@@ -227,7 +230,11 @@ function VerifyPanel({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const answer = (k: string) => ({ value: answers[k] ?? "", onChange: (v: string) => setAnswers((a) => ({ ...a, [k]: v })) });
   const upc = scanned || item.upc || "";
-  const mismatch = Boolean(scanned && item.upc && !sameBarcode(item.upc, scanned));
+  const box = scanned ? boxOf(item, scanned) : null;
+  const mismatch = Boolean(scanned && item.upc && !box && !sameBarcode(item.upc, scanned));
+  // A code that's neither on file nor a known box: ask where it's printed before saving it.
+  const unknownCode = Boolean(scanned && !box && !item.upc);
+  const [barcodeOn, setBarcodeOn] = useState<"" | "unit" | "box">("");
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
@@ -258,9 +265,13 @@ function VerifyPanel({
             <p className="text-red-800">
               Scanned <b>{scanned}</b>, but this product&apos;s barcode is <b>{item.upc}</b>. Wrong item, or a new pack or formula: don&apos;t verify.
             </p>
+          ) : box ? (
+            <p>
+              Outer box <b>{scanned}</b> ({box.units} per box). This identifies the product; check the label on a single pack from inside it.
+            </p>
           ) : upc ? (
             <p>
-              Barcode <b>{upc}</b> {item.upc ? "(on file)" : "(new: will be saved to this product)"}
+              Barcode <b>{upc}</b> {item.upc ? "(on file)" : "(new)"}
             </p>
           ) : (
             <div className="flex flex-wrap items-center gap-2">
@@ -296,6 +307,23 @@ function VerifyPanel({
       <form action={action} className="space-y-4 rounded-xl border bg-card p-4 lg:sticky lg:top-28 lg:self-start">
         <input type="hidden" name="product_id" value={item.id} />
         <input type="hidden" name="upc" value={upc} />
+        {unknownCode && (
+          <fieldset className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">
+            <legend className="px-1 font-medium">Where is this barcode printed?</legend>
+            {(["unit", "box"] as const).map((v) => (
+              <label key={v} className="flex min-h-11 items-center gap-2">
+                <input type="radio" name="barcode_on" value={v} checked={barcodeOn === v} onChange={() => setBarcodeOn(v)} className="size-5" />
+                {v === "unit" ? "On the single pack itself" : "On the outer box or multipack (the single pack has none)"}
+              </label>
+            ))}
+            {barcodeOn === "box" && (
+              <label className="flex items-center gap-2">
+                Single packs in that box
+                <input name="units_per_box" inputMode="numeric" required className={cn(fieldClass, "w-24")} />
+              </label>
+            )}
+          </fieldset>
+        )}
         <YesNo name="nutrition_ok" label="Nutrition panel matches?" hint="Calories, protein, fiber, carbs, added sugar, sodium, sat fat (small rounding is fine)." {...answer("nutrition_ok")} />
         <YesNo name="ingredients_ok" label="Ingredients and allergens match?" hint="Including any 'may contain' or facility statement." {...answer("ingredients_ok")} />
         <YesNo name="single_serve" label="One sealed single-serve pack?" hint="The label says 1 serving per container, or the pack itself is the serving." {...answer("single_serve")} />
@@ -316,7 +344,7 @@ function VerifyPanel({
             </li>
           </ul>
         )}
-        <Button type="submit" className="w-full" disabled={pending || !upc || mismatch}>
+        <Button type="submit" className="w-full" disabled={pending || !upc || mismatch || (unknownCode && !barcodeOn)}>
           {pending ? "Saving…" : "Verify package"}
         </Button>
         {!item.clinicianApproved && (

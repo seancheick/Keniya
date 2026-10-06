@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ScanLine, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { logPurchase, type PurchaseState } from "@/actions/admin/inventory";
+import { createPurchasePack, logPurchase, type PurchaseState } from "@/actions/admin/inventory";
 import { lookupBarcode } from "@/actions/admin/lookup";
 import { createProduct, uploadProductPhoto } from "@/actions/admin/products";
 import type { LookupDraft } from "@/lib/admin/lookup";
@@ -23,6 +23,8 @@ export type PurchaseProduct = {
   name: string;
   brand: string | null;
   upc: string | null;
+  /** Outer boxes/multipacks this product is bought in: scanning one logs units × boxes. */
+  packs: { gtin: string; units: number; description: string | null }[];
   status: string;
   onHand: number;
   /** Average cost of stock on hand (lots only), null when none. */
@@ -58,6 +60,11 @@ export function LogPurchase({
   const [total, setTotal] = useState("");
   const [done, setDone] = useState<null | { product: PurchaseProduct; unit: number; qty: number }>(null);
   const [receiptBusy, setReceiptBusy] = useState(false);
+  // Set when the scan was an outer box: qty = boxes bought × single packs per box.
+  const [box, setBox] = useState<{ gtin: string; units: number } | null>(null);
+  const [boxes, setBoxes] = useState("1");
+  const [boxFor, setBoxFor] = useState({ query: "", productId: "", units: "" });
+  const [savingBox, startBox] = useTransition();
   const [creatingPending, startCreate] = useTransition();
   const [lastState, setLastState] = useState(state);
 
@@ -86,8 +93,18 @@ export function LogPurchase({
       .slice(0, 8);
   }, [query, list]);
 
+  function pickBox(p: PurchaseProduct, gtin: string, units: number) {
+    setSelected(p);
+    setDone(null);
+    setBox({ gtin, units });
+    setBoxes("1");
+    setQty(String(units));
+    toast.success(`Box of ${units} × ${p.name}`);
+  }
+
   async function onScan(code: string) {
     setScanning(false);
+    setBox(null);
     const found = list.find((p) => sameBarcode(p.upc, code));
     if (found) {
       setSelected(found);
@@ -95,9 +112,15 @@ export function LogPurchase({
       toast.success(`Found ${found.name}`);
       return;
     }
+    const inBox = list.find((p) => p.packs.some((x) => sameBarcode(x.gtin, code)));
+    if (inBox) return pickBox(inBox, code, inBox.packs.find((x) => sameBarcode(x.gtin, code))!.units);
     setLookingUp(true);
     const res = await lookupBarcode(code).catch(() => ({ kind: "none" as const, upc: code }));
     setLookingUp(false);
+    if (res.kind === "pack") {
+      const p = list.find((x) => x.id === res.id);
+      if (p) return pickBox(p, res.gtin, res.units);
+    }
     if (res.kind === "existing") {
       const p = list.find((x) => x.id === res.id);
       if (p) {
@@ -230,6 +253,7 @@ export function LogPurchase({
                 name,
                 brand: (fd.get("brand") as string) || null,
                 upc: (fd.get("upc") as string) || null,
+                packs: [],
                 status: "Candidate",
                 onHand: 0,
                 lotAvgCents: null,
@@ -244,6 +268,60 @@ export function LogPurchase({
             })
           }
         >
+          {creating.upc && (
+            <div className="space-y-2 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm">
+              <p className="font-medium">Is this the outer box of a product we already have?</p>
+              <input
+                value={boxFor.query}
+                onChange={(e) => setBoxFor((b) => ({ ...b, query: e.target.value, productId: "" }))}
+                placeholder="Search the product inside"
+                className={`${fieldClass} h-11`}
+                aria-label="Product inside the box"
+              />
+              {boxFor.query.trim().length > 1 && !boxFor.productId && (
+                <ul className="divide-y rounded-lg border bg-card">
+                  {list
+                    .filter((p) => `${p.code} ${p.name} ${p.brand ?? ""}`.toLowerCase().includes(boxFor.query.trim().toLowerCase()))
+                    .slice(0, 6)
+                    .map((p) => (
+                      <li key={p.id}>
+                        <button type="button" className="min-h-11 w-full px-3 py-2 text-left hover:bg-muted" onClick={() => setBoxFor((b) => ({ ...b, productId: p.id, query: `${p.code} ${p.name}` }))}>
+                          {p.code} {p.name}
+                        </button>
+                      </li>
+                    ))}
+                </ul>
+              )}
+              {boxFor.productId && (
+                <div className="flex items-end gap-2">
+                  <Field label="Single packs in the box" className="flex-1">
+                    <input value={boxFor.units} onChange={(e) => setBoxFor((b) => ({ ...b, units: e.target.value }))} inputMode="numeric" className={`${fieldClass} h-11`} placeholder="10" />
+                  </Field>
+                  <Button
+                    type="button"
+                    className="h-11"
+                    disabled={savingBox}
+                    onClick={() =>
+                      startBox(async () => {
+                        const units = Number.parseInt(boxFor.units, 10);
+                        const res = await createPurchasePack({ product_id: boxFor.productId, gtin: creating.upc!, units_per_pack: units });
+                        if (res.error) return void toast.error(res.error);
+                        const p = list.find((x) => x.id === boxFor.productId)!;
+                        const updated = { ...p, packs: [...p.packs, { gtin: creating.upc!, units, description: null }] };
+                        setList((l) => l.map((x) => (x.id === p.id ? updated : x)));
+                        setCreating(null);
+                        setBoxFor({ query: "", productId: "", units: "" });
+                        pickBox(updated, creating.upc!, units);
+                      })
+                    }
+                  >
+                    Save box
+                  </Button>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">The box barcode is saved separately; it never replaces the single pack&apos;s own barcode.</p>
+            </div>
+          )}
           <p className="font-semibold">New product</p>
           {/* creating.upc is only ever set from a scan, so the package itself verifies the barcode. */}
           {creating.upc && <input type="hidden" name="upc_source" value="scan" />}
@@ -313,7 +391,7 @@ export function LogPurchase({
                   {selected.code} · {selected.brand ?? "—"} {selected.upc ? `· UPC ${selected.upc}` : ""}
                 </p>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setSelected(null)}>
+              <Button variant="ghost" size="sm" onClick={() => { setSelected(null); setBox(null); }}>
                 Change
               </Button>
             </div>
@@ -353,6 +431,26 @@ export function LogPurchase({
             }}
           >
             <input type="hidden" name="product_id" value={selected.id} />
+            {box && <input type="hidden" name="box_note" value={`Scanned box ${box.gtin} (${box.units} per box × ${boxes})`} />}
+            {box && (
+              <div className="flex items-end gap-3 rounded-lg bg-sky-50 p-3 text-sm">
+                <p className="flex-1">
+                  Scanned an outer box: <b>{box.units}</b> single packs each.
+                </p>
+                <Field label="Boxes bought" className="w-28">
+                  <input
+                    inputMode="numeric"
+                    value={boxes}
+                    onChange={(e) => {
+                      setBoxes(e.target.value);
+                      const n = Number.parseInt(e.target.value, 10);
+                      if (n > 0) setQty(String(n * box.units));
+                    }}
+                    className={`${fieldClass} h-11`}
+                  />
+                </Field>
+              </div>
+            )}
             <Field label="Store / vendor">
               <input name="vendor" required list="vendors" className={`${fieldClass} h-11`} placeholder="Costco" />
             </Field>
@@ -362,7 +460,7 @@ export function LogPurchase({
               ))}
             </datalist>
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Units">
+              <Field label={box ? "Single packs (usable units)" : "Units"}>
                 <input name="qty" required inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} className={`${fieldClass} h-11`} placeholder="24" />
               </Field>
               <Field label="Total paid $">

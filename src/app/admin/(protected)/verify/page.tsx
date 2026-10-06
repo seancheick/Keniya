@@ -38,6 +38,7 @@ export default async function VerifyPage() {
         status: s.status,
         clinicianApproved: isClinicianApproved(s),
         upc: p.upc,
+        packs: catalog.packs.filter((x) => x.product_id === s.id).map((x) => ({ gtin: x.gtin, units: x.units_per_pack })),
         verifiedAt: v?.verified_at ?? null,
         verifiedBy: v?.verified_by ?? null,
         inBoxes,
@@ -61,7 +62,7 @@ export default async function VerifyPage() {
     // Boxes first, then anything eligible, then the rest; unverified before verified.
     .sort(
       (a, b) =>
-        Number(Boolean(a.verifiedAt && a.upc)) - Number(Boolean(b.verifiedAt && b.upc)) ||
+        Number(Boolean(a.verifiedAt && (a.upc || a.packs.length))) - Number(Boolean(b.verifiedAt && (b.upc || b.packs.length))) ||
         Number(!a.inBoxes.length) - Number(!b.inBoxes.length) ||
         Number(!a.eligible.length) - Number(!b.eligible.length) ||
         a.code.localeCompare(b.code),

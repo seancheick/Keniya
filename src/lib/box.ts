@@ -1,4 +1,5 @@
 import { DEFAULT_SETTINGS, type BoxSlug } from "@/lib/admin/types";
+import type { CategoryCopy } from "@/lib/standards";
 
 export type Box = {
   slug: BoxSlug;
@@ -9,10 +10,12 @@ export type Box = {
   /** Shown on the box card itself so it can't be missed before choosing. */
   caution?: string;
   /**
-   * What every box of this kind contains, by category (counts sum to 14), from the Box
-   * Builder slots. Categories only, never specific snacks: picks rotate, promises don't.
+   * Public copy for each recipe category (Comfort, Protein, Savory, Sweet, Hydration). The
+   * counts are never written here: publicBoxes() derives them from the live recipe, so the
+   * card can't promise "2× tea" when the engine only enforces "2–3 sips". Notes describe what
+   * the rules guarantee, never a subtype the optimizer doesn't enforce.
    */
-  categories: { name: string; count: number; note: string }[];
+  composition: Partial<Record<string, CategoryCopy>>;
   /** Founding-run size for this box (admin `runSize` default); shown on the card and in order emails. */
   founding: number;
   tint: "blush" | "sage" | "cream";
@@ -28,6 +31,9 @@ export const requestable = [
 ] as const;
 
 /** Waitlist boxInterest for the general "new boxes and shipping" list (no box reserved). */
+/** A box as the public pages show it: copy filled from the live rules, composition counts derived from the live recipe. */
+export type PublicBox = Box & { categories: { name: string; count: string; note: string }[] };
+
 export const UPDATES_INTEREST = "updates";
 
 /**
@@ -48,13 +54,13 @@ const raw: Omit<Box, "founding">[] = [
     shortName: "Pregnancy",
     forWho: "For pregnancy, first trimester to third, and the people buying for her.",
     why: "Gentle picks for rough mornings, real treats for cravings.",
-    categories: [
-      { name: "Comfort", count: 4, note: "gentle, easy picks for rough days" },
-      { name: "Protein & staying power", count: 4, note: "nuts, seeds and savory crunch" },
-      { name: "Sweet treats", count: 3, note: "fruit and chocolate, because cravings count" },
-      { name: "Sips", count: 2, note: "caffeine-free tea and hydration" },
-      { name: "Salty snack", count: 1, note: "for the salty craving" },
-    ],
+    composition: {
+      Comfort: { name: "Comfort", note: "plain, gentle, low-effort picks for the days when nothing sounds good" },
+      Protein: { name: "Protein & staying power", note: "protein picks such as nuts, seeds and nut butters" },
+      Sweet: { name: "Sweet treats", note: "fruit and sweet treats, because cravings count" },
+      Hydration: { name: "Sips", note: "caffeine-checked drink mixes and water enhancers" },
+      Savory: { name: "Salty & savory", note: "for the salty, crunchy craving" },
+    },
     tint: "blush",
     image: "/images/box-pregnancy.jpg",
     imageAlt: "An open Pregnancy Comfort Box: ginger chews, crackers, a fruit pouch, almond butter, roasted chickpeas, fruit bars, peppermint tea, an electrolyte stick and popcorn",
@@ -66,13 +72,13 @@ const raw: Omit<Box, "founding">[] = [
     forWho: "For type 1, type 2 and prediabetes, and anyone keeping carbs in check.",
     caution: "Pregnant? Choose the Gestational Diabetes box.",
     why: "Every pack under {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar.",
-    categories: [
-      { name: "Protein & fiber", count: 6, note: "filling picks with more protein or fiber" },
-      { name: "Nuts & seeds", count: 3, note: "whole-food crunch" },
-      { name: "Smarter sweets", count: 3, note: "treats with less added sugar" },
-      { name: "Sips", count: 1, note: "a sugar-free electrolyte drink mix" },
-      { name: "Salty snack", count: 1, note: "portioned and easy" },
-    ],
+    composition: {
+      Savory: { name: "Savory crunch", note: "picks such as chickpeas, seeds, popcorn and crackers, each within the carb limit" },
+      Protein: { name: "Protein", note: "picks such as nut butters, nuts, jerky and bars that lead with protein" },
+      Sweet: { name: "Smarter sweets", note: "fruit and portioned treats, each with no more than {{blood_sugar.addedSugarMax}} g added sugar" },
+      Hydration: { name: "Sips", note: "unsweetened drink mixes, no added sugar" },
+      Comfort: { name: "Comfort", note: "gentle, easy picks" },
+    },
     tint: "sage",
     image: "/images/box-carb-conscious.jpg",
     imageAlt: "An open Keniya box of 14 blood-sugar-screened snacks: roasted chickpeas, almond butter, almonds, pumpkin seeds, cheese crisps, jerky, a protein bar, fruit bar, popcorn and an electrolyte stick",
@@ -83,13 +89,13 @@ const raw: Omit<Box, "founding">[] = [
     shortName: "Heart",
     forWho: "For high blood pressure, high cholesterol, and anyone eating for their heart.",
     why: "Sodium capped at {{heart.sodiumMax}} mg on every pack; saturated fat and added sugar checked.",
-    categories: [
-      { name: "Nuts & seeds", count: 4, note: "unsaturated-fat sources in single servings" },
-      { name: "Whole grains & fiber", count: 4, note: "crackers, bars and crunch" },
-      { name: "Fruit", count: 3, note: "dried, freeze-dried and fruit bars" },
-      { name: "Sips", count: 2, note: "a sugar-free electrolyte mix and caffeine-free tea" },
-      { name: "Treat", count: 1, note: "dark chocolate, sodium on the label" },
-    ],
+    composition: {
+      Savory: { name: "Savory crunch", note: "picks such as nuts, seeds, whole-grain crackers and popcorn, each under {{heart.sodiumMax}} mg sodium" },
+      Sweet: { name: "Fruit & treats", note: "fruit such as dried fruit and fruit bars, and at most {{heart.treatMax}} portioned treats" },
+      Protein: { name: "Protein", note: "picks such as nut and seed butters and nuts" },
+      Hydration: { name: "Sips", note: "unsweetened drink mixes and water enhancers" },
+      Comfort: { name: "Comfort", note: "gentle, easy picks" },
+    },
     tint: "cream",
     image: "/images/box-heart.jpg",
     imageAlt: "An open Heart Wellness Box of 14 snacks: almond butter, pumpkin seeds, almonds, a heart-healthy nut mix, chickpeas, whole-grain crackers, seed bars, fruit, popcorn, an electrolyte stick and ginger tea",
@@ -100,13 +106,13 @@ const raw: Omit<Box, "founding">[] = [
     shortName: "Gestational",
     forWho: "For gestational diabetes: pregnancy screening and the Blood Sugar standard, both.",
     why: "Every snack passes our Pregnancy checks and stays under {{gestational_diabetes.carbsMax}} g carbs and {{gestational_diabetes.addedSugarMax}} g added sugar.",
-    categories: [
-      { name: "Protein & fiber", count: 5, note: "filling picks that lead with protein or fiber" },
-      { name: "Comfort", count: 3, note: "gentle picks for rough days" },
-      { name: "Smarter sweets", count: 2, note: "portioned treats with less added sugar" },
-      { name: "Sips", count: 2, note: "caffeine-free tea and a sugar-free hydration mix" },
-      { name: "Salty snacks", count: 2, note: "portioned savory crunch" },
-    ],
+    composition: {
+      Protein: { name: "Protein & staying power", note: "picks such as nuts, seeds and nut butters that lead with protein" },
+      Savory: { name: "Savory crunch", note: "portioned savory picks, each within the carb limit" },
+      Comfort: { name: "Comfort", note: "plain, gentle picks for rough days" },
+      Sweet: { name: "Smarter sweets", note: "unsweetened fruit and at most {{gestational_diabetes.treatMax}} portioned treats" },
+      Hydration: { name: "Sips", note: "unsweetened, caffeine-checked drink mixes" },
+    },
     tint: "blush",
     imageAlt: "The Gestational Diabetes Box (photography coming)",
   },
@@ -115,14 +121,14 @@ const raw: Omit<Box, "founding">[] = [
     name: "GLP-1 Companion Box",
     shortName: "GLP-1",
     forWho: "For people on GLP-1 medications, when appetite is small and protein matters.",
-    why: "Protein-forward, smaller portions, hydration, and comfort picks for queasy days.",
-    categories: [
-      { name: "Protein-forward", count: 6, note: "small packs that lead with protein" },
-      { name: "Savory crunch", count: 3, note: "portioned, lower-carb savory picks" },
-      { name: "Comfort", count: 2, note: "ginger and peppermint for queasy days" },
-      { name: "Sips", count: 2, note: "sugar-free hydration and caffeine-free tea" },
-      { name: "Small sweet", count: 1, note: "one portioned treat" },
-    ],
+    why: "Protein-forward, smaller portions, unsweetened sips and gentle comfort picks.",
+    composition: {
+      Protein: { name: "Protein-forward", note: "small packs that lead with protein" },
+      Savory: { name: "Savory crunch", note: "portioned, lower-carb savory picks" },
+      Comfort: { name: "Comfort", note: "gentle, easy picks for queasy days" },
+      Sweet: { name: "Small sweets", note: "small, portioned treats" },
+      Hydration: { name: "Sips", note: "unsweetened hydration, no added sugar" },
+    },
     tint: "sage",
     imageAlt: "The GLP-1 Companion Box (photography coming)",
   },
@@ -131,14 +137,14 @@ const raw: Omit<Box, "founding">[] = [
     name: "Postpartum & Nursing Box",
     shortName: "Postpartum",
     forWho: "For the fourth trimester, nursing or not, and the people bringing her food.",
-    why: "One-handed, no-prep snacks: the same food-safety checks as Pregnancy, more hydration.",
-    categories: [
-      { name: "Protein & staying power", count: 4, note: "nuts, seeds, jerky and savory crunch" },
-      { name: "Comfort", count: 3, note: "gentle, easy picks for long nights" },
-      { name: "Sweet treats", count: 3, note: "fruit and chocolate" },
-      { name: "Sips", count: 3, note: "hydration mix and tea, because nursing is thirsty work" },
-      { name: "Salty snack", count: 1, note: "for the salty craving" },
-    ],
+    why: "One-handed, no-prep snacks with the same food-safety checks as Pregnancy.",
+    composition: {
+      Protein: { name: "Protein & staying power", note: "picks such as nuts, seeds, jerky and nut butters to get through a feed and a nap" },
+      Comfort: { name: "Comfort", note: "gentle, easy picks for long nights" },
+      Sweet: { name: "Sweet treats", note: "fruit and sweet treats" },
+      Savory: { name: "Salty & savory", note: "for the salty, crunchy craving" },
+      Hydration: { name: "Sips", note: "caffeine-checked drink mixes and water enhancers, because nursing is thirsty work" },
+    },
     tint: "cream",
     imageAlt: "The Postpartum & Nursing Box (photography coming)",
   },

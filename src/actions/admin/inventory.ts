@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { db, PHOTO_BUCKET } from "@/lib/admin/db";
 import { dollarsToCents } from "@/lib/admin/forms";
 import { isIsoDate } from "@/lib/admin/verify";
+import { cleanBarcode, gtin14, printedForm, validCheckDigit } from "@/lib/admin/barcode";
 import { ensureVendor } from "@/lib/admin/vendors";
 
 export type PurchaseState = {
@@ -59,7 +60,7 @@ export async function logPurchase(_prev: PurchaseState, fd: FormData): Promise<P
       total_paid_cents: total,
       expires_on: d.expires_on || null,
       lot_code: d.lot_code || null,
-      note: d.note || null,
+      note: [fd.get("box_note"), d.note].filter((x) => typeof x === "string" && x.trim()).join(" · ") || null,
       created_by: admin.name,
     })
     .select("id, unit_cost_cents")
@@ -113,4 +114,40 @@ export async function setLotExpiry(_prev: SimpleState, fd: FormData): Promise<Si
   if (res.error) return { error: res.error.message };
   revalidatePath("/admin", "layout");
   return { ok: true };
+}
+
+const packSchema = z.object({
+  product_id: z.uuid("Pick the product inside the box"),
+  gtin: z.string().min(8).max(20),
+  units_per_pack: z.coerce.number().int().min(2, "A box holds at least 2 single packs").max(1000),
+  description: z.string().trim().max(160).optional(),
+});
+
+/**
+ * Register a scanned outer box/multipack as "N of this product". The scan of the physical box
+ * is the evidence, so it starts verified. Never written to the product's own barcode.
+ */
+export async function createPurchasePack(input: z.input<typeof packSchema>): Promise<{ error?: string; ok?: boolean; units?: number }> {
+  const admin = await requireAdmin();
+  const parsed = packSchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const d = parsed.data;
+  const code = cleanBarcode(d.gtin);
+  if (!code || !validCheckDigit(code)) return { error: "That barcode doesn't pass the GS1 check digit: scan it again." };
+  const g = gtin14(code)!;
+  const asUnit = await db().from("products").select("code, name").eq("gtin14", g).maybeSingle();
+  if (asUnit.data) return { error: `That barcode is already ${asUnit.data.code} ${asUnit.data.name}'s own barcode.` };
+  const at = new Date().toISOString();
+  const ins = await db().from("purchase_packs").insert({
+    product_id: d.product_id,
+    gtin: printedForm(code) ?? code,
+    units_per_pack: d.units_per_pack,
+    description: d.description || `Box of ${d.units_per_pack}, registered while logging a purchase`,
+    barcode_status: "verified",
+    barcode_sources: [{ source: "package", gtin: printedForm(code) ?? code, exact_variant: true, checked_at: at, note: `Outer box scanned while logging a purchase by ${admin.name}` }],
+    created_by: admin.name,
+  });
+  if (ins.error) return { error: /purchase_packs_gtin14_key/.test(ins.error.message) ? "That box barcode is already registered." : ins.error.message };
+  revalidatePath("/admin", "layout");
+  return { ok: true, units: d.units_per_pack };
 }

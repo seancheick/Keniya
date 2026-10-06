@@ -57,6 +57,10 @@ const MIGRATIONS: { file: string; applied: string }[] = [
   },
   { file: "supabase/migrations/20261006025542_packing_safeguards.sql", applied: "select to_regprocedure('public.pack_shipment_checked(uuid,uuid[],jsonb,uuid,text,integer,integer,numeric,integer)') is not null as ok" },
   { file: "supabase/migrations/20261006030933_admin_function_hardening.sql", applied: "select not exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in ('products_assign_code','purchase_lots_received','adjust_lot','pack_shipment','unpack_shipment','pack_shipment_checked','activate_box_lineup','save_box_lineup','save_package_profile','set_lot_expiry') and not coalesce(p.proconfig @> array['search_path=pg_catalog, public, pg_temp'],false)) and not coalesce(has_function_privilege('anon',to_regprocedure('public.rls_auto_enable()'),'execute'),false) as ok" },
+  {
+    file: "supabase/migrations/20261007000000_purchase_packs.sql",
+    applied: "select to_regclass('public.purchase_packs') is not null and position('purchase_packs' in pg_get_functiondef('public.pack_shipment(uuid,text,integer,integer,numeric,integer)'::regprocedure)) > 0 as ok",
+  },
 ];
 
 const TABLES = [

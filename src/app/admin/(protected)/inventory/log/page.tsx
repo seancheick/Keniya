@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Log purchase" };
 
 export default async function LogPurchasePage({ searchParams }: { searchParams: Promise<{ product?: string }> }) {
   const { product } = await searchParams;
-  const [{ snacks, products, lots }, vendors, lineups, settings, rules] = await Promise.all([loadCatalog(), loadVendors(), loadActiveLineups(), loadSettings(), loadBoxRules()]);
+  const [{ snacks, products, lots, packs }, vendors, lineups, settings, rules] = await Promise.all([loadCatalog(), loadVendors(), loadActiveLineups(), loadSettings(), loadBoxRules()]);
   const upc = new Map(products.map((p) => [p.id, p.upc]));
   const usedIn = (id: string) => BOX_SLUGS.filter((b) => lineups[b]?.items.some((i) => i.product_id === id)).map((b) => BOX_LABEL[b]);
   const items: PurchaseProduct[] = snacks
@@ -23,6 +23,7 @@ export default async function LogPurchasePage({ searchParams }: { searchParams: 
         name: s.name,
         brand: s.brand,
         upc: upc.get(s.id) ?? null,
+        packs: packs.filter((x) => x.product_id === s.id).map((x) => ({ gtin: x.gtin, units: x.units_per_pack, description: x.description })),
         status: s.status,
         onHand: units,
         lotAvgCents: units ? mine.reduce((t, l) => t + l.qty_remaining * l.unit_cost_cents, 0) / units : null,

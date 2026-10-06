@@ -100,6 +100,18 @@ export type VersionRow = {
   created_by: string | null;
 };
 
+/** An outer box/multipack we buy (one GTIN = units_per_pack of the product). */
+export type PurchasePackRow = {
+  id: string;
+  product_id: string;
+  gtin: string;
+  gtin14: string;
+  units_per_pack: number;
+  description: string | null;
+  barcode_status: "candidate" | "provisional" | "high" | "conflict" | "verified";
+  barcode_sources: unknown[];
+};
+
 export type LotRow = {
   id: string;
   created_at: string;
@@ -203,11 +215,20 @@ export const defaultPackage = (ps: PackageProfile[]) => ps.find((p) => p.is_defa
 export const packagingOz = (settings: Settings, pkg: PackageProfile | null) =>
   (pkg?.empty_weight_oz ?? 0) + settings.packaging.reduce((s, p) => s + (p.weightOz ?? 0), 0);
 
+/**
+ * The barcode that proves which product a package is: its own printed UPC, or for a packet with
+ * none, a verified outer pack it came in. Packing needs one of the two (pack_shipment agrees).
+ */
+export function identityCode(p: Pick<ProductRow, "id" | "upc">, packs: PurchasePackRow[]): string | null {
+  return p.upc ?? packs.find((x) => x.product_id === p.id && x.barcode_status === "verified")?.gtin ?? null;
+}
+
 export function toSnack(
   p: ProductRow,
   v: VersionRow | undefined,
   lots: Pick<LotRow, "qty_remaining" | "unit_cost_cents" | "expires_on" | "product_version_id">[],
   latestSeenCents: number | null,
+  packs: PurchasePackRow[] = [],
 ): Snack {
   const live = lots.filter((l) => l.qty_remaining > 0 && !lotHold(l, v?.id));
   const expiries = live.map((l) => l.expires_on).filter((d): d is string => Boolean(d)).sort();
@@ -247,7 +268,7 @@ export function toSnack(
     earliestExpiry: expiries[0] ?? null,
     loveRate: null,
     clinicianApprovedBy: p.status === "Approved" ? p.reviewed_by : null,
-    packageVerified: Boolean(p.upc && v?.verified_at),
+    packageVerified: Boolean(identityCode(p, packs) && v?.verified_at),
   };
 }
 
@@ -256,17 +277,19 @@ export type Catalog = {
   versions: Map<string, VersionRow>;
   lots: LotRow[];
   prices: VendorPriceRow[];
+  packs: PurchasePackRow[];
   snacks: Snack[];
   byId: Map<string, Snack>;
 };
 
 /** Everything the builder, dashboard and purchasing need, in four queries. */
 export async function loadCatalog(): Promise<Catalog> {
-  const [P, versionRows, lotRows, priceRows] = await Promise.all([
+  const [P, versionRows, lotRows, priceRows, packs] = await Promise.all([
     allRows<ProductRow>((from, to) => db().from("products").select("*").order("code").order("id").range(from, to), "products"),
     allRows<VersionRow>((from, to) => db().from("product_versions").select("*").eq("is_current", true).order("id").range(from, to), "versions"),
     allRows<LotRow>((from, to) => db().from("purchase_lots").select("*").gt("qty_remaining", 0).order("id").range(from, to), "lots"),
     allRows<VendorPriceRow>((from, to) => db().from("vendor_prices").select("*").order("seen_at", { ascending: false }).order("created_at", { ascending: false }).order("id").range(from, to), "prices"),
+    allRows<PurchasePackRow>((from, to) => db().from("purchase_packs").select("*").order("id").range(from, to), "purchase packs"),
   ]);
   const V = new Map(versionRows.map((v) => [v.product_id, v]));
   const L = lotRows.map((l) => ({ ...l, unit_cost_cents: Number(l.unit_cost_cents) }));
@@ -275,8 +298,8 @@ export async function loadCatalog(): Promise<Catalog> {
   for (const l of L) lotsBy.set(l.product_id, [...(lotsBy.get(l.product_id) ?? []), l]);
   const latestSeen = new Map<string, number>();
   for (const p of PR) if (!latestSeen.has(p.product_id)) latestSeen.set(p.product_id, p.unit_cost_cents);
-  const snacks = P.map((p) => toSnack(p, V.get(p.id), lotsBy.get(p.id) ?? [], latestSeen.get(p.id) ?? null));
-  return { products: P, versions: V, lots: L, prices: PR, snacks, byId: new Map(snacks.map((s) => [s.id, s])) };
+  const snacks = P.map((p) => toSnack(p, V.get(p.id), lotsBy.get(p.id) ?? [], latestSeen.get(p.id) ?? null, packs));
+  return { products: P, versions: V, lots: L, prices: PR, packs, snacks, byId: new Map(snacks.map((s) => [s.id, s])) };
 }
 
 export async function loadActiveLineups(): Promise<Record<BoxSlug, { lineup: LineupRow; items: LineupItemRow[] } | null>> {

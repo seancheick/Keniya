@@ -1,5 +1,5 @@
 import { Heading, Text } from "@react-email/components";
-import type { Box } from "@/lib/box";
+import type { PublicBox as Box } from "@/lib/box";
 import { site } from "@/lib/site";
 import { Button, EmailShell, Panel, CategoryList, c, t } from "@/emails/layout";
 

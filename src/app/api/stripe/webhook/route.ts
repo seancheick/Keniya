@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { boxes, cravings } from "@/lib/box";
+import { cravings } from "@/lib/box";
+import { loadPublicRules, publicBoxes } from "@/lib/public-rules";
 import { env } from "@/lib/env";
 import { sendCartReminder, sendOrderEmails } from "@/lib/resend";
 import { getStripe } from "@/lib/stripe";
@@ -35,7 +36,8 @@ export async function POST(req: Request) {
   }
 
   const session = event.data.object as Stripe.Checkout.Session;
-  const box = boxes.find((b) => b.slug === session.metadata?.box_slug);
+  // Emails list what goes in, so they use the same live-recipe composition as the site.
+  const box = publicBoxes(await loadPublicRules()).find((b) => b.slug === session.metadata?.box_slug);
   const email = session.customer_details?.email ?? session.customer_email ?? null;
 
   switch (event.type) {

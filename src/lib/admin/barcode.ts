@@ -38,6 +38,17 @@ export function gtin14(code: string): string | null {
   return d ? d.padStart(14, "0") : null;
 }
 
+/**
+ * The form printed on a US package, for storing in `upc`: GTIN-14/EAN-13 codes that only pad a
+ * 12-digit UPC-A with zeros come back as that UPC-A, keeping its own leading zero
+ * ("00071146002524" → "071146002524", never "71146002524"). Match with gtin14, not this.
+ */
+export function printedForm(code: string): string | null {
+  const g = gtin14(code);
+  if (!g) return null;
+  return g.startsWith("00") ? g.slice(2) : g.startsWith("0") ? g.slice(1) : g;
+}
+
 /** GTIN-14 indicator digit 0 = the consumer unit; 1–8 = a case or inner pack of it, 9 = variable measure. */
 export const isConsumerUnit = (code: string) => gtin14(code)?.startsWith("0") === true;
 

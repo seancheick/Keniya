@@ -8,6 +8,7 @@ import { mapOffProduct, OFF_FIELDS, type OffDraft, type OffProduct } from "@/lib
 
 export type LookupResult =
   | { kind: "existing"; id: string; name: string }
+  | { kind: "pack"; id: string; name: string; gtin: string; units: number; description: string | null }
   | { kind: "draft"; draft: LookupDraft }
   | { kind: "none"; upc: string; note?: string };
 
@@ -49,9 +50,14 @@ export async function lookupBarcode(raw: string): Promise<LookupResult> {
   const upc = raw.replace(/\D/g, "");
   if (upc.length < 6 || upc.length > 14) return { kind: "none", upc, note: "Not a valid barcode" };
 
-  const variants = [...new Set([upc, upc.replace(/^0+/, ""), upc.padStart(12, "0"), upc.padStart(13, "0")])];
-  const local = await db().from("products").select("id, name").in("upc", variants).limit(1).maybeSingle();
+  const local = await db().from("products").select("id, name").eq("gtin14", upc.padStart(14, "0")).limit(1).maybeSingle();
   if (local.data) return { kind: "existing", id: local.data.id, name: local.data.name };
+  // An outer box/multipack we've registered: the product inside, and how many single packs.
+  const pack = await db().from("purchase_packs").select("product_id, gtin, units_per_pack, description, products(name)").eq("gtin14", upc.padStart(14, "0")).maybeSingle();
+  if (pack.data) {
+    const d = pack.data as unknown as { product_id: string; gtin: string; units_per_pack: number; description: string | null; products: { name: string } | null };
+    return { kind: "pack", id: d.product_id, name: d.products?.name ?? "", gtin: d.gtin, units: d.units_per_pack, description: d.description };
+  }
 
   const [usda, off] = await Promise.all([fromUsda(upc), fromOff(upc)]);
   const draft = mergeDrafts(usda, off);

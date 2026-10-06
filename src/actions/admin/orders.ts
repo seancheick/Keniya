@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { avoidConflict } from "@/lib/admin/avoid";
-import { db, must, allRows } from "@/lib/admin/db";
+import { db, must, allRows, identityCode } from "@/lib/admin/db";
 import { optimize } from "@/lib/admin/optimizer";
 import { matchLabel, readLabelCsv } from "@/lib/admin/pirateship";
 import { estimatePostage } from "@/lib/admin/postage";
@@ -226,7 +226,7 @@ async function preparePack(id: string, replacement?: string[], requireStock = tr
   const slug = BOX_SLUGS.find((x) => x === ship.box_slug);
   const packOz = (pkg?.empty_weight_oz ?? 0) + ctx.settings.packaging.reduce((s, p) => s + p.weightOz, 0);
   const products = new Map(ctx.catalog.snacks.map((snack) => [snack.id, {
-    snack, upc: ctx.catalog.products.find((p) => p.id === snack.id)?.upc ?? null,
+    snack, upc: identityCode(ctx.catalog.products.find((p) => p.id === snack.id) ?? { id: snack.id, upc: null }, ctx.catalog.packs),
     verifiedAt: ctx.catalog.versions.get(snack.id)?.verified_at ?? null,
     ingredients: ctx.catalog.versions.get(snack.id)?.ingredients,
   }]));

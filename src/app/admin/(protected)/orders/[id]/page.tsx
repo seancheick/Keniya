@@ -6,7 +6,7 @@ import { PlannedItems } from "@/components/admin/planned-items";
 import { PrintButton } from "@/components/admin/print-button";
 import { Badge, Card, PageHeader, Table, type Tone } from "@/components/admin/ui";
 import { fmt$, fmtPct, shipmentProfit } from "@/lib/admin/costing";
-import { db, loadBoxRules, loadCatalog, loadSettings, loadPackageProfiles, must } from "@/lib/admin/db";
+import { db, identityCode, loadBoxRules, loadCatalog, loadSettings, loadPackageProfiles, must } from "@/lib/admin/db";
 import { avoidConflict } from "@/lib/admin/avoid";
 import { packingProblems } from "@/lib/admin/packing";
 import { stockPickList, stockSnapshot, type LotPull } from "@/lib/admin/stock";
@@ -40,7 +40,7 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
   const p = shipmentProfit({ ...s, snack_cost_cents: s.snack_cost_cents === null ? null : Number(s.snack_cost_cents) });
   const name = (pid: string) => catalog.byId.get(pid)?.name ?? "?";
   const addr = s.ship_to?.address as Record<string, string | null> | undefined;
-  const packingProducts = new Map(catalog.snacks.map((snack) => [snack.id, { snack, upc: catalog.products.find((p) => p.id === snack.id)?.upc ?? null, verifiedAt: catalog.versions.get(snack.id)?.verified_at ?? null, ingredients: catalog.versions.get(snack.id)?.ingredients }]));
+  const packingProducts = new Map(catalog.snacks.map((snack) => [snack.id, { snack, upc: identityCode(catalog.products.find((p) => p.id === snack.id) ?? { id: snack.id, upc: null }, catalog.packs), verifiedAt: catalog.versions.get(snack.id)?.verified_at ?? null, ingredients: catalog.versions.get(snack.id)?.ingredients }]));
   const pkg = packages.find((p) => p.id === s.package_profile_id && p.active);
   const packagingOz = (pkg?.empty_weight_oz ?? 0) + settings.packaging.reduce((n, x) => n + x.weightOz, 0);
   const stock = stockPickList(s.planned_items, catalog.lots, catalog.versions);

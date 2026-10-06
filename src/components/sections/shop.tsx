@@ -9,7 +9,7 @@ import { MatchQuiz } from "@/components/quiz/match-quiz";
 import { WaitlistForm } from "@/components/waitlist-form";
 import Link from "next/link";
 import { landingFor } from "@/lib/landing";
-import { UPDATES_INTEREST, type Box } from "@/lib/box";
+import { UPDATES_INTEREST, type Box, type PublicBox } from "@/lib/box";
 import type { BoxSlug } from "@/lib/admin/types";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -34,7 +34,7 @@ function readHash(boxes: Box[]): { slug?: Box["slug"]; gift?: boolean; scroll?: 
 }
 
 /** `boxes` and `standards` are filled from the live box rules by the page (src/lib/public-rules.ts). */
-export function Shop({ boxes, standards }: { boxes: Box[]; standards: Record<BoxSlug, string[]> }) {
+export function Shop({ boxes, standards }: { boxes: PublicBox[]; standards: Record<BoxSlug, string[]> }) {
   const [slug, setSlug] = useState<Box["slug"]>(boxes[0].slug);
   const [gift, setGift] = useState(false);
   // After a choice the big cards fold into a compact switcher, so price + checkout sit

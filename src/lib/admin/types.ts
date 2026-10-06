@@ -35,8 +35,13 @@ export const CATEGORIES = ["Comfort", "Protein", "Sweet", "Savory", "Hydration"]
 export const NUTRITION_SOURCES = ["Package label", "Manufacturer", "Retailer", "USDA", "Open Food Facts", "Manual"] as const;
 
 /** Pregnancy checks that must all be PASS. P7c is information only and never blocks. */
-export const PREGNANCY_BLOCKING = ["P1", "P2", "P3", "P4", "P5", "P6", "P7a", "P7b", "P8", "P9"] as const;
-export const PREGNANCY_CHECK_KEYS = [...PREGNANCY_BLOCKING, "P7c"] as const;
+/**
+ * Product-level checks that must all be PASS. P9 (expiry) is not one of them: a product has no
+ * expiry, a purchased lot does. It is recorded at the package check and enforced per lot
+ * (≥90 days, lotHold in stock.ts) at receiving and packing, so it never decides eligibility.
+ */
+export const PREGNANCY_BLOCKING = ["P1", "P2", "P3", "P4", "P5", "P6", "P7a", "P7b", "P8"] as const;
+export const PREGNANCY_CHECK_KEYS = [...PREGNANCY_BLOCKING, "P9", "P7c"] as const;
 /** Keniya Pregnancy Standard P1–P9 (revised v3, original box-builder workbook). */
 export const PREGNANCY_CHECK_LABEL: Record<(typeof PREGNANCY_CHECK_KEYS)[number], string> = {
   P1: "Pasteurized or fully cooked",
@@ -49,7 +54,7 @@ export const PREGNANCY_CHECK_LABEL: Record<(typeof PREGNANCY_CHECK_KEYS)[number]
   P7b: "Keniya brand preference (e.g. no erythritol or sugar alcohols); never framed as unsafe",
   P7c: "Customer-preference flag (e.g. stevia, sweeteners); information only, never blocks",
   P8: "Honest single-serve count (one pack = one snack)",
-  P9: "Expiry fits the 3-month ship + shelf window",
+  P9: "Package date checked on a purchased lot (≥90 days left; enforced per lot at packing, not a product check)",
 };
 /** What each status means for a reviewer. */
 export const STATUS_MEANING: Record<Status, string> = {
