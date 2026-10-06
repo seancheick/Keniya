@@ -55,6 +55,31 @@ export const CLINICIAN_VERDICT = "Clinician verdict (OK / change / reject)";
 export const CLINICIAN_COMMENTS = "Clinician comments";
 export const pCheckHeader = (k: (typeof PREGNANCY_CHECK_KEYS)[number]) => `${k} · ${PREGNANCY_CHECK_LABEL[k]}`;
 
+/** Recommendations follow current evidence and eligibility, never imported verdict notes. */
+export function reviewRecommendation(s: Snack, fits: boolean): string {
+  if (s.status === "Rejected" || s.status === "Retired" || !fits) return "Do not approve for these boxes";
+  if (!s.diligenceComplete) return "Hold — complete internal diligence";
+  if (s.clinicalDecision === "changes_requested") return "Hold — resolve clinician changes";
+  return isClinicianApproved(s) ? "Already clinically approved" : "Recommend Approve — clinician decision required";
+}
+
+/** Diagnostics only: the database's diligence predicate remains the approval gate. */
+export function reviewWorkRemaining(s: Snack, x: ClinicalExtra | undefined): string {
+  const missing = [
+    !x?.nutritionSource?.trim() && "label source",
+    !x?.ingredients?.trim() && "ingredients",
+    !s.allergens?.trim() && "allergen statement",
+    !(typeof s.unit_wt_oz === "number" && s.unit_wt_oz > 0) && "pack weight",
+    ...(["calories", "protein_g", "fiber_g", "carbs_g", "added_sugar_g", "sodium_mg", "sat_fat_g", "caffeine_mg", "sugar_alcohols_g"] as const)
+      .filter((k) => typeof s[k] !== "number" || s[k]! < 0).map((k) => k.replaceAll("_", " ")),
+    ...(["P1", "P2", "P3", "P4", "P5", "P6", "P7a", "P7b", "P8"] as const)
+      .filter((k) => !["PASS", "FAIL"].includes(String(s.pregnancy_checks[k] ?? "").toUpperCase())).map((k) => `${k} screening decision`),
+    String(s.pregnancy_checks.P8).toUpperCase() !== "PASS" && "manufacturer single-pack evidence",
+    !s.diligenceComplete && "internal diligence sign-off",
+  ].filter(Boolean);
+  return missing.join("; ");
+}
+
 export function clinicalReviewRows(
   snacks: Snack[],
   extra: (id: string) => ClinicalExtra | undefined,
@@ -71,7 +96,10 @@ export function clinicalReviewRows(
       Product: s.name,
       Brand: s.brand,
       Status: s.status,
-      "Pre-screen finding (what to check)": notes.prescreen,
+      "Keniya recommendation": inLineup(s.id).length ? reviewRecommendation(s, inLineup(s.id).every((b) => eligible(b, s).fits)) : "Hold — no active box assignment",
+      "Internal diligence": s.diligenceComplete ? "complete" : "incomplete",
+      "Review work remaining": reviewWorkRemaining(s, x),
+      "Historical pre-screen note (not a current decision)": notes.prescreen,
       [CLINICIAN_VERDICT]: "",
       [CLINICIAN_COMMENTS]: "",
       "In active box lineup": inLineup(s.id).map((b) => BOX_LABEL[b]).join("; "),

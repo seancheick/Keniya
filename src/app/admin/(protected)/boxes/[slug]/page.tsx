@@ -28,7 +28,11 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
   for (const ph of must(photosRes, "photos") as { product_id: string; path: string }[]) if (!fronts.has(ph.product_id)) fronts.set(ph.product_id, ph.path);
   const urls = await signedUrls([...fronts.values()]);
   const photos = Object.fromEntries([...fronts].flatMap(([id, path]) => (urls.get(path) ? [[id, urls.get(path)!]] : [])));
-  const findings = Object.fromEntries(ctx.catalog.products.map((p) => [p.id, splitNotes(p.notes).prescreen]).filter(([, f]) => f));
+  const findings = Object.fromEntries(ctx.catalog.products.map((p) => {
+    const first = p.notes?.split("\n")[0] ?? "";
+    const historical = splitNotes(p.notes).prescreen;
+    return [p.id, first.startsWith("[Label audit ") ? first : historical ? `Historical note — not a current decision: ${historical}` : ""];
+  }).filter(([, f]) => f));
   const versions = must(versionsRes, "versions") as LineupRow[];
   const b = ctx.boxes[slug];
 

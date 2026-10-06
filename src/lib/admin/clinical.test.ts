@@ -67,7 +67,7 @@ describe("clinicalReviewRows", () => {
     ], () => undefined, () => []);
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(await clinicalWorkbook(rows) as never);
-    expect(wb.getWorksheet("Review")!.getColumn(1).values).toEqual([undefined, "Code", "WAIT", "LEGACY", "CAND"]);
+    expect(wb.getWorksheet("Review")!.getColumn(1).values).toEqual([undefined, "Code", "WAIT", "CAND", "LEGACY"]);
     expect(wb.getWorksheet("Details")!.rowCount).toBe(5);
     expect(rows[1]["Product verification"]).toContain("re-attestation");
     expect(rows[1]["Ready to pack"]).toBeUndefined();
@@ -87,7 +87,9 @@ describe("clinicalReviewRows", () => {
     const ws = wb.getWorksheet("Details")!;
     expect(ws.getRow(1).getCell(4).value).toBe("Status");
     expect(ws.getRow(2).getCell(4).value).toBe("Pre-approved");
-    expect(ws.getRow(2).getCell(5).value).toBe("Check the label.");
+    const header = ws.getRow(1).values as string[];
+    expect(ws.getRow(2).getCell(header.indexOf("Historical pre-screen note (not a current decision)")).value).toBe("Check the label.");
+    expect(ws.getRow(2).getCell(header.indexOf("Keniya recommendation")).value).toBe("Hold — no active box assignment");
     const review = wb.getWorksheet("Review")!;
     expect(review.getRow(2).getCell(6).value).toBeNull();
     expect(review.getRow(2).getCell(6).dataValidation.formulae).toEqual(['"Approve,Changes needed,Reject"']);

@@ -17,6 +17,15 @@ const input: PacketInput = {
 };
 
 describe("clinician packet", () => {
+  it("does not promote historical approval notes over current diligence or box limits", () => {
+    const held = { ...input, boxes: [{ ...input.boxes[0], picks: [{ snack: snack({ diligenceComplete: false, status: "Candidate" }), category: null }] }],
+      extra: () => ({ ...input.extra("x")!, notes: "[Pre-screen old] Pre-approved, awaiting clinician" }) };
+    expect(packetProductRows(held)[0]["Keniya recommendation"]).toBe("Hold — complete internal diligence");
+    const fail = { ...held, boxes: [{ ...held.boxes[0], picks: [{ snack: snack({ sodium_mg: 180, diligenceComplete: true }), category: null }] }] };
+    expect(packetProductRows(fail)[0]["Keniya recommendation"]).toBe("Do not approve for these boxes");
+    const ready = { ...held, boxes: [{ ...held.boxes[0], picks: [{ snack: snack({ diligenceComplete: true, status: "Pre-approved", clinicalDecision: "pending", clinicianApprovedBy: null }), category: null }] }] };
+    expect(packetProductRows(ready)[0]["Keniya recommendation"]).toBe("Recommend Approve — clinician decision required");
+  });
   it("has one row per product used, with the rule and rationale for each box it serves", () => {
     const rows = packetProductRows(input);
     expect(rows.map((r) => r.Code)).toEqual(["P001", "P002"]);
@@ -55,6 +64,12 @@ describe("clinician packet", () => {
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load(await clinicianPacketWorkbook({ ...input, boxes: [] }) as never);
     expect(wb.getWorksheet("Products")!.rowCount).toBe(1);
+  });
+  it("keeps a review draft visibly unreleased even when its box rules pass", async () => {
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await clinicianPacketWorkbook({ ...input, boxes: [{ ...input.boxes[0], state: "draft", checks: [] }] }) as never);
+    expect(wb.getWorksheet("Lineups")!.getRow(2).getCell(3).value).toBe("DRAFT — operator work required");
+    expect(String(wb.getWorksheet("Start here")!.getRow(1).getCell(2).value)).toContain("1 lineups missing or failing checks");
   });
   it("describes a box with no per-pack limits honestly", () => {
     expect(limitsLine({ ...DEFAULT_BOX_RULES.pregnancy_comfort, caffeineMax: null })).toMatch(/no per-pack limits/);

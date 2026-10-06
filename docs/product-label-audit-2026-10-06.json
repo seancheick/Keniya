@@ -1,0 +1,448 @@
+{
+  "checked_on": "2026-10-06",
+  "scope": "25 unique products in the three previously active lineups",
+  "clinical_approvals_created": 0,
+  "records": [
+    {
+      "code": "P003",
+      "source": "https://www.baresnacks.com/products",
+      "finding": "Exact 1.23 oz mango pack not established by current manufacturer catalog. Obtain a current full label or replace.",
+      "changes": {
+        "pregnancy_checks": {
+          "P1": "PASS",
+          "P2": "PASS",
+          "P3": "PASS",
+          "P4": "PASS",
+          "P5": "PASS",
+          "P6": "PASS",
+          "P8": "",
+          "P7a": "PASS",
+          "P7b": "PASS"
+        }
+      },
+      "remove_from_review_lineups": true
+    },
+    {
+      "code": "P007",
+      "source": "https://www.bluediamond.com/brand/blue-diamond/snack-almonds/simple/lightly-salted-almonds/",
+      "finding": "Stored values are scaled from 28 g. The quoted exact 17 g figures trace to a 2019 USDA record, not a verified current manufacturer panel. Obtain the exact current 17 g label.",
+      "changes": {
+        "pregnancy_checks": {
+          "P1": "PASS",
+          "P2": "PASS",
+          "P3": "PASS",
+          "P4": "PASS",
+          "P5": "PASS",
+          "P6": "PASS",
+          "P8": "",
+          "P7a": "PASS",
+          "P7b": "PASS"
+        }
+      },
+      "remove_from_review_lineups": true
+    },
+    {
+      "code": "P008",
+      "source": "https://crispygreen.com/products/freeze-dried-strawberry",
+      "finding": "Manufacturer 12 g bag panel confirmed. Protein is <1 g, not exactly 1 g; numeric field left unknown rather than inventing a value. Complete remaining diligence.",
+      "changes": {
+        "calories": 50,
+        "protein_g": null,
+        "fiber_g": 2,
+        "carbs_g": 10,
+        "added_sugar_g": 0,
+        "sodium_mg": 0,
+        "sat_fat_g": 0,
+        "ingredients": "Strawberries."
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P010",
+      "source": "https://store.edenfoods.com/pumpkin-seeds-pocket-snacks-organic-1-oz/",
+      "finding": "Exact 1 oz pocket pack panel confirmed: replace scaled values. Manufacturer identifies sesame/almond/pistachio shared equipment. Complete remaining diligence.",
+      "changes": {
+        "calories": 170,
+        "protein_g": 9,
+        "fiber_g": 4,
+        "carbs_g": 5,
+        "added_sugar_g": 0,
+        "sodium_mg": 85,
+        "sat_fat_g": 2.5,
+        "ingredients": "Organic Pumpkin Seeds, Sea Salt.",
+        "allergens": "Made on equipment that handles sesame seeds, almonds, and pistachios.",
+        "free_from": {
+          "vegan": true,
+          "soy_free": true,
+          "dairy_free": true,
+          "gluten_free": true,
+          "peanut_free": true,
+          "tree_nut_free": false
+        }
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P011",
+      "source": "https://gogosqueez.com/products/gogo-squeez-48-pack-apple-apple/",
+      "finding": "Current manufacturer ingredient list replaces old formula. No added sugar confirmed; retain other numbers pending exact-panel comparison.",
+      "changes": {
+        "ingredients": "Apple, apple puree concentrate, lemon juice concentrate.",
+        "added_sugar_g": 0
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P013",
+      "source": "https://www.justins.com/products/classic-almond-butter-1-15-oz/",
+      "finding": "Exact 1.15 oz / 32 g panel confirmed. 220 calories, 6 g protein, 5 g carbs, 10 mg sodium, 3 g saturated fat; complete remaining diligence.",
+      "changes": {
+        "calories": 220,
+        "protein_g": 6,
+        "fiber_g": 3,
+        "carbs_g": 5,
+        "added_sugar_g": 0,
+        "sodium_mg": 10,
+        "sat_fat_g": 3,
+        "ingredients": "Dry Roasted Almonds, Palm Oil."
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P014",
+      "source": "https://www.kindsnacks.com/products/minis/dark-chocolate-nuts-and-sea-salt",
+      "finding": "20 g mini manufacturer panel confirms recorded values and explicitly declares 0 g sugar alcohol. Still requires complete screening and internal sign-off.",
+      "changes": {
+        "calories": 90,
+        "protein_g": 3,
+        "fiber_g": 3,
+        "carbs_g": 8,
+        "added_sugar_g": 2,
+        "sodium_mg": 70,
+        "sat_fat_g": 1.5,
+        "sugar_alcohols_g": 0
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P015",
+      "source": "https://www.kindsnacks.com/products/nut-bar/dark-chocolate-nuts-sea-salt",
+      "finding": "Exact 40 g bar panel: 190 calories, 16 g carbs, 7 g fiber, 6 g protein, 140 mg sodium, 3 g saturated fat, 4 g added sugar and explicitly 0 g sugar alcohol.",
+      "changes": {
+        "calories": 190,
+        "protein_g": 6,
+        "fiber_g": 7,
+        "carbs_g": 16,
+        "added_sugar_g": 4,
+        "sodium_mg": 140,
+        "sat_fat_g": 3,
+        "sugar_alcohols_g": 0,
+        "ingredients": "Almonds, peanuts, chicory root fiber, honey, palm kernel oil, cane sugar, glucose syrup, rice flour, unsweetened chocolate, alkalized cocoa, sea salt, soy lecithin, natural flavor, cocoa butter."
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P018",
+      "source": "https://www.lesserevil.com/products/himalayan-pink-salt-organic-popcorn",
+      "finding": "Current manufacturer page panel is for a larger bag. Reported 110 calories / 4.5 g saturated fat for 0.88 oz not independently confirmed from an exact manufacturer panel; do not scale.",
+      "changes": {
+        "pregnancy_checks": {
+          "P1": "PASS",
+          "P2": "PASS",
+          "P3": "PASS",
+          "P4": "PASS",
+          "P5": "PASS",
+          "P6": "PASS",
+          "P8": "",
+          "P7a": "PASS",
+          "P7b": "PASS"
+        }
+      },
+      "remove_from_review_lineups": true
+    },
+    {
+      "code": "P019",
+      "source": "https://www.onceagain.com/products/once-again-organic-peanut-butter-squeeze-pack-10-ct",
+      "finding": "Exact manufacturer 32 g squeeze-pack panel replaces scaled figures. 200 calories, 8 g carbs, 8 g protein, 2 g saturated fat. Complete remaining diligence.",
+      "changes": {
+        "calories": 200,
+        "protein_g": 8,
+        "fiber_g": 2,
+        "carbs_g": 8,
+        "added_sugar_g": 0,
+        "sodium_mg": 0,
+        "sat_fat_g": 2,
+        "ingredients": "Organic Peanuts."
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P020",
+      "source": "https://www.hormelfoodservice.com/products/planters-salted-peanuts-6-10-1oz/",
+      "finding": "Exact 6/10/1oz manufacturer foodservice panel says 95 mg sodium; manufacturer general page also has 100 mg variants. Use exact product panel, not blanket 100 mg correction; confirm purchased SKU in hand.",
+      "changes": {
+        "calories": 170,
+        "protein_g": 7,
+        "fiber_g": 2,
+        "carbs_g": 5,
+        "sodium_mg": 95,
+        "sat_fat_g": 2,
+        "ingredients": "Peanuts, Peanut Oil, Sea Salt."
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P021",
+      "source": "https://simplemills.com/Products/Product/Fine-Ground-Sea-Salt-Almond-Flour-Cracker-Snack-Pa.aspx",
+      "finding": "Exact 23 g / 0.8 oz pouch manufacturer panel confirms 180 mg sodium and 13 g carbs. REMOVE FROM HEART: exceeds 140 mg ceiling. Other boxes still need diligence.",
+      "changes": {
+        "calories": 120,
+        "protein_g": 2,
+        "fiber_g": 1,
+        "carbs_g": 13,
+        "added_sugar_g": 0,
+        "sodium_mg": 180,
+        "sat_fat_g": 0.5,
+        "ingredients": "Nut & Seed Flour Blend (Almonds, Sunflower Seeds, Flax Seeds), Tapioca Starch, Cassava Flour, Organic Sunflower Oil, Sea Salt, Organic Onion, Organic Garlic, Rosemary Extract."
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P022",
+      "source": "https://skinnydipped.com/products/dark-chocolate-cocoa",
+      "finding": "Current manufacturer lists 3.5 oz and 0.46 oz, not proof of the recorded 1 oz single pack. Exclude until exact full-label snack pack is proved.",
+      "changes": {
+        "pregnancy_checks": {
+          "P1": "PASS",
+          "P2": "PASS",
+          "P3": "PASS",
+          "P4": "PASS",
+          "P5": "PASS",
+          "P6": "PASS",
+          "P8": "",
+          "P7a": "PASS",
+          "P7b": "PASS"
+        }
+      },
+      "remove_from_review_lineups": true
+    },
+    {
+      "code": "P023",
+      "source": "https://www.hersheyland.com/products/skinnypop-original-popcorn-0-65-oz-bag.html",
+      "finding": "Exact 18 g / 0.65 oz manufacturer panel confirmed: 85 mg sodium, 10 g carbs, 1 g protein; complete remaining diligence.",
+      "changes": {
+        "calories": 100,
+        "protein_g": 1,
+        "fiber_g": 1,
+        "carbs_g": 10,
+        "added_sugar_g": 0,
+        "sodium_mg": 85,
+        "sat_fat_g": 0.5,
+        "ingredients": "Popcorn, sunflower oil, salt."
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P027",
+      "source": "https://www.popus.com/collections/best-sellers/products/prince-of-peace-ginger-candy-chews-original-8oz",
+      "finding": "Manufacturer bulk bag contains individually wrapped chews. Keniya assembled 3-chew unit has no demonstrated full manufacturer snack-pack label. P8 FAIL; replace with a real labeled single pack.",
+      "changes": {
+        "pregnancy_checks": {
+          "P1": "PASS",
+          "P2": "PASS",
+          "P3": "PASS",
+          "P4": "PASS",
+          "P5": "PASS",
+          "P6": "PASS",
+          "P8": "FAIL",
+          "P7a": "PASS",
+          "P7b": "PASS"
+        }
+      },
+      "remove_from_review_lineups": true
+    },
+    {
+      "code": "P029",
+      "source": "https://gingerpeople.com/products/gin-gins-original-ginger-chews/",
+      "finding": "Correct manufacturer formula includes soy lecithin. Keniya assembled 2-chew unit has no demonstrated full manufacturer snack-pack label. P8 FAIL; replace rather than repack. Nutrition still needs exact-unit evidence.",
+      "changes": {
+        "ingredients": "Cane sugar, glucose syrup, ginger (10%), tapioca starch, rice flour, soy lecithin, salt, citric acid.",
+        "allergens": "Contains soy.",
+        "free_from": {
+          "vegan": true,
+          "soy_free": false,
+          "dairy_free": true,
+          "gluten_free": true,
+          "peanut_free": false,
+          "tree_nut_free": true
+        },
+        "pregnancy_checks": {
+          "P1": "PASS",
+          "P2": "PASS",
+          "P3": "PASS",
+          "P4": "PASS",
+          "P5": "PASS",
+          "P6": "PASS",
+          "P8": "FAIL",
+          "P7a": "PASS",
+          "P7b": "PASS"
+        }
+      },
+      "remove_from_review_lineups": true,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P031",
+      "source": "https://www.tomsturgispretzels.com/product/little-ones-pretzels-1-oz-snack-pack-assortment/",
+      "finding": "Current manufacturer page links its 2023-10-27 1 oz panel: 390 mg sodium, 22 g carbs, 3 g protein. Replaces 2018 source, but remains an older manufacturer panel; confirm purchased label.",
+      "changes": {
+        "calories": 110,
+        "protein_g": 3,
+        "fiber_g": 1,
+        "carbs_g": 22,
+        "added_sugar_g": 0,
+        "sodium_mg": 390,
+        "sat_fat_g": 0,
+        "ingredients": "Choice blended wheat flour, vegetable shortening (corn, canola, cottonseed, sunflower and/or soybean oil), malt syrup, corn syrup, yeast, salt and soda.",
+        "allergens": "Contains wheat; shared equipment may contain milk, sesame, soy.",
+        "free_from": {
+          "vegan": true,
+          "soy_free": false,
+          "dairy_free": false,
+          "gluten_free": false,
+          "peanut_free": false,
+          "tree_nut_free": false
+        }
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P035",
+      "source": "https://www.motts.com/products/applesauce/no-sugar-added-apple-applesauce",
+      "finding": "Manufacturer confirms 3.2 oz clear pouches. Its nutrition link leads to a general product-facts search; current exact pouch panel not independently extracted. Retain recorded values with hold for package comparison.",
+      "changes": {},
+      "remove_from_review_lineups": false
+    },
+    {
+      "code": "P039",
+      "source": "https://www.ultimareplenisher.com/products/lemonade-electrolyte-powder-drink",
+      "finding": "Manufacturer Lemonade panel and 3.7 g / 0.13 oz stickpack confirmed. ELECTROLYTE / ADDED MICRONUTRIENTS: magnesium 100 mg, potassium 250 mg, vitamin C 100 mg, calcium 47 mg, phosphorus 70 mg, zinc 1 mg, manganese 0.2 mg, chloride 78 mg. Current panel is titled Nutrition Facts, not Supplement Facts; clinical suitability still requires Laurie. Confirm full label on individual stick.",
+      "changes": {
+        "calories": 0,
+        "protein_g": 0,
+        "fiber_g": 0,
+        "carbs_g": 0,
+        "added_sugar_g": 0,
+        "sodium_mg": 55,
+        "sat_fat_g": 0,
+        "ingredients": "Citric Acid, Magnesium Citrate, Potassium Phosphate, Natural Lemon Flavor (with other Natural Flavors), Potassium Aspartate, Salt (Sodium Chloride), Calcium Ascorbate, Calcium Citrate, Rebaudioside A (Organic Stevia Leaf Extract), Calcium Lactate, Zinc Citrate, Manganese Citrate."
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P046",
+      "source": "https://www.peeledsnacks.com",
+      "finding": "Exact 1.23 oz vs 1.4 oz current package unresolved. Obtain a current full-label SKU or replace.",
+      "changes": {
+        "pregnancy_checks": {
+          "P1": "PASS",
+          "P2": "PASS",
+          "P3": "PASS",
+          "P4": "PASS",
+          "P5": "PASS",
+          "P6": "PASS",
+          "P8": "",
+          "P7a": "PASS",
+          "P7b": "PASS"
+        }
+      },
+      "remove_from_review_lineups": true
+    },
+    {
+      "code": "P047",
+      "source": "https://fruitforthought.com/products/dried-mango?variant=27903272714345",
+      "finding": "Manufacturer 1 oz single-serving panel confirmed: 90 calories, 21 g carbs, 1 g fiber, 1 g protein, 0 sodium / added sugar. Manufacturer does not establish organic claim; remove organic wording pending certification.",
+      "changes": {
+        "calories": 90,
+        "protein_g": 1,
+        "fiber_g": 1,
+        "carbs_g": 21,
+        "added_sugar_g": 0,
+        "sodium_mg": 0,
+        "sat_fat_g": 0,
+        "ingredients": "Dried Mango."
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P077",
+      "source": "https://www.wonderfulpistachios.com/products/roasted-salted-no-shells",
+      "finding": "Manufacturer confirms flavor but current page sizes are 2.25, 6, 24 oz, not exact 21 g pack. Do not substitute another market or flavor panel. Obtain exact current 21 g label.",
+      "changes": {
+        "pregnancy_checks": {
+          "P8": ""
+        }
+      },
+      "remove_from_review_lineups": true
+    },
+    {
+      "code": "P082",
+      "source": "https://hippeas.com/products/vegan-white-cheddar-puffs",
+      "finding": "Current manufacturer sells 0.8 oz single bags and 4 oz bags with a changed formula. Its displayed 1 oz serving is from the 4 oz bag; it is not proof of a 1 oz single pack. Exclude old 2018 record until exact current SKU is established.",
+      "changes": {
+        "pregnancy_checks": {
+          "P8": ""
+        }
+      },
+      "remove_from_review_lineups": true
+    },
+    {
+      "code": "P083",
+      "source": "https://www.campbellsfoodservice.com/product/baked-with-whole-grain-cheddar-crackers/",
+      "finding": "Exact 21 g / 0.75 oz manufacturer panel confirms 170 mg sodium, not recorded 160 mg. Correct despite pasted review calling this ready.",
+      "changes": {
+        "calories": 100,
+        "protein_g": 2,
+        "fiber_g": 1,
+        "carbs_g": 14,
+        "added_sugar_g": 0,
+        "sodium_mg": 170,
+        "sat_fat_g": 0.5
+      },
+      "remove_from_review_lineups": false,
+      "historical_screening_cleared": true
+    },
+    {
+      "code": "P108",
+      "source": "https://www.truecitrus.com/products/true-lemon-raspberry-lemonade",
+      "finding": "Exact older 0.75 g water enhancer not proved by current manufacturer page. Current 3 g Raspberry Lemonade is a different sugar-containing SKU; do not overwrite with that panel. Obtain exact full-label pack or replace.",
+      "changes": {
+        "pregnancy_checks": {
+          "P1": "PASS",
+          "P2": "PASS",
+          "P3": "PASS",
+          "P4": "PASS",
+          "P5": "PASS",
+          "P6": "PASS",
+          "P8": "",
+          "P7a": "PASS",
+          "P7b": "PASS"
+        }
+      },
+      "remove_from_review_lineups": true
+    }
+  ]
+}

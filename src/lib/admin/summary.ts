@@ -30,12 +30,12 @@ export type AdminContext = {
 };
 
 /** Everything the dashboard and box pages show, computed once per request. */
-export async function loadAdminContext(inputs?: { settings: Settings; rules: Record<BoxSlug, BoxRules> }): Promise<AdminContext> {
+export async function loadAdminContext(inputs?: { settings: Settings; rules: Record<BoxSlug, BoxRules> }, includeReviewDrafts = false): Promise<AdminContext> {
   const [catalog, settings, rules, lineups, packages, history] = await Promise.all([
     loadCatalog(),
     inputs ? Promise.resolve(inputs.settings) : loadSettings(),
     inputs ? Promise.resolve(inputs.rules) : loadBoxRules(),
-    loadActiveLineups(),
+    loadActiveLineups(includeReviewDrafts),
     loadPackageProfiles(),
     loadPostageHistory(),
   ]);
@@ -63,7 +63,7 @@ export async function loadAdminContext(inputs?: { settings: Settings; rules: Rec
       picks,
       extras,
       checks,
-      ready: picks.length > 0 && isReady(checks),
+      ready: active?.lineup.status === "active" && picks.length > 0 && isReady(checks),
       cost: picks.length
         ? landedCost({
             slug,

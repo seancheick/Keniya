@@ -35,12 +35,12 @@ export async function GET(request: Request) {
     });
   }
   if (t === "clinician_packet") {
-    // The finished lineups only: what the clinician signs, not the whole catalog.
-    const ctx = await loadAdminContext();
+    // Include current review drafts explicitly; withdrawn lineups cannot masquerade as ready.
+    const ctx = await loadAdminContext(undefined, true);
     const buf = await clinicianPacketWorkbook({
       boxes: BOX_SLUGS.map((slug) => {
         const b = ctx.boxes[slug];
-        return { slug, version: b.lineup?.version ?? null, checks: b.checks, picks: b.picks, extras: b.extras };
+        return { slug, version: b.lineup?.version ?? null, state: b.lineup?.status === "draft" ? "draft" as const : "active" as const, checks: b.checks, picks: b.picks, extras: b.extras };
       }),
       rules: ctx.rules,
       policy: ctx.settings.policy,

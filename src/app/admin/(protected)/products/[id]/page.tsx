@@ -306,7 +306,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               )}
               {p.notes && (
                 <div className="col-span-2">
-                  <dt className="text-xs text-muted-foreground">Notes</dt>
+                  <dt className="text-xs text-muted-foreground">Operator notes and history — not approval</dt>
                   <dd className="whitespace-pre-wrap">{p.notes}</dd>
                 </div>
               )}

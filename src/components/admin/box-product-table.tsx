@@ -215,7 +215,7 @@ function Evidence({ s, fits, blocked, finding }: { s: Snack; fits: Record<BoxSlu
       <div className="space-y-2">
         {finding && (
           <p className="text-xs">
-            <span className="font-medium">Pre-screen:</span> {finding}
+            <span className="font-medium">Evidence note:</span> {finding}
           </p>
         )}
         <div className="flex flex-wrap gap-2">

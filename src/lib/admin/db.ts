@@ -313,8 +313,9 @@ export async function loadCatalog(): Promise<Catalog> {
   return { products: P, versions: V, lots: L, prices: PR, packs, snacks, byId: new Map(snacks.map((s) => [s.id, s])) };
 }
 
-export async function loadActiveLineups(): Promise<Record<BoxSlug, { lineup: LineupRow; items: LineupItemRow[] } | null>> {
-  const lineups = must(await db().from("box_lineups").select("*").eq("status", "active"), "lineups") as LineupRow[];
+export async function loadActiveLineups(includeReviewDrafts = false): Promise<Record<BoxSlug, { lineup: LineupRow; items: LineupItemRow[] } | null>> {
+  const query = db().from("box_lineups").select("*").order("version", { ascending: false });
+  const lineups = must(await (includeReviewDrafts ? query.in("status", ["active", "draft"]) : query.eq("status", "active")), "lineups") as LineupRow[];
   const ids = lineups.map((l) => l.id);
   const items = ids.length
     ? (must(await db().from("lineup_items").select("*").in("lineup_id", ids).order("position"), "lineup items") as LineupItemRow[])

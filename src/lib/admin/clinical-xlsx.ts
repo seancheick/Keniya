@@ -14,7 +14,7 @@ const INPUT_FILL = "FFFFFBEB";
 const HEADER_FILL = "FFF3F4F6";
 
 function widthFor(header: string): number {
-  if (header === "Product" || header === "Pre-screen finding (what to check)") return header === "Product" ? 34 : 60;
+  if (header === "Product" || header === "Historical pre-screen note (not a current decision)") return header === "Product" ? 34 : 60;
   if (header === CLINICIAN_COMMENTS || header === "Ingredients" || header === "Other notes") return 48;
   if (header === CLINICIAN_VERDICT) return 18;
   if (header === "Product verification") return 30;
@@ -36,25 +36,25 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[], ruleSumm
   start.columns = [{ width: 28 }, { width: 100 }];
   const instructions = [
     ["Keniya clinician review", `Exported ${new Date().toISOString().slice(0, 10)}. ${rows.length} products. This is a snapshot.`],
-    ["1. Open Review", "Start with Awaiting clinician and Re-attest legacy approval. Active lineup products appear first within each group."],
+    ["1. Open Review", "Start with Recommend Approve rows. Hold rows need operator diligence before clinician review. Active lineup products appear first within each group."],
     ["2. Check the evidence", "Click the product name to open its row on Details, or use the same product code to check ingredients, allergens, per-pack nutrition, sources and Pregnancy checks. Blank values mean not recorded, not zero or safe."],
     ["3. Record your decision", "Fill the yellow Decision, Comments, Reviewer and Review date cells. Use Approve, Changes needed or Reject. State which boxes your decision covers and any corrections or restrictions in Comments."],
     ["4. Return this file", "Send the completed file to the operator. Editing the workbook does not update the admin or approve a product automatically. The operator records your decision against the current product label, checking the Product ID and Label version ID on Details for changes since export."],
     ["Before packing", "Product verification is only clinician approval, unit or verified outer-pack barcode and package-in-hand verification. Box rules, customer restrictions, current lot availability and expiry are checked separately when packing."],
-    ["Review groups", "Awaiting clinician = Pre-approved. Re-attest legacy approval = Approved without authenticated clinician approval. Label / initial review = Candidate. Rejected and Retired remain in Details."],
+    ["Review groups", "Awaiting clinician = Pre-approved. Re-attest legacy approval = Approved without authenticated clinician approval. Operator work required = incomplete diligence. Label / initial review = Candidate. Rejected and Retired remain in Details."],
     ["Review total", String(rows.filter((r) => !["Rejected", "Retired"].includes(String(r.Status))).length)],
   ];
   for (const values of instructions) { const r = start.addRow(values); r.height = 60; r.alignment = { wrapText: true, vertical: "top" }; r.getCell(1).font = { bold: true }; }
   start.getRow(1).fill = fill(HEADER_FILL);
   const review = wb.addWorksheet("Review", { views: [{ state: "frozen", xSplit: 2, ySplit: 1 }] });
-  const reviewHeaders = ["Code", "Product", "Review group", "In active box lineup", "Pre-screen finding (what to check)", "Decision", "Comments", "Reviewer", "Review date"];
+  const reviewHeaders = ["Code", "Product", "Review group", "In active box lineup", "Keniya recommendation", "Decision", "Comments", "Reviewer", "Review date"];
   review.columns = reviewHeaders.map((header) => ({ header, key: header, width: header === "Product" ? 34 : header === "Comments" || header.startsWith("Pre-screen") ? 48 : header === "Code" ? 12 : 24 }));
-  const group = (r: Record<string, unknown>) => r.Status === "Pre-approved" ? "Awaiting clinician" : r.Status === "Approved" && r["Authenticated clinician approval"] !== "yes" ? "Re-attest legacy approval" : r.Status === "Candidate" ? "Label / initial review" : "Already approved";
-  const rank = ["Awaiting clinician", "Re-attest legacy approval", "Label / initial review", "Already approved"];
+  const group = (r: Record<string, unknown>) => r.Status === "Approved" && r["Authenticated clinician approval"] !== "yes" ? "Re-attest legacy approval" : String(r["Keniya recommendation"]).startsWith("Hold") ? "Operator work required" : r.Status === "Pre-approved" ? "Awaiting clinician" : r.Status === "Candidate" ? "Label / initial review" : "Already approved";
+  const rank = ["Awaiting clinician", "Operator work required", "Re-attest legacy approval", "Label / initial review", "Already approved"];
   const queue = rows.filter((r) => !["Rejected", "Retired"].includes(String(r.Status))).sort((a, b) => rank.indexOf(group(a)) - rank.indexOf(group(b)) || Number(Boolean(b["In active box lineup"])) - Number(Boolean(a["In active box lineup"])) || String(a.Product).localeCompare(String(b.Product)));
   for (const r of queue) {
-    const row = review.addRow([r.Code, r.Product, group(r), r["In active box lineup"] || null, r["Pre-screen finding (what to check)"] || null, null, null, null, null]);
-    row.height = Math.min(409, Math.max(60, Math.ceil(String(r["Pre-screen finding (what to check)"] ?? "").length / 46) * 15 + 15));
+    const row = review.addRow([r.Code, r.Product, group(r), r["In active box lineup"] || null, r["Keniya recommendation"] || null, null, null, null, null]);
+    row.height = Math.min(409, Math.max(60, Math.ceil(String(r["Keniya recommendation"] ?? "").length / 46) * 15 + 15));
     row.alignment = { wrapText: true, vertical: "top" };
     for (let c = 6; c <= 9; c++) row.getCell(c).fill = fill(INPUT_FILL);
     row.getCell(6).dataValidation = { type: "list", allowBlank: true, formulae: ['"Approve,Changes needed,Reject"'], showErrorMessage: true, errorStyle: "stop", errorTitle: "Choose a decision", error: "Choose Approve, Changes needed or Reject." };
@@ -112,9 +112,9 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[], ruleSumm
   };
   section("How to review");
   line("1", "Start here explains the workflow. Review has the short decision queue; Details contains every product and all evidence.");
-  line("2", "Read 'Pre-screen finding (what to check)': it says what was found, what was corrected and the source used.");
+  line("2", "Read Keniya recommendation first. Historical pre-screen notes do not establish current diligence or clinical approval.");
   line("3", "Fill the four yellow columns on Review: Decision, Comments, Reviewer and Review date. Return the file for manual recording in the admin.");
-  line("4", "Candidate rows need a label check or your decision first; their finding says why.");
+  line("4", "Candidate rows need operator diligence before an authenticated clinician decision. Missing label values stay unknown.");
   lg.addRow([]);
   section("Status");
   for (const s of STATUSES) {
