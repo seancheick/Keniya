@@ -1,5 +1,22 @@
 # Handoff: Keniya Admin (`/admin`)
 
+**Status, Oct 6 2026, end of day: stock/packing audit deployed; state of play.**
+- **Production runs `fce25bc`** (Vercel success). It contains: Codex's stock and packing audit fixes (`571d713`), both mobile passes, the box-builder table, Verify screen and approval ladder. Tests: **75 pass**; typecheck, lint and production build are clean.
+- **The audit** is written up in `docs/admin-stock-audit.md` (full finding-by-finding table). In short:
+  - Packing only uses **current-formula lots with ≥ 90 days left**, earliest expiry first. Held lots (expired, undated, short-dated, old formula) stay visible in Inventory but are not planned, packed or purchased against. Logic in `src/lib/admin/stock.ts`, enforced again in the database.
+  - Packing checks the **whole box** (recipe, distinct snacks, categories, weight incl. extras, named approval, package verification, customer avoids) in `src/lib/admin/packing.ts`; the database re-checks item/package/lot snapshots before consuming stock (`pack_shipment_checked`).
+  - Atomic lineup saves/activation and package-profile saves (`save_box_lineup`, `activate_box_lineup`, `save_package_profile`), lot-expiry correction without re-receiving (`set_lot_expiry`), pagination past the 1,000-row cap (`allRows`), unpack clears stale label data, label/formula edits clear verification.
+  - New migrations `20261006025542_packing_safeguards.sql` and `20261006030933_admin_function_hardening.sql` (function search paths; one privileged function no longer callable by public roles). Both are applied to the live database and listed in `scripts/migrate-admin.ts`.
+- **What the audit found in my (Claude's) work, now fixed** (so a future session doesn't repeat it):
+  - The Verify screen left an earlier verification standing when you answered "label doesn't match".
+  - `packBlockers` checked each product alone, not the whole box.
+  - "Package verified" was built on `verified_at`, a field the product edit form could set by hand, and label/formula edits kept approval and verification.
+  - Lesson: any new gate needs a full pack cycle on test data before it's called done.
+- **Not verified:** a physical packing cycle (the database has 0 lots, 0 shipments, 0 orders, 0 verified products). The SQL tests in `supabase/tests/*.sql` need a scratch Postgres and have not been run in this environment; they were run by Codex only. `loadPostageHistory` is still capped at 500 recent labels.
+- **Clinician file:** `ops/keniya-clinician-review-2026-10-06.xlsx` is the current export (97 products: 54 Pre-approved, 11 legacy Approved, 13 Candidate, 19 Rejected; 25 products in the active lineups, none Candidate, none ready to pack yet). Re-export any time from Products → Export for clinician.
+- **Active lineups:** Pregnancy v2, Carb Conscious v3, Heart v3, all READY · PROVISIONAL (every pick still needs a named clinician approval and a package check).
+- **Working agreements that came up:** another agent (Codex) edits this repo in the same folder: check `git status` before editing, use a separate worktree if it has uncommitted changes, and never commit its work without the owner's say-so.
+
 **Status, Oct 6 2026, later: mobile pass on box builder, orders, inventory.**
 - Box page 11,264 px → ~8,000 px on a phone. Secondary controls (stock/approval filters, "Leave out", snack mix) fold behind **Options**; lineup rows are compact; passing checks are folded (failures always shown); a fixed bottom bar shows `N/14 picked`, the stage and **Save draft / Activate**; the box switcher is a full-width 3-up; Box recipe and Saved lineups are collapsible (`Disclosure` in `ui.tsx`); the products table shows the 14 picks plus 12 more with "Show all".
 - Orders: pill tabs (`PillTabs`, shared with Products), order and shipment cards on phones, Pirate Ship and Gift/Sample folded. Packing checklist: one name per row (dropdown behind **Swap**), progress + **Mark packed** pinned to the bottom, scale weight folded.
@@ -107,9 +124,11 @@ Steps:
   - `0007` adds the private bucket `keniya-admin` and `preorders.stripe_fee_cents` / `amount_net_cents`.
   - `0008` adds the `Pre-approved` product status.
   - `0009` adds `products.prescreened_by/at` and moves the pre-screen stamp out of `reviewed_by/at`.
-- **Pure logic (unit-tested, `pnpm test`, 56 tests)** in `src/lib/admin/`:
+  - `20261006025542_packing_safeguards.sql` + `20261006030933_admin_function_hardening.sql` (Codex audit): RPCs `pack_shipment_checked`, `activate_box_lineup`, `save_box_lineup`, `save_package_profile`, `set_lot_expiry`; `pack_shipment` now enforces current-formula, ≥ 90-day lots (same signature, so older app code still works); `shipments.avoid` column.
+- **Pure logic (unit-tested, `pnpm test`, 75 tests)** in `src/lib/admin/`:
   - `rules.ts`: workbook formulas for "qualifies" (`fitFor`), final eligibility with hard limits (`eligibleFor`), the pack gate (`packBlockers`) and lineup checks;
   - `clinical.ts` + `clinical-xlsx.ts`: the clinician review export;
+  - `verify.ts` (package-in-hand checks), `stock.ts` (held vs packable lots, pick lists), `packing.ts` (whole-box recipe and packing problems);
   - `costing.ts`: landed cost, Price Calculator port;
   - `optimizer.ts`: greedy + swap local search, 5 objectives, `canBuild`;
   - `purchasing.ts`, `postage.ts` (learns the median of ≥5 real labels per 4 oz band), `avoid.ts`, `pirateship.ts` (CSV in/out), `reports.ts`;
@@ -125,7 +144,8 @@ Steps:
 
 **P0: before the Nov 11 ship (owner / clinician)**
 - Clinician (Laurie Pham, PharmD) reviews the export: confirms or changes the hard limits, approves products (**Approve (clinician)**), and re-confirms the 11 workbook approvals.
-- Package verification: for every lineup pick, enter the UPC and check the label with the package in hand (set "verified"). Packing is blocked until this is done. Next build (suggested by the clinician): a pack-floor "verify" flow (scan UPC → confirm label, serving format, expiry → Ready to pack) and a simpler box-builder table (product, photo, stock, per-box ✓, approval, package verified, expiry, add) with the evidence one click away.
+- Package verification: for every lineup pick, use **Verify** (`/admin/verify`) with the package in hand: scan the UPC, confirm label, serving format and expiry (≥ 90 days). Packing is blocked until this is done. (The Verify screen and the simpler box-builder table suggested by the clinician are built.)
+- Do one real purchase → verify → pack → label → unpack cycle on a few products before the 150-box run; nothing has been run on real stock yet.
 - Confirm P8 (single-serve) for the 15 products still unknown.
 - Pre-screen follow-ups:
   - P044/P026: the brand's site lists only multi-serve bags; confirm a 1 oz pack exists.
@@ -139,14 +159,14 @@ Steps:
 
 **P0: production readiness**
 1. §1 setup is done except `ADMIN_PASSWORD` on Vercel **Preview** (could not be checked: Vercel API returns 403 for env listing). Owner: confirm in Vercel → Settings → Environment Variables.
-   - New in v5, not enforced: Settings "Min days to expiry when packing" (90). `pack_shipment` uses FEFO regardless of expiry; add a min-days setting and skip near-expiry lots (needs an RPC change).
+   - The 90-day minimum is now enforced when packing (fixed Oct 6), but it is a code constant (`MIN_DAYS_TO_EXPIRY` / `src/lib/admin/stock.ts`), not yet the Settings value from the workbook.
 2. Not tested against live USDA (shared DEMO_KEY was rate-limited, own key not available in the container), live Stripe balance-transaction lookup, real phone camera scanning (BarcodeDetector on Android, ZXing fallback on iOS), real Supabase Storage uploads, or a real Pirate Ship CSV. Header matching is pattern-based and was tested only on a synthetic CSV; get a real export from the owner and adjust `readLabelCsv`.
 3. Add `error.tsx` under `src/app/admin/(protected)/`. Loaders throw on Supabase errors (`must()`), and `createShipmentForPreorder` throws (it's a form action). Today the user sees the generic error page.
 
 **P1: correctness / robustness**
-4. **Non-atomic multi-step writes.** `saveLineup` (insert lineup, then items, then activate), `updateProduct` with a new version (close old, insert new), and `createProduct` (product, then version) use compensating deletes, not transactions. Move them into Postgres RPCs.
-5. **PostgREST 1000-row cap.** `loadCatalog` (`vendor_prices` grows with every purchase), the orders page (shipments `limit(1000)`), reports, `loadPostageHistory` (500) and preorder lists don't paginate. Fix this before roughly 1000 purchases or shipments. The CSV export already pages.
-6. **Avoid-list matching (`avoid.ts`) is a heuristic.** Packing is **not blocked** when a conflict can't be auto-swapped: the shipment gets a note and staff must swap by hand. Consider blocking the pack button until conflicts are resolved, and showing conflicts per item on the shipment page. Note "may contain peanuts" labels make most nut products conflict with "peanuts".
+4. **Non-atomic multi-step writes (partly fixed Oct 6).** Lineup saves/activation and package-profile saves are now atomic Postgres RPCs. Still compensating-delete style: `updateProduct` with a new formula version (close old, insert new) and `createProduct` (product, then version).
+5. **PostgREST 1000-row cap (mostly fixed Oct 6).** The catalog, order planning/listing, dashboard, label import/export and recall trace now page through `allRows`. Not re-checked: reports queries; `loadPostageHistory` is capped at the latest 500 labels.
+6. **Avoid-list matching (`avoid.ts`) is a heuristic**, now rechecked on swaps, extras, gifts/samples and again when packing (a conflict blocks planning/packing). Free-text matching is a curation aid, not an allergy interpreter: "may contain peanuts" labels make most nut products conflict with "peanuts", and customer free text still needs a person.
 7. The optimizer with "Only in-stock" returns <14 picks when stock is thin, and the UI warns. `createShipmentForPreorder` falls back to the lineup when the avoid-optimizer fails. Revisit.
 8. Dates use UTC (`toISOString`, `daysUntil`). Expiry tiers and "this month" can be off by a day near midnight in US time zones.
 9. The import script overwrites product `notes` and nutrition on every run (it's a sync). Edits made in the UI to imported products are lost if it's re-run. Document this or add a `--products-only-new` mode.
