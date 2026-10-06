@@ -1,0 +1,7 @@
+/ops/
+/outputs/
+.env*
+.git/
+.next/
+coverage/
+node_modules/
