@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { gingerChews, popcorn, settings, snack } from "./__fixtures__/snacks";
 import { optimize } from "./optimizer";
-import { blockingFailures, checkLineup, eligibleFor, fitsBoxes, isReady, packBlockers, shipsUnderPolicy, type Pick } from "./rules";
+import { blockingFailures, checkLineup, eligibleFor, fitsBoxes, isReady, lineupStage, packBlockers, shipsUnderPolicy, type Pick } from "./rules";
 import { BOX_SLUGS, DEFAULT_BOX_RULES, type Snack } from "./types";
 
 describe("product fit (workbook v4 formulas)", () => {
@@ -182,6 +182,21 @@ describe("approval ladder", () => {
     const checks = checkLineup("blood_sugar", { ...r, categories: [] }, picks, settings, 6);
     expect(checks.find((c) => c.key === "candidate")!.pass).toBe(false);
     expect(isReady(checks)).toBe(false);
+  });
+  it("a missing purchase cost never blocks a lineup (it's the shopping list), only warns", () => {
+    const picks = Array.from({ length: 14 }, () => ({ snack: snack({ categories: ["Savory"], roles: { WHOLE_FOOD: true }, unitCostCents: null }), category: "Savory" }));
+    const checks = checkLineup("blood_sugar", { ...DEFAULT_BOX_RULES.blood_sugar, categories: [] }, picks, settings, 6);
+    expect(checks.find((c) => c.key === "costed")).toMatchObject({ pass: false, level: "warn" });
+    expect(isReady(checks)).toBe(true);
+  });
+  it("lineup stage: provisional → clinician approved → cleared to pack", () => {
+    const pre = { snack: snack({ status: "Pre-approved", clinicianApprovedBy: null, packageVerified: false }) };
+    const approved = { snack: snack({ clinicianApprovedBy: "Laurie Pham", packageVerified: false }) };
+    const verified = { snack: snack({ clinicianApprovedBy: "Laurie Pham", packageVerified: true }) };
+    expect(lineupStage([pre, approved], true).label).toBe("READY · PROVISIONAL");
+    expect(lineupStage([approved, verified], true).label).toBe("READY · CLINICIAN APPROVED");
+    expect(lineupStage([verified], true).label).toBe("CLEARED TO PACK");
+    expect(lineupStage([verified], false).label).toBe("FIX");
   });
 });
 

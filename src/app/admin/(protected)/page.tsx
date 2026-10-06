@@ -109,7 +109,7 @@ export default async function Dashboard() {
                 {b.cost ? (
                   <div className="grid grid-cols-2 gap-3">
                     <Stat label="Can build" value={b.canBuild.n} tone={b.canBuild.n < settings.runSize[slug] ? "warn" : "good"} hint={b.canBuild.limiting ? `Limit: ${b.canBuild.limiting.name} (${b.canBuild.limiting.onHand})` : undefined} />
-                    <Stat label="Snacks" value={fmt$(b.cost.snackCents)} />
+                    <Stat label="Snacks" value={fmt$(b.cost.snackCents)} hint={b.picks.some((p) => p.snack.unitCostCents === null) ? `${b.picks.filter((p) => p.snack.unitCostCents === null).length} uncosted` : undefined} tone={b.picks.some((p) => p.snack.unitCostCents === null) ? "warn" : undefined} />
                     <Stat label="Landed" value={fmt$(b.cost.totalCents)} />
                     <Stat label="Margin" value={fmtPct(b.cost.contributionPct)} tone={b.cost.contributionCents < 0 ? "bad" : "good"} />
                   </div>

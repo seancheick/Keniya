@@ -41,7 +41,7 @@ export default async function PurchasingPage({ searchParams }: { searchParams: P
 
   return (
     <>
-      <PageHeader title="Purchasing" description="What to buy for the next run, merged across boxes, minus packable stock (current formula, at least 90 days left), at the cheapest recent price." />
+      <PageHeader title="Purchasing" description="The shopping list: what the active lineups need for the next run, merged across boxes, minus packable stock (current formula, at least 90 days left). Prices here are only estimates from past sightings; the real cost is whatever you pay when you log the purchase lot." />
       <Card className="mb-4">
         <form className="flex flex-wrap items-end gap-3">
           {BOX_SLUGS.map((b) => (
@@ -75,7 +75,7 @@ export default async function PurchasingPage({ searchParams }: { searchParams: P
             <thead>
               <tr>
                 <th>Product</th>
-                <th>Boxes</th>
+                <th>Boxes (units per box)</th>
                 <th className="num">Required</th>
                 <th className="num">Buffer</th>
                 <th className="num">Packable</th>
@@ -93,7 +93,7 @@ export default async function PurchasingPage({ searchParams }: { searchParams: P
                       {r.product.name}
                     </Link>
                   </td>
-                  <td className="text-xs">{(Object.keys(r.perBox) as BoxSlug[]).map((b) => BOX_LABEL[b]).join(", ")}</td>
+                  <td className="text-xs">{(Object.keys(r.perBox) as BoxSlug[]).map((b) => `${BOX_LABEL[b]} ×${runSize[b] ? Math.round((r.perBox[b] ?? 0) / runSize[b]) : 0}/box`).join(", ")}</td>
                   <td className="num">{r.required}</td>
                   <td className="num">{r.buffer}</td>
                   <td className="num">{r.onHand}</td>

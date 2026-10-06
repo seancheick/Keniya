@@ -7,8 +7,8 @@
  *   pnpm box:feasibility heart 5    # one box, up to 5 alternates
  *
  * Needs Node 22+, the Supabase service key in .env.local, and the react-server condition
- * (set by the pnpm script) so `server-only` imports load outside Next. Products with no cost are left
- * out, as a lineup with an uncosted pick can never be READY.
+ * (set by the pnpm script) so `server-only` imports load outside Next. Cost never gates a lineup: the
+ * lineup is the shopping list, and cost comes from the purchase lot when you buy.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { optimize } from "../src/lib/admin/optimizer";
@@ -34,7 +34,7 @@ if (!slugs.length) {
 }
 
 const ctx = await loadAdminContext();
-const uncosted = ctx.catalog.snacks.filter((s) => s.unitCostCents === null).map((s) => s.id);
+const uncosted: string[] = [];
 let failed = false;
 for (const slug of slugs) {
   const exclude = new Set(uncosted);
@@ -53,7 +53,7 @@ for (const slug of slugs) {
     for (const p of r.picks) exclude.add(p.snack.id);
   }
   if (found.length) {
-    console.log(`✓ ${slug}: ${found.length} disjoint READY lineup${found.length === 1 ? "" : "s"} (${ctx.catalog.snacks.length - uncosted.length} costed products in the pool)`);
+    console.log(`✓ ${slug}: ${found.length} disjoint READY lineup${found.length === 1 ? "" : "s"} (${ctx.catalog.snacks.length} products in the pool)`);
     found.forEach((codes, i) => console.log(`    ${i === 0 ? "lineup " : "alt " + i + " "}: ${codes.join(" ")}`));
     // Resilience: which single product, if out of stock, leaves the box unbuildable?
     const primary = found[0];

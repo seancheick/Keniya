@@ -265,14 +265,16 @@ export const isClinicianApproved = (s: { status: Snack["status"]; clinicianAppro
 /** Clinician-approved and package-verified: the last step before a pick can be packed. */
 export const isReadyToPack = (s: Snack) => isClinicianApproved(s) && s.packageVerified === true;
 
-/** Lineup readiness ladder: FIX → PROVISIONAL (needs approval / package checks) → CLEARED TO PACK. */
+/** Lineup ladder: FIX → READY · PROVISIONAL (Keniya pre-approved, awaiting the clinician) → READY · CLINICIAN APPROVED → CLEARED TO PACK. */
 export function lineupStage(picks: { snack: Snack }[], ready: boolean): { label: string; tone: "good" | "warn" | "bad"; detail: string } {
   if (!ready) return { label: "FIX", tone: "bad", detail: "Fails a box rule" };
   const needApproval = picks.filter((p) => !isClinicianApproved(p.snack)).length;
   const needPackage = picks.filter((p) => p.snack.packageVerified !== true).length;
   if (!needApproval && !needPackage) return { label: "CLEARED TO PACK", tone: "good", detail: "Every pick is clinician-approved and package-verified" };
-  const parts = [needApproval && `${needApproval} need clinician approval`, needPackage && `${needPackage} need a package check`].filter(Boolean);
-  return { label: "READY · PROVISIONAL", tone: "warn", detail: `${parts.join(", ")}; packing is blocked until done` };
+  // Keniya's diligence is done and the clinician has signed every pick; only the package-in-hand checks remain.
+  if (!needApproval) return { label: "READY · CLINICIAN APPROVED", tone: "good", detail: `${needPackage} need a package check; packing is blocked until done` };
+  const parts = [`${needApproval} await the clinician`, needPackage && `${needPackage} need a package check`].filter(Boolean);
+  return { label: "READY · PROVISIONAL", tone: "warn", detail: `Pre-approved by Keniya; ${parts.join(", ")}; packing is blocked until done` };
 }
 
 /**
@@ -376,7 +378,9 @@ export function checkLineup(
   );
   checks.push(check("nutrition", "Picks missing nutrition data", count((x) => !nutritionComplete(x)), { max: 0 }));
   checks.push(check("rejected", "Rejected or retired products", count((x) => x.status === "Rejected" || x.status === "Retired"), { max: 0 }));
-  checks.push(check("costed", "Picks with no cost", count((x) => x.unitCostCents === null), { max: 0 }));
+  // Cost never gates a lineup: the lineup is the shopping list and cost comes from the
+  // purchase lot when it's bought. Shown so the landed-cost estimate is read as incomplete.
+  checks.push(check("costed", "Picks with no purchase cost yet (estimate incomplete)", count((x) => x.unitCostCents === null), { max: 0 }, "warn"));
   checks.push(
     check("ships", "Picks that don't ship under policy", count((x) => !shipsUnderPolicy(x, settings.policy).ok), {
       max: 0,

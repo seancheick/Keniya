@@ -62,9 +62,14 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         description={`${snacks.length} snacks. A ✓ box means eligible: nutrition rules, hard limits, shipping policy and status all pass. Tap or hover it for the reason.`}
         actions={
           <>
-            <Button asChild variant="outline" title="Excel review queue with decision fields, instructions and full label evidence. Includes every product on Details. No costs.">
+            <Button asChild title="The finished lineups only: each product with its label values, the rule applied, the pass rationale, source and decision fields. This is what the clinician signs.">
+              <a href="/admin/reports/export?table=clinician_packet" download>
+                <Download /> Clinician packet
+              </a>
+            </Button>
+            <Button asChild variant="outline" title="Internal audit workbook: every product in the catalog with full label evidence and decision fields. No costs.">
               <a href="/admin/reports/export?table=clinical_review" download>
-                <Download /> Export for clinician
+                <Download /> Full catalog review
               </a>
             </Button>
             <Button asChild>
