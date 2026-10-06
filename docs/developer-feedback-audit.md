@@ -53,10 +53,11 @@ To repeat database validation, create an empty local database named `keneya_test
 
 ## Release receipt
 
-- Core implementation: `7e43c4c`; deployment artifact exclusion: `e98e3d5`.
-- Production: https://keniyahealth.com. Final deployment `dpl_2miHco6FTZ4wmPSFXW7KL3Eod3Yo` (source `e98e3d5`) was built READY and promoted after schema and authenticated-role verification.
+- Core implementation: `7e43c4c`; deployment artifact exclusion: `e98e3d5`. Changes are pushed to `main`; GitHub validation passed lint, TypeScript, all 154 tests, production build, fresh migrations and the database/concurrency suite. CI actions are pinned to verified Node 24 releases on Ubuntu 24.04.
+- Production: https://keniyahealth.com. The tested release deployment `dpl_2miHco6FTZ4wmPSFXW7KL3Eod3Yo` (source `e98e3d5`) was built READY and promoted after schema and authenticated-role verification. Subsequent documentation/CI-only Git deployments use identical application source.
 - Supabase project: `issfvpyewzlnxxdqrzqc`. All six `202610080*` migrations applied; 20 admin tables have RLS without public policies, 20 required RPCs exist with no anonymous/authenticated execution, and the photo bucket remains private.
 - Preflight: 110 products, zero paid orders, zero barcode collision groups, and zero invalid barcode lengths. A private application-data snapshot of 20 existing tables plus function/schema metadata is saved under `ops/release-20261006T190427Z/`; this is a logical application snapshot, not a provider disaster-recovery backup.
+- Final production log scan showed only the deliberate invalid-signature test (400), with no server failures.
 - Missing live rules were explicitly initialized from the canonical rules module. Existing prices/capacities were preserved; missing prices were initialized to the advertised price and missing capacities to zero. Commerce never supplies these defaults during a request.
 - Stripe endpoint `we_1UKqAhE2hXH694McjM2Ws9RV` now subscribes to all ten required checkout/refund/dispute events. The existing signing secret was verified against production with an inert signed event.
 - Separate clinician access and session signing are configured. The clinician credential is stored privately in `ops/clinician-password.txt`; provide it to Laurie through a private channel and rotate/delete the local handoff copy afterward. It is excluded from Git and deployments.
