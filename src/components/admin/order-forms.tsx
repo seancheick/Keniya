@@ -119,9 +119,14 @@ export function PackButtons({ id, status, disabled = false, expectedItems, expec
   if (status === "planned")
     return (
       <form action={pack} className="space-y-3">
-        <Field label="Scale weight in oz (optional)" hint="Leave blank to use snack + packaging weight. Enter the sealed box weight for your shipping label.">
-          <input name="measured_weight_oz" type="number" min="0.1" step="0.1" inputMode="decimal" className={`${fieldClass} max-w-40`} />
-        </Field>
+        <details className="group text-sm">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1 text-muted-foreground [&::-webkit-details-marker]:hidden">
+            <span aria-hidden className="transition-transform group-open:rotate-90">›</span> Add scale weight (optional)
+          </summary>
+          <Field label="Scale weight in oz" hint="Leave blank to use snack + packaging weight. Enter the sealed box weight for your shipping label.">
+            <input name="measured_weight_oz" type="number" min="0.1" step="0.1" inputMode="decimal" className={`${fieldClass} max-w-40`} />
+          </Field>
+        </details>
         <input type="hidden" name="id" value={id} />
         <input type="hidden" name="expected_lots" value={expectedLots ?? ""} />
         <input type="hidden" name="expected_package" value={expectedPackage ?? ""} />

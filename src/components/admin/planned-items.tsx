@@ -15,6 +15,8 @@ export function PlannedItems({ shipmentId, items, options, blockers, expectedLot
   const [ids, setIds] = useState(items);
   const [checked, setChecked] = useState<number[]>([]);
   const [query, setQuery] = useState("");
+  // Phones show the product name; the replacement dropdown appears only when you tap Swap.
+  const [swapping, setSwapping] = useState<number | null>(null);
   const [pending, start] = useTransition();
   const dirty = ids.join() !== items.join();
   const picked = checked.length;
@@ -38,15 +40,18 @@ export function PlannedItems({ shipmentId, items, options, blockers, expectedLot
                 {i + 1}
               </label>
               <div className="min-w-0 flex-1">
-                <select value={id} disabled={pending} onChange={(e) => { setIds((xs) => xs.map((x, j) => j === i ? e.target.value : x)); setChecked([]); }} className={`${fieldClass} h-11 print:hidden`} aria-label={`Item ${i + 1}`}>
+                <select value={id} disabled={pending} onChange={(e) => { setIds((xs) => xs.map((x, j) => j === i ? e.target.value : x)); setChecked([]); }} className={`${fieldClass} h-11 print:hidden ${swapping === i ? "" : "max-sm:hidden"}`} aria-label={`Item ${i + 1}`}>
                   {!selected && <option value={id}>Unknown product — replace it</option>}
                   {visible.map((o) => <option key={o.id} value={o.id} disabled={(!o.ok || ids.includes(o.id)) && o.id !== id}>{o.ok ? "" : "Needs attention · "}{o.label}</option>)}
                 </select>
-                <p className="mt-1 text-sm font-medium sm:hidden print:block">{selected?.label ?? "Unknown product"}</p>
+                <p className={`text-sm font-medium sm:hidden print:block ${swapping === i ? "hidden" : ""}`}>{selected?.label ?? "Unknown product"}</p>
                 {selected?.reason && <p className="mt-1 text-sm text-amber-900">{selected.reason}</p>}
                 {(id === items[i] ? slotPulls[i] : selected?.pulls)?.map((lot) => <p key={lot.lotId} className="mt-1 text-sm"><b>Pull {lot.qty}</b> · lot {lot.label} · expires {lot.expiresOn}</p>)}
                 {selected && selected.short > 0 && <p className="text-sm text-red-800">Short {selected.short} packable unit(s). <Link className="underline" href={`/admin/inventory/log?product=${id}`}>Log a purchase</Link></p>}
-                <Link href={`/admin/products/${id}`} className="mt-1 inline-block text-xs underline print:hidden">Product details / verify</Link>
+                <div className="mt-1 flex flex-wrap items-center gap-x-4 print:hidden">
+                  <button type="button" className="min-h-11 text-sm underline sm:hidden" onClick={() => setSwapping(swapping === i ? null : i)}>{swapping === i ? "Done" : "Swap"}</button>
+                  <Link href={`/admin/products/${id}`} className="inline-flex min-h-11 items-center text-xs underline sm:min-h-0">Product details / verify</Link>
+                </div>
               </div>
             </div>
           </li>;
@@ -59,8 +64,8 @@ export function PlannedItems({ shipmentId, items, options, blockers, expectedLot
         })}>{pending ? "Saving…" : "Save swaps"}</Button>
         <Button variant="ghost" disabled={pending} onClick={() => { setIds(items); setChecked([]); }}>Discard swaps</Button>
         <p className="text-sm text-muted-foreground">Save your swaps before checking off items.</p>
-      </div> : <div className="space-y-2 border-t pt-4 print:hidden">
-        <p className="text-sm" aria-live="polite">{picked} of {ids.length} packs checked</p>
+      </div> : <div className="sticky bottom-0 z-20 -mx-4 space-y-2 border-t bg-card/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 print:hidden">
+        <p className="text-sm font-medium" aria-live="polite">{picked} of {ids.length} packs checked</p>
         <PackButtons id={shipmentId} status="planned" disabled={!complete || blockers.length > 0} expectedItems={items} expectedLots={expectedLots} expectedPackage={expectedPackage} />
       </div>}
     </div>

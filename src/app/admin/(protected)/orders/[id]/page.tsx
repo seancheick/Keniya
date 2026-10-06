@@ -84,7 +84,20 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
             {s.status === "planned" ? (
               <PlannedItems key={`${s.planned_items.join(",")}:${JSON.stringify(stockSnapshot(stock))}:${s.package_profile_id}`} shipmentId={id} items={s.planned_items} options={options} blockers={blockers} expectedLots={JSON.stringify(stockSnapshot(stock))} expectedPackage={s.package_profile_id} slotPulls={slotPulls} />
             ) : (
-              <Table>
+              <>
+              <ul className="divide-y sm:hidden">
+                {items.map((it) => (
+                  <li key={it.id} className="py-3">
+                    <Link href={`/admin/products/${it.product_id}`} className="text-sm font-medium">
+                      {name(it.product_id)}
+                    </Link>
+                    <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                      {it.qty > 1 ? `${it.qty} × ` : ""}lot <span className="font-mono">{it.purchase_lots?.lot_code ?? it.lot_id.slice(0, 8)}</span> · expires {it.purchase_lots?.expires_on ?? "—"} · {fmt$(Number(it.unit_cost_cents))}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+              <Table className="max-sm:hidden">
                 <thead>
                   <tr>
                     <th>Product</th>
@@ -110,6 +123,7 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
                   ))}
                 </tbody>
               </Table>
+              </>
             )}
           </Card>
           {(s.status === "packed" || s.status === "shipped" || s.status === "delivered" || s.status === "issue") && (

@@ -64,16 +64,18 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
           <Stat label="Units on hand" value={units.toLocaleString()} hint={`${snacks.reduce((s, p) => s + p.onHand, 0)} packable · ${units - snacks.reduce((s, p) => s + p.onHand, 0)} held`} />
           <Stat label="Inventory value" value={fmt$(value)} />
-          <Stat label={`Expiring < ${tiers[0]} d`} value={fmt$(atRisk(tiers[0]))} tone={atRisk(tiers[0]) ? "bad" : undefined} />
-          <Stat label={`Expiring < ${tiers[1]} d`} value={fmt$(atRisk(tiers[1]))} tone={atRisk(tiers[1]) ? "orange" : undefined} />
-          <Stat label={`Expiring < ${tiers[2]} d`} value={fmt$(atRisk(tiers[2]))} tone={atRisk(tiers[2]) ? "warn" : undefined} />
+          <div className="col-span-2 grid grid-cols-3 gap-3 sm:contents">
+            <Stat label={`Expiring < ${tiers[0]} d`} value={fmt$(atRisk(tiers[0]))} tone={atRisk(tiers[0]) ? "bad" : undefined} />
+            <Stat label={`Expiring < ${tiers[1]} d`} value={fmt$(atRisk(tiers[1]))} tone={atRisk(tiers[1]) ? "orange" : undefined} />
+            <Stat label={`Expiring < ${tiers[2]} d`} value={fmt$(atRisk(tiers[2]))} tone={atRisk(tiers[2]) ? "warn" : undefined} />
+          </div>
         </div>
       </Card>
 
       <Card className="mb-4">
         <form className="flex flex-wrap gap-2">
-          <input name="q" defaultValue={sp.q} placeholder="Search product" className={`${fieldClass} max-w-xs`} aria-label="Search" />
-          <select name="show" defaultValue={sp.show ?? ""} className={`${fieldClass} w-auto`} aria-label="Show">
+          <input name="q" defaultValue={sp.q} placeholder="Search product" className={`${fieldClass} max-w-xs max-sm:max-w-none`} aria-label="Search" type="search" />
+          <select name="show" defaultValue={sp.show ?? ""} className={`${fieldClass} w-auto max-sm:w-full`} aria-label="Show">
             <option value="">All lots with stock</option>
             <option value="packable">Packable lots</option>
             <option value="held">Held — needs attention</option>
@@ -86,7 +88,47 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
       {rows.length === 0 ? (
         <Empty action={<Button asChild><Link href="/admin/inventory/log">Log your first purchase</Link></Button>}>{lots.length ? "No lots match these filters. Clear the filters to see all stock." : "No stock yet."}</Empty>
       ) : (
-        <Card title="Lots with stock (FEFO order)">
+        <>
+        <div className="sm:hidden">
+          <h2 className="mb-2 text-sm font-semibold tracking-wide text-muted-foreground uppercase">Lots with stock (earliest expiry first)</h2>
+          <ul className="space-y-2">
+            {rows.map(({ l, p, days, hold }) => {
+              const tone = expiryTone(days, tiers);
+              return (
+                <li key={l.id} className="rounded-xl border bg-card p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/admin/products/${p.id}`} className="font-medium">
+                        {p.name}
+                      </Link>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="font-mono">{p.code}</span> · {vendorBy.get(l.vendor_id ?? "") ?? "—"} · bought {l.purchased_at}
+                      </p>
+                    </div>
+                    <p className="text-right text-sm tabular-nums">
+                      <b>{l.qty_remaining}</b>
+                      <span className="text-muted-foreground">/{l.qty}</span>
+                    </p>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                    <span>Expires {l.expires_on ?? "—"}</span>
+                    {tone && <Badge tone={tone}>{days! < 0 ? "expired" : `${days} d`}</Badge>}
+                    <span className="ml-auto text-muted-foreground tabular-nums">
+                      {fmt$(l.unit_cost_cents)} each · {fmt$(l.qty_remaining * l.unit_cost_cents)}
+                    </span>
+                  </div>
+                  {hold && <p className="mt-1 text-xs text-amber-900">Held: {hold}</p>}
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 border-t pt-1">
+                    <AdjustLot lotId={l.id} remaining={l.qty_remaining} />
+                    <TextLink href={`/admin/inventory/recall?lot=${l.id}`}>{l.lot_code ? `Trace ${l.lot_code}` : "Trace"}</TextLink>
+                  </div>
+                  <LotExpiryForm key={l.expires_on} lotId={l.id} expiresOn={l.expires_on} />
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+        <Card title="Lots with stock (FEFO order)" className="max-sm:hidden">
           <Table>
             <thead>
               <tr>
@@ -137,13 +179,30 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
             </tbody>
           </Table>
         </Card>
+        </>
       )}
 
       <Card title="Recent stock movements" className="mt-4">
         {moves.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nothing yet.</p>
         ) : (
-          <Table>
+          <>
+          <ul className="divide-y sm:hidden">
+            {moves.map((m) => (
+              <li key={m.id} className="flex items-start gap-2 py-2.5 text-sm">
+                <Badge tone={m.qty > 0 ? "good" : m.kind === "waste" ? "bad" : "muted"}>{m.kind}</Badge>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate">{productBy.get(m.product_id)?.name ?? "—"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(m.created_at).toLocaleString("en-US", { dateStyle: "short", timeStyle: "short" })} · {m.created_by ?? "—"}
+                    {m.reason ? ` · ${m.reason}` : ""}
+                  </p>
+                </div>
+                <span className="tabular-nums">{m.qty > 0 ? `+${m.qty}` : m.qty}</span>
+              </li>
+            ))}
+          </ul>
+          <Table className="max-sm:hidden">
             <thead>
               <tr>
                 <th>When</th>
@@ -169,6 +228,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
               ))}
             </tbody>
           </Table>
+          </>
         )}
       </Card>
     </>

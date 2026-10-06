@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { activateLineup } from "@/actions/admin/boxes";
 import { BoxBuilder } from "@/components/admin/box-builder";
 import { RulesForm } from "@/components/admin/rules-form";
-import { Badge, Card, PageHeader, Table } from "@/components/admin/ui";
+import { Badge, Disclosure, PageHeader, Table } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { db, loadPostageHistory, must, signedUrls, type LineupRow } from "@/lib/admin/db";
 import { splitNotes } from "@/lib/admin/clinical";
@@ -45,10 +45,12 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
           </>
         }
         actions={
-          <div className="flex gap-1">
+          <div className="grid w-full grid-cols-3 gap-2 sm:flex sm:w-auto sm:gap-1">
             {BOX_SLUGS.map((s) => (
-              <Button key={s} asChild size="sm" variant={s === slug ? "default" : "outline"}>
-                <Link href={`/admin/boxes/${s}`}>{BOX_LABEL[s]}</Link>
+              <Button key={s} asChild size="sm" variant={s === slug ? "default" : "outline"} className="max-sm:h-11">
+                <Link href={`/admin/boxes/${s}`} aria-current={s === slug ? "page" : undefined}>
+                  {BOX_LABEL[s]}
+                </Link>
               </Button>
             ))}
           </div>
@@ -69,11 +71,11 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
         photos={photos}
         findings={findings}
       />
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card title="Box recipe (saved default)">
+      <div className="mt-6 grid items-start gap-4 lg:grid-cols-2">
+        <Disclosure title="Box recipe" summary="saved default: ranges and hard limits">
           <RulesForm slug={slug} rules={ctx.rules[slug]} />
-        </Card>
-        <Card title="Saved lineups">
+        </Disclosure>
+        <Disclosure title="Saved lineups" summary={`${versions.length} saved · v${b.lineup?.version ?? "—"} active`}>
           <p className="mb-3 text-sm text-muted-foreground">Each time you save a lineup it is kept here. The active one is what new orders get; activate an older one to go back to it.</p>
           {versions.length === 0 ? (
             <p className="text-sm text-muted-foreground">None saved yet.</p>
@@ -115,7 +117,7 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
               </tbody>
             </Table>
           )}
-        </Card>
+        </Disclosure>
       </div>
     </>
   );

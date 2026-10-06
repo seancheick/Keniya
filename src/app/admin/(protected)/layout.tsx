@@ -29,7 +29,7 @@ export default async function AdminShell({ children }: Readonly<{ children: Reac
         </div>
         <AdminNav />
       </header>
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 [&_.grid>*]:min-w-0">{children}</main>
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 [&_.grid>*]:min-w-0 max-sm:[&_[data-slot=button]]:min-h-11">{children}</main>
       <footer className="print:hidden px-4 pb-6 text-xs text-muted-foreground sm:px-6">
         Signed in as {admin.name} ·{" "}
         <form action={logout} className="inline">

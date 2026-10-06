@@ -177,7 +177,7 @@ export function expiryTone(days: number | null, tiers: [number, number, number])
 }
 
 export const fieldClass =
-  "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm";
+  "h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 max-sm:h-11 md:text-sm";
 
 export function Field({ label, hint, children, className }: { label: string; hint?: React.ReactNode; children: React.ReactNode; className?: string }) {
   return (
@@ -186,5 +186,68 @@ export function Field({ label, hint, children, className }: { label: string; hin
       {children}
       {hint && <span className="block text-xs text-muted-foreground">{hint}</span>}
     </label>
+  );
+}
+
+/** Link tabs with counts (review stage, order status…): scroll sideways on a phone, 44px tall there. */
+export function PillTabs({
+  label,
+  tabs,
+}: {
+  label: string;
+  tabs: { key: string; label: string; href: string; count?: number; active: boolean; title?: string }[];
+}) {
+  return (
+    <nav aria-label={label} className="-mx-4 mb-3 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+      <ul className="flex w-max gap-2 sm:w-auto sm:flex-wrap">
+        {tabs.map((t) => (
+          <li key={t.key}>
+            <Link
+              href={t.href}
+              aria-current={t.active ? "page" : undefined}
+              title={t.title}
+              className={cn(
+                "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm whitespace-nowrap transition-colors sm:min-h-9 sm:px-3",
+                t.active ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted",
+              )}
+            >
+              {t.label}
+              {t.count !== undefined && (
+                <span className={cn("text-xs tabular-nums", t.active ? "text-primary-foreground/80" : "text-muted-foreground")}>{t.count}</span>
+              )}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+/** A card whose body folds away (rarely-used forms, long instructions). Server-safe: it's a <details>. */
+export function Disclosure({
+  title,
+  summary,
+  defaultOpen,
+  className,
+  children,
+}: {
+  title: React.ReactNode;
+  /** One line shown next to the title while folded. */
+  summary?: React.ReactNode;
+  defaultOpen?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <details open={defaultOpen} className={cn("group rounded-xl border bg-card", className)}>
+      <summary className="flex min-h-12 cursor-pointer list-none items-center gap-2 px-4 py-2 [&::-webkit-details-marker]:hidden">
+        <span className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">{title}</span>
+        {summary && <span className="min-w-0 truncate text-xs text-muted-foreground">{summary}</span>}
+        <span aria-hidden className="ml-auto text-muted-foreground transition-transform group-open:rotate-90">
+          ›
+        </span>
+      </summary>
+      <div className="border-t p-4 sm:p-5">{children}</div>
+    </details>
   );
 }

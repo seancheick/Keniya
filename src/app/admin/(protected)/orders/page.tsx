@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ManualShipmentForm, PirateShipImport, PlanAllButton } from "@/components/admin/order-forms";
-import { Badge, Card, Empty, PageHeader, Table, type Tone } from "@/components/admin/ui";
+import { Badge, Card, Disclosure, Empty, PageHeader, PillTabs, Table, type Tone } from "@/components/admin/ui";
 import { createShipmentForPreorder } from "@/actions/admin/orders";
 import { Button } from "@/components/ui/button";
 import { fmt$, shipmentProfit } from "@/lib/admin/costing";
@@ -62,21 +62,42 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
         description="Paid Stripe preorders → planned shipment → packed (stock deducted, earliest expiry first) → label from Pirate Ship → shipped."
         actions={<PlanAllButton />}
       />
-      <div className="mb-4 flex gap-1 overflow-x-auto">
-        {TABS.map(([k, label]) => (
-          <Button key={k} asChild size="sm" variant={tab === k ? "default" : "outline"}>
-            <Link href={`/admin/orders?tab=${k}`}>
-              {label} <span className="opacity-70">{count(k)}</span>
-            </Link>
-          </Button>
-        ))}
-      </div>
+      <PillTabs
+        label="Order status"
+        tabs={TABS.map(([k, label]) => ({ key: k, label, href: `/admin/orders?tab=${k}`, count: count(k), active: tab === k }))}
+      />
 
       {tab === "todo" ? (
         todo.length === 0 ? (
           <Empty>Every paid order has a shipment.</Empty>
         ) : (
-          <Card>
+          <>
+          <ul className="space-y-2 sm:hidden">
+            {todo.map((p) => (
+              <li key={p.id} className="rounded-xl border bg-card p-3">
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium">{p.shipping?.name ?? p.customer_name ?? "—"}</p>
+                    <p className="truncate text-xs text-muted-foreground">{p.email}</p>
+                  </div>
+                  <span className="text-sm tabular-nums">{fmt$(p.amount_total)}</span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                  <Badge tone="info">{box(p.box_slug)}</Badge>
+                  {p.avoid ? <Badge tone="warn">avoid: {p.avoid}</Badge> : null}
+                  <span className="text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</span>
+                </div>
+                {p.craving && <p className="mt-1 text-xs text-muted-foreground">Craving: {p.craving}</p>}
+                <form action={createShipmentForPreorder} className="mt-2">
+                  <input type="hidden" name="preorder_id" value={p.id} />
+                  <Button className="h-11 w-full" variant="outline">
+                    Plan this order
+                  </Button>
+                </form>
+              </li>
+            ))}
+          </ul>
+          <Card className="hidden sm:block">
             <Table>
               <thead>
                 <tr>
@@ -114,11 +135,48 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
               </tbody>
             </Table>
           </Card>
+          </>
         )
       ) : list.length === 0 ? (
         <Empty>Nothing here.</Empty>
       ) : (
+        <>
+        <ul className="space-y-2 sm:hidden">
+          {tab === "packed" && (
+            <li>
+              <Button asChild variant="outline" className="h-11 w-full">
+                {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- CSV download, not a page */}
+                <a href="/admin/orders/pirateship">Export for Pirate Ship</a>
+              </Button>
+            </li>
+          )}
+          {list.map((s) => {
+            const pr = shipmentProfit({ ...s, snack_cost_cents: s.snack_cost_cents === null ? null : Number(s.snack_cost_cents) });
+            return (
+              <li key={s.id}>
+                <Link href={`/admin/orders/${s.id}`} className="block rounded-xl border bg-card p-3 active:bg-muted/50">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm font-medium">{s.code}</span>
+                    {s.kind !== "order" && <Badge>{s.kind}</Badge>}
+                    <Badge tone={STATUS_TONE[s.status]} className="ml-auto">
+                      {s.status}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-sm">
+                    {s.recipient_name ?? "—"} <span className="text-muted-foreground">· {box(s.box_slug)}</span>
+                  </p>
+                  {s.notes && <p className="mt-1 line-clamp-2 text-xs text-amber-700">{s.notes}</p>}
+                  <p className="mt-1 text-xs text-muted-foreground tabular-nums">
+                    Revenue {fmt$(s.revenue_cents)} · Profit {s.snack_cost_cents === null ? "after packing" : `${fmt$(pr.profit)}${pr.postageIsEstimate ? "*" : ""}`}
+                  </p>
+                </Link>
+              </li>
+            );
+          })}
+          <li className="text-xs text-muted-foreground">* postage estimated until the real label cost is entered.</li>
+        </ul>
         <Card
+          className="hidden sm:block"
           action={
             tab === "packed" && (
               <Button asChild size="sm" variant="outline">
@@ -167,10 +225,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           </Table>
           <p className="mt-2 text-xs text-muted-foreground">* postage estimated until the real label cost is entered.</p>
         </Card>
+        </>
       )}
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <Card title="Pirate Ship">
+      <div className="mt-6 grid items-start gap-4 lg:grid-cols-2">
+        <Disclosure title="Pirate Ship" summary="export packed boxes, import labels">
           <ol className="mb-3 list-decimal space-y-1 pl-5 text-sm text-muted-foreground">
             <li>
               Pack boxes here, then{" "}
@@ -180,10 +239,10 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
             <li>Export Pirate Ship&apos;s shipment history CSV and import it here: actual cost and tracking fill in and boxes move to Shipped.</li>
           </ol>
           <PirateShipImport />
-        </Card>
-        <Card title="Gift, sample or replacement">
+        </Disclosure>
+        <Disclosure title="Gift, sample or replacement" summary="a $0 shipment packed like an order">
           <ManualShipmentForm />
-        </Card>
+        </Disclosure>
       </div>
     </>
   );

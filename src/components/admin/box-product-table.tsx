@@ -41,6 +41,8 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
   const [onlyEligible, setOnlyEligible] = useState(true);
   const [cat, setCat] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  // Phones: the 14 picks plus a dozen more; the rest behind a button (the page is long enough).
+  const [showAll, setShowAll] = useState(false);
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -66,16 +68,16 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
     <div className="rounded-xl border bg-card">
       <div className="flex flex-wrap items-center gap-2 border-b p-3">
         <p className="font-semibold">Products</p>
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" className={cn(fieldClass, "h-8 w-40")} aria-label="Search products" />
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" className={cn(fieldClass, "h-8 w-40 max-sm:h-11 max-sm:w-full")} aria-label="Search products" type="search" />
         <div className="flex flex-wrap gap-1">
           {[null, ...categories].map((c) => (
-            <Button key={c ?? "all"} size="xs" variant={cat === c ? "default" : "outline"} onClick={() => setCat(c)}>
+            <Button key={c ?? "all"} size="xs" className="max-sm:h-11 max-sm:px-4" variant={cat === c ? "default" : "outline"} onClick={() => setCat(c)}>
               {c ?? "All"}
             </Button>
           ))}
         </div>
-        <label className="ml-auto flex items-center gap-2 text-xs">
-          <input type="checkbox" checked={onlyEligible} onChange={(e) => setOnlyEligible(e.target.checked)} />
+        <label className="ml-auto flex min-h-11 items-center gap-2 text-xs max-sm:text-sm sm:min-h-0">
+          <input type="checkbox" className="size-5 sm:size-4" checked={onlyEligible} onChange={(e) => setOnlyEligible(e.target.checked)} />
           Only eligible for {BOX_LABEL[slug]}
         </label>
       </div>
@@ -97,23 +99,24 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ s, fits, here, blocked }) => {
+            {rows.map(({ s, fits, here, blocked }, idx) => {
+              const folded = !showAll && idx >= inBox.size + 12;
               const added = inBox.has(s.id);
               const d = daysUntil(s.earliestExpiry);
               const approval = isClinicianApproved(s) ? "Clinician" : s.status === "Approved" ? "Legacy" : s.status;
               const action = added ? (
-                <Button size="xs" variant="outline" onClick={() => onRemove(s.id)}>
+                <Button size="xs" className="max-sm:h-11 max-sm:px-4" variant="outline" onClick={() => onRemove(s.id)}>
                   <X /> Remove
                 </Button>
               ) : (
-                <Button size="xs" disabled={!here || full} title={!here ? (blocked ?? fits[slug].reasons[0]) : full ? "The box is full: remove a pick first" : undefined} onClick={() => onAdd(s)}>
+                <Button size="xs" className="max-sm:h-11 max-sm:px-4" disabled={!here || full} title={!here ? (blocked ?? fits[slug].reasons[0]) : full ? "The box is full: remove a pick first" : undefined} onClick={() => onAdd(s)}>
                   <Plus /> Add
                 </Button>
               );
               return (
                 <Fragment key={s.id}>
                   <tr
-                    className={cn("cursor-pointer border-b hover:bg-muted/40", added && "bg-emerald-50/60", !here && !added && "text-muted-foreground")}
+                    className={cn("cursor-pointer border-b hover:bg-muted/40", added && "bg-emerald-50/60", !here && !added && "text-muted-foreground", folded && "max-sm:hidden")}
                     onClick={() => setOpen(open === s.id ? null : s.id)}
                     aria-expanded={open === s.id}
                   >
@@ -132,9 +135,6 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
                           </span>
                           {/* Phones: the wide columns collapse into one line under the name. */}
                           <span className="mt-1 flex flex-wrap items-center gap-1 text-xs sm:hidden">
-                            {BOX_SLUGS.filter((b) => fits[b].fits).map((b) => (
-                              <Badge key={b} tone="good">{`✓ ${SHORT[b]}`}</Badge>
-                            ))}
                             <Badge tone={approval === "Clinician" ? "good" : approval === "Candidate" ? "info" : "warn"}>{approval}</Badge>
                             <Badge tone={s.packageVerified ? "good" : "muted"}>{s.packageVerified ? "Verified" : "Not verified"}</Badge>
                             <span className="text-muted-foreground">{s.onHand} in stock</span>
@@ -164,7 +164,7 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
                       {action}
                     </td>
                   </tr>
-                  {open === s.id && (
+                  {open === s.id && !folded && (
                     <tr className="border-b bg-muted/30">
                       <td colSpan={9} className="max-w-[calc(100vw-2rem)] p-3">
                         <Evidence s={s} fits={fits} blocked={blocked} finding={findings[s.id]} />
@@ -177,6 +177,13 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
           </tbody>
         </table>
         {rows.length === 0 && <p className="p-4 text-sm text-muted-foreground">No products match. Untick &quot;Only eligible&quot; to see everything.</p>}
+        {!showAll && rows.length > inBox.size + 12 && (
+          <div className="border-t p-3 sm:hidden">
+            <Button variant="outline" className="h-11 w-full" onClick={() => setShowAll(true)}>
+              {`Show all ${rows.length} products`}
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

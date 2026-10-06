@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Download, Plus, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge, Card, Empty, FitBadges, PageHeader, StatusBadge, Table, fieldClass } from "@/components/admin/ui";
+import { Badge, Card, Empty, FitBadges, PageHeader, PillTabs, StatusBadge, Table, fieldClass } from "@/components/admin/ui";
 import { cn } from "@/lib/utils";
 import { fmt$ } from "@/lib/admin/costing";
 import { loadBoxRules, loadCatalog, loadSettings } from "@/lib/admin/db";
@@ -77,30 +77,17 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         }
       />
 
-      {/* Review stage: one tap, with counts. Scrolls sideways on a phone. */}
-      <nav aria-label="Review stage" className="-mx-4 mb-3 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
-        <ul className="flex w-max gap-2 sm:w-auto sm:flex-wrap">
-          {TABS.filter((t) => !["Rejected", "Retired"].includes(t.key) || count(t.key) > 0 || t.key === activeTab).map((t) => {
-            const on = t.key === activeTab;
-            return (
-              <li key={t.key}>
-                <Link
-                  href={tabHref(t.key)}
-                  aria-current={on ? "page" : undefined}
-                  title={"hint" in t ? t.hint : undefined}
-                  className={cn(
-                    "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm whitespace-nowrap transition-colors sm:min-h-9 sm:px-3",
-                    on ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted",
-                  )}
-                >
-                  {t.label}
-                  <span className={cn("text-xs tabular-nums", on ? "text-primary-foreground/80" : "text-muted-foreground")}>{count(t.key)}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-      </nav>
+      <PillTabs
+        label="Review stage"
+        tabs={TABS.filter((t) => !["Rejected", "Retired"].includes(t.key) || count(t.key) > 0 || t.key === activeTab).map((t) => ({
+          key: t.key,
+          label: t.label,
+          href: tabHref(t.key),
+          count: count(t.key),
+          active: t.key === activeTab,
+          title: "hint" in t ? t.hint : undefined,
+        }))}
+      />
 
       <form className="mb-4 space-y-2">
         {activeTab && <input type="hidden" name="status" value={activeTab} />}

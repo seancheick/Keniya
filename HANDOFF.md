@@ -1,5 +1,12 @@
 # Handoff: Keniya Admin (`/admin`)
 
+**Status, Oct 6 2026, later: mobile pass on box builder, orders, inventory.**
+- Box page 11,264 px → ~8,000 px on a phone. Secondary controls (stock/approval filters, "Leave out", snack mix) fold behind **Options**; lineup rows are compact; passing checks are folded (failures always shown); a fixed bottom bar shows `N/14 picked`, the stage and **Save draft / Activate**; the box switcher is a full-width 3-up; Box recipe and Saved lineups are collapsible (`Disclosure` in `ui.tsx`); the products table shows the 14 picks plus 12 more with "Show all".
+- Orders: pill tabs (`PillTabs`, shared with Products), order and shipment cards on phones, Pirate Ship and Gift/Sample folded. Packing checklist: one name per row (dropdown behind **Swap**), progress + **Mark packed** pinned to the bottom, scale weight folded.
+- Inventory: lots, movements and the expiry tiles are cards/3-up on phones; Adjust and Correct-expiry forms are full width.
+- Admin-wide on phones: every button ≥ 44 px (`max-sm:[&_[data-slot=button]]:min-h-11` on `<main>`), inputs 44 px (`fieldClass`).
+- Not run on real data: inventory and orders have no rows yet. The phone layouts were checked with a throwaway fixture route (deleted) rendering the real page code and the real checklist component with fake rows.
+
 **Status, Oct 6 2026: mobile polish (branch `ui-mobile-polish`, merged to main).**
 - Root cause of the "product page looks off on phones": `PageHeader` let the title share a row with the action buttons (title squeezed to ~70 px), and grid tracks grew to their widest child (a 990 px card on a 375 px screen). Fixes: `PageHeader` stacks on phones; `<main>` has `[&_.grid>*]:min-w-0`; long badges wrap; card headers wrap. Every admin page was measured at 375 px: no sideways scroll.
 - Products list: review-stage tabs with counts (All, Candidate, Pre-approved, **Approved = named clinician only**, **Legacy approval**, Rejected, Retired when non-empty); search always visible, other filters behind "More filters"; phones get one card per product (status, ✓ boxes, flags, stock, cost) instead of the table. `?status=Legacy` is a view, not a DB status.
