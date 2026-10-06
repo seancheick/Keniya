@@ -18,6 +18,8 @@ export type PacketBox = {
 
 export type PacketInput = {
   boxes: PacketBox[];
+  /** Unfinished proposals belong only in the operator workbook. */
+  audience?: "operator" | "clinician";
   rules: Record<BoxSlug, BoxRules>;
   policy: Settings["policy"];
   extra: (id: string) => ClinicalExtra | undefined;
@@ -32,9 +34,10 @@ const nz = (v: unknown) => (v === null || v === undefined || v === "" ? null : v
 /** The per-pack limits a box applies, as one line. */
 export function limitsLine(r: BoxRules): string {
   const parts = [
+    r.beverageCarbsMax !== null && `hydration total carbs ≤${r.beverageCarbsMax} g per stick; 0 g added sugar preferred`,
     r.beverageAddedSugarMax !== null && `beverage added sugar ≤${r.beverageAddedSugarMax} g`,
-    r.carbsMax !== null && `total carbs ≤${r.carbsMax} g`,
-    r.addedSugarMax !== null && `added sugar ≤${r.addedSugarMax} g${r.treatAddedSugarMax !== null ? ` (treat ≤${r.treatAddedSugarMax} g)` : ""}`,
+    r.carbsMax !== null && `snack total carbs ≤${r.carbsMax} g`,
+    r.addedSugarMax !== null && `snack added sugar ≤${r.addedSugarMax} g${r.treatAddedSugarMax !== null ? ` (treat ≤${r.treatAddedSugarMax} g)` : ""}`,
     r.sodiumMax !== null && `sodium ≤${r.sodiumMax} mg`,
     r.satFatMax !== null && `saturated fat ≤${r.satFatMax} g${r.satFatNutMax !== null ? ` (intrinsic nut/seed fat ≤${r.satFatNutMax} g)` : ""}`,
     r.caffeineMax !== null && `caffeine ≤${r.caffeineMax} mg`,
@@ -42,8 +45,19 @@ export function limitsLine(r: BoxRules): string {
   return parts.length ? parts.join("; ") : "no per-pack limits (pregnancy checks and shipping policy only)";
 }
 
+/** Only validated lineups with completed internal diligence belong in Laurie’s packet. */
+function reviewableInput(input: PacketInput): PacketInput {
+  if (input.audience === "operator") return input;
+  return { ...input, boxes: input.boxes.filter((b) => b.version !== null && b.picks.length > 0 && isReady(b.checks) &&
+    [...b.picks.map((p) => p.snack), ...b.extras].every((s) => s.diligenceComplete === true &&
+      (s.status === "Pre-approved" || s.status === "Approved") &&
+      eligibleFor(b.slug, s, input.rules[b.slug], input.policy, s.rejectReason).fits &&
+      s.clinicalDecision !== "rejected" && s.clinicalDecision !== "changes_requested")) };
+}
+
 /** One row per product used in any lineup, with every box it serves and the pass rationale for each. */
 export function packetProductRows(input: PacketInput): Record<string, unknown>[] {
+  input = reviewableInput(input);
   const uses = new Map<string, { snack: Snack; boxes: { slug: BoxSlug; category: string | null; extra: boolean }[] }>();
   for (const b of input.boxes) {
     for (const p of b.picks) {
@@ -70,7 +84,8 @@ export function packetProductRows(input: PacketInput): Record<string, unknown>[]
       "Verified outer-pack barcode": x?.verifiedPackBarcode,
       "Used in": boxes.map((b) => `${BOX_LABEL[b.slug]}${b.extra ? " (extra)" : b.category ? ` (${b.category})` : ""}`).join("; "),
       Status: s.status,
-      "Keniya recommendation": reviewRecommendation(s, boxes.every((b) => eligibleFor(b.slug, s, input.rules[b.slug], input.policy, s.rejectReason).fits)),
+      "Keniya recommendation": reviewRecommendation(s, boxes.every((b) => eligibleFor(b.slug, s, input.rules[b.slug], input.policy, s.rejectReason).fits &&
+      s.clinicalDecision !== "rejected" && s.clinicalDecision !== "changes_requested")),
       "Internal diligence": s.diligenceComplete ? "complete" : "incomplete",
       "Review work remaining": reviewWorkRemaining(s, x),
       "Clinical review state": s.clinicalDecision ?? "pending",
@@ -125,6 +140,7 @@ export function packetProductRows(input: PacketInput): Record<string, unknown>[]
 }
 
 export async function clinicianPacketWorkbook(input: PacketInput): Promise<Buffer> {
+  input = reviewableInput(input);
   const wb = new ExcelJS.Workbook();
   wb.created = new Date();
   wb.creator = "Keniya";
@@ -132,16 +148,16 @@ export async function clinicianPacketWorkbook(input: PacketInput): Promise<Buffe
 
   const start = wb.addWorksheet("Start here");
   start.columns = [{ width: 26 }, { width: 110 }];
-  const failedLineups = input.boxes.filter((b) => b.state === "draft" || b.version === null || !b.picks.length || !isReady(b.checks)).length;
+  const failedLineups = input.boxes.filter((b) => (input.audience === "operator" && b.state === "draft") || b.version === null || !b.picks.length || !isReady(b.checks)).length;
   const used = [...new Map(input.boxes.flatMap((b) => [...b.picks.map((p) => p.snack), ...b.extras]).map((s) => [s.id, s])).values()];
   const diligencePending = used.filter((s) => !s.diligenceComplete).length;
   const clinicalPending = used.filter((s) => !isClinicianApproved(s)).length;
   const packagePending = used.filter((s) => !s.packageVerified).length;
   const lines = [
     ["Keniya clinician packet", `Exported ${new Date().toISOString().slice(0, 10)}. ${input.boxes.length} lineups, ${products.length} products. ${failedLineups} lineups missing or failing checks; ${diligencePending} products need internal diligence; ${clinicalPending} need authenticated clinical approval; ${packagePending} need package verification. Review the recorded evidence and each lineup result.`],
-    ["What to do", "Start with Keniya recommendation. Hold rows need operator work before clinical approval; Do not approve rows fail the recorded box rules. Only Recommend Approve rows have completed internal diligence and pass every box they serve. Fill the yellow Clinician decision and Comments for reviewable rows. Historical notes are retained as history and never establish current approval."],
+    ["What to do", input.audience !== "operator" ? "Only internally complete products in validated lineups are included. If no products are listed, internal diligence must be completed before Laurie receives a review packet. Laurie can approve, request a specific change, or reject through her clinician account." : "Start with Keniya recommendation. Hold rows need operator work before clinical approval; Do not approve rows fail the recorded box rules. Only Recommend Approve rows have completed internal diligence and pass every box they serve. Fill the yellow Clinician decision and Comments for reviewable rows. Historical notes are retained as history and never establish current approval."],
     ["What a decision means", "Workbook decisions do not update the admin. Laurie records approval through her clinician account after internal diligence is complete. Changes needed or Reject: tell us the specific clinical or compliance concern so we can fix the data or the rule, not just the pick."],
-    ["Scope", "The latest active or draft lineup for each box is shown with its actual stage. Drafts are proposals, not released recipes. Products outside these lineups, costs and vendors are omitted. Package checks and current-lot expiry remain required before packing."],
+    ["Scope", input.audience !== "operator" ? "Only validated lineups and internally complete products are included. Unfinished evidence and operator holds remain in the internal catalog workbook. Package checks and current-lot expiry remain required before packing." : "The latest active or draft lineup for each box is shown with its actual stage. Drafts are proposals, not released recipes. Products outside these lineups, costs and vendors are omitted. Package checks and current-lot expiry remain required before packing."],
     ["Limits are Keniya standards", "Per-pack thresholds are Keniya curation standards informed by published guidance (FDA, AHA, ADA, ACOG/CDC), not medical cutoffs; sources are recorded in the rules."],
   ];
   for (const v of lines) {
@@ -163,7 +179,7 @@ export async function clinicianPacketWorkbook(input: PacketInput): Promise<Buffe
     const row = lu.addRow([
       BOX_LABEL[b.slug],
       b.version === null ? "no active lineup" : `v${b.version}`,
-      b.state === "draft" ? "DRAFT — operator work required" : b.version === null || !b.picks.length ? "NO ACTIVE LINEUP" : lineupStage([...b.picks, ...b.extras.map((snack) => ({ snack }))], isReady(b.checks)).label,
+      input.audience === "operator" && b.state === "draft" ? "DRAFT — operator work required" : b.version === null || !b.picks.length ? "NO ACTIVE LINEUP" : lineupStage([...b.picks, ...b.extras.map((snack) => ({ snack }))], isReady(b.checks)).label,
       b.version === null || !b.picks.length ? "No active lineup to validate" : fails.length ? "FAILS box rules" : `passes every box rule (${b.picks.length} picks)`,
       fails.map((c) => `${c.label}: ${c.value}`).join("; ") || null,
       warns.map((c) => `${c.label}: ${c.value}`).join("; ") || null,

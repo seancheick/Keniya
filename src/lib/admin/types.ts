@@ -258,6 +258,8 @@ export const boxRulesSchema = z.object({
   treatMax: z.number().int().min(0).nullable(),
   // Hard limits every pick must meet before any pathway counts (null = no limit).
   carbsMax: z.number().min(0).nullable().default(null),
+  /** Separate total-carb ceiling for hydration sticks; null uses the normal pack ceiling. */
+  beverageCarbsMax: z.number().min(0).nullable().default(null),
   beverageAddedSugarMax: z.number().min(0).nullable().default(null),
   addedSugarMax: z.number().min(0).nullable().default(null),
   /** Added-sugar limit for controlled treats (CT role) instead of addedSugarMax. */
@@ -281,6 +283,7 @@ const none = {
   fiberMin: null,
   treatMax: null,
   carbsMax: null,
+  beverageCarbsMax: null,
   beverageAddedSugarMax: null,
   addedSugarMax: null,
   treatAddedSugarMax: null,
@@ -326,11 +329,10 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     wholeFoodMin: 2,
     // Picks that qualify only as a portioned treat (no protein/fiber/whole-food anchor).
     treatMax: 3,
-    // Keniya standard (2026-10-06): ≤20 g total carbs (ADA snack examples use 15–20 g carbs
-    // plus protein; ADA counts total carbs, not "net carbs") and ≤5 g added sugar per pack.
-    carbsMax: 20,
-    beverageAddedSugarMax: 0,
-    addedSugarMax: 5,
+    // Separate snack and hydration standards; zero added sugar is a preference, not a gate.
+    carbsMax: 15,
+    beverageCarbsMax: 3,
+    addedSugarMax: 3,
   },
   heart: {
     ...none,
@@ -374,9 +376,9 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     beverageMax: 2,
     proteinOrFiberMin: 5,
     treatMax: 2,
-    carbsMax: 20,
-    beverageAddedSugarMax: 0,
-    addedSugarMax: 5,
+    carbsMax: 15,
+    beverageCarbsMax: 3,
+    addedSugarMax: 3,
     caffeineMax: 50,
   },
   // 2025 joint GLP-1 nutrition guidance (ASN/OMA/TOS/ACLM): adequate protein, nutrient-dense,

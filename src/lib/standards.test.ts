@@ -37,7 +37,7 @@ describe("fillStandards", () => {
     for (const t of texts) expect(() => fillStandards(t, rules)).not.toThrow();
     // A per-pack limit written as a literal number would drift from the rules: it must be a token.
     const literal = /\b\d+(\.\d+)? ?(mg sodium|g (total )?carb|g added sugar|g saturated fat)\b/i;
-    for (const t of texts) expect(t, t).not.toMatch(literal);
+    for (const t of texts) expect(t.replace(/0 g added sugar options (are )?preferred( when available)?\.?/g, ""), t).not.toMatch(literal);
     // The engine's limits are inclusive (≤): "under 140 mg" would exclude exactly 140.
     for (const t of texts) expect(t, t).not.toMatch(/\bunder \{\{/i);
     // Counts of picks, sips or treats come from the recipe too ("one treat", "2 sips" drift).

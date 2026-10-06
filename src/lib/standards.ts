@@ -19,6 +19,7 @@ export function fillStandards(text: string, rules: PublicRules): string {
     })
     .replace(/\{\{(\w+)\.(\w+)\}\}/g, (_, slug: string, field: string) => {
       const box = rules[slug as BoxSlug];
+      if (field === "beverageStandard" && box?.beverageCarbsMax !== null && typeof box?.beverageCarbsMax === "number") return `at most ${box.beverageCarbsMax} g total carbs per stick`;
       if (field === "beverageStandard" && box) return box.beverageAddedSugarMax === 0 ? "unsweetened" : box.beverageAddedSugarMax === null ? "screened" : `at most ${box.beverageAddedSugarMax} g added sugar per beverage`;
       const v = box?.[field as keyof BoxRules];
       if (typeof v !== "number") throw new Error(`Standards: ${slug}.${field} is not a number (${String(v)})`);
@@ -58,13 +59,14 @@ export function publicStandards(slug: BoxSlug, rules: PublicRules): string[] {
   const r = rules[slug];
   const checks = `${PREGNANCY_BLOCKING.length} pregnancy screening checks: fully cooked or pasteurized, no pregnancy no-gos, allergens identified`;
   const caffeine = r.caffeineMax !== null ? `Caffeine known on every pack and no more than ${r.caffeineMax} mg` : null;
-  const carbs = r.carbsMax !== null ? `No more than ${r.carbsMax} g total carbohydrate per pack (total carbs, never "net carbs")` : null;
-  const sugar = r.addedSugarMax !== null ? `No more than ${r.addedSugarMax} g added sugar per pack` : null;
-  const beverage = r.beverageAddedSugarMax === null ? null : r.beverageAddedSugarMax === 0 ? "Beverages must have 0 g added sugar" : `Beverages have at most ${r.beverageAddedSugarMax} g added sugar`;
+  const pack = slug === "blood_sugar" || slug === "gestational_diabetes" ? "snack pack" : "pack";
+  const carbs = r.carbsMax !== null ? `No more than ${r.carbsMax} g total carbohydrate per ${pack} (total carbs, never "net carbs")` : null;
+  const sugar = r.addedSugarMax !== null ? `No more than ${r.addedSugarMax} g added sugar per ${pack}` : null;
+  const beverage = r.beverageCarbsMax !== null ? `Hydration picks: ${r.beverageCarbsMax} g total carbs or less per stick.` : r.beverageAddedSugarMax === null ? null : r.beverageAddedSugarMax === 0 ? "Beverages must have 0 g added sugar" : `Beverages have at most ${r.beverageAddedSugarMax} g added sugar`;
   const catMin = (name: string) => r.categories.find((c) => c.name === name)?.min ?? 0;
   const lines: Record<BoxSlug, (string | null)[]> = {
     pregnancy_comfort: [checks, caffeine, "Concentrated herbs and botanicals left out when pregnancy safety is uncertain", `Every package we pack has at least ${MIN_DAYS_TO_EXPIRY} days before its date`],
-    blood_sugar: [carbs, sugar, beverage, "Qualifies through protein, fiber, whole-food fats, or a small portioned treat", r.treatMax !== null ? `At most ${r.treatMax} treat-only picks in the box` : null],
+    blood_sugar: [carbs, sugar, beverage, "0 g added sugar hydration options are preferred when available.", "Qualifies through protein, fiber, whole-food fats, or a small portioned treat", r.treatMax !== null ? `At most ${r.treatMax} treat-only picks in the box` : null],
     heart: [
       r.sodiumMax !== null ? `No more than ${r.sodiumMax} mg sodium per pack` : null,
       r.satFatMax !== null ? `No more than ${r.satFatMax} g saturated fat (${r.satFatNutMax ?? r.satFatMax} g when it comes from the nuts and seeds themselves, never from added palm or coconut oil)` : null,
@@ -72,7 +74,7 @@ export function publicStandards(slug: BoxSlug, rules: PublicRules): string[] {
       "Nuts, seeds, whole grains, fruit and fiber are the backbone",
       beverage,
     ],
-    gestational_diabetes: ["Passes both our Pregnancy screening and our Blood Sugar standard", carbs, sugar, caffeine, beverage],
+    gestational_diabetes: ["Passes both our Pregnancy screening and our Blood Sugar standard", carbs, sugar, caffeine, beverage, "0 g added sugar hydration options are preferred when available."],
     glp1: [r.proteinOrFiberMin !== null ? `At least ${r.proteinOrFiberMin} picks lead with protein or fiber` : null, carbs, sugar, beverage, "Small portions and hydration"],
     postpartum: ["The same food-safety checks as the Pregnancy box", caffeine, catMin("Protein") && catMin("Hydration") ? `At least ${catMin("Protein")} protein picks and ${catMin("Hydration")} sips in every box` : null, "One-handed, no-prep snacks"],
   };

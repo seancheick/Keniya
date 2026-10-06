@@ -89,6 +89,7 @@ export async function saveBoxRules(_prev: BoxState, fd: FormData): Promise<BoxSt
     fiberMin: int(fd.get("fiberMin")),
     treatMax: int(fd.get("treatMax")),
     carbsMax: dec(fd.get("carbsMax")),
+    beverageCarbsMax: dec(fd.get("beverageCarbsMax")),
     beverageAddedSugarMax: dec(fd.get("beverageAddedSugarMax")),
     addedSugarMax: dec(fd.get("addedSugarMax")),
     treatAddedSugarMax: dec(fd.get("treatAddedSugarMax")),

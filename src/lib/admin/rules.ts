@@ -3,6 +3,7 @@
 // Curation aid only, not medical advice: final lineups need clinical sign-off.
 import {
   BOX_LABEL,
+  DEFAULT_BOX_RULES,
   BOX_SLUGS,
   PREGNANCY_BLOCKING,
   type BoxRules,
@@ -46,7 +47,7 @@ export const ccFiberForward = (p: RuleInput) =>
 export const ccWholeFood = (p: RuleInput) => p.roles.WHOLE_FOOD === true;
 export const ccPortionedTreat = (p: RuleInput) =>
   p.type !== "Beverage" && p.calories! <= 200 && p.added_sugar_g! <= 8 && p.carbs_g! <= 30;
-export const ccUnsweetenedDrink = (p: RuleInput) =>
+export const glp1UnsweetenedDrink = (p: RuleInput) =>
   p.type === "Beverage" && p.added_sugar_g === 0 && p.carbs_g! <= 5;
 
 /**
@@ -101,22 +102,24 @@ export function pregnancyFit(p: RuleInput, rejectReason?: string | null): BoxFit
   return { box: "pregnancy_comfort", fits, via: fits ? ["All pregnancy checks pass"] : [], reasons };
 }
 
-export function carbFit(p: RuleInput, rejectReason?: string | null): BoxFit {
+export function carbFit(p: RuleInput, rejectReason?: string | null, rules: BoxRules = DEFAULT_BOX_RULES.blood_sugar): BoxFit {
   const reasons = base(p, rejectReason);
   if (reasons.length) return { box: "blood_sugar", fits: false, via: [], reasons };
+  if (p.type === "Beverage") {
+    const max = rules.beverageCarbsMax ?? rules.carbsMax;
+    const fits = max === null || p.carbs_g! <= max;
+    return { box: "blood_sugar", fits, via: fits ? ["Low-carb hydration"] : [], reasons: fits ? [] : [`Drink has ${p.carbs_g} g total carbs (max ${max} g per stick)`] };
+  }
   const via: string[] = [];
   if (ccProteinForward(p)) via.push("Protein-forward");
   if (ccFiberForward(p)) via.push("Fiber-forward");
   if (ccWholeFood(p)) via.push("Whole-food");
   if (ccPortionedTreat(p)) via.push("Portioned treat");
-  if (ccUnsweetenedDrink(p)) via.push("Unsweetened drink");
+
   if (via.length) return { box: "blood_sugar", fits: true, via, reasons: [] };
-  const why =
-    p.type === "Beverage"
-      ? `Drink has ${p.added_sugar_g} g added sugar / ${p.carbs_g} g carbs (needs 0 g and ≤5 g)`
-      : `${p.protein_g} g protein, ${p.fiber_g} g fiber, ${p.added_sugar_g} g added sugar, ${p.carbs_g} g carbs, ${p.calories} cal: ` +
-        "needs protein ≥5 g with carbs ≤25 g, fiber ≥3 g with added sugar ≤5 g, whole-food, " +
-        "or a portioned treat (≤200 cal, ≤8 g added sugar, ≤30 g carbs)";
+  const why = `${p.protein_g} g protein, ${p.fiber_g} g fiber, ${p.added_sugar_g} g added sugar, ${p.carbs_g} g carbs, ${p.calories} cal: ` +
+    "needs protein ≥5 g with carbs ≤25 g, fiber ≥3 g with added sugar ≤5 g, whole-food, " +
+    "or a portioned treat (≤200 cal, ≤8 g added sugar, ≤30 g carbs)";
   return { box: "blood_sugar", fits: false, via: [], reasons: [why] };
 }
 
@@ -143,9 +146,9 @@ export function heartFit(p: RuleInput, rejectReason?: string | null): BoxFit {
 }
 
 /** Gestational diabetes: the Pregnancy screening and the Blood Sugar pathways, both. */
-export function gdmFit(p: RuleInput, rejectReason?: string | null): BoxFit {
+export function gdmFit(p: RuleInput, rejectReason?: string | null, rules: BoxRules = DEFAULT_BOX_RULES.gestational_diabetes): BoxFit {
   const preg = pregnancyFit(p, rejectReason);
-  const carb = carbFit(p, rejectReason);
+  const carb = carbFit(p, rejectReason, rules);
   const fits = preg.fits && carb.fits;
   return {
     box: "gestational_diabetes",
@@ -164,7 +167,7 @@ export function glp1Fit(p: RuleInput, rejectReason?: string | null): BoxFit {
   if (ccFiberForward(p)) via.push("Fiber-forward");
   if (ccWholeFood(p)) via.push("Whole-food");
   if (ccPortionedTreat(p) && p.calories! <= 150) via.push("Small portioned treat");
-  if (ccUnsweetenedDrink(p)) via.push("Unsweetened drink");
+  if (glp1UnsweetenedDrink(p)) via.push("Unsweetened drink");
   if (via.length) return { box: "glp1", fits: true, via, reasons: [] };
   return {
     box: "glp1",
@@ -201,7 +204,10 @@ export function fitsBoxes(p: RuleInput, rejectReason?: string | null): Record<Bo
 // are treated as immutable, so cache per object.
 const fitCache = new WeakMap<RuleInput, Partial<Record<BoxSlug, BoxFit>>>();
 
-export function fitFor(slug: BoxSlug, p: RuleInput, rejectReason?: string | null): BoxFit {
+export function fitFor(slug: BoxSlug, p: RuleInput, rejectReason?: string | null, rules?: BoxRules): BoxFit {
+  // Configured hydration pathways depend on the rule object, so never reuse the default cache.
+  if (rules && slug === "blood_sugar") return carbFit(p, rejectReason, rules);
+  if (rules && slug === "gestational_diabetes") return gdmFit(p, rejectReason, rules);
   if (rejectReason !== undefined) return FIT[slug](p, rejectReason);
   const hit = fitCache.get(p) ?? {};
   if (!hit[slug]) {
@@ -231,10 +237,11 @@ export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, polic
     if (max !== null && num(v) && v > max) out.push(`${v} ${unit} ${what} (max ${max} ${unit})`);
   };
   if (p.type === "Beverage") over(p.added_sugar_g, rules.beverageAddedSugarMax, "added sugar in beverage", "g");
-  over(p.carbs_g, rules.carbsMax, "carbs", "g");
+  const diabetesDrink = p.type === "Beverage" && (slug === "blood_sugar" || slug === "gestational_diabetes");
+  over(p.carbs_g, p.type === "Beverage" ? rules.beverageCarbsMax ?? rules.carbsMax : rules.carbsMax, "carbs", "g");
   // A controlled treat gets its own added-sugar ceiling when the box sets one.
   const treat = heartTreat(p) && rules.treatAddedSugarMax !== null;
-  over(p.added_sugar_g, treat ? rules.treatAddedSugarMax : rules.addedSugarMax, treat ? "added sugar (treat)" : "added sugar", "g");
+  if (!diabetesDrink) over(p.added_sugar_g, treat ? rules.treatAddedSugarMax : rules.addedSugarMax, treat ? "added sugar (treat)" : "added sugar", "g");
   over(p.sodium_mg, rules.sodiumMax, "sodium", "mg");
   over(p.caffeine_mg, rules.caffeineMax, "caffeine", "mg");
   if (rules.satFatMax !== null) {
@@ -251,7 +258,7 @@ export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, polic
 
 /** Final answer for a box: the nutrition rules qualify it AND it passes every gate. */
 export function eligibleFor(slug: BoxSlug, p: RuleInput, rules: BoxRules, policy: Settings["policy"], rejectReason?: string | null): BoxFit {
-  const q = fitFor(slug, p, rejectReason);
+  const q = fitFor(slug, p, rejectReason, rules);
   const gates = gateFailures(slug, p, rules, policy);
   return { box: slug, fits: q.fits && gates.length === 0, via: q.via, reasons: [...q.reasons, ...gates] };
 }

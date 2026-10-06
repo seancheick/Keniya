@@ -11,15 +11,15 @@ export default async function AdminShell({ children }: Readonly<{ children: Reac
     <>
       <header className="sticky top-0 z-30 border-b print:hidden bg-card/95 backdrop-blur">
         <div className="flex items-center gap-3 px-4 pt-3 sm:px-6">
-          <Link href="/admin" className="font-display inline-flex min-h-11 items-center text-lg">
+          <Link href={admin.role === "clinician" ? "/admin/review" : "/admin"} className="font-display inline-flex min-h-11 items-center text-lg">
             Keniya <span className="text-muted-foreground">Admin</span>
           </Link>
           <div className="ml-auto flex items-center gap-2">
-            <Button asChild size="sm" className="max-sm:h-11">
+            {admin.role === "admin" && <Button asChild size="sm" className="max-sm:h-11">
               <Link href="/admin/inventory/log">
                 <Plus /> Log purchase
               </Link>
-            </Button>
+            </Button>}
             <form action={logout} className="hidden sm:block">
               <Button variant="ghost" size="sm" type="submit" title={`Signed in as ${admin.name}`}>
                 Sign out
@@ -27,7 +27,7 @@ export default async function AdminShell({ children }: Readonly<{ children: Reac
             </form>
           </div>
         </div>
-        <AdminNav />
+        {admin.role === "admin" ? <AdminNav /> : <nav className="px-4 py-3 text-sm">Finished clinical review</nav>}
       </header>
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 [&_.grid>*]:min-w-0 max-sm:[&_[data-slot=button]]:min-h-11">{children}</main>
       <footer className="print:hidden px-4 pb-6 text-xs text-muted-foreground sm:px-6">

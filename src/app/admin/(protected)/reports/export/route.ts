@@ -2,6 +2,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { db, must } from "@/lib/admin/db";
 import { clinicalReviewRows } from "@/lib/admin/clinical";
 import { clinicalWorkbook } from "@/lib/admin/clinical-xlsx";
+import { packetInput } from "@/lib/admin/packet-data";
 import { clinicianPacketWorkbook } from "@/lib/admin/clinical-packet";
 import { toCsv } from "@/lib/admin/recall";
 import { eligibleFor } from "@/lib/admin/rules";
@@ -22,8 +23,9 @@ const TABLES = {
 } as const;
 
 export async function GET(request: Request) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const t = new URL(request.url).searchParams.get("table") as keyof typeof TABLES | "clinical_review" | "clinician_packet" | null;
+  if (admin.role === "clinician" && t !== "clinician_packet") return new Response("Operator access required", { status: 403 });
   if (t === "clinical_review") {
     const review = await clinicalReview();
     return new Response(new Uint8Array(await clinicalWorkbook(review.rows, review.ruleSummary)), {
@@ -35,17 +37,9 @@ export async function GET(request: Request) {
     });
   }
   if (t === "clinician_packet") {
-    // Include current review drafts explicitly; withdrawn lineups cannot masquerade as ready.
+    // The packet builder excludes unfinished evidence and unvalidated proposals.
     const ctx = await loadAdminContext(undefined, true);
-    const buf = await clinicianPacketWorkbook({
-      boxes: BOX_SLUGS.map((slug) => {
-        const b = ctx.boxes[slug];
-        return { slug, version: b.lineup?.version ?? null, state: b.lineup?.status === "draft" ? "draft" as const : "active" as const, checks: b.checks, picks: b.picks, extras: b.extras };
-      }),
-      rules: ctx.rules,
-      policy: ctx.settings.policy,
-      extra: extraFor(ctx),
-    });
+    const buf = await clinicianPacketWorkbook(packetInput(ctx));
     return new Response(new Uint8Array(buf), {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -67,29 +61,7 @@ export async function GET(request: Request) {
 
 /** Label/version evidence for a product, shared by both clinician exports. */
 function extraFor(ctx: Awaited<ReturnType<typeof loadAdminContext>>) {
-  const { products, versions } = ctx.catalog;
-  const prod = new Map(products.map((p) => [p.id, p]));
-  return (id: string) => {
-    const p = prod.get(id);
-    const v = versions.get(id);
-    if (!p) return undefined;
-    return {
-      versionId: v?.id ?? null,
-      upc: p.upc,
-      verifiedPackBarcode: ctx.catalog.packs.find((pack) => pack.product_id === p.id && pack.barcode_status === "verified")?.gtin ?? null,
-      form: p.form,
-      shelfLife: v?.shelf_life ?? null,
-      ingredients: v?.ingredients ?? null,
-      nutritionSource: v?.nutrition_source ?? null,
-      verifiedAt: v?.verified_at ?? null,
-      verifiedBy: v?.verified_by ?? null,
-      reviewedBy: p.reviewed_by,
-      reviewedAt: p.reviewed_at,
-      prescreenedBy: p.prescreened_by,
-      prescreenedAt: p.prescreened_at,
-      notes: p.notes,
-    };
-  };
+  return packetInput(ctx).extra;
 }
 
 async function clinicalReview() {
@@ -103,7 +75,7 @@ async function clinicalReview() {
   );
   const ruleSummary = BOX_SLUGS.map((slug) => {
     const r = ctx.rules[slug];
-    const limits = [["Total carbs (g)", r.carbsMax], ["Added sugar (g)", r.addedSugarMax], ["Sodium (mg)", r.sodiumMax], ["Saturated fat (g)", r.satFatMax], ["Saturated fat for nuts/seeds (g)", r.satFatNutMax]];
+    const limits = [["Snack total carbs (g)", r.carbsMax], ["Hydration total carbs per stick (g)", r.beverageCarbsMax], ["Beverage added sugar (g)", r.beverageAddedSugarMax], ["Added sugar (g)", r.addedSugarMax], ["Sodium (mg)", r.sodiumMax], ["Saturated fat (g)", r.satFatMax], ["Saturated fat for nuts/seeds (g)", r.satFatNutMax]];
     return `${BOX_LABEL[slug]} per-pack limits: ${limits.map(([label, value]) => `${label}: ${value === null ? "no configured limit" : `maximum ${value}`}`).join("; ")}.`;
   });
   return { rows, ruleSummary };

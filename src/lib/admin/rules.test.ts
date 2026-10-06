@@ -51,7 +51,7 @@ describe("product fit (workbook v4 formulas)", () => {
   it("drinks: unsweetened low-sodium beverage fits carb and heart", () => {
     const tea = snack({ type: "Beverage", form: "Tea", calories: 0, protein_g: 0, fiber_g: 0, carbs_g: 0, added_sugar_g: 0, sodium_mg: 0 });
     const f = fitsBoxes(tea);
-    expect(f.blood_sugar.via).toEqual(["Unsweetened drink"]);
+    expect(f.blood_sugar.via).toEqual(["Low-carb hydration"]);
     expect(f.heart.via).toEqual(["Unsweetened drink"]);
   });
 
@@ -114,7 +114,7 @@ describe("final eligibility (qualifies + gates)", () => {
   });
   it("caps Carb Conscious carbs and added sugar for every pick", () => {
     const fruit = snack({ protein_g: 2, fiber_g: 4, carbs_g: 31, added_sugar_g: 0, roles: { MF: true } });
-    expect(eligibleFor("blood_sugar", fruit, DEFAULT_BOX_RULES.blood_sugar, policy).reasons).toContain("31 g carbs (max 20 g)");
+    expect(eligibleFor("blood_sugar", fruit, DEFAULT_BOX_RULES.blood_sugar, policy).reasons).toContain("31 g carbs (max 15 g)");
     expect(eligibleFor("blood_sugar", snack({ carbs_g: 12, added_sugar_g: 2 }), DEFAULT_BOX_RULES.blood_sugar, policy).fits).toBe(true);
   });
   it("an unchecked P8 is unknown, not a pass", () => {
@@ -270,9 +270,9 @@ describe("approval and live standards fail closed", () => {
     expect(isClinicianApproved(snack({ diligenceComplete: false }))).toBe(false);
     expect(isClinicianApproved(snack({ clinicianApprovedBy: "Sean" }))).toBe(false);
   });
-  it("sweetened beverages fail every clinical hard gate regardless of pathways", () => {
+  it("Heart and GLP-1 retain their zero-added-sugar beverage hard gates", () => {
     const drink = snack({ type: "Beverage", form: "Powder", added_sugar_g: 5, roles: { CT: true, NS: true, WHOLE_FOOD: true }, protein_g: 6, fiber_g: 5 });
-    for (const slug of ["blood_sugar", "heart", "gestational_diabetes", "glp1"] as const) {
+    for (const slug of ["heart", "glp1"] as const) {
       expect(eligibleFor(slug, drink, DEFAULT_BOX_RULES[slug], settings.policy).fits).toBe(false);
       expect(eligibleFor(slug, drink, { ...DEFAULT_BOX_RULES[slug], beverageAddedSugarMax: 5 }, settings.policy).fits).toBe(true);
     }

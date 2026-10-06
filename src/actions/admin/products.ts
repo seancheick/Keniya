@@ -10,6 +10,9 @@ import { db, PHOTO_BUCKET } from "@/lib/admin/db";
 import { ensureVendor } from "@/lib/admin/vendors";
 import { dollarsToFractionalCents, productSchema, readProductForm, versionSchema } from "@/lib/admin/forms";
 import { validCheckDigit } from "@/lib/admin/barcode";
+import { loadAdminContext } from "@/lib/admin/summary";
+import { packetInput } from "@/lib/admin/packet-data";
+import { packetProductRows } from "@/lib/admin/clinical-packet";
 import { STATUSES } from "@/lib/admin/types";
 
 export type FormState = { error?: string; ok?: boolean; id?: string };
@@ -87,6 +90,11 @@ export async function setProductStatus(_prev: FormState, fd: FormData): Promise<
   const parsed = statusSchema.safeParse(Object.fromEntries(fd));
   if (!parsed.success) return { error: "Invalid request" };
   const { id, status, reason, clinical_decision } = parsed.data;
+  if (admin.role === "clinician") {
+    if (!["Approved", "Rejected"].includes(status) && !clinical_decision) return { error: "Choose approve, request changes or reject." };
+    const rows = packetProductRows(packetInput(await loadAdminContext(undefined, true)));
+    if (!rows.some((row) => row["Product ID"] === id)) return { error: "Internal diligence and lineup validation must be complete before clinical review." };
+  }
   if (clinical_decision && admin.role !== "clinician") return { error: "Only Laurie can request clinical changes." };
   if (status === "Rejected" && !reason) return { error: "Say why it's rejected (shown wherever it's offered)." };
   if (status === "Approved" && admin.role !== "clinician") return { error: "Sign in with Laurie's clinician credential to approve." };

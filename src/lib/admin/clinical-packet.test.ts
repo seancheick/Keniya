@@ -7,6 +7,7 @@ import { DEFAULT_BOX_RULES } from "./types";
 const shared = snack({ code: "P001", name: "Almonds", roles: { NS: true }, status: "Pre-approved", clinicianApprovedBy: null });
 const heartOnly = snack({ code: "P002", name: "Popcorn", roles: { WG: true } });
 const input: PacketInput = {
+  audience: "operator",
   boxes: [
     { slug: "heart", version: 4, checks: [{ key: "x", label: "Picks without a verified package", value: "2", level: "warn", pass: false, deficit: 2 }], picks: [{ snack: shared, category: "Protein" }, { snack: heartOnly, category: "Savory" }], extras: [] },
     { slug: "blood_sugar", version: 3, checks: [], picks: [{ snack: shared, category: "Protein" }], extras: [] },
@@ -25,6 +26,13 @@ describe("clinician packet", () => {
     expect(packetProductRows(fail)[0]["Keniya recommendation"]).toBe("Do not approve for these boxes");
     const ready = { ...held, boxes: [{ ...held.boxes[0], picks: [{ snack: snack({ diligenceComplete: true, status: "Pre-approved", clinicalDecision: "pending", clinicianApprovedBy: null }), category: null }] }] };
     expect(packetProductRows(ready)[0]["Keniya recommendation"]).toBe("Recommend Approve — clinician decision required");
+  });
+  it("includes completed proposals in Laurie's packet and excludes failed lineups or held extras", () => {
+    const ready: PacketInput = { ...input, audience: "clinician", boxes: [{ ...input.boxes[0], state: "draft", checks: [], picks: [{ snack: shared, category: "Protein" }], extras: [] }] };
+    expect(packetProductRows(ready).map((r) => r.Code)).toEqual(["P001"]);
+    expect(packetProductRows({ ...ready, boxes: [{ ...ready.boxes[0], checks: [{ key: "gap", label: "Missing picks", value: "1", level: "block", pass: false, deficit: 1 }] }] })).toEqual([]);
+    expect(packetProductRows({ ...ready, boxes: [{ ...ready.boxes[0], extras: [snack({ diligenceComplete: false })] }] })).toEqual([]);
+    expect(packetProductRows({ ...ready, boxes: [{ ...ready.boxes[0], picks: [{ snack: { ...shared, clinicalDecision: "changes_requested" }, category: "Protein" }] }] })).toEqual([]);
   });
   it("has one row per product used, with the rule and rationale for each box it serves", () => {
     const rows = packetProductRows(input);

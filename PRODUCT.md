@@ -37,7 +37,7 @@ customer condition / life stage → applicable Keniya screening rules → eligib
 - Checkout (Stripe) collects optional "Allergies or foods to avoid" and "Sweet or salty?" answers, stored on the order (`avoid`, `craving`). Quiz answers prefill them.
 - One Packed for You card per box type (not personalized, not per snack): a welcome, what the box focuses on, 2–3 label tips, a QR code to the box page. Nutrient numbers come from each snack's sealed label.
 - Box contents rotate by season; the site shows categories and counts, never specific snacks.
-- Screening source of truth: the Box Builder workbook (Pregnancy P1–P9; Carb Conscious (Blood Sugar) four qualifying pathways, thresholds pending clinical confirmation; Heart roles plus enforced box-level limits).
+- Screening source of truth: the shared rule model and live box rules. Blood Sugar / GDM regular snacks: ≤15 g total carbs and ≤3 g added sugar per pack. Hydration: ≤3 g total carbs per stick, with 0 g added sugar preferred but not required. GDM also requires the complete Pregnancy screen. Heart, Pregnancy, Postpartum and GLP-1 retain their own standards. Exact-pack evidence and internal diligence must be complete before Keniya pre-approval and Laurie’s final review.
 - Sister platform: PharmaGuide (pharmaguide.io), supplement and ingredient intelligence.
 
 ## Capabilities and Constraints

@@ -1,0 +1,338 @@
+{
+  "date": "2026-10-06",
+  "products_replayed": 110,
+  "changes": {
+    "pregnancy_comfort": {
+      "newly_eligible": [],
+      "newly_ineligible": [],
+      "eligible_before": 31,
+      "eligible_after": 31
+    },
+    "blood_sugar": {
+      "newly_eligible": [
+        "P110"
+      ],
+      "newly_ineligible": [
+        "P015",
+        "P017",
+        "P030",
+        "P103"
+      ],
+      "eligible_before": 36,
+      "eligible_after": 33
+    },
+    "heart": {
+      "newly_eligible": [],
+      "newly_ineligible": [],
+      "eligible_before": 35,
+      "eligible_after": 35
+    },
+    "gestational_diabetes": {
+      "newly_eligible": [
+        "P110"
+      ],
+      "newly_ineligible": [
+        "P030",
+        "P103"
+      ],
+      "eligible_before": 17,
+      "eligible_after": 16
+    },
+    "glp1": {
+      "newly_eligible": [],
+      "newly_ineligible": [],
+      "eligible_before": 36,
+      "eligible_after": 36
+    },
+    "postpartum": {
+      "newly_eligible": [],
+      "newly_ineligible": [],
+      "eligible_before": 31,
+      "eligible_after": 31
+    }
+  },
+  "active_before": 0,
+  "active_after": 0,
+  "internal_diligence_complete": 0,
+  "clinician_packet_products": 0,
+  "lineups": [
+    {
+      "box": "pregnancy_comfort",
+      "optimizer_candidates_before": 28,
+      "optimizer_candidates_after": 28,
+      "optimizer_filled_before": 14,
+      "optimizer_filled_after": 14,
+      "draft_version": 5,
+      "draft_before": [
+        "P039",
+        "P020",
+        "P021",
+        "P031",
+        "P011",
+        "P047",
+        "P035",
+        "P023"
+      ],
+      "draft_after": [
+        "P034",
+        "P032",
+        "P001",
+        "P038",
+        "P004",
+        "P035",
+        "P036",
+        "P053",
+        "P048",
+        "P045",
+        "P030",
+        "P028",
+        "P025",
+        "P006"
+      ],
+      "blocking_failures_after": [
+        {
+          "label": "Unreviewed picks (Candidate)",
+          "value": "14 (need \u2264 0)"
+        }
+      ],
+      "n_minus_one_before": null,
+      "n_minus_one_after": null,
+      "n_minus_one_note": "Not qualified: baseline lineup fails blocking checks; no release resilience claim."
+    },
+    {
+      "box": "blood_sugar",
+      "optimizer_candidates_before": 34,
+      "optimizer_candidates_after": 31,
+      "optimizer_filled_before": 14,
+      "optimizer_filled_after": 14,
+      "draft_version": 5,
+      "draft_before": [
+        "P083",
+        "P013",
+        "P010",
+        "P021",
+        "P020",
+        "P008",
+        "P015",
+        "P039",
+        "P023"
+      ],
+      "draft_after": [
+        "P011",
+        "P014",
+        "P020",
+        "P013",
+        "P083",
+        "P021",
+        "P023",
+        "P010",
+        "P025",
+        "P034",
+        "P032",
+        "P035",
+        "P036",
+        "P073"
+      ],
+      "blocking_failures_after": [
+        {
+          "label": "Unreviewed picks (Candidate)",
+          "value": "14 (need \u2264 0)"
+        }
+      ],
+      "n_minus_one_before": null,
+      "n_minus_one_after": null,
+      "n_minus_one_note": "Not qualified: baseline lineup fails blocking checks; no release resilience claim."
+    },
+    {
+      "box": "heart",
+      "optimizer_candidates_before": 33,
+      "optimizer_candidates_after": 33,
+      "optimizer_filled_before": 14,
+      "optimizer_filled_after": 14,
+      "draft_version": 6,
+      "draft_before": [
+        "P039",
+        "P020",
+        "P023",
+        "P011",
+        "P014",
+        "P047",
+        "P019",
+        "P010"
+      ],
+      "draft_after": [
+        "P020",
+        "P023",
+        "P010",
+        "P006",
+        "P074",
+        "P034",
+        "P011",
+        "P014",
+        "P068",
+        "P032",
+        "P033",
+        "P035",
+        "P036",
+        "P088"
+      ],
+      "blocking_failures_after": [
+        {
+          "label": "Unreviewed picks (Candidate)",
+          "value": "14 (need \u2264 0)"
+        }
+      ],
+      "n_minus_one_before": null,
+      "n_minus_one_after": null,
+      "n_minus_one_note": "Not qualified: baseline lineup fails blocking checks; no release resilience claim."
+    },
+    {
+      "box": "gestational_diabetes",
+      "optimizer_candidates_before": 15,
+      "optimizer_candidates_after": 14,
+      "optimizer_filled_before": 12,
+      "optimizer_filled_after": 11,
+      "draft_version": 4,
+      "draft_before": [
+        "P039",
+        "P011",
+        "P035",
+        "P020",
+        "P013",
+        "P021",
+        "P025",
+        "P010",
+        "P008",
+        "P036",
+        "P030"
+      ],
+      "draft_after": [
+        "P025",
+        "P035",
+        "P036",
+        "P038",
+        "P004",
+        "P099",
+        "P100",
+        "P101",
+        "P034",
+        "P032",
+        "P102"
+      ],
+      "blocking_failures_after": [
+        {
+          "label": "Selections filled",
+          "value": "11 (need 14)"
+        },
+        {
+          "label": "Unreviewed picks (Candidate)",
+          "value": "11 (need \u2264 0)"
+        },
+        {
+          "label": "Savory picks",
+          "value": "1 (need 3\u20136)"
+        },
+        {
+          "label": "Substantial selections",
+          "value": "6 (need \u2265 8)"
+        },
+        {
+          "label": "Protein- or fiber-forward picks",
+          "value": "4 (need \u2265 5)"
+        }
+      ],
+      "n_minus_one_before": null,
+      "n_minus_one_after": null,
+      "n_minus_one_note": "Not qualified: baseline lineup fails blocking checks; no release resilience claim."
+    },
+    {
+      "box": "glp1",
+      "optimizer_candidates_before": 34,
+      "optimizer_candidates_after": 34,
+      "optimizer_filled_before": 14,
+      "optimizer_filled_after": 14,
+      "draft_version": 3,
+      "draft_before": [
+        "P039",
+        "P015",
+        "P025",
+        "P020",
+        "P013",
+        "P073",
+        "P083",
+        "P021",
+        "P011",
+        "P014",
+        "P010"
+      ],
+      "draft_after": [
+        "P011",
+        "P034",
+        "P020",
+        "P013",
+        "P073",
+        "P004",
+        "P019",
+        "P083",
+        "P021",
+        "P014",
+        "P032",
+        "P033",
+        "P035",
+        "P036"
+      ],
+      "blocking_failures_after": [
+        {
+          "label": "Unreviewed picks (Candidate)",
+          "value": "14 (need \u2264 0)"
+        }
+      ],
+      "n_minus_one_before": null,
+      "n_minus_one_after": null,
+      "n_minus_one_note": "Not qualified: baseline lineup fails blocking checks; no release resilience claim."
+    },
+    {
+      "box": "postpartum",
+      "optimizer_candidates_before": 28,
+      "optimizer_candidates_after": 28,
+      "optimizer_filled_before": 14,
+      "optimizer_filled_after": 14,
+      "draft_version": 4,
+      "draft_before": [
+        "P039",
+        "P020",
+        "P013",
+        "P010",
+        "P031",
+        "P011",
+        "P035",
+        "P025"
+      ],
+      "draft_after": [
+        "P001",
+        "P025",
+        "P034",
+        "P032",
+        "P005",
+        "P004",
+        "P006",
+        "P035",
+        "P036",
+        "P048",
+        "P045",
+        "P033",
+        "P053",
+        "P037"
+      ],
+      "blocking_failures_after": [
+        {
+          "label": "Unreviewed picks (Candidate)",
+          "value": "14 (need \u2264 0)"
+        }
+      ],
+      "n_minus_one_before": null,
+      "n_minus_one_after": null,
+      "n_minus_one_note": "Not qualified: baseline lineup fails blocking checks; no release resilience claim."
+    }
+  ]
+}

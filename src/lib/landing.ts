@@ -86,18 +86,19 @@ export const landings: BoxLanding[] = [
     redirectFrom: ["/balanced-blood-sugar-snack-box", "/carb-conscious-snack-box"],
     title: "Blood Sugar Snack Box: At or below {{blood_sugar.carbsMax}} g Carbs Per Pack",
     description:
-      "14 snacks for type 1, type 2 and prediabetes, every pack at or below {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar: protein-forward, fiber-forward, nuts and seeds, portioned treats. $47, free shipping.",
+      "14 snacks for type 1, type 2 and prediabetes, every snack pack at or below {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar: protein-forward, fiber-forward, nuts and seeds, portioned treats. $47, free shipping.",
     h1: "Snacks for blood sugar, with the carb count already checked.",
     intro:
-      "Built by a founder with a lifetime of label-reading for type 1 diabetes. Every pack stays at or below {{blood_sugar.carbsMax}} g total carbohydrate and {{blood_sugar.addedSugarMax}} g added sugar, then has to earn its place through protein, fiber, whole-food fats or a small, portioned treat.",
+      "Built by a founder with a lifetime of label-reading for type 1 diabetes. Every snack pack stays at or below {{blood_sugar.carbsMax}} g total carbohydrate and {{blood_sugar.addedSugarMax}} g added sugar, then has to earn its place through protein, fiber, whole-food fats or a small, portioned treat.",
     forWho: [
       "People with type 1 or type 2 diabetes or prediabetes",
       "Anyone keeping carbs and added sugar in check",
       "Family and friends who want to send snacks that fit",
     ],
     screening: [
+      { title: "Very-low-carb hydration picks", body: "Hydration picks: {{blood_sugar.beverageCarbsMax}} g total carbs or less per stick. 0 g added sugar options are preferred when available." },
       {
-        title: "At or below {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar, every pack",
+        title: "At or below {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar, every snack pack",
         body: "Total carbohydrate, never \"net carbs\". A snack over either number can't go in, whatever else it has going for it.",
       },
       {
@@ -124,7 +125,7 @@ export const landings: BoxLanding[] = [
       },
       {
         q: "Is it sugar-free?",
-        a: "No. Some snacks, like the treats and fruit bars, contain sugar. They're portioned, and the added sugar is on every label.",
+        a: "No. Regular snacks have at most {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar per pack. Hydration picks: {{blood_sugar.beverageCarbsMax}} g total carbs or less per stick. 0 g added sugar options are preferred when available; a small amount of sugar does not automatically exclude a stick.",
       },
       {
         q: "Is there a box for gestational diabetes?",
@@ -206,6 +207,7 @@ export const landings: BoxLanding[] = [
       "Partners and family who want to send snacks that fit",
     ],
     screening: [
+      { title: "Very-low-carb hydration picks", body: "Hydration picks: {{gestational_diabetes.beverageCarbsMax}} g total carbs or less per stick, plus full Pregnancy screening. 0 g added sugar options are preferred when available." },
       {
         title: "Keniya Pregnancy Screening first",
         body: "Fully cooked or pasteurized, no pregnancy no-gos, caffeine known and limited, herbs and botanicals left out when safety is uncertain.",

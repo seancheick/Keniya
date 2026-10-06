@@ -44,7 +44,7 @@ export function daysUntil(iso: string | null, today = new Date()) {
   return Math.round((new Date(`${iso}T00:00:00Z`).getTime() - Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())) / DAY);
 }
 
-export function scorer(objective: Objective, pool: Snack[], runSize: number, today: Date) {
+export function scorer(objective: Objective, pool: Snack[], runSize: number, today: Date, slug?: BoxSlug) {
   const costs = pool.map((s) => s.unitCostCents ?? Infinity).filter(Number.isFinite);
   const maxCost = Math.max(1, ...costs);
   const need = Math.max(1, runSize);
@@ -70,7 +70,8 @@ export function scorer(objective: Objective, pool: Snack[], runSize: number, tod
               ? p.favorite
               : 0.35 * p.margin + 0.2 * p.favorite + 0.2 * p.expiring + 0.15 * p.overstock + 0.1 * p.approved;
     // Approved products and stock win ties; tiny margin term keeps cheap-first as last resort.
-    return main + 0.05 * p.approved + 0.01 * p.margin + (s.onHand > 0 ? 0.01 : 0);
+    const hydrationPreference = (slug === "blood_sugar" || slug === "gestational_diabetes") && s.type === "Beverage" && s.added_sugar_g === 0 ? 0.001 : 0;
+    return hydrationPreference + main + 0.05 * p.approved + 0.01 * p.margin + (s.onHand > 0 ? 0.01 : 0);
   };
 }
 
@@ -91,7 +92,7 @@ export function optimize(input: OptimizeInput): OptimizeResult {
       eligibleFor(slug, s, rules, settings.policy).fits &&
       (catNames.length === 0 || s.categories.some((c) => catNames.includes(c))),
   );
-  const score = scorer(input.objective, pool, input.runSize ?? 1, today);
+  const score = scorer(input.objective, pool, input.runSize ?? 1, today, slug);
   const sc = new Map(pool.map((s) => [s.id, score(s)]));
   const ranked = [...pool].sort((a, b) => sc.get(b.id)! - sc.get(a.id)! || a.code.localeCompare(b.code));
 

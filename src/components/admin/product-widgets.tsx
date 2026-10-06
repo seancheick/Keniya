@@ -49,7 +49,7 @@ export function StatusControls({ id, status, legacyApproval, clinician = false }
             {clinician ? "Reject (clinician)…" : "Reject internally…"}
           </Button>
         )}
-        {status !== "Retired" && (
+        {!clinician && status !== "Retired" && (
           <Button size="sm" variant="ghost" className="max-sm:min-h-11" name="status" value="Retired" disabled={pending}>
             Retire
           </Button>
