@@ -4,7 +4,7 @@ import { site } from "@/lib/site";
 export const faqs = [
   {
     q: "What exactly is in the box?",
-    a: `${site.snackCount} snacks across the categories shown for each box, like comfort, protein, sweets and sips. Each condition has its own screening rules, so a snack has to qualify for your box before it can go in. Exact picks rotate with the season. At least 8 are full single servings, a pack of chews or two tea bags counts as one snack, and small extras are free and never counted. Every box includes a Packed for You card on how we choose.`,
+    a: `${site.snackCount} snacks across the categories shown for each box, like comfort, protein, sweets and sips. Each box has its own screening rules, so a snack has to qualify for your box before it can go in. Exact picks rotate with the season. At least 8 are full single servings, a pack of chews or two tea bags counts as one snack, and small extras are free and never counted. Every box includes a Packed for You card on how we choose.`,
   },
   {
     q: "When does it ship?",
@@ -20,11 +20,11 @@ export const faqs = [
   },
   {
     q: "What about allergies?",
-    a: "Every snack ships sealed with its full label. Your condition decides which snacks are eligible; your preferences help us choose among them. Tell us about allergies or foods to avoid, and whether you lean sweet or salty, at checkout, and we'll pack around them where we can. We aren't an allergen-free facility and can't rule out cross-contact at the maker, so with a severe allergy, please check every label.",
+    a: "Every snack ships sealed with its full label. Your box's standards decide which snacks are eligible; your preferences help us choose among them. Tell us about allergies or foods to avoid, and whether you lean sweet or salty, at checkout, and we'll pack around them where we can. We aren't an allergen-free facility and can't rule out cross-contact at the maker, so with a severe allergy, please check every label.",
   },
   {
     q: "Is this medical advice?",
-    a: "No. We screen and select packaged snacks around your condition, but we don't diagnose, treat or give personal medical advice. Your doctor is the right person to ask about what's best for you.",
+    a: "No. We screen and select packaged snacks to each box's standards, but we don't diagnose, treat or give personal medical advice. Your doctor is the right person to ask about what's best for you.",
   },
 ];
 

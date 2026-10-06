@@ -66,7 +66,7 @@ export function Shop() {
       <div className="mx-auto max-w-6xl px-5 py-14 lg:py-20">
         <h2 className="font-display text-headline text-ink">Choose your box.</h2>
         <p className="mt-3 text-ink-soft">
-          ${site.preorderPriceUSD} each · {site.snackCount} snacks · each screened for its condition
+          ${site.preorderPriceUSD} each · {site.snackCount} snacks · each screened to its own standards
         </p>
         <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-sage/50 bg-sage/10 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
           <p className="text-ink">

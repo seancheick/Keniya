@@ -60,7 +60,7 @@ const faqs = [
   },
   {
     q: "Which box makes a good pregnancy gift?",
-    a: "The Pregnancy Comfort box. Every snack passes Keniya Pregnancy Screening: fully cooked or pasteurized, caffeine checked, and ingredients with a known pregnancy concern left out.",
+    a: "The Pregnancy Comfort box. Every snack passes Keniya Pregnancy Screening: fully cooked or pasteurized, caffeine checked, and herbs and botanicals left out when pregnancy safety is uncertain.",
   },
   {
     q: "Can I cancel?",

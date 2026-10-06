@@ -59,8 +59,8 @@ export const landings: BoxLanding[] = [
         body: "We read them on every label, and each snack ships sealed with its full label so you can too.",
       },
       {
-        title: "Ingredients with a known pregnancy concern left out",
-        body: "For example licorice root and sage. Some other ingredients we skip as a Keniya preference, not because they're unsafe.",
+        title: "Herbs and botanicals we leave out during pregnancy",
+        body: "We skip concentrated herbs and botanicals when pregnancy safety is uncertain, for example licorice root and sage. Some other ingredients we skip as a Keniya preference, not because they're unsafe.",
       },
       {
         title: "Honest counting and fresh dates",
@@ -181,15 +181,15 @@ export const landings: BoxLanding[] = [
       },
       { title: "At least 3 fiber-forward picks", body: "Whole grains, beans and fruit." },
       {
-        title: "No more than 2 higher-sodium picks",
-        body: "Anything over 300 mg of sodium per serving counts, and we cap them at two.",
+        title: "Sodium capped on every pick",
+        body: "Every snack has to come in under our per-pack sodium limit, and the exact number is on its label.",
       },
       { title: "No more than 2 treats", body: "Treats stay treats." },
     ],
     faqs: [
       {
         q: "Is every snack low-sodium?",
-        a: "Not necessarily. We cap higher-sodium picks, anything over 300 mg per serving, at two per box, and every snack ships with its label so you can see the sodium and plan around it.",
+        a: "Every snack has to pass our per-pack sodium limit, and we favor the lowest-sodium picks when choosing. Every snack ships with its label so you can see the exact number and plan around it.",
       },
       {
         q: "Will this lower my blood pressure or cholesterol?",
