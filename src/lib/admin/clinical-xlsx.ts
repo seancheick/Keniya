@@ -39,9 +39,9 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[], ruleSumm
     ["1. Open Review", "Start with Recommend Approve rows. Hold rows need operator diligence before clinician review. Active lineup products appear first within each group."],
     ["2. Check the evidence", "Click the product name to open its row on Details, or use the same product code to check ingredients, allergens, per-pack nutrition, sources and Pregnancy checks. Blank values mean not recorded, not zero or safe."],
     ["3. Record your decision", "Fill the yellow Decision, Comments, Reviewer and Review date cells. Use Approve, Changes needed or Reject. State which boxes your decision covers and any corrections or restrictions in Comments."],
-    ["4. Return this file", "Send the completed file to the operator. Editing the workbook does not update the admin or approve a product automatically. The operator records your decision against the current product label, checking the Product ID and Label version ID on Details for changes since export."],
+    ["4. Record in the clinician account", "Workbook decisions are comments only and do not approve a product. Laurie records her decision through her authenticated clinician account after internal diligence is complete. Check the Product ID and Label version ID for changes since export; the operator corrects evidence and requested changes."],
     ["Before packing", "Product verification is only clinician approval, unit or verified outer-pack barcode and package-in-hand verification. Box rules, customer restrictions, current lot availability and expiry are checked separately when packing."],
-    ["Review groups", "Awaiting clinician = Pre-approved. Re-attest legacy approval = Approved without authenticated clinician approval. Operator work required = incomplete diligence. Label / initial review = Candidate. Rejected and Retired remain in Details."],
+    ["Review groups", `Awaiting clinician = completed internal diligence. Operator work required = evidence or diligence remains. Label / initial review = Candidate. Rejected and Retired remain in Details.${rows.some((r) => r.Status === "Approved" && r["Authenticated clinician approval"] !== "yes") ? " Re-attest legacy approval = recorded Approved without authenticated clinician approval." : ""}`],
     ["Review total", String(rows.filter((r) => !["Rejected", "Retired"].includes(String(r.Status))).length)],
   ];
   for (const values of instructions) { const r = start.addRow(values); r.height = 60; r.alignment = { wrapText: true, vertical: "top" }; r.getCell(1).font = { bold: true }; }
@@ -113,7 +113,7 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[], ruleSumm
   section("How to review");
   line("1", "Start here explains the workflow. Review has the short decision queue; Details contains every product and all evidence.");
   line("2", "Read Keniya recommendation first. Historical pre-screen notes do not establish current diligence or clinical approval.");
-  line("3", "Fill the four yellow columns on Review: Decision, Comments, Reviewer and Review date. Return the file for manual recording in the admin.");
+  line("3", "The yellow workbook cells capture review comments. Approval is recorded only through Laurie's authenticated clinician account after internal diligence is complete.");
   line("4", "Candidate rows need operator diligence before an authenticated clinician decision. Missing label values stay unknown.");
   lg.addRow([]);
   section("Status");
