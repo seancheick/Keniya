@@ -55,6 +55,15 @@ for (const slug of slugs) {
   if (found.length) {
     console.log(`✓ ${slug}: ${found.length} disjoint READY lineup${found.length === 1 ? "" : "s"} (${ctx.catalog.snacks.length - uncosted.length} costed products in the pool)`);
     found.forEach((codes, i) => console.log(`    ${i === 0 ? "lineup " : "alt " + i + " "}: ${codes.join(" ")}`));
+    // Resilience: which single product, if out of stock, leaves the box unbuildable?
+    const primary = found[0];
+    const fragile: string[] = [];
+    for (const code of primary) {
+      const id = ctx.catalog.snacks.find((s) => s.code === code)!.id;
+      const r = optimize({ slug, rules: ctx.rules[slug], settings: ctx.settings, snacks: ctx.catalog.snacks, objective: "balanced", packagingOz: ctx.packOz, runSize: ctx.settings.runSize[slug], requireStock: false, excludeIds: [...uncosted, id] });
+      if (blockingFailures(r.checks).length) fragile.push(code);
+    }
+    console.log(fragile.length ? `    single points of failure: ${fragile.join(" ")} (the box can't be built without them)` : "    no single product is a point of failure");
   }
 }
 process.exit(failed ? 1 : 0);
