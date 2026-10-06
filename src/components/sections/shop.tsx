@@ -180,7 +180,7 @@ export function Shop() {
 
         {/* Step 2 — what's inside + buy */}
         <div className="mt-6 grid gap-6 lg:grid-cols-[1.25fr_1fr] lg:gap-8">
-          {/* All three panels are in the HTML (tabpanel pattern) so search engines and screen
+          {/* Every box's panel is in the HTML (tabpanel pattern) so search engines and screen
               readers get every box; only the selected one is shown. */}
           <div className="order-2 lg:order-1">
             {boxes.map((b) => (

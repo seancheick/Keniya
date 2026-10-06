@@ -21,7 +21,7 @@ const figtree = Figtree({
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: `Snack boxes for pregnancy, carb-conscious eating & heart health · ${site.name}`,
+    default: `Snack boxes screened for pregnancy, blood sugar, heart, GLP-1 & postpartum · ${site.name}`,
     template: `%s · ${site.name}`,
   },
   description: site.description,

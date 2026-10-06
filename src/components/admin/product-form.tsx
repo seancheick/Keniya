@@ -263,7 +263,7 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
           </div>
         </Section>
 
-        <Section title="Judged roles" hint="Reviewer's call. Feed Heart and Carb Conscious eligibility.">
+        <Section title="Judged roles" hint="Reviewer's call. Feed Heart, Blood Sugar and GLP-1 eligibility.">
           <div className="grid gap-2 sm:grid-cols-2">
             {ROLE_KEYS.map((k) => (
               <label key={k} className="flex items-center gap-2 text-sm">
