@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { avoidConflict } from "@/lib/admin/avoid";
 import { db, must, allRows, identityCode } from "@/lib/admin/db";
+import { isClinicianApproved } from "@/lib/admin/rules";
 import { optimize } from "@/lib/admin/optimizer";
 import { matchLabel, readLabelCsv } from "@/lib/admin/pirateship";
 import { estimatePostage } from "@/lib/admin/postage";
@@ -39,6 +40,8 @@ async function planItems(slug: BoxSlug, avoid: string | null) {
   const ctx = await loadAdminContext();
   const box = ctx.boxes[slug];
   if (!box.lineup || !box.picks.length) return { error: `No active ${slug} lineup. Build one on the Boxes tab first.` } as const;
+  if (!box.ready) return { error: `The active ${slug} lineup fails current rules. Update it before planning orders.` } as const;
+  if ([...box.picks.map((p) => p.snack), ...box.extras].some((s) => !isClinicianApproved(s))) return { error: "The active lineup needs clinician approval before planning orders." } as const;
   const conflicts = ctx.catalog.snacks
     .map((s) => ({ s, why: avoidConflict({ ...s, ingredients: ctx.catalog.versions.get(s.id)?.ingredients }, avoid) }))
     .filter((x) => x.why);
@@ -52,7 +55,7 @@ async function planItems(slug: BoxSlug, avoid: string | null) {
       slug,
       rules: ctx.rules[slug],
       settings: ctx.settings,
-      snacks: ctx.catalog.snacks,
+      snacks: ctx.catalog.snacks.filter(isClinicianApproved),
       objective: "balanced",
       packagingOz: ctx.packOz,
       excludeIds: conflicts.map((c) => c.s.id),
@@ -61,7 +64,7 @@ async function planItems(slug: BoxSlug, avoid: string | null) {
       picks = r.picks;
       note = `Avoid “${avoid}”: swapped ${hit.map((h) => h.snack.name).join(", ")}`;
     } else {
-      note = `Avoid “${avoid}” conflicts with ${hit.map((h) => h.snack.name).join(", ")}; no compliant lineup found. Swap by hand.`;
+      return { error: `Avoid “${avoid}” conflicts with ${hit.map((h) => h.snack.name).join(", ")}; no approved compliant lineup found.` } as const;
     }
   }
   return { ctx, lineupId: box.lineup.id, items: [...picks.map((p) => p.snack.id), ...box.extras.map((e) => e.id)], note } as const;

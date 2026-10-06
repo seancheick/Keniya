@@ -1,5 +1,6 @@
 // Pack-floor package verification: the last rung before "ready to pack". Someone holding the
 // actual package confirms the UPC, the label, the serving format and the expiry date.
+import { validCheckDigit } from "./barcode";
 import { sameUpc } from "./fdc";
 
 /** P9 (lot/package level): a package needs at least this many days left (3-month ship + shelf window). */
@@ -9,7 +10,7 @@ export const MIN_DAYS_TO_EXPIRY = 90;
 export const minExpiryDate = (now = new Date()) => new Date(now.getTime() + MIN_DAYS_TO_EXPIRY * 86_400_000).toISOString().slice(0, 10);
 
 export const normalizeUpc = (raw: string) => raw.replace(/\D/g, "");
-export const validUpc = (upc: string) => /^\d{8,14}$/.test(upc);
+export const validUpc = validCheckDigit;
 
 export function daysBetween(fromIso: string, toIso: string): number {
   return Math.round((Date.parse(`${toIso}T00:00:00Z`) - Date.parse(`${fromIso}T00:00:00Z`)) / 86_400_000);
@@ -20,20 +21,6 @@ export function isIsoDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const parsed = new Date(`${value}T00:00:00Z`);
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
-}
-
-/** Label changes invalidate both package verification and the prior formula approval. */
-export function packageLabelChanged(previous: Record<string, unknown>, next: Record<string, unknown>): boolean {
-  const keys = ["calories", "protein_g", "fiber_g", "carbs_g", "added_sugar_g", "sodium_mg", "caffeine_mg", "sat_fat_g", "sugar_alcohols_g", "unit_wt_oz", "ingredients", "allergens", "free_from"];
-  return keys.some((key) => {
-    const a = previous[key]; const b = next[key];
-    if (key === "free_from") {
-      const normalize = (v: unknown) => JSON.stringify(Object.entries((v ?? {}) as Record<string, boolean>).sort(([a], [b]) => a.localeCompare(b)));
-      return normalize(a) !== normalize(b);
-    }
-    if (["ingredients", "allergens"].includes(key)) return (a ?? "") !== (b ?? "");
-    return (a === null || a === undefined ? null : Number(a)) !== (b === null || b === undefined ? null : Number(b));
-  });
 }
 
 export type VerifyInput = {
@@ -52,7 +39,7 @@ export type VerifyInput = {
 /** Reasons the package can't be verified; empty = verified. */
 export function verifyProblems(v: VerifyInput): string[] {
   const out: string[] = [];
-  if (!validUpc(v.scannedUpc)) out.push("Scan or type the barcode (8–14 digits).");
+  if (!validUpc(v.scannedUpc)) out.push("Scan or type a valid GS1 barcode (8–14 digits and a valid check digit).");
   else if (v.fileUpc && !sameUpc(v.fileUpc, v.scannedUpc))
     out.push(`This barcode (${v.scannedUpc}) doesn't match the one on file (${v.fileUpc}): wrong item, or a new formula/pack.`);
   else if (v.otherOwner) out.push(`This barcode is already on ${v.otherOwner.code} ${v.otherOwner.name}.`);

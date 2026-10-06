@@ -68,7 +68,7 @@ export const heartTreat = (p: RuleInput) => p.roles.CT === true;
 const TROPICAL_OIL = /\b(palm|palm[- ]kernel|coconut)\s+oil\b|partially\s+hydrogenated/i;
 export const hasAddedTropicalOil = (p: RuleInput) => TROPICAL_OIL.test(p.ingredients ?? "");
 /** The ≤4 g sat-fat allowance is for fat intrinsic to nuts/seeds (AHA Heart-Check), not added oils. */
-export const nutFatException = (p: RuleInput) => p.roles.NS === true && !hasAddedTropicalOil(p);
+export const nutFatException = (p: RuleInput) => p.roles.NS === true && Boolean(p.ingredients?.trim()) && !hasAddedTropicalOil(p);
 
 export type BoxFit = {
   box: BoxSlug;
@@ -221,7 +221,7 @@ export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, polic
   if (p.status === "Retired") out.push("Retired");
   const ships = shipsUnderPolicy(p, policy);
   if (!ships.ok) out.push(ships.reason!);
-  // Single-serve must be confirmed: blank P8 is "unknown", not a pass. (Pregnancy's own P1–P9 rule already covers it.)
+  // Single-serve must be confirmed: blank P8 is "unknown", not a pass. (Pregnancy's own P1–P8 rule already covers it.)
   if (slug !== "pregnancy_comfort") {
     const p8 = (p.pregnancy_checks.P8 ?? "").toUpperCase();
     if (p8 === "FAIL") out.push("Multi-serve pack (P8)");
@@ -230,6 +230,7 @@ export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, polic
   const over = (v: number | null, max: number | null, what: string, unit: string) => {
     if (max !== null && num(v) && v > max) out.push(`${v} ${unit} ${what} (max ${max} ${unit})`);
   };
+  if (p.type === "Beverage") over(p.added_sugar_g, rules.beverageAddedSugarMax, "added sugar in beverage", "g");
   over(p.carbs_g, rules.carbsMax, "carbs", "g");
   // A controlled treat gets its own added-sugar ceiling when the box sets one.
   const treat = heartTreat(p) && rules.treatAddedSugarMax !== null;
@@ -265,7 +266,7 @@ export function eligibleBoxes(
 }
 
 /** Approved by a named clinician (legacy workbook approvals don't count until re-attested). */
-export const isClinicianApproved = (s: { status: Snack["status"]; clinicianApprovedBy?: string | null }) => s.status === "Approved" && Boolean(s.clinicianApprovedBy);
+export const isClinicianApproved = (s: { status: Snack["status"]; clinicianApprovedBy?: string | null; clinicalDecision?: Snack["clinicalDecision"]; approvalRole?: string | null; diligenceComplete?: boolean }) => s.status === "Approved" && s.clinicianApprovedBy === "Laurie Pham" && s.clinicalDecision === "approved" && s.approvalRole === "clinician" && s.diligenceComplete === true;
 /** Clinician-approved and package-verified: the last step before a pick can be packed. */
 export const isReadyToPack = (s: Snack) => isClinicianApproved(s) && s.packageVerified === true;
 
@@ -296,7 +297,7 @@ export function packBlockers(
     const e = eligibleFor(slug, snack, rules, policy, snack.rejectReason);
     if (!e.fits) why.push(`not eligible (${e.reasons[0]})`);
     if (snack.status !== "Approved") why.push(`${snack.status}, not clinician-approved`);
-    else if (!snack.clinicianApprovedBy) why.push("legacy approval, needs clinician re-attestation");
+    else if (!isClinicianApproved(snack)) why.push("legacy approval, needs clinician re-attestation");
     if (!upc) why.push("no UPC");
     if (!verifiedAt) why.push("package not verified");
     return why.length ? [`${snack.code} ${snack.name}: ${why.join(", ")}`] : [];

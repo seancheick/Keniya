@@ -2,6 +2,8 @@ import { DEFAULT_SETTINGS, type BoxSlug } from "@/lib/admin/types";
 import type { CategoryCopy } from "@/lib/standards";
 
 export type Box = {
+  /** Request-time sales and approval state; absent means checkout is unavailable. */
+  sale?: { available: boolean; clinicianApproved: boolean; priceCents: number; remaining: number; state: "preorder" | "sold_out" | "waitlist" };
   slug: BoxSlug;
   name: string;
   shortName: string;
@@ -76,7 +78,7 @@ const raw: Omit<Box, "founding">[] = [
       Savory: { name: "Savory crunch", note: "picks such as chickpeas, seeds, popcorn and crackers, each within the carb limit" },
       Protein: { name: "Protein", note: "picks such as nut butters, nuts, jerky and bars that lead with protein" },
       Sweet: { name: "Smarter sweets", note: "fruit and portioned treats, each with no more than {{blood_sugar.addedSugarMax}} g added sugar" },
-      Hydration: { name: "Sips", note: "unsweetened drink mixes, no added sugar" },
+      Hydration: { name: "Sips", note: "{{blood_sugar.beverageStandard}} drink mixes" },
       Comfort: { name: "Comfort", note: "gentle, easy picks" },
     },
     tint: "sage",
@@ -93,7 +95,7 @@ const raw: Omit<Box, "founding">[] = [
       Savory: { name: "Savory crunch", note: "picks such as nuts, seeds, whole-grain crackers and popcorn, each with {{heart.sodiumMax}} mg sodium or less" },
       Sweet: { name: "Fruit & treats", note: "fruit such as dried fruit and fruit bars, and at most {{heart.treatMax}} portioned treats" },
       Protein: { name: "Protein", note: "picks such as nut and seed butters and nuts" },
-      Hydration: { name: "Sips", note: "unsweetened drink mixes and water enhancers" },
+      Hydration: { name: "Sips", note: "{{heart.beverageStandard}} drink mixes and water enhancers" },
       Comfort: { name: "Comfort", note: "gentle, easy picks" },
     },
     tint: "cream",
@@ -111,7 +113,7 @@ const raw: Omit<Box, "founding">[] = [
       Savory: { name: "Savory crunch", note: "portioned savory picks, each within the carb limit" },
       Comfort: { name: "Comfort", note: "plain, gentle picks for rough days" },
       Sweet: { name: "Smarter sweets", note: "unsweetened fruit and at most {{gestational_diabetes.treatMax}} portioned treats" },
-      Hydration: { name: "Sips", note: "unsweetened, caffeine-checked drink mixes" },
+      Hydration: { name: "Sips", note: "{{gestational_diabetes.beverageStandard}}, caffeine-checked drink mixes" },
     },
     tint: "blush",
     imageAlt: "The Gestational Diabetes Box (photography coming)",
@@ -121,13 +123,13 @@ const raw: Omit<Box, "founding">[] = [
     name: "GLP-1 Companion Box",
     shortName: "GLP-1",
     forWho: "For people on GLP-1 medications, when appetite is small and protein matters.",
-    why: "Protein-forward, smaller portions, unsweetened sips and gentle comfort picks.",
+    why: "Protein-forward, smaller portions, {{glp1.beverageStandard}} sips and gentle comfort picks.",
     composition: {
       Protein: { name: "Protein-forward", note: "small packs that lead with protein" },
       Savory: { name: "Savory crunch", note: "portioned, lower-carb savory picks" },
       Comfort: { name: "Comfort", note: "gentle, easy picks for queasy days" },
       Sweet: { name: "Small sweets", note: "small, portioned treats" },
-      Hydration: { name: "Sips", note: "unsweetened hydration, no added sugar" },
+      Hydration: { name: "Sips", note: "{{glp1.beverageStandard}} hydration" },
     },
     tint: "sage",
     imageAlt: "The GLP-1 Companion Box (photography coming)",

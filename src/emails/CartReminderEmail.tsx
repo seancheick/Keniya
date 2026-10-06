@@ -1,25 +1,26 @@
 import { Heading, Text } from "@react-email/components";
 import type { PublicBox as Box } from "@/lib/box";
+import { landingFor } from "@/lib/landing";
 import { site } from "@/lib/site";
 import { Button, EmailShell, Panel, CategoryList, c, t } from "@/emails/layout";
 
 /** One reminder after a Stripe Checkout session expires unpaid. */
-export function CartReminderEmail({ box, recoveryUrl }: { box: Box; recoveryUrl: string }) {
+export function CartReminderEmail({ box }: { box: Box }) {
   return (
     <EmailShell
-      preview={`Your ${box.name} is still waiting. Only ${box.founding} were made.`}
+      preview={`Take another look at the ${box.name}. Availability is checked when you preorder.`}
       image={box.image}
       imageAlt={box.imageAlt}
       footerNote="This is the only reminder we'll send about this checkout."
     >
       <Text style={t.eyebrow}>Still thinking it over?</Text>
-      <Heading style={t.h1}>You left your {box.shortName} box behind.</Heading>
+      <Heading style={t.h1}>Still interested in the {box.shortName} box?</Heading>
       <Text style={t.body}>
-        No rush, but there are only {box.founding} founding {box.name}es, and once they&apos;re
-        gone, they&apos;re gone. Your checkout is saved, so it takes about a minute to finish.
+        Your previous checkout has expired. You can visit the box page to start a new preorder
+        while it is available. A box has not been reserved for you.
       </Text>
 
-      <Button href={recoveryUrl}>Finish my order</Button>
+      <Button href={`${site.url.replace(/\/$/, "")}${landingFor(box.slug).path}`}>View the box</Button>
 
       <Panel>
         <Text style={{ ...t.small, color: c.ink }}>

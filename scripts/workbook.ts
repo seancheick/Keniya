@@ -95,7 +95,7 @@ const emptyPerBox = <T,>(make: () => T) => Object.fromEntries(BOX_SLUGS.map((b) 
 // columns (v5 added the stock block after "Your quote $") don't shift what we read.
 const CHECK_COLS: [string, string][] = [
   ["P1", "P1"], ["P2", "P2"], ["P3", "P3"], ["P4", "P4"], ["P5", "P5"], ["P6", "P6"],
-  ["P7a", "P7a"], ["P7b", "P7b"], ["P8", "P8"], ["P9", "P9"], ["P7c", "P7c"],
+  ["P7a", "P7a"], ["P7b", "P7b"], ["P8", "P8"], ["P7c", "P7c"],
 ];
 const ROLE_COLS: [string, string][] = [["UF", "UF"], ["NS", "NS"], ["WG", "WG"], ["MF", "MF"], ["CT", "CT"], ["Whole-food fat/protein", "WHOLE_FOOD"]];
 const FF_COLS: [string, string][] = [

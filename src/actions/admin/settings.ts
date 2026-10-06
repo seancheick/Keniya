@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { expireInvalidCheckoutSessions } from "@/lib/commerce-reconcile";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { db } from "@/lib/admin/db";
@@ -63,6 +64,7 @@ export async function saveSettings(_prev: SettingsState, fd: FormData): Promise<
   if (!parsed.success) return { error: `${parsed.error.issues[0].path.join(".")}: ${parsed.error.issues[0].message}` };
   const res = await db().from("admin_settings").upsert({ id: 1, data: parsed.data, updated_at: new Date().toISOString(), updated_by: admin.name });
   if (res.error) return { error: res.error.message };
+  await expireInvalidCheckoutSessions(BOX_SLUGS);
   revalidatePath("/admin", "layout");
   return { ok: true };
 }
@@ -88,6 +90,7 @@ export async function savePackage(_prev: SettingsState, fd: FormData): Promise<S
   const row = { ...rest, cost_cents: costCents, is_default: is_default === "on" };
   const res = await db().rpc("save_package_profile", { p_id: id || null, p_profile: row });
   if (res.error) return { error: res.error.message };
+  await expireInvalidCheckoutSessions(BOX_SLUGS);
   revalidatePath("/admin", "layout");
   return { ok: true };
 }

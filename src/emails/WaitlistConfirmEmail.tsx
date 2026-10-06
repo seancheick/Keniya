@@ -17,7 +17,6 @@ export function WaitlistConfirmEmail({
   const box = boxes.find((b) => b.slug === boxInterest);
   // General updates list: nothing is reserved, so no "spot saved" language.
   const updates = boxInterest === UPDATES_INTEREST;
-  // GLP-1 / menopause / postpartum are waitlist-only; don't tell them to preorder.
   const boxName = box?.name ?? requestable.find((c) => c.slug === boxInterest)?.name ?? "Keniya snack box";
 
   return (
@@ -26,7 +25,7 @@ export function WaitlistConfirmEmail({
         updates
           ? "You're subscribed to updates on new boxes and shipping."
           : box
-            ? `Your spot for the ${box.name} is saved.`
+            ? `You're on the ${box.name} list.`
             : `You're on the ${boxName} list.`
       }
       image={box?.image ?? "/images/hero-box.jpg"}
@@ -46,9 +45,9 @@ export function WaitlistConfirmEmail({
         </Text>
       ) : (
         <Text style={t.body}>
-          We saved your spot for the <strong style={{ color: c.ink }}>{boxName}</strong>.{" "}
+          You joined the updates list for the <strong style={{ color: c.ink }}>{boxName}</strong>.{" "}
           {box
-            ? `Preorders are open now, and there are only ${box.founding} founding ${box.name}es. Founding boxes ship ${site.shipDate}.`
+            ? "We'll email you when availability changes. Joining this list does not reserve a box."
             : "Thanks for the request. Requests decide what we build next, and if we make it, you'll be the first to know."}
         </Text>
       )}
@@ -68,7 +67,7 @@ export function WaitlistConfirmEmail({
       </Text>
 
       <Button href={box ? `${siteUrl}/#box-${box.slug}` : `${siteUrl}/#boxes`}>
-        {box ? `Preorder the ${box.shortName} box` : "See the boxes"}
+        {box ? `View the ${box.shortName} box` : "See the boxes"}
       </Button>
     </EmailShell>
   );

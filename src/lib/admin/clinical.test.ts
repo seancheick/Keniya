@@ -7,6 +7,26 @@ import { clinicalWorkbook } from "./clinical-xlsx";
 import ExcelJS from "exceljs";
 
 describe("clinicalReviewRows", () => {
+  it("recognizes verified outer-pack identity without inventing a unit UPC", () => {
+    const extra = { upc: null, verifiedPackBarcode: "012345678905", reviewedBy: "Laurie", verifiedAt: "2026-10-06" };
+    const [row] = clinicalReviewRows([snack({ status: "Approved" })], () => extra as never, () => []);
+    expect(row["Product verification"]).toBe("yes");
+    expect(row["Unit UPC"]).toBeNull();
+    expect(row["Verified outer-pack barcode"]).toBe("012345678905");
+    const [missing] = clinicalReviewRows([snack({ status: "Approved", packageVerified: false })], () => ({ ...extra, verifiedPackBarcode: null }) as never, () => []);
+    expect(missing["Product verification"]).toContain("verified package identity and label");
+  });
+  it("queues a named reviewer without authenticated approval for re-attestation", async () => {
+    const rows = clinicalReviewRows([snack({ status: "Approved", clinicalDecision: "pending", approvalRole: null })],
+      () => ({ reviewedBy: "Laurie Pham", reviewedAt: "2026-10-06" }) as never, () => []);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await clinicalWorkbook(rows) as never);
+    expect(wb.getWorksheet("Review")!.getRow(2).getCell(3).value).toBe("Re-attest legacy approval");
+  });
+  it("does not treat a typed reviewer name as authenticated approval", () => {
+    const [row] = clinicalReviewRows([snack({ clinicalDecision: "pending", approvalRole: null })], () => ({ upc: "036000291452", reviewedBy: "Laurie Pham", verifiedAt: "2026-10-06" }) as never, () => []);
+    expect(row["Product verification"]).toContain("clinician re-attestation");
+  });
   it("shows every rule decision with its reason and no costs", () => {
     const ok = snack({ name: "Roasted chickpeas", unitCostCents: 55 });
     const sweet = snack({ name: "Candy", added_sugar_g: 20, fiber_g: 0, protein_g: 0, pregnancy_checks: { P1: "FAIL" } });
@@ -41,7 +61,7 @@ describe("clinicalReviewRows", () => {
   it("prioritizes review work and preserves excluded products in Details", async () => {
     const rows = clinicalReviewRows([
       snack({ code: "REJECT", status: "Rejected" }),
-      snack({ code: "LEGACY", status: "Approved" }),
+      snack({ code: "LEGACY", status: "Approved", clinicalDecision: "pending", approvalRole: null }),
       snack({ code: "WAIT", status: "Pre-approved" }),
       snack({ code: "CAND", status: "Candidate" }),
     ], () => undefined, () => []);
@@ -74,6 +94,6 @@ describe("clinicalReviewRows", () => {
     expect(wb.worksheets.map((s) => s.name)).toEqual(["Start here", "Review", "Details", "Legend"]);
     const legend = wb.getWorksheet("Legend")!.getSheetValues().flat().join(" ");
     expect(legend).toContain("Pasteurized or fully cooked");
-    expect(legend).toContain("waiting for the clinician");
+    expect(legend).toContain("waiting for authenticated clinician approval");
   });
 });

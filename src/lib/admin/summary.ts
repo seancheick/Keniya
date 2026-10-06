@@ -30,11 +30,11 @@ export type AdminContext = {
 };
 
 /** Everything the dashboard and box pages show, computed once per request. */
-export async function loadAdminContext(): Promise<AdminContext> {
+export async function loadAdminContext(inputs?: { settings: Settings; rules: Record<BoxSlug, BoxRules> }): Promise<AdminContext> {
   const [catalog, settings, rules, lineups, packages, history] = await Promise.all([
     loadCatalog(),
-    loadSettings(),
-    loadBoxRules(),
+    inputs ? Promise.resolve(inputs.settings) : loadSettings(),
+    inputs ? Promise.resolve(inputs.rules) : loadBoxRules(),
     loadActiveLineups(),
     loadPackageProfiles(),
     loadPostageHistory(),
@@ -49,6 +49,8 @@ export async function loadAdminContext(): Promise<AdminContext> {
       .map((i) => ({ snack: catalog.byId.get(i.product_id)!, category: i.category }));
     const extras = (active?.items ?? []).filter((i) => i.is_extra && catalog.byId.has(i.product_id)).map((i) => catalog.byId.get(i.product_id)!);
     const checks = checkLineup(slug, rules[slug], picks, settings, packOz + extras.reduce((s, e) => s + (e.unit_wt_oz ?? 0), 0));
+    const missing = (active?.items ?? []).filter(i => !catalog.byId.has(i.product_id)).length;
+    if (missing) checks.push({ key: "missing_lineup_items", label: "Missing lineup products", value: String(missing), level: "block", pass: false, deficit: missing });
     for (const extra of extras) {
       const fit = eligibleFor(slug, extra, rules[slug], settings.policy, extra.rejectReason);
       checks.push({ key: `extra:${extra.id}`, label: `Extra: ${extra.name}`, value: fit.fits ? "Eligible" : fit.reasons.join("; "), level: "block", pass: fit.fits, deficit: fit.fits ? 0 : 1 });

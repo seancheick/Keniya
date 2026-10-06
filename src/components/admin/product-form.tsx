@@ -220,7 +220,7 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
               </select>
             </Field>
             <Field label="Package verified on" hint="Recorded in Verify with the package in hand. Label edits require a new check.">
-              <input name="verified_at" type="date" readOnly defaultValue={v(ver?.verified_at)} className={fieldClass} />
+              <input type="date" readOnly defaultValue={v(ver?.verified_at)} className={fieldClass} />
             </Field>
           </div>
           <Field label="Ingredients" className="mt-3">
@@ -248,7 +248,7 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
           </div>
         </Section>
 
-        <Section title="Pregnancy checks" hint="All of P1–P9 must be PASS for the Pregnancy box. P7c is informational. P7a: check ingredients against the watchlist.">
+        <Section title="Pregnancy checks" hint="Product checks P1–P8 must pass; expiry (P9) is checked per purchased lot. P7c is informational. P7a: check ingredients against the watchlist.">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {PREGNANCY_CHECK_KEYS.map((k) => (
               <Field key={k} label={k === "P7c" ? "P7c (info)" : k} hint={PREGNANCY_CHECK_LABEL[k]}>

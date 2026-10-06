@@ -21,7 +21,7 @@ export function productJsonLd(box: Box) {
       url,
       price: site.preorderPriceUSD,
       priceCurrency: "USD",
-      availability: "https://schema.org/PreOrder",
+      availability: box.sale?.available ? "https://schema.org/PreOrder" : "https://schema.org/OutOfStock",
       itemCondition: "https://schema.org/NewCondition",
       seller: { "@id": `${base}/#organization` },
       ...(site.freeShipping && {

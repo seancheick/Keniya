@@ -16,13 +16,13 @@ begin
   -- 1. Product barcode X, then a purchase pack X: rejected.
   rejected := false;
   begin insert into public.purchase_packs (product_id, gtin, units_per_pack) values (a, '036000291452', 6);
-  exception when raise_exception then rejected := true; end;
+  exception when raise_exception or unique_violation then rejected := true; end;
   assert rejected, 'pack with an existing product barcode was accepted';
 
   -- 2. Same code written as a padded GTIN-14: still the same item, rejected.
   rejected := false;
   begin insert into public.purchase_packs (product_id, gtin, units_per_pack) values (a, '00036000291452', 6);
-  exception when raise_exception then rejected := true; end;
+  exception when raise_exception or unique_violation then rejected := true; end;
   assert rejected, 'pack with the zero-padded form of a product barcode was accepted';
 
   -- 3. A distinct outer-pack code succeeds.
@@ -31,17 +31,17 @@ begin
   -- 4. Purchase pack Y, then a product barcode Y (both spellings, insert and update): rejected.
   rejected := false;
   begin insert into public.products (name, upc) values ('Barcode test B', '012345678905');
-  exception when raise_exception then rejected := true; end;
+  exception when raise_exception or unique_violation then rejected := true; end;
   assert rejected, 'product with an existing pack barcode was accepted';
 
   rejected := false;
   begin insert into public.products (name, upc) values ('Barcode test B', '0012345678905');
-  exception when raise_exception then rejected := true; end;
+  exception when raise_exception or unique_violation then rejected := true; end;
   assert rejected, 'product with the EAN-13 form of a pack barcode was accepted';
 
   rejected := false;
   begin update public.products set upc = '012345678905' where id = a;
-  exception when raise_exception then rejected := true; end;
+  exception when raise_exception or unique_violation then rejected := true; end;
   assert rejected, 'changing a product barcode to a pack barcode was accepted';
 
   -- 5. Distinct unit codes succeed, and a product with no barcode is fine.

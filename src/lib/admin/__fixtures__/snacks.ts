@@ -1,7 +1,7 @@
 // Test fixtures: public label nutrition for real snack types; costs and stock are synthetic.
 import { DEFAULT_SETTINGS, type Settings, type Snack } from "../types";
 
-const pass = { P1: "PASS", P2: "PASS", P3: "PASS", P4: "PASS", P5: "PASS", P6: "PASS", P7a: "PASS", P7b: "PASS", P8: "PASS", P9: "PASS" };
+const pass = { P1: "PASS", P2: "PASS", P3: "PASS", P4: "PASS", P5: "PASS", P6: "PASS", P7a: "PASS", P7b: "PASS", P8: "PASS" };
 
 let n = 0;
 export function snack(over: Partial<Snack> = {}): Snack {
@@ -28,14 +28,18 @@ export function snack(over: Partial<Snack> = {}): Snack {
     unit_wt_oz: 1,
     pregnancy_checks: { ...pass },
     roles: {},
-    allergens: null,
+    allergens: "None",
+    ingredients: "Almonds",
     freeFrom: {},
     unitCostCents: 80,
     retailCents: 150,
     onHand: 100,
     earliestExpiry: null,
     loveRate: null,
-    clinicianApprovedBy: "Test Clinician",
+    clinicianApprovedBy: "Laurie Pham",
+    clinicalDecision: "approved",
+    approvalRole: "clinician",
+    diligenceComplete: true,
     packageVerified: true,
     ...over,
   };

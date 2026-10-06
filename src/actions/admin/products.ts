@@ -1,13 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { expireInvalidCheckoutSessions } from "@/lib/commerce-reconcile";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { BOX_SLUGS } from "@/lib/admin/types";
 import { requireAdmin } from "@/lib/admin/auth";
 import { db, PHOTO_BUCKET } from "@/lib/admin/db";
 import { ensureVendor } from "@/lib/admin/vendors";
 import { dollarsToFractionalCents, productSchema, readProductForm, versionSchema } from "@/lib/admin/forms";
-import { packageLabelChanged } from "@/lib/admin/verify";
+import { validCheckDigit } from "@/lib/admin/barcode";
 import { STATUSES } from "@/lib/admin/types";
 
 export type FormState = { error?: string; ok?: boolean; id?: string };
@@ -23,31 +25,31 @@ function parse(fd: FormData) {
   return { product: p.data, version: v.data } as const;
 }
 
-const dupUpc = (msg: string) => /products_upc_key|duplicate key.*upc/i.test(msg);
+const dupUpc = (msg: string) => /products_(upc|gtin14)_key|barcode_identities|duplicate key.*upc/i.test(msg);
 
 export async function createProduct(_prev: FormState, fd: FormData): Promise<FormState> {
   const admin = await requireAdmin();
   const parsed = parse(fd);
   if ("error" in parsed) return { error: parsed.error };
   const vendorId = await ensureVendor(String(fd.get("vendor") ?? ""), admin.name);
-  // A product created from a scan on the receiving screen has its identity verified by the package itself.
-  const scanned = fd.get("upc_source") === "scan" && parsed.product.upc ? { barcode_status: "verified", barcode_checked_at: new Date().toISOString(), barcode_sources: [{ source: "package", gtin: parsed.product.upc, exact_variant: true, checked_at: new Date().toISOString(), note: `Scanned while logging a purchase by ${admin.name}` }] } : {};
-  const ins = await db()
-    .from("products")
-    .insert({ ...parsed.product, ...scanned, code: "", default_vendor_id: vendorId, created_by: admin.name })
-    .select("id")
-    .single();
-  if (ins.error) return { error: dupUpc(ins.error.message) ? "A product with this UPC already exists." : ins.error.message };
-  const ver = await db()
-    .from("product_versions")
-    .insert({ ...parsed.version, verified_at: null, product_id: ins.data.id, version: 1, verified_by: null, created_by: admin.name });
-  if (ver.error) {
-    await db().from("products").delete().eq("id", ins.data.id);
-    return { error: ver.error.message };
-  }
+  // Receiving establishes packaging identity only after an explicit unit/outer-box answer.
+  const scanned = fd.get("upc_source") === "scan";
+  const barcodeOn = fd.get("barcode_on");
+  if (scanned && !["unit", "box"].includes(String(barcodeOn))) return { error: "Say whether the scanned barcode is on the single pack or the outer box." };
+  const outer = scanned && barcodeOn === "box" ? parsed.product.upc : null;
+  const units = outer ? Number(fd.get("units_per_box")) : null;
+  if (outer && (!Number.isInteger(units) || units! < 2 || units! > 1000)) return { error: "Enter 2–1000 single packs per outer box." };
+  if (parsed.product.upc && !validCheckDigit(parsed.product.upc)) return { error: "Barcode must have a valid GS1 check digit." };
+  const ins = await db().rpc("save_product", {
+    p_id: null, p_product: { ...parsed.product, upc: outer ? null : parsed.product.upc, default_vendor_id: vendorId },
+    p_version: parsed.version, p_actor: admin.name, p_new_version: false,
+    p_expected_updated_at: null, p_outer_gtin: outer, p_outer_units: units,
+  });
+  if (ins.error) return { error: dupUpc(ins.error.message) ? "This barcode already identifies a product or outer pack." : ins.error.message };
+  const productId = ins.data as string;
   refresh();
-  if (fd.get("_return") === "id") return { ok: true, id: ins.data.id };
-  redirect(`/admin/products/${ins.data.id}`);
+  if (fd.get("_return") === "id") return { ok: true, id: productId };
+  redirect(`/admin/products/${productId}`);
 }
 
 /**
@@ -58,48 +60,17 @@ export async function updateProduct(id: string, _prev: FormState, fd: FormData):
   const admin = await requireAdmin();
   const parsed = parse(fd);
   if ("error" in parsed) return { error: parsed.error };
-  const [previous, current] = await Promise.all([
-    db().from("products").select("upc, type, form").eq("id", id).single(),
-    db().from("product_versions").select("*").eq("product_id", id).eq("is_current", true).maybeSingle(),
-  ]);
+  const previous = await db().from("products").select("updated_at").eq("id", id).single();
   if (previous.error) return { error: previous.error.message };
-  if (current.error) return { error: current.error.message };
-  const changed = fd.get("new_version") === "on" || !current.data || packageLabelChanged(current.data, parsed.version) ||
-    previous.data.upc !== parsed.product.upc || previous.data.type !== parsed.product.type || previous.data.form !== parsed.product.form;
-  // Only the package-in-hand Verify workflow may establish verification. Metadata edits
-  // retain it; a label/formula change must be reviewed and checked again.
-  parsed.version.verified_at = changed ? null : current.data?.verified_at ?? null;
-  const verifiedBy = changed ? null : current.data?.verified_by ?? null;
+  if (parsed.product.upc && !validCheckDigit(parsed.product.upc)) return { error: "Barcode must have a valid GS1 check digit." };
   const vendorId = await ensureVendor(String(fd.get("vendor") ?? ""), admin.name);
-  const up = await db().from("products").update({
-    ...parsed.product, default_vendor_id: vendorId, updated_at: new Date().toISOString(),
-    ...(changed ? { status: "Candidate", reviewed_by: null, reviewed_at: null } : {}),
-  }).eq("id", id);
-  if (up.error) return { error: dupUpc(up.error.message) ? "A product with this UPC already exists." : up.error.message };
-
-  if (fd.get("new_version") === "on" || !current.data) {
-    const today = new Date().toISOString().slice(0, 10);
-    const latest = await db().from("product_versions").select("version").eq("product_id", id).order("version", { ascending: false }).limit(1).maybeSingle();
-    if (current.data) {
-      const close = await db().from("product_versions").update({ is_current: false, effective_to: today }).eq("id", current.data.id);
-      if (close.error) return { error: close.error.message };
-    }
-    const ins = await db().from("product_versions").insert({
-      ...parsed.version,
-      product_id: id,
-      version: (latest.data?.version ?? 0) + 1,
-      effective_from: today,
-      verified_by: parsed.version.verified_at ? admin.name : null,
-      created_by: admin.name,
-    });
-    if (ins.error) {
-      if (current.data) await db().from("product_versions").update({ is_current: true, effective_to: null }).eq("id", current.data.id);
-      return { error: ins.error.message };
-    }
-  } else {
-    const upv = await db().from("product_versions").update({ ...parsed.version, verified_by: verifiedBy }).eq("id", current.data.id);
-    if (upv.error) return { error: upv.error.message };
-  }
+  const saved = await db().rpc("save_product", {
+    p_id: id, p_product: { ...parsed.product, default_vendor_id: vendorId }, p_version: parsed.version,
+    p_actor: admin.name, p_new_version: fd.get("new_version") === "on",
+    p_expected_updated_at: previous.data.updated_at, p_outer_gtin: null, p_outer_units: null,
+  });
+  if (saved.error) return { error: dupUpc(saved.error.message) ? "This barcode already identifies a product or outer pack." : saved.error.message };
+  await expireInvalidCheckoutSessions(BOX_SLUGS);
   refresh();
   redirect(`/admin/products/${id}`);
 }
@@ -107,6 +78,7 @@ export async function updateProduct(id: string, _prev: FormState, fd: FormData):
 const statusSchema = z.object({
   id: z.uuid(),
   status: z.enum(STATUSES),
+  clinical_decision: z.enum(["changes_requested"]).optional(),
   reason: z.string().trim().max(500).optional(),
 });
 
@@ -114,16 +86,15 @@ export async function setProductStatus(_prev: FormState, fd: FormData): Promise<
   const admin = await requireAdmin();
   const parsed = statusSchema.safeParse(Object.fromEntries(fd));
   if (!parsed.success) return { error: "Invalid request" };
-  const { id, status, reason } = parsed.data;
+  const { id, status, reason, clinical_decision } = parsed.data;
+  if (clinical_decision && admin.role !== "clinician") return { error: "Only Laurie can request clinical changes." };
   if (status === "Rejected" && !reason) return { error: "Say why it's rejected (shown wherever it's offered)." };
-  const now = new Date().toISOString();
-  // Pre-approval is the pre-screen, not a clinical decision: keep the two audit trails apart.
-  const who = status === "Pre-approved" ? { prescreened_by: admin.name, prescreened_at: now } : { reviewed_by: admin.name, reviewed_at: now };
-  const res = await db()
-    .from("products")
-    .update({ status, reject_reason: status === "Rejected" ? reason : null, ...who, updated_at: now })
-    .eq("id", id);
+  if (status === "Approved" && admin.role !== "clinician") return { error: "Sign in with Laurie's clinician credential to approve." };
+  const res = await db().rpc("set_product_review", {
+    p_id: id, p_status: clinical_decision === "changes_requested" ? "Changes requested" : status, p_reason: reason ?? null, p_actor: admin.name, p_role: admin.role,
+  });
   if (res.error) return { error: res.error.message };
+  await expireInvalidCheckoutSessions(BOX_SLUGS);
   refresh();
   return { ok: true };
 }
@@ -194,13 +165,4 @@ export async function logPriceSighting(_prev: FormState, fd: FormData): Promise<
   if (res.error) return { error: res.error.message };
   refresh();
   return { ok: true };
-}
-
-/** Barcode lookup for the purchase flow: exact UPC match. */
-export async function findByUpc(upc: string): Promise<{ id: string } | null> {
-  await requireAdmin();
-  const clean = upc.replace(/\D/g, "");
-  if (clean.length < 6) return null;
-  const res = await db().from("products").select("id").eq("upc", clean).maybeSingle();
-  return res.data ?? null;
 }

@@ -9,6 +9,7 @@ import { adminConfigured, passwordMatches, SESSION_COOKIE, SESSION_DAYS, signSes
 export type LoginState = { error?: string; name?: string };
 
 const schema = z.object({
+  role: z.enum(["admin", "clinician"]).default("admin"),
   name: z.string().trim().min(1, "Add your name (it's recorded on what you change)").max(40),
   password: z.string().min(1, "Enter the admin password").max(200),
   next: z.string().optional(),
@@ -24,9 +25,9 @@ export async function login(_prev: LoginState, form: FormData): Promise<LoginSta
   const h = await headers();
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
   if (!(await allowLoginAttempt(ip))) return { error: "Too many attempts. Wait 10 minutes and try again.", name };
-  if (!passwordMatches(parsed.data.password)) return { error: "Wrong password.", name };
+  if (!passwordMatches(parsed.data.password, parsed.data.role)) return { error: "Wrong password.", name };
 
-  const token = signSession(parsed.data.name)!;
+  const token = signSession(parsed.data.name, Date.now(), parsed.data.role)!;
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

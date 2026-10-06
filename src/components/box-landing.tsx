@@ -1,3 +1,4 @@
+import { loadPublicCatalog } from "@/lib/public-sales";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
@@ -7,7 +8,7 @@ import { JsonLd } from "@/components/json-ld";
 import { ReviewerCard } from "@/components/reviewer-card";
 import { boxes, type Box } from "@/lib/box";
 import { giftLanding, landings } from "@/lib/landing";
-import { loadPublicRules, publicBoxes, publicLanding } from "@/lib/public-rules";
+import { publicLanding } from "@/lib/public-rules";
 import { breadcrumbJsonLd, faqJsonLd, productJsonLd } from "@/lib/schema";
 import { site } from "@/lib/site";
 import { publicStandards } from "@/lib/standards";
@@ -23,7 +24,7 @@ export const promises = [
 
 /** Metadata from the filled landing copy; pages call this from generateMetadata. */
 export async function landingMetadata(slug: Box["slug"]): Promise<Metadata> {
-  const l = publicLanding(slug, await loadPublicRules());
+  const l = publicLanding(slug, (await loadPublicCatalog()).rules);
   const box = boxes.find((b) => b.slug === l.slug)!;
   return {
     title: l.title,
@@ -91,9 +92,9 @@ export function OtherBoxes({ current }: { current?: Box["slug"] | "gifts" }) {
 }
 
 export async function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
-  const rules = await loadPublicRules();
+  const { rules, boxes: liveBoxes } = await loadPublicCatalog();
   const l = publicLanding(slug, rules);
-  const box = publicBoxes(rules).find((b) => b.slug === slug)!;
+  const box = liveBoxes.find((b) => b.slug === slug)!;
   const url = `${base}${l.path}`;
 
   return (
@@ -117,7 +118,7 @@ export async function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
             <p className="font-display text-4xl text-ink">
               ${site.preorderPriceUSD}
               <span className="ml-2 font-sans text-sm text-ink-soft">
-                {site.snackCount} snacks · only {box.founding} made
+                {site.snackCount} snacks · {box.sale?.available ? `${box.sale.remaining} founding spots available` : box.sale?.state === "sold_out" ? "sold out" : "waitlist open"}
               </span>
             </p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -145,7 +146,7 @@ export async function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
       <section className="mt-14" aria-labelledby="standard">
         <h2 id="standard" className="font-display text-3xl text-ink">Every snack in this box</h2>
         <ul className="mt-4 space-y-2 text-ink-soft">
-          {[...publicStandards(slug, rules), "Every lineup reviewed by our clinician"].map((line) => (
+          {[...publicStandards(slug, rules), box.sale?.clinicianApproved ? "Current lineup approved by Laurie Pham, PharmD" : "Current lineup awaiting clinician approval"].map((line) => (
             <li key={line} className="flex gap-2">
               <CheckIcon className="mt-1 size-4 shrink-0 text-sage-deep" strokeWidth={2.5} aria-hidden />
               {line}
@@ -223,7 +224,7 @@ export async function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
 
       <div className="mt-12 flex flex-col items-start gap-4 rounded-3xl bg-sage-deep p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="font-display text-2xl text-cream">
-          Only {box.founding} {box.name}es in the founding batch.
+          {box.sale?.available ? `${box.sale.remaining} of ${box.founding} founding spots available.` : box.sale?.state === "sold_out" ? "Founding batch sold out." : "Join the founding batch waitlist."}
         </p>
         <BuyButton box={box} showNote={false} className="sm:w-auto" label={`Preorder, $${site.preorderPriceUSD}`} />
       </div>

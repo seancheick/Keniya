@@ -1,5 +1,6 @@
 import "server-only";
 import { getSupabaseAdminStrict } from "@/lib/supabase";
+import { validCheckDigit } from "./barcode";
 import { lotHold } from "./stock";
 import { effectiveUnitCost } from "./costing";
 import type { PostageSample } from "./postage";
@@ -62,6 +63,9 @@ export type ProductRow = {
   /** Clinician decision (Approved / Rejected). */
   reviewed_by: string | null;
   reviewed_at: string | null;
+  clinical_decision?: "pending" | "approved" | "rejected" | "changes_requested";
+  approval_role?: string | null;
+  diligence_status?: string;
   /** Pre-screen (status Pre-approved, or a pre-screen rejection). */
   prescreened_by: string | null;
   prescreened_at: string | null;
@@ -190,7 +194,11 @@ export async function loadBoxRules(): Promise<Record<BoxSlug, BoxRules>> {
     rules: unknown;
   }[];
   const out = {} as Record<BoxSlug, BoxRules>;
-  for (const slug of BOX_SLUGS) out[slug] = resolveBoxRules(slug, rows.find((r) => r.box_slug === slug)?.rules);
+  for (const slug of BOX_SLUGS) {
+    const row = rows.find((r) => r.box_slug === slug);
+    if (!row || !row.rules || typeof row.rules !== "object") throw new Error(`Missing live rules for ${slug}`);
+    out[slug] = resolveBoxRules(slug, row.rules);
+  }
   return out;
 }
 
@@ -219,8 +227,8 @@ export const packagingOz = (settings: Settings, pkg: PackageProfile | null) =>
  * The barcode that proves which product a package is: its own printed UPC, or for a packet with
  * none, a verified outer pack it came in. Packing needs one of the two (pack_shipment agrees).
  */
-export function identityCode(p: Pick<ProductRow, "id" | "upc">, packs: PurchasePackRow[]): string | null {
-  return p.upc ?? packs.find((x) => x.product_id === p.id && x.barcode_status === "verified")?.gtin ?? null;
+export function identityCode(p: Pick<ProductRow, "id" | "upc" | "barcode_status">, packs: PurchasePackRow[]): string | null {
+  return p.barcode_status === "verified" && p.upc && validCheckDigit(p.upc) ? p.upc : packs.find((x) => x.product_id === p.id && x.barcode_status === "verified" && validCheckDigit(x.gtin))?.gtin ?? null;
 }
 
 export function toSnack(
@@ -267,8 +275,11 @@ export function toSnack(
     onHand: live.reduce((s, l) => s + l.qty_remaining, 0),
     earliestExpiry: expiries[0] ?? null,
     loveRate: null,
-    clinicianApprovedBy: p.status === "Approved" ? p.reviewed_by : null,
-    packageVerified: Boolean(identityCode(p, packs) && v?.verified_at),
+    clinicalDecision: p.clinical_decision,
+    approvalRole: p.approval_role,
+    diligenceComplete: p.diligence_status === "complete" && Boolean(p.prescreened_by && p.prescreened_at),
+    clinicianApprovedBy: p.status === "Approved" && p.reviewed_at ? p.reviewed_by : null,
+    packageVerified: Boolean(identityCode(p, packs) && v?.verified_at && v?.verified_by),
   };
 }
 

@@ -11,12 +11,13 @@ export function LoginForm({ next }: { next?: string }) {
   return (
     <form action={action} className="mt-6 space-y-4">
       <input type="hidden" name="next" value={next ?? ""} />
+      <div className="space-y-1.5"><Label htmlFor="role">Sign in as</Label><select id="role" name="role" className="w-full rounded border p-2"><option value="admin">Keniya diligence team</option><option value="clinician">Laurie Pham · clinician</option></select></div>
       <div className="space-y-1.5">
         <Label htmlFor="name">Your name</Label>
         <Input id="name" name="name" autoComplete="nickname" required maxLength={40} placeholder="Sean" defaultValue={state.name} />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor="password">Admin password</Label>
+        <Label htmlFor="password">Role password</Label>
         <Input id="password" name="password" type="password" autoComplete="current-password" required />
       </div>
       {state.error && (

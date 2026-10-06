@@ -61,3 +61,9 @@ describe("publicComposition", () => {
     expect(() => publicComposition("heart", { ...rules, heart: { ...rules.heart, categories: [...rules.heart.categories, { name: "Mystery", min: 0, max: 1 }] } }, boxes[2].composition)).toThrow(/no public copy/);
   });
 });
+
+
+it("beverage copy follows the configurable hard sugar gate", () => {
+  expect(fillStandards("{{heart.beverageStandard}}", DEFAULT_BOX_RULES)).toBe("unsweetened");
+  expect(fillStandards("{{heart.beverageStandard}}", { ...DEFAULT_BOX_RULES, heart: { ...DEFAULT_BOX_RULES.heart, beverageAddedSugarMax: 2 } })).toBe("at most 2 g added sugar per beverage");
+});

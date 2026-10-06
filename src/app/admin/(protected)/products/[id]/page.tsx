@@ -24,6 +24,8 @@ import { daysUntil } from "@/lib/admin/optimizer";
 import { eligibleBoxes, shipsUnderPolicy } from "@/lib/admin/rules";
 import { BOX_LABEL, NUTRIENT_KEYS, PREGNANCY_CHECK_KEYS, ROLE_KEYS, ROLE_LABEL, type BoxSlug } from "@/lib/admin/types";
 
+import { requireAdmin } from "@/lib/admin/auth";
+
 export const metadata: Metadata = { title: "Product" };
 
 const NUTRIENT_LABEL: Record<(typeof NUTRIENT_KEYS)[number], string> = {
@@ -41,6 +43,7 @@ const NUTRIENT_LABEL: Record<(typeof NUTRIENT_KEYS)[number], string> = {
 const date = (d: string | null) => (d ? new Date(`${d.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const admin = await requireAdmin();
   const { id } = await params;
   const pr = await db().from("products").select("*").eq("id", id).maybeSingle();
   if (!pr.data) notFound();
@@ -119,7 +122,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 {p.prescreened_by ? ` · pre-screened by ${p.prescreened_by} on ${date(p.prescreened_at)}` : ""}
                 {p.reviewed_by ? ` · clinician decision by ${p.reviewed_by} on ${date(p.reviewed_at)}` : p.status === "Approved" ? " · legacy workbook approval: needs clinician re-attestation" : ""}
               </p>
-              <StatusControls id={id} status={p.status} legacyApproval={p.status === "Approved" && !p.reviewed_by} />
+              <StatusControls clinician={admin.role === "clinician"} id={id} status={p.status} legacyApproval={p.status === "Approved" && !p.reviewed_by} />
             </div>
           </Card>
 

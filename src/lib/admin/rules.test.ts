@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { gingerChews, popcorn, settings, snack } from "./__fixtures__/snacks";
 import { optimize } from "./optimizer";
-import { blockingFailures, checkLineup, eligibleFor, fitsBoxes, isReady, lineupStage, packBlockers, shipsUnderPolicy, type Pick } from "./rules";
-import { BOX_SLUGS, DEFAULT_BOX_RULES, type Snack } from "./types";
+import { blockingFailures, checkLineup, eligibleFor, fitsBoxes, isReady, isClinicianApproved, lineupStage, packBlockers, shipsUnderPolicy, type Pick } from "./rules";
+import { BOX_SLUGS, DEFAULT_BOX_RULES, resolveBoxRules, type Snack } from "./types";
 
 describe("product fit (workbook v4 formulas)", () => {
   it("popcorn: pregnancy ✓, carb ✓ via portioned treat (fiber alone isn't fiber-forward), heart ✓ via whole grain", () => {
@@ -258,5 +258,31 @@ describe("lineup checks", () => {
     expect(checks.find((c) => c.key === "unique")!.pass).toBe(false);
     const approved = checks.find((c) => c.key === "approved")!;
     expect(approved).toMatchObject({ pass: false, level: "warn" });
+  });
+});
+
+
+describe("approval and live standards fail closed", () => {
+  it("a shared admin name is not a clinical attestation", () => {
+    expect(isClinicianApproved(snack())).toBe(true);
+    expect(isClinicianApproved(snack({ approvalRole: null }))).toBe(false);
+    expect(isClinicianApproved(snack({ clinicalDecision: "pending" }))).toBe(false);
+    expect(isClinicianApproved(snack({ diligenceComplete: false }))).toBe(false);
+    expect(isClinicianApproved(snack({ clinicianApprovedBy: "Sean" }))).toBe(false);
+  });
+  it("sweetened beverages fail every clinical hard gate regardless of pathways", () => {
+    const drink = snack({ type: "Beverage", form: "Powder", added_sugar_g: 5, roles: { CT: true, NS: true, WHOLE_FOOD: true }, protein_g: 6, fiber_g: 5 });
+    for (const slug of ["blood_sugar", "heart", "gestational_diabetes", "glp1"] as const) {
+      expect(eligibleFor(slug, drink, DEFAULT_BOX_RULES[slug], settings.policy).fits).toBe(false);
+      expect(eligibleFor(slug, drink, { ...DEFAULT_BOX_RULES[slug], beverageAddedSugarMax: 5 }, settings.policy).fits).toBe(true);
+    }
+  });
+  it("unknown nut ingredients never earn the saturated-fat exception", () => {
+    expect(eligibleFor("heart", snack({ ingredients: null, roles: { NS: true }, sat_fat_g: 3 }), DEFAULT_BOX_RULES.heart, settings.policy).fits).toBe(false);
+  });
+  it("malformed stored rules do not become code defaults", () => {
+    expect(() => resolveBoxRules("heart", { total: "14" })).toThrow(/Invalid live rules/);
+    expect(() => resolveBoxRules("heart", {})).toThrow(/Invalid live rules/);
+    expect(() => resolveBoxRules("heart", null)).toThrow(/Invalid live rules/);
   });
 });

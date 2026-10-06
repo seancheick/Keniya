@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase", () => ({ getSupabaseAdminStrict: vi.fn() }));
-import { allRows, toSnack, type ProductRow, type VersionRow } from "./db";
+import { allRows, toSnack, identityCode, type ProductRow, type VersionRow } from "./db";
 const product: ProductRow = {
   id: "p", created_at: "2026-01-01", updated_at: "2026-01-01", code: "P001", name: "Test", brand: null, upc: "123456789012", type: "Substantial", form: "Solid", categories: [], url: null, default_vendor_id: null, retail_cents: null, estimate_cost_cents: 100, quote_cost_cents: null, price_checked_on: null, status: "Approved", reject_reason: null, reviewed_by: "Clinician", reviewed_at: null, prescreened_by: null, prescreened_at: null, sensory: null, notes: null, created_by: null,
 };
@@ -25,5 +25,25 @@ describe("catalog stock and pagination", () => {
     expect(result.onHand).toBe(2);
     expect(result.unitCostCents).toBe(150);
     expect(result.earliestExpiry).toBe("2099-01-01");
+  });
+});
+
+import { resolveSettings } from "./types";
+describe("fail-closed catalog configuration", () => {
+  it("rejects malformed settings instead of replacing them with defaults", () => {
+    expect(() => resolveSettings({ prices: { heart: -1 } })).toThrow("Invalid live settings");
+    expect(() => resolveSettings("broken")).toThrow("Invalid live settings");
+  });
+  it("requires both durable identity provenance and a named physical label check", () => {
+    const approved = { ...product, upc: "036000291452", barcode_status: "verified" as const, reviewed_by: "Laurie Pham", reviewed_at: "2026-10-06" };
+    expect(toSnack(approved, version, [], null).packageVerified).toBe(true);
+    expect(toSnack({ ...approved, barcode_status: "provisional" }, version, [], null).packageVerified).toBe(false);
+    expect(toSnack(approved, { ...version, verified_by: null }, [], null).packageVerified).toBe(false);
+    expect(toSnack({ ...approved, reviewed_at: null }, version, [], null).clinicianApprovedBy).toBeNull();
+  });
+  it("does not use an invalid unit check digit as package identity", () => {
+    expect(identityCode({ id: "p", upc: "123456789013" }, [])).toBeNull();
+    expect(identityCode({ id: "p", upc: "036000291452", barcode_status: "provisional" }, [])).toBeNull();
+    expect(identityCode({ id: "p", upc: "036000291452", barcode_status: "verified" }, [])).toBe("036000291452");
   });
 });

@@ -24,6 +24,7 @@ const HEALTH: [key: keyof BoxRules, label: string, hint: string][] = [
 // Checked on every pick before any pathway counts; a pick over a limit isn't eligible.
 const GATES: [key: keyof BoxRules, label: string, hint: string][] = [
   ["carbsMax", "Total carbs: at most (g)", "Per pack"],
+  ["beverageAddedSugarMax", "Beverage added sugar: at most (g)", "Hard limit before any nutrition pathway"],
   ["addedSugarMax", "Added sugar: at most (g)", "Per pack"],
   ["treatAddedSugarMax", "Added sugar on a controlled treat: at most (g)", "Replaces the limit above for picks marked as a treat"],
   ["sodiumMax", "Sodium: at most (mg)", "Per pack"],

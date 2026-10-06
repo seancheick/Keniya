@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { startCheckout, type CheckoutInput } from "@/actions/checkout";
 import { Button } from "@/components/ui/button";
 import { WaitlistForm } from "@/components/waitlist-form";
@@ -45,9 +45,14 @@ export function BuyButton({
   /** Quiz answers to prefill at checkout. */
   prefill?: Pick<CheckoutInput, "craving" | "avoid">;
 }) {
+  const requestKey = useRef<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [showEmail, setShowEmail] = useState(false);
+
+  if (!box.sale?.available) return <div className={cn("w-full max-w-md", className)}>
+    <WaitlistForm boxInterest={box.slug} source="box_waitlist" cta="Join the waitlist" compact />
+  </div>;
 
   const cta = label ?? `Preorder — $${site.preorderPriceUSD}`;
 
@@ -63,16 +68,17 @@ export function BuyButton({
           setError(null);
           startTransition(async () => {
             try {
-              const res = await openCheckout({ boxSlug: box.slug, gift, ...prefill });
+              const res = await openCheckout({ boxSlug: box.slug, gift, ...prefill, requestKey: (requestKey.current ??= crypto.randomUUID()) });
               if (res.ok) {
                 window.location.href = res.url;
                 return;
               }
+              if (res.code === "expired_session" || res.code === "stale_request") requestKey.current = null;
               setError(res.message);
               if (res.needsEmail && showFallbackEmail) setShowEmail(true);
             } catch (err) {
               console.error(err);
-              setError("Couldn’t reach checkout — try again or hold your spot below.");
+              setError("Couldn’t reach checkout — try again or join the waitlist below.");
               if (showFallbackEmail) setShowEmail(true);
             }
           });
@@ -94,14 +100,14 @@ export function BuyButton({
       {showEmail && (
         <div className="mt-4 rounded-2xl border border-border bg-cream-card p-4">
           <p className="mb-3 text-sm text-ink-soft">
-            Hold your founding spot for the{" "}
+            Join the list for the{" "}
             <strong className="text-ink">{box.shortName}</strong> box — we’ll email you
-            the moment payment is confirmed live.
+            when preorders open.
           </p>
           <WaitlistForm
             boxInterest={box.slug}
             source="checkout_fallback"
-            cta="Hold my spot"
+            cta="Join the waitlist"
             compact
           />
         </div>

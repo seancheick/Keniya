@@ -101,13 +101,13 @@ export async function sendOrderEmails(
   return { customer, founder };
 }
 
-export async function sendCartReminder(to: string, box: Box, recoveryUrl: string, sessionId: string) {
+export async function sendCartReminder(to: string, box: Box, sessionId: string) {
   const { CartReminderEmail } = await import("@/emails/CartReminderEmail");
   return sendOnce("cart reminder", `cart-${sessionId}`, {
     from: env.RESEND_FROM_EMAIL,
     to,
     replyTo: site.email,
-    subject: `Your ${box.shortName} box is still waiting`,
-    react: CartReminderEmail({ box, recoveryUrl }),
+    subject: `Take another look at the ${box.shortName} box`,
+    react: CartReminderEmail({ box }),
   });
 }

@@ -8,8 +8,8 @@ const shared = snack({ code: "P001", name: "Almonds", roles: { NS: true }, statu
 const heartOnly = snack({ code: "P002", name: "Popcorn", roles: { WG: true } });
 const input: PacketInput = {
   boxes: [
-    { slug: "heart", version: 4, stage: { label: "READY · PROVISIONAL", detail: "" }, checks: [{ key: "x", label: "Picks without a verified package", value: "2", level: "warn", pass: false, deficit: 2 }], picks: [{ snack: shared, category: "Protein" }, { snack: heartOnly, category: "Savory" }], extras: [] },
-    { slug: "blood_sugar", version: 3, stage: { label: "READY · PROVISIONAL", detail: "" }, checks: [], picks: [{ snack: shared, category: "Protein" }], extras: [] },
+    { slug: "heart", version: 4, checks: [{ key: "x", label: "Picks without a verified package", value: "2", level: "warn", pass: false, deficit: 2 }], picks: [{ snack: shared, category: "Protein" }, { snack: heartOnly, category: "Savory" }], extras: [] },
+    { slug: "blood_sugar", version: 3, checks: [], picks: [{ snack: shared, category: "Protein" }], extras: [] },
   ],
   rules: DEFAULT_BOX_RULES,
   policy: settings.policy,
@@ -34,6 +34,27 @@ describe("clinician packet", () => {
     expect(wb.getWorksheet("Lineups")!.rowCount).toBe(3);
     expect(wb.getWorksheet("Products")!.rowCount).toBe(3);
     expect(wb.getWorksheet("Lineups")!.getRow(2).getCell(4).value).toBe("passes every box rule (2 picks)");
+  });
+  it("reports missing lineups, failed checks and incomplete reviews without blanket approval claims", async () => {
+    const incomplete: PacketInput = { ...input, boxes: [
+      { ...input.boxes[0], version: null, picks: [], checks: [] },
+      { ...input.boxes[1], checks: [{ key: "missing", label: "Selections missing", value: "1", level: "block", pass: false, deficit: 1 }],
+        picks: [{ snack: snack({ status: "Candidate", diligenceComplete: false, clinicalDecision: "pending", packageVerified: false }), category: null }] },
+    ] };
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await clinicianPacketWorkbook(incomplete) as never);
+    const intro = String(wb.getWorksheet("Start here")!.getRow(1).getCell(2).value);
+    expect(intro).toContain("2 lineups missing or failing checks");
+    expect(intro).toContain("1 products need internal diligence");
+    expect(intro).not.toContain("diligence is complete");
+    expect(wb.getWorksheet("Lineups")!.getRow(2).getCell(4).value).toBe("No active lineup to validate");
+    expect(wb.getWorksheet("Lineups")!.getRow(3).getCell(3).value).toBe("FIX");
+    expect(wb.getWorksheet("Lineups")!.getRow(3).getCell(4).value).toBe("FAILS box rules");
+  });
+  it("exports an empty packet", async () => {
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await clinicianPacketWorkbook({ ...input, boxes: [] }) as never);
+    expect(wb.getWorksheet("Products")!.rowCount).toBe(1);
   });
   it("describes a box with no per-pack limits honestly", () => {
     expect(limitsLine({ ...DEFAULT_BOX_RULES.pregnancy_comfort, caffeineMax: null })).toMatch(/no per-pack limits/);

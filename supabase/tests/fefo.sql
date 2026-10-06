@@ -6,6 +6,12 @@ begin;
 insert into public.products (name, status, reviewed_by, upc) values ('Test almonds', 'Approved', 'Test Clinician', '123456789012') returning id \gset p_
 insert into public.product_versions (product_id, verified_at) values (:'p_id', current_date) returning id \gset v_
 
+update public.product_versions set nutrition_source='Physical label',ingredients='Almonds',allergens='Tree nuts',unit_wt_oz=1,calories=150,protein_g=6,fiber_g=3,carbs_g=12,added_sugar_g=0,sodium_mg=0,caffeine_mg=0,sat_fat_g=1,sugar_alcohols_g=0,pregnancy_checks='{"P1":"PASS","P2":"PASS","P3":"PASS","P4":"PASS","P5":"PASS","P6":"PASS","P7a":"PASS","P7b":"PASS","P8":"PASS"}' where id=:'v_id';
+update public.products set barcode_status='verified' where id=:'p_id';
+update public.product_versions set verified_at=current_date,verified_by='Sean' where id=:'v_id';
+select public.set_product_review(:'p_id','Pre-approved',null,'Sean','admin');
+select public.set_product_review(:'p_id','Approved',null,'Laurie Pham','clinician');
+
 -- Lot A: bought Jan, expires Jun.  Lot B: bought Feb, expires May.  FEFO must use B first.
 insert into public.purchase_lots (product_id, product_version_id, purchased_at, qty, total_paid_cents, qty_remaining, expires_on, created_by)
 values (:'p_id', :'v_id', '2026-01-01', 24, 1199, 24, current_date + 180, 'test') returning id \gset a_

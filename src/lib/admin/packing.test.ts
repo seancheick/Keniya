@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { packingProblems, recipePicks } from "./packing";
 import { snack, settings } from "./__fixtures__/snacks";
 import { resolveBoxRules, type BoxRules } from "./types";
-const rules: BoxRules = { ...resolveBoxRules("blood_sugar", null), total: 2, categories: [{ name: "Protein", min: 1, max: 1 }, { name: "Sweet", min: 1, max: 1 }], substantialMin: null, proteinOrFiberMin: null, wholeFoodMin: null };
+const rules: BoxRules = { ...resolveBoxRules("blood_sugar", undefined), total: 2, categories: [{ name: "Protein", min: 1, max: 1 }, { name: "Sweet", min: 1, max: 1 }], substantialMin: null, proteinOrFiberMin: null, wholeFoodMin: null };
 const a = snack({ id: "a", categories: ["Sweet", "Protein"] });
 const b = snack({ id: "b", categories: ["Sweet"] });
 const product = (s: typeof a): { snack: typeof a; upc: string; verifiedAt: string; ingredients: string | null } => ({ snack: s, upc: "123456789012", verifiedAt: "2026-10-01", ingredients: null });

@@ -10,6 +10,7 @@ describe("barcode identity", () => {
     expect(validCheckDigit("0850397004996")).toBe(true);
     expect(validCheckDigit("850397004997")).toBe(false);
     expect(validCheckDigit("12345")).toBe(false);
+    expect(validCheckDigit("UPC 850397004996")).toBe(false);
     expect(gtin14("850397004996")).toBe("00850397004996");
     expect(sameGtin("850397004996", "00850397004996")).toBe(true);
     expect(cleanBarcode("8-50397-00499-6")).toBe("850397004996");

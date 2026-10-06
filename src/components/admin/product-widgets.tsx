@@ -21,7 +21,7 @@ function useToast(state: FormState, ok: string, after?: () => void) {
   }, [state, ok, after]);
 }
 
-export function StatusControls({ id, status, legacyApproval }: { id: string; status: Status; legacyApproval?: boolean }) {
+export function StatusControls({ id, status, legacyApproval, clinician = false }: { id: string; status: Status; legacyApproval?: boolean; clinician?: boolean }) {
   const [state, action, pending] = useActionState(setProductStatus, {});
   const [rejecting, setRejecting] = useState(false);
   useToast(state, "Status updated", () => setRejecting(false));
@@ -29,7 +29,7 @@ export function StatusControls({ id, status, legacyApproval }: { id: string; sta
     <div className="space-y-2">
       <form action={action} className="flex flex-wrap gap-2">
         <input type="hidden" name="id" value={id} />
-        {(status !== "Approved" || legacyApproval) && (
+        {clinician && (status !== "Approved" || legacyApproval) && (
           <Button size="sm" className="max-sm:min-h-11" name="status" value="Approved" disabled={pending} title="Records the clinician's name and date">
             {legacyApproval ? "Re-attest approval (clinician)" : "Approve (clinician)"}
           </Button>
@@ -46,7 +46,7 @@ export function StatusControls({ id, status, legacyApproval }: { id: string; sta
         )}
         {status !== "Rejected" && (
           <Button size="sm" variant="outline" type="button" className="max-sm:min-h-11" onClick={() => setRejecting((r) => !r)}>
-            Reject…
+            {clinician ? "Reject (clinician)…" : "Reject internally…"}
           </Button>
         )}
         {status !== "Retired" && (
@@ -55,6 +55,7 @@ export function StatusControls({ id, status, legacyApproval }: { id: string; sta
           </Button>
         )}
       </form>
+      {clinician && <form action={action} className="flex gap-2"><input type="hidden" name="id" value={id} /><input type="hidden" name="status" value="Candidate" /><input type="hidden" name="clinical_decision" value="changes_requested" /><input name="reason" required placeholder="Clinical change needed" className={fieldClass} /><Button size="sm" variant="outline" disabled={pending}>Request changes</Button></form>}
       {rejecting && (
         <form action={action} className="flex gap-2">
           <input type="hidden" name="id" value={id} />

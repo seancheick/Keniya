@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { expireInvalidCheckoutSessions } from "@/lib/commerce-reconcile";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { db, must } from "@/lib/admin/db";
@@ -33,6 +34,7 @@ export async function saveLineup(input: z.input<typeof lineupSchema>): Promise<B
   }
   const ins = await db().rpc("save_box_lineup", { p_slug: d.slug, p_objective: d.objective, p_notes: d.notes, p_activate: d.activate, p_actor: admin.name, p_items: d.items });
   if (ins.error) return { error: ins.error.message };
+  if (d.activate) await expireInvalidCheckoutSessions([d.slug]);
   revalidatePath("/admin", "layout");
   return { ok: true, id: ins.data as string };
 }
@@ -58,6 +60,7 @@ export async function activateLineup(fd: FormData) {
   if (error) throw new Error(error);
   const res = await db().rpc("activate_box_lineup", { p_id: id });
   if (res.error) throw new Error(res.error.message);
+  await expireInvalidCheckoutSessions([row.box_slug]);
   revalidatePath("/admin", "layout");
 }
 
@@ -86,6 +89,7 @@ export async function saveBoxRules(_prev: BoxState, fd: FormData): Promise<BoxSt
     fiberMin: int(fd.get("fiberMin")),
     treatMax: int(fd.get("treatMax")),
     carbsMax: dec(fd.get("carbsMax")),
+    beverageAddedSugarMax: dec(fd.get("beverageAddedSugarMax")),
     addedSugarMax: dec(fd.get("addedSugarMax")),
     treatAddedSugarMax: dec(fd.get("treatAddedSugarMax")),
     sodiumMax: dec(fd.get("sodiumMax")),
@@ -102,6 +106,7 @@ export async function saveBoxRules(_prev: BoxState, fd: FormData): Promise<BoxSt
     return { error: `Category ranges must allow exactly ${r.total} picks (minimums add to ${sumMin}, maximums to ${sumMax})` };
   const res = await db().from("box_rules").upsert({ box_slug: slug.data, rules: r, updated_at: new Date().toISOString(), updated_by: admin.name });
   if (res.error) return { error: res.error.message };
+  await expireInvalidCheckoutSessions([slug.data]);
   revalidatePath("/admin", "layout");
   // The public site prints these rules (src/lib/public-rules.ts), so a save re-renders it too.
   revalidatePath("/", "layout");

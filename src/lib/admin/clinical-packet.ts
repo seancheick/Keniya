@@ -4,13 +4,12 @@
 // validation result. The full catalog workbook (clinical-xlsx.ts) stays an internal audit tool.
 import ExcelJS from "exceljs";
 import { splitNotes, type ClinicalExtra } from "./clinical";
-import { eligibleFor, type Check, type Pick } from "./rules";
+import { eligibleFor, isClinicianApproved, isReady, lineupStage, nutFatException, type Check, type Pick } from "./rules";
 import { BOX_LABEL, BOX_SLUGS, PREGNANCY_CHECK_KEYS, ROLE_KEYS, ROLE_LABEL, type BoxRules, type BoxSlug, type Settings, type Snack } from "./types";
 
 export type PacketBox = {
   slug: BoxSlug;
   version: number | null;
-  stage: { label: string; detail: string };
   checks: Check[];
   picks: Pick[];
   extras: Snack[];
@@ -32,6 +31,7 @@ const nz = (v: unknown) => (v === null || v === undefined || v === "" ? null : v
 /** The per-pack limits a box applies, as one line. */
 export function limitsLine(r: BoxRules): string {
   const parts = [
+    r.beverageAddedSugarMax !== null && `beverage added sugar ≤${r.beverageAddedSugarMax} g`,
     r.carbsMax !== null && `total carbs ≤${r.carbsMax} g`,
     r.addedSugarMax !== null && `added sugar ≤${r.addedSugarMax} g${r.treatAddedSugarMax !== null ? ` (treat ≤${r.treatAddedSugarMax} g)` : ""}`,
     r.sodiumMax !== null && `sodium ≤${r.sodiumMax} mg`,
@@ -65,9 +65,14 @@ export function packetProductRows(input: PacketInput): Record<string, unknown>[]
       Product: s.name,
       Brand: s.brand,
       "Exact pack": `${s.unit_wt_oz ?? "?"} oz · ${s.type} · ${x?.form ?? ""}`,
-      UPC: x?.upc,
+      "Unit UPC": x?.upc,
+      "Verified outer-pack barcode": x?.verifiedPackBarcode,
       "Used in": boxes.map((b) => `${BOX_LABEL[b.slug]}${b.extra ? " (extra)" : b.category ? ` (${b.category})` : ""}`).join("; "),
       Status: s.status,
+      "Internal diligence": s.diligenceComplete ? "complete" : "incomplete",
+      "Clinical review state": s.clinicalDecision ?? "pending",
+      "Authenticated clinician approval": isClinicianApproved(s) ? "yes" : "no",
+      "Package verified": s.packageVerified ? "yes" : "no",
       "Pre-screened by": x?.prescreenedBy,
       "Pre-screened on": day(x?.prescreenedAt),
       "Label source": x?.nutritionSource,
@@ -85,8 +90,8 @@ export function packetProductRows(input: PacketInput): Record<string, unknown>[]
     }
     const exceptions = [
       s.roles.CT && "controlled treat (treat added-sugar ceiling applies)",
-      s.roles.NS && typeof s.sat_fat_g === "number" && s.sat_fat_g > 2 && "nut/seed saturated-fat allowance used (intrinsic fat)",
-      Object.entries(s.pregnancy_checks).some(([k, v]) => k !== "P7c" && String(v).toUpperCase() === "FAIL") && `pregnancy check failed: ${Object.entries(s.pregnancy_checks).filter(([k, v]) => k !== "P7c" && String(v).toUpperCase() === "FAIL").map(([k]) => k).join(", ")}`,
+      nutFatException(s) && typeof s.sat_fat_g === "number" && s.sat_fat_g > 2 && "nut/seed saturated-fat allowance used (intrinsic fat)",
+      Object.entries(s.pregnancy_checks).some(([k, v]) => (PREGNANCY_CHECK_KEYS as readonly string[]).includes(k) && k !== "P7c" && String(v).toUpperCase() === "FAIL") && `pregnancy check failed: ${Object.entries(s.pregnancy_checks).filter(([k, v]) => (PREGNANCY_CHECK_KEYS as readonly string[]).includes(k) && k !== "P7c" && String(v).toUpperCase() === "FAIL").map(([k]) => k).join(", ")}`,
       s.pregnancy_checks.P7c && `customer-preference flag (P7c): ${s.pregnancy_checks.P7c}`,
     ].filter(Boolean);
     Object.assign(row, {
@@ -123,11 +128,16 @@ export async function clinicianPacketWorkbook(input: PacketInput): Promise<Buffe
 
   const start = wb.addWorksheet("Start here");
   start.columns = [{ width: 26 }, { width: 110 }];
+  const failedLineups = input.boxes.filter((b) => b.version === null || !b.picks.length || !isReady(b.checks)).length;
+  const used = [...new Map(input.boxes.flatMap((b) => [...b.picks.map((p) => p.snack), ...b.extras]).map((s) => [s.id, s])).values()];
+  const diligencePending = used.filter((s) => !s.diligenceComplete).length;
+  const clinicalPending = used.filter((s) => !isClinicianApproved(s)).length;
+  const packagePending = used.filter((s) => !s.packageVerified).length;
   const lines = [
-    ["Keniya clinician packet", `Exported ${new Date().toISOString().slice(0, 10)}. ${input.boxes.length} lineups, ${products.length} products. Keniya's diligence is complete: every product was label-verified against a named source, run against the live box rules, and pre-approved internally; every lineup passed its composition checks. You are the final clinical checkpoint.`],
+    ["Keniya clinician packet", `Exported ${new Date().toISOString().slice(0, 10)}. ${input.boxes.length} lineups, ${products.length} products. ${failedLineups} lineups missing or failing checks; ${diligencePending} products need internal diligence; ${clinicalPending} need authenticated clinical approval; ${packagePending} need package verification. Review the recorded evidence and each lineup result.`],
     ["What to do", "Lineups: confirm each box's recipe and validation result. Products: for each row, the rule applied and the pass rationale are next to the label values. Fill the yellow Clinician decision (Approve / Changes needed / Reject) and Comments. A product used in several boxes needs one decision; say in Comments if it differs by box."],
-    ["What a decision means", "Approve turns Keniya's PRE-APPROVED into APPROVED for that product. Changes needed or Reject: tell us the specific clinical or compliance concern so we can fix the data or the rule, not just the pick."],
-    ["Not in this file", "Candidates, rejected products and the rest of the catalog (the full workbook exists for audit). Costs and vendors. The package-in-hand check happens at packing, against the exact purchased packet."],
+    ["What a decision means", "Workbook decisions do not update the admin. Laurie records approval through her clinician account after internal diligence is complete. Changes needed or Reject: tell us the specific clinical or compliance concern so we can fix the data or the rule, not just the pick."],
+    ["Not in this file", "Products outside these lineups, costs and vendors. Candidate or rejected products used in a lineup remain visible here with their actual state. Package checks and current-lot expiry remain required before packing."],
     ["Limits are Keniya standards", "Per-pack thresholds are Keniya curation standards informed by published guidance (FDA, AHA, ADA, ACOG/CDC), not medical cutoffs; sources are recorded in the rules."],
   ];
   for (const v of lines) {
@@ -149,8 +159,8 @@ export async function clinicianPacketWorkbook(input: PacketInput): Promise<Buffe
     const row = lu.addRow([
       BOX_LABEL[b.slug],
       b.version === null ? "no active lineup" : `v${b.version}`,
-      b.stage.label,
-      fails.length ? "FAILS box rules" : `passes every box rule (${b.picks.length} picks)`,
+      b.version === null || !b.picks.length ? "NO ACTIVE LINEUP" : lineupStage([...b.picks, ...b.extras.map((snack) => ({ snack }))], isReady(b.checks)).label,
+      b.version === null || !b.picks.length ? "No active lineup to validate" : fails.length ? "FAILS box rules" : `passes every box rule (${b.picks.length} picks)`,
       fails.map((c) => `${c.label}: ${c.value}`).join("; ") || null,
       warns.map((c) => `${c.label}: ${c.value}`).join("; ") || null,
       [...counts].map(([k, n]) => `${k} ${n}`).join(", ") || null,
@@ -180,7 +190,7 @@ export async function clinicianPacketWorkbook(input: PacketInput): Promise<Buffe
   ws.getRow(1).font = { bold: true };
   ws.getRow(1).fill = fill(HEADER_FILL);
   ws.getRow(1).alignment = { wrapText: true, vertical: "top" };
-  ws.autoFilter = { from: "A1", to: `${ws.getColumn(headers.length).letter}${Math.max(1, products.length + 1)}` };
+  if (headers.length) ws.autoFilter = { from: "A1", to: `${ws.getColumn(headers.length).letter}${Math.max(1, products.length + 1)}` };
 
   return Buffer.from(await wb.xlsx.writeBuffer());
 }

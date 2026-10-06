@@ -224,7 +224,7 @@ export function Shop({ boxes, standards }: { boxes: PublicBox[]; standards: Reco
                   ))}
                   <li className="flex gap-2">
                     <CheckIcon className="mt-0.5 size-4 shrink-0 text-sage-deep" strokeWidth={2.5} aria-hidden />
-                    <span>Every lineup reviewed by our clinician</span>
+                    <span>{b.sale?.clinicianApproved ? "Current lineup approved by Laurie Pham, PharmD" : "Current lineup awaiting clinician approval"}</span>
                   </li>
                 </ul>
                 <p className="mt-4 max-w-[52ch] text-xs leading-relaxed text-ink-soft">
@@ -258,7 +258,7 @@ export function Shop({ boxes, standards }: { boxes: PublicBox[]; standards: Reco
                 </span>
               </p>
               <p className="text-sm font-semibold text-blush-ink">
-                Only {box.founding} made
+                {box.sale?.state === "sold_out" ? "Founding batch sold out" : box.sale?.available ? `${box.sale.remaining} of ${box.founding} founding spots available` : "Join the founding batch waitlist"}
               </p>
             </div>
 

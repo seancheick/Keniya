@@ -243,10 +243,10 @@ export const landings: BoxLanding[] = [
     path: "/glp1-snack-box",
     title: "GLP-1 Companion Snack Box: Protein-Forward, Small Portions",
     description:
-      "14 snacks for people on GLP-1 medications: protein-forward, at or below {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar per pack, small portions, unsweetened sips and gentle comfort picks. $47, free shipping.",
+      "14 snacks for people on GLP-1 medications: protein-forward, at or below {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar per pack, small portions, {{glp1.beverageStandard}} sips and gentle comfort picks. $47, free shipping.",
     h1: "Small appetite, protein first: a snack box for GLP-1 days.",
     intro:
-      "When you're eating less, every bite has to count. Every snack here leads with protein, fiber or whole-food fats, stays at or below {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar, and the box carries unsweetened sips and gentle comfort picks for the queasy days.",
+      "When you're eating less, every bite has to count. Every snack here leads with protein, fiber or whole-food fats, stays at or below {{glp1.carbsMax}} g carbs and {{glp1.addedSugarMax}} g added sugar, and the box carries {{glp1.beverageStandard}} sips and gentle comfort picks for the queasy days.",
     forWho: [
       "People taking a GLP-1 medication for weight or blood sugar",
       "Anyone eating smaller meals who wants protein in every snack",
@@ -267,7 +267,7 @@ export const landings: BoxLanding[] = [
       },
       {
         title: "Hydration built in",
-        body: "Fluids are easy to forget when you're not hungry, so every box carries at least {{glp1.cat.Hydration.min}} unsweetened sip.",
+        body: "Fluids are easy to forget when you're not hungry, so every box carries at least {{glp1.cat.Hydration.min}} {{glp1.beverageStandard}} sip.",
       },
     ],
     faqs: [

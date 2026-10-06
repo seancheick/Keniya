@@ -71,7 +71,6 @@ export const versionSchema = z.object({
   pregnancy_checks: z.record(z.string(), z.string()),
   roles: z.record(z.string(), z.boolean()),
   nutrition_source: z.string().max(60).nullable(),
-  verified_at: z.string().nullable(),
 });
 
 export function readProductForm(fd: FD) {
@@ -115,7 +114,6 @@ export function readProductForm(fd: FD) {
     ),
     roles: Object.fromEntries(ROLE_KEYS.flatMap((k) => (fd.get(`role_${k}`) ? [[k, true]] : []))),
     nutrition_source: str(fd, "nutrition_source"),
-    verified_at: str(fd, "verified_at"),
   };
   return { product, version };
 }

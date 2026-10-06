@@ -1,9 +1,10 @@
 "use server";
 
 import { z } from "zod";
-import { getSupabaseAdmin } from "@/lib/supabase";
-import { getResend, sendWaitlistConfirmEmail } from "@/lib/resend";
-import { env } from "@/lib/env";
+import { headers } from "next/headers";
+import { createHash } from "node:crypto";
+import { getSupabaseAdminStrict } from "@/lib/supabase";
+import { sendWaitlistConfirmEmail } from "@/lib/resend";
 import { site } from "@/lib/site";
 import { UPDATES_INTEREST } from "@/lib/box";
 
@@ -18,35 +19,6 @@ const waitlistSchema = z.object({
 
 export type WaitlistInput = z.input<typeof waitlistSchema>;
 
-// Backup record when the database is unreachable. Resend returns `{ error }` rather than
-// throwing on API failures, so both paths must be checked.
-async function notifyFounder(
-  email: string,
-  d: z.output<typeof waitlistSchema>,
-): Promise<boolean> {
-  try {
-    const { error } = await getResend().emails.send({
-      from: env.RESEND_FROM_EMAIL,
-      to: site.email,
-      subject: `[Keniya waitlist] ${email} · ${d.boxInterest}`,
-      text: [
-        `Email: ${email}`,
-        `Box: ${d.boxInterest}`,
-        `Source: ${d.source}`,
-        `Who: ${d.quizWho ?? "—"}`,
-        `Craving: ${d.quizCraving ?? "—"}`,
-        `Allergies: ${(d.quizAllergies ?? []).join(", ") || "—"}`,
-        `DB insert failed — saved via email only.`,
-      ].join("\n"),
-    });
-    if (error) console.error("founder notify failed", error);
-    return !error;
-  } catch (err) {
-    console.error("founder notify threw", err);
-    return false;
-  }
-}
-
 export async function joinWaitlist(
   input: WaitlistInput,
 ): Promise<{ ok: boolean; message: string }> {
@@ -57,8 +29,21 @@ export async function joinWaitlist(
   const d = parsed.data;
   const email = d.email.trim().toLowerCase();
 
-  const db = getSupabaseAdmin();
-  let dbOk = false;
+  let db;
+  try {
+    db = getSupabaseAdminStrict();
+    const h = await headers();
+    const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
+    const key = createHash("sha256").update(ip).digest("hex");
+    const limited = await db.rpc("allow_public_attempt", { p_key: `waitlist:ip:${key}`, p_limit: 5, p_window_seconds: 600 });
+    if (limited.error) throw new Error(limited.error.message);
+    const byEmail = await db.rpc("allow_public_attempt", { p_key: `waitlist:email:${createHash("sha256").update(email).digest("hex")}`, p_limit: 3, p_window_seconds: 3600 });
+    if (byEmail.error) throw new Error(byEmail.error.message);
+    if (!limited.data || !byEmail.data) return { ok: false, message: "Too many requests. Please try again later." };
+  } catch (error) {
+    console.error("waitlist unavailable", error);
+    return { ok: false, message: `We couldn't save your request. Please try again later or email ${site.email}.` };
+  }
   const { error } = await db.from("waitlist").insert({
     email,
     box_interest: d.boxInterest,
@@ -68,24 +53,10 @@ export async function joinWaitlist(
     quiz_craving: d.quizCraving ?? null,
   });
 
+  if (error?.code === "23505") return { ok: true, message: "You're already on the list — we'll be in touch." };
   if (error) {
-    if (error.code === "23505") {
-      dbOk = true;
-    } else {
-      console.error("waitlist insert failed", error.code, error.message);
-      dbOk = false;
-    }
-  } else {
-    dbOk = true;
-  }
-
-  // Never tell someone they're on the list unless we actually recorded them somewhere.
-  const saved = dbOk || (await notifyFounder(email, d));
-  if (!saved) {
-    return {
-      ok: false,
-      message: `Something hiccuped — email ${site.email} and we’ll add you by hand.`,
-    };
+    console.error("waitlist insert failed", error.code, error.message);
+    return { ok: false, message: `We couldn't save your request. Please try again later or email ${site.email}.` };
   }
 
   const mail = await sendWaitlistConfirmEmail({

@@ -8,9 +8,10 @@
  *
  * Needs NEXT_PUBLIC_SUPABASE_URL (or SUPABASE_URL) and SUPABASE_SERVICE_ROLE_KEY in .env.local.
  * Products upsert on code (P001…): nutrition/checks update the current formula version in
- * place. Settings, rules and lineups are only written when empty unless --force.
+ * place. Settings and rules are only overwritten with --force; imported lineups remain drafts.
  * Business data never enters git: the workbook stays in /ops (gitignored).
  */
+import { expireInvalidCheckoutSessions } from "../src/lib/commerce-reconcile";
 import { existsSync, readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
 import { landedCost } from "../src/lib/admin/costing";
@@ -25,6 +26,8 @@ for (const f of [".env.local", ".env"]) {
     if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
   }
 }
+
+process.env.NEXT_PUBLIC_SUPABASE_URL ??= process.env.SUPABASE_URL;
 
 const args = process.argv.slice(2);
 const path = args.find((a) => !a.startsWith("--"));
@@ -96,73 +99,89 @@ async function main() {
     return r.data;
   };
 
-  const ids = new Map<string, string>();
-  for (const p of wb.products) {
-    // The workbook's "Vendor" column is sourcing research ("Brand wholesale / UNFI"), not a
-    // store you bought from: keep it as a note; real vendors come from purchases and quotes.
-    const { version, vendor, ...prod } = p;
-    const notes = [prod.notes, vendor ? `Sourcing (workbook): ${vendor}` : null].filter(Boolean).join("\n") || null;
-    const row = ok(
-      await db
-        .from("products")
-        .upsert({ ...prod, notes, created_by: by, updated_at: new Date().toISOString() }, { onConflict: "code" })
-        .select("id")
-        .single(),
-      `product ${p.code}`,
-    ) as { id: string };
-    ids.set(p.code, row.id);
-    const cur = (await db.from("product_versions").select("id").eq("product_id", row.id).eq("is_current", true).maybeSingle()).data as { id: string } | null;
-    if (cur) ok(await db.from("product_versions").update(version).eq("id", cur.id), `version ${p.code}`);
-    else ok(await db.from("product_versions").insert({ ...version, product_id: row.id, version: 1, created_by: by }), `version ${p.code}`);
-    if (p.estimate_cost_cents !== null) {
-      const has = (await db.from("vendor_prices").select("id").eq("product_id", row.id).eq("source", "estimate").limit(1)).data;
-      if (!has?.length)
-        ok(
-          await db.from("vendor_prices").insert({ product_id: row.id, vendor_id: null, unit_cost_cents: p.estimate_cost_cents, source: "estimate", note: vendor ? `Workbook estimate (${vendor})` : "Workbook estimate", created_by: by }),
-          `price ${p.code}`,
-        );
+  let mutationsStarted = false;
+  let mutationFailure: unknown;
+  try {
+    const ids = new Map<string, string>();
+    for (const p of wb.products) {
+      // The workbook's "Vendor" column is sourcing research ("Brand wholesale / UNFI"), not a
+      // store you bought from: keep it as a note; real vendors come from purchases and quotes.
+      const { version, vendor, ...prod } = p;
+      const notes = [prod.notes, vendor ? `Sourcing (workbook): ${vendor}` : null].filter(Boolean).join("\n") || null;
+      const existing = ok(await db.from("products").select("*").eq("code", p.code).maybeSingle(), `lookup ${p.code}`) as { id: string; updated_at: string; upc?: string | null; default_vendor_id?: string | null } | null;
+      mutationsStarted = true;
+      const id = ok(await db.rpc("save_product", {
+        p_id: existing?.id ?? null, p_product: { ...existing, ...prod, notes }, p_version: version,
+        p_actor: by, p_new_version: false, p_expected_updated_at: existing?.updated_at ?? null,
+        p_outer_gtin: null, p_outer_units: null,
+      }), `product and formula ${p.code}`) as string;
+      ids.set(p.code, id);
+      // Workbook decisions are historical internal records, never authenticated approvals.
+      // Do not overwrite an existing review on a repeat import; changed labels reset via RPC.
+      if (!existing && ["Rejected", "Retired"].includes(p.status)) {
+        ok(await db.rpc("set_product_review", { p_id: id, p_status: p.status,
+          p_reason: p.reject_reason, p_actor: by, p_role: "admin" }), `internal review ${p.code}`);
+      }
+      if (p.estimate_cost_cents !== null) {
+        const has = (await db.from("vendor_prices").select("id").eq("product_id", id).eq("source", "estimate").limit(1)).data;
+        if (!has?.length)
+          ok(
+            await db.from("vendor_prices").insert({ product_id: id, vendor_id: null, unit_cost_cents: p.estimate_cost_cents, source: "estimate", note: vendor ? `Workbook estimate (${vendor})` : "Workbook estimate", created_by: by }),
+            `price ${p.code}`,
+          );
+      }
+    }
+    console.log(`Upserted ${ids.size} products.`);
+
+    const settingsRow = (await db.from("admin_settings").select("data").eq("id", 1).maybeSingle()).data as { data: object } | null;
+    if (force || !settingsRow || Object.keys(settingsRow.data ?? {}).length === 0) {
+      mutationsStarted = true;
+      ok(await db.from("admin_settings").upsert({ id: 1, data: wb.settings, updated_by: by }), "settings");
+      ok(await db.from("package_profiles").update({ cost_cents: wb.mailer.cents, empty_weight_oz: wb.mailer.emptyOz }).eq("is_default", true), "package");
+      console.log("Settings written (mailer cost + packaging weight on the default 12×9×4 package).");
+    } else console.log("Settings already set: skipped (use --force to overwrite).");
+
+    for (const b of BOX_SLUGS) {
+      const hasRules = (await db.from("box_rules").select("box_slug").eq("box_slug", b).maybeSingle()).data;
+      if (force || !hasRules) {
+        mutationsStarted = true;
+        ok(await db.from("box_rules").upsert({ box_slug: b, rules: wb.rules[b], updated_by: by }), `rules ${b}`);
+      }
+      const active = (await db.from("box_lineups").select("id").eq("box_slug", b).eq("status", "active").maybeSingle()).data;
+      if (active && !force) {
+        console.log(`${BOX_LABEL[b]}: active lineup exists, skipped.`);
+        continue;
+      }
+      const items = [
+        ...wb.lineups[b].map((l) => ({ product_id: ids.get(l.code)!, category: l.category, is_extra: false })),
+        ...wb.extras[b].map((c) => ({ product_id: ids.get(c)!, category: null, is_extra: true })),
+      ];
+      mutationsStarted = true;
+      ok(await db.rpc("save_box_lineup", { p_slug: b, p_objective: "manual",
+        p_notes: "Imported workbook proposal; check live rules and authenticated approvals before activation",
+        p_activate: false, p_actor: by, p_items: items }), `draft lineup ${b}`);
+      console.log(`${BOX_LABEL[b]}: draft imported (${items.length} items); activate after review.`);
+    }
+
+    if (wb.watchlist.length) ok(await db.from("watchlist").upsert(wb.watchlist, { onConflict: "ingredient" }), "watchlist");
+    console.log(`Watchlist: ${wb.watchlist.length} ingredients. Done.`);
+  } catch (error) {
+    mutationFailure = error;
+    throw error;
+  } finally {
+    if (mutationsStarted) {
+      try {
+        await expireInvalidCheckoutSessions(BOX_SLUGS);
+      } catch (expiryError) {
+        if (mutationFailure) throw new AggregateError([mutationFailure, expiryError], "Mutation failed and invalid Stripe checkout sessions still need expiry");
+        throw expiryError;
+      }
     }
   }
-  console.log(`Upserted ${ids.size} products.`);
-
-  const settingsRow = (await db.from("admin_settings").select("data").eq("id", 1).maybeSingle()).data as { data: object } | null;
-  if (force || !settingsRow || Object.keys(settingsRow.data ?? {}).length === 0) {
-    ok(await db.from("admin_settings").upsert({ id: 1, data: wb.settings, updated_by: by }), "settings");
-    ok(await db.from("package_profiles").update({ cost_cents: wb.mailer.cents, empty_weight_oz: wb.mailer.emptyOz }).eq("is_default", true), "package");
-    console.log("Settings written (mailer cost + packaging weight on the default 12×9×4 package).");
-  } else console.log("Settings already set: skipped (use --force to overwrite).");
-
-  for (const b of BOX_SLUGS) {
-    const hasRules = (await db.from("box_rules").select("box_slug").eq("box_slug", b).maybeSingle()).data;
-    if (force || !hasRules) ok(await db.from("box_rules").upsert({ box_slug: b, rules: wb.rules[b], updated_by: by }), `rules ${b}`);
-    const active = (await db.from("box_lineups").select("id").eq("box_slug", b).eq("status", "active").maybeSingle()).data;
-    if (active && !force) {
-      console.log(`${BOX_LABEL[b]}: active lineup exists, skipped.`);
-      continue;
-    }
-    if (active) ok(await db.from("box_lineups").update({ status: "archived" }).eq("id", (active as { id: string }).id), "archive");
-    const latest = (await db.from("box_lineups").select("version").eq("box_slug", b).order("version", { ascending: false }).limit(1).maybeSingle()).data as { version: number } | null;
-    const lu = ok(
-      await db
-        .from("box_lineups")
-        .insert({ box_slug: b, version: (latest?.version ?? 0) + 1, status: "active", objective: "manual", notes: "Imported from the Box Builder workbook", created_by: by, activated_at: new Date().toISOString() })
-        .select("id")
-        .single(),
-      `lineup ${b}`,
-    ) as { id: string };
-    const items = [
-      ...wb.lineups[b].map((l, i) => ({ lineup_id: lu.id, position: i + 1, product_id: ids.get(l.code)!, category: l.category, is_extra: false })),
-      ...wb.extras[b].map((c, i) => ({ lineup_id: lu.id, position: 100 + i, product_id: ids.get(c)!, category: null, is_extra: true })),
-    ];
-    ok(await db.from("lineup_items").insert(items), `lineup items ${b}`);
-    console.log(`${BOX_LABEL[b]}: lineup v${(latest?.version ?? 0) + 1} active (${items.length} items).`);
-  }
-
-  if (wb.watchlist.length) ok(await db.from("watchlist").upsert(wb.watchlist, { onConflict: "ingredient" }), "watchlist");
-  console.log(`Watchlist: ${wb.watchlist.length} ingredients. Done.`);
 }
 
 main().catch((e) => {
   console.error(e instanceof Error ? e.message : e);
+  if (e instanceof AggregateError) for (const cause of e.errors) console.error(cause instanceof Error ? cause.message : cause);
   process.exit(1);
 });

@@ -1,6 +1,6 @@
 // Clinician review sheet: one row per product with the label data and every rule decision,
 // so a reviewer can audit box fit without the admin. No costs or vendors (not theirs to audit).
-import { fitFor, type BoxFit } from "./rules";
+import { fitFor, isClinicianApproved, type BoxFit } from "./rules";
 import {
   BOX_LABEL,
   BOX_SLUGS,
@@ -16,6 +16,7 @@ import {
 export type ClinicalExtra = {
   versionId?: string | null;
   upc: string | null;
+  verifiedPackBarcode?: string | null;
   form: string;
   shelfLife: string | null;
   ingredients: string | null;
@@ -32,8 +33,8 @@ export type ClinicalExtra = {
 /** Last two rungs of the ladder: clinician approval (named) and package verification. */
 function readyToPack(s: Snack, x: ClinicalExtra | undefined): string {
   const missing = [
-    s.status !== "Approved" ? "clinician approval" : !x?.reviewedBy?.trim() ? "clinician re-attestation" : null,
-    !x?.upc ? "UPC" : null,
+    s.status !== "Approved" ? "clinician approval" : !isClinicianApproved(s) || !x?.reviewedBy?.trim() ? "clinician re-attestation" : null,
+    !s.packageVerified ? "verified package identity and label" : null,
     !x?.verifiedAt ? "label checked in hand" : null,
   ].filter(Boolean);
   return missing.length ? `no: needs ${missing.join(", ")}` : "yes";
@@ -117,8 +118,11 @@ export function clinicalReviewRows(
       "Pre-screened on": day(x?.prescreenedAt ?? null),
       "Clinician decision by": x?.reviewedBy ?? (s.status === "Approved" ? "Legacy workbook approval: re-attestation needed" : null),
       "Clinician decision on": day(x?.reviewedAt ?? null),
-      UPC: x?.upc,
+      "Unit UPC": x?.upc,
+      "Verified outer-pack barcode": x?.verifiedPackBarcode,
       "Other notes": notes.other,
+      "Authenticated clinician approval": isClinicianApproved(s) ? "yes" : "no",
+      "Clinical review state": s.clinicalDecision ?? "pending",
     });
     return row;
   });

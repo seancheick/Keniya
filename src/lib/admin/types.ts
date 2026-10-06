@@ -41,7 +41,7 @@ export const NUTRITION_SOURCES = ["Package label", "Manufacturer", "Retailer", "
  * (≥90 days, lotHold in stock.ts) at receiving and packing, so it never decides eligibility.
  */
 export const PREGNANCY_BLOCKING = ["P1", "P2", "P3", "P4", "P5", "P6", "P7a", "P7b", "P8"] as const;
-export const PREGNANCY_CHECK_KEYS = [...PREGNANCY_BLOCKING, "P9", "P7c"] as const;
+export const PREGNANCY_CHECK_KEYS = [...PREGNANCY_BLOCKING, "P7c"] as const;
 /** Keniya Pregnancy Standard P1–P9 (revised v3, original box-builder workbook). */
 export const PREGNANCY_CHECK_LABEL: Record<(typeof PREGNANCY_CHECK_KEYS)[number], string> = {
   P1: "Pasteurized or fully cooked",
@@ -54,13 +54,12 @@ export const PREGNANCY_CHECK_LABEL: Record<(typeof PREGNANCY_CHECK_KEYS)[number]
   P7b: "Keniya brand preference (e.g. no erythritol or sugar alcohols); never framed as unsafe",
   P7c: "Customer-preference flag (e.g. stevia, sweeteners); information only, never blocks",
   P8: "Honest single-serve count (one pack = one snack)",
-  P9: "Package date checked on a purchased lot (≥90 days left; enforced per lot at packing, not a product check)",
 };
 /** What each status means for a reviewer. */
 export const STATUS_MEANING: Record<Status, string> = {
   Candidate: "Not reviewed yet, or waiting on a label check",
-  "Pre-approved": "Passed the automated source and ingredient pre-screen; waiting for the clinician",
-  Approved: "Approved by the clinician (or approved earlier in the workbook)",
+  "Pre-approved": "Internal diligence complete; waiting for authenticated clinician approval",
+  Approved: "Authenticated clinician approval of the current formula; legacy workbook approval needs re-attestation",
   Rejected: "Not used; reason given",
   Retired: "No longer sold or used",
 };
@@ -135,6 +134,9 @@ export type Snack = RuleInput & {
   loveRate: number | null;
   /** Who made the clinician decision; null for legacy workbook approvals (need re-attestation). */
   clinicianApprovedBy?: string | null;
+  clinicalDecision?: "pending" | "approved" | "rejected" | "changes_requested";
+  approvalRole?: string | null;
+  diligenceComplete?: boolean;
   /** UPC on file and the label checked with the package in hand. */
   packageVerified?: boolean;
 };
@@ -215,7 +217,8 @@ export const DEFAULT_SETTINGS: Settings = {
 
 /** Stored settings merged over defaults, so new fields never break an old row. */
 export function resolveSettings(stored: unknown): Settings {
-  const s = (stored && typeof stored === "object" ? stored : {}) as Partial<Settings>;
+  if (stored !== undefined && (stored === null || typeof stored !== "object" || Array.isArray(stored))) throw new Error("Invalid live settings");
+  const s = (stored ?? {}) as Partial<Settings>;
   const merged = {
     ...DEFAULT_SETTINGS,
     ...s,
@@ -230,7 +233,8 @@ export function resolveSettings(stored: unknown): Settings {
     policy: { ...DEFAULT_SETTINGS.policy, ...s.policy },
   };
   const parsed = settingsSchema.safeParse(merged);
-  return parsed.success ? parsed.data : DEFAULT_SETTINGS;
+  if (!parsed.success) throw new Error("Invalid live settings");
+  return parsed.data;
 }
 
 // ---------------------------------------------------------------- box rules
@@ -254,6 +258,7 @@ export const boxRulesSchema = z.object({
   treatMax: z.number().int().min(0).nullable(),
   // Hard limits every pick must meet before any pathway counts (null = no limit).
   carbsMax: z.number().min(0).nullable().default(null),
+  beverageAddedSugarMax: z.number().min(0).nullable().default(null),
   addedSugarMax: z.number().min(0).nullable().default(null),
   /** Added-sugar limit for controlled treats (CT role) instead of addedSugarMax. */
   treatAddedSugarMax: z.number().min(0).nullable().default(null),
@@ -276,6 +281,7 @@ const none = {
   fiberMin: null,
   treatMax: null,
   carbsMax: null,
+  beverageAddedSugarMax: null,
   addedSugarMax: null,
   treatAddedSugarMax: null,
   sodiumMax: null,
@@ -323,6 +329,7 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     // Keniya standard (2026-10-06): ≤20 g total carbs (ADA snack examples use 15–20 g carbs
     // plus protein; ADA counts total carbs, not "net carbs") and ≤5 g added sugar per pack.
     carbsMax: 20,
+    beverageAddedSugarMax: 0,
     addedSugarMax: 5,
   },
   heart: {
@@ -343,6 +350,7 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     // (AHA Heart-Check nut category); added sugar ≤5 g on core picks (FDA "healthy" range),
     // ≤8 g on a controlled treat.
     sodiumMax: 140,
+    beverageAddedSugarMax: 0,
     addedSugarMax: 5,
     treatAddedSugarMax: 8,
     satFatMax: 2,
@@ -367,6 +375,7 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     proteinOrFiberMin: 5,
     treatMax: 2,
     carbsMax: 20,
+    beverageAddedSugarMax: 0,
     addedSugarMax: 5,
     caffeineMax: 50,
   },
@@ -388,6 +397,7 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     wholeFoodMin: 2,
     treatMax: 2,
     carbsMax: 20,
+    beverageAddedSugarMax: 0,
     addedSugarMax: 5,
   },
   // Pregnancy food-safety checks still apply. Caffeine: Keniya per-pack cap of 100 mg,
@@ -413,8 +423,11 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
 };
 
 export function resolveBoxRules(slug: BoxSlug, stored: unknown): BoxRules {
+  if (stored !== undefined && (!stored || typeof stored !== "object" || Array.isArray(stored))) throw new Error(`Invalid live rules for ${slug}`);
+  if (stored !== undefined && !boxRulesSchema.safeParse(stored).success) throw new Error(`Invalid live rules for ${slug}`);
   const parsed = boxRulesSchema.safeParse({ ...DEFAULT_BOX_RULES[slug], ...(stored as object) });
-  return parsed.success ? parsed.data : DEFAULT_BOX_RULES[slug];
+  if (!parsed.success) throw new Error(`Invalid live rules for ${slug}`);
+  return parsed.data;
 }
 
 export const OBJECTIVES = ["balanced", "margin", "expiring", "overstock", "favorites"] as const;

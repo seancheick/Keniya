@@ -1,3 +1,4 @@
+import { loadPublicCatalog } from "@/lib/public-sales";
 import { Hero } from "@/components/sections/hero";
 import { TrustStrip } from "@/components/sections/trust-strip";
 import { Shop } from "@/components/sections/shop";
@@ -7,7 +8,6 @@ import { PreorderCta } from "@/components/sections/preorder-cta";
 import { StickyBuyBar } from "@/components/sticky-buy-bar";
 import { JsonLd } from "@/components/json-ld";
 import { faqs } from "@/components/sections/faq";
-import { loadPublicRules, publicBoxes } from "@/lib/public-rules";
 import { site } from "@/lib/site";
 import { faqJsonLd, productJsonLd } from "@/lib/schema";
 import { standardsForAll } from "@/lib/standards";
@@ -23,8 +23,7 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function Home() {
-  const rules = await loadPublicRules();
-  const boxes = publicBoxes(rules);
+  const { rules, boxes } = await loadPublicCatalog();
   // Built from the same data the page renders, so markup can't drift from visible content.
   // Product @ids point at each box's landing page, the canonical home for that product.
   const homeJsonLd = {

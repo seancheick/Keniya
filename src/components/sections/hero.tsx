@@ -70,8 +70,8 @@ export function Hero() {
           </h1>
           <p className="hero-sub mt-6 max-w-[48ch] text-lg leading-relaxed text-ink-soft">
             Six boxes, each with its own nutrition and ingredient standards. Every one of the{" "}
-            {site.snackCount} snacks has to pass its box&rsquo;s limits, and every lineup is
-            reviewed by our clinician.
+            {site.snackCount} snacks has to pass its box&rsquo;s limits, and each lineup needs
+            clinician approval before preorders open.
           </p>
           <div className="hero-actions mt-9">
             <div className="flex flex-wrap items-center gap-3">

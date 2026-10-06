@@ -4,7 +4,7 @@ import { clinicalReviewRows } from "@/lib/admin/clinical";
 import { clinicalWorkbook } from "@/lib/admin/clinical-xlsx";
 import { clinicianPacketWorkbook } from "@/lib/admin/clinical-packet";
 import { toCsv } from "@/lib/admin/recall";
-import { eligibleFor, lineupStage } from "@/lib/admin/rules";
+import { eligibleFor } from "@/lib/admin/rules";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_LABEL, BOX_SLUGS } from "@/lib/admin/types";
 
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     const buf = await clinicianPacketWorkbook({
       boxes: BOX_SLUGS.map((slug) => {
         const b = ctx.boxes[slug];
-        return { slug, version: b.lineup?.version ?? null, stage: lineupStage([...b.picks, ...b.extras.map((snack) => ({ snack }))], b.ready), checks: b.checks, picks: b.picks, extras: b.extras };
+        return { slug, version: b.lineup?.version ?? null, checks: b.checks, picks: b.picks, extras: b.extras };
       }),
       rules: ctx.rules,
       policy: ctx.settings.policy,
@@ -76,6 +76,7 @@ function extraFor(ctx: Awaited<ReturnType<typeof loadAdminContext>>) {
     return {
       versionId: v?.id ?? null,
       upc: p.upc,
+      verifiedPackBarcode: ctx.catalog.packs.find((pack) => pack.product_id === p.id && pack.barcode_status === "verified")?.gtin ?? null,
       form: p.form,
       shelfLife: v?.shelf_life ?? null,
       ingredients: v?.ingredients ?? null,

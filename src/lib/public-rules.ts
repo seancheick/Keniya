@@ -1,24 +1,7 @@
 import "server-only";
-import { loadBoxRules } from "@/lib/admin/db";
-import { DEFAULT_BOX_RULES } from "@/lib/admin/types";
 import { boxes, type Box, type PublicBox } from "@/lib/box";
 import { landingFor, type BoxLanding } from "@/lib/landing";
 import { fillStandards, publicComposition, type PublicRules } from "@/lib/standards";
-
-/**
- * The rules the public site prints are the rules the engine enforces: the live `box_rules`
- * rows merged over the defaults, exactly what eligibility uses. Pages that call this are
- * revalidated when a rule is saved in the admin (see saveBoxRules), so there's nothing to
- * remember. If the database is unreachable the defaults are used and the error is logged.
- */
-export async function loadPublicRules(): Promise<PublicRules> {
-  try {
-    return await loadBoxRules();
-  } catch (err) {
-    console.error("public rules: falling back to defaults", err);
-    return DEFAULT_BOX_RULES;
-  }
-}
 
 /** Box copy with every `{{slug.field}}` filled, and "what goes in" derived from the live recipe. */
 export const publicBoxes = (rules: PublicRules): PublicBox[] =>

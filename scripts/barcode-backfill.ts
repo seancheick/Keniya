@@ -14,9 +14,11 @@
  * candidate (not written to `upc`), two agreeing or USDA exact variant = provisional, three
  * = high, disagreement = conflict (left for GS1 / manufacturer / the package).
  */
+import { expireInvalidCheckoutSessions } from "../src/lib/commerce-reconcile";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { barcodeVerdict, cleanBarcode, gtin14, printedForm, validCheckDigit, type BarcodeSource } from "../src/lib/admin/barcode";
 import { db } from "../src/lib/admin/db";
+import { BOX_SLUGS } from "../src/lib/admin/types";
 import type { FdcFood } from "../src/lib/admin/fdc";
 
 for (const f of [".env.local", ".env"]) {
@@ -26,6 +28,8 @@ for (const f of [".env.local", ".env"]) {
     if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
   }
 }
+
+process.env.NEXT_PUBLIC_SUPABASE_URL ??= process.env.SUPABASE_URL;
 
 const UA = "KeniyaAdmin/1.0 (keniyahealth.com)";
 const KEY = process.env.USDA_API_KEY ?? "DEMO_KEY";
@@ -132,36 +136,53 @@ async function main() {
   console.log(`${todo.length} products to look up${apply ? " (applying)" : " (dry run)"}`);
   if (apply) writeFileSync(`ops/barcode-backfill-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(todo, null, 1));
   const tally: Record<string, number> = {};
-  for (const p of todo) {
-    const at = new Date().toISOString();
-    const sources: BarcodeSource[] = [];
-    const usda = await fromUsda(p, at);
-    if (usda) sources.push(usda);
-    const off = await fromOff(p, at);
-    if (off) sources.push(off);
-    // Third source only when the first two haven't already settled it.
-    if (barcodeVerdict(sources).status !== "high" && (sources.length < 2 || barcodeVerdict(sources).status === "conflict")) {
-      const u = await fromUpcitemdb(p, at);
-      if (u) sources.push(u);
+  let mutationsStarted = false;
+  let mutationFailure: unknown;
+  try {
+    for (const p of todo) {
+      const at = new Date().toISOString();
+      const sources: BarcodeSource[] = [];
+      const usda = await fromUsda(p, at);
+      if (usda) sources.push(usda);
+      const off = await fromOff(p, at);
+      if (off) sources.push(off);
+      // Third source only when the first two haven't already settled it.
+      if (barcodeVerdict(sources).status !== "high" && (sources.length < 2 || barcodeVerdict(sources).status === "conflict")) {
+        const u = await fromUpcitemdb(p, at);
+        if (u) sources.push(u);
+      }
+      const v = barcodeVerdict(sources);
+      tally[v.status] = (tally[v.status] ?? 0) + 1;
+      console.log(`${p.code} ${v.status.padEnd(11)} ${v.gtin ?? "-"}  ${p.name}${v.note ? `  [${v.note}]` : ""}`);
+      for (const s of sources) console.log(`      ${s.source}: ${s.gtin} ${s.exact_variant ? "[exact]" : ""} ${s.note ?? ""}`);
+      if (!apply) continue;
+      const write: Record<string, unknown> = { barcode_status: v.status, barcode_sources: sources, barcode_checked_at: at };
+      if ((v.status === "provisional" || v.status === "high") && !p.upc) {
+        // Store the code as printed (from the agreeing source), never a zero-stripped form; and
+        // never a code already registered as an outer purchase pack.
+        const printed = printedForm(sources.find((s) => gtin14(s.gtin) === v.gtin)!.gtin);
+        const isPack = (await db().from("purchase_packs").select("id").eq("gtin14", v.gtin!).maybeSingle()).data;
+        if (printed && validCheckDigit(printed) && !isPack) write.upc = printed;
+        else console.log(`      not written: ${isPack ? "that code is an outer purchase pack" : "no valid printed form"}`);
+      }
+      mutationsStarted = true;
+      const r = await db().from("products").update(write).eq("id", p.id);
+      if (r.error) console.log(`      ERROR ${r.error.message}`);
     }
-    const v = barcodeVerdict(sources);
-    tally[v.status] = (tally[v.status] ?? 0) + 1;
-    console.log(`${p.code} ${v.status.padEnd(11)} ${v.gtin ?? "-"}  ${p.name}${v.note ? `  [${v.note}]` : ""}`);
-    for (const s of sources) console.log(`      ${s.source}: ${s.gtin} ${s.exact_variant ? "[exact]" : ""} ${s.note ?? ""}`);
-    if (!apply) continue;
-    const write: Record<string, unknown> = { barcode_status: v.status, barcode_sources: sources, barcode_checked_at: at };
-    if ((v.status === "provisional" || v.status === "high") && !p.upc) {
-      // Store the code as printed (from the agreeing source), never a zero-stripped form; and
-      // never a code already registered as an outer purchase pack.
-      const printed = printedForm(sources.find((s) => gtin14(s.gtin) === v.gtin)!.gtin);
-      const isPack = (await db().from("purchase_packs").select("id").eq("gtin14", v.gtin!).maybeSingle()).data;
-      if (printed && validCheckDigit(printed) && !isPack) write.upc = printed;
-      else console.log(`      not written: ${isPack ? "that code is an outer purchase pack" : "no valid printed form"}`);
+    console.log("summary:", JSON.stringify(tally), `| UPCitemdb calls ${upcitemdbCalls}`);
+  } catch (error) {
+    mutationFailure = error;
+    throw error;
+  } finally {
+    if (mutationsStarted) {
+      try {
+        await expireInvalidCheckoutSessions(BOX_SLUGS);
+      } catch (expiryError) {
+        if (mutationFailure) throw new AggregateError([mutationFailure, expiryError], "Mutation failed and invalid Stripe checkout sessions still need expiry");
+        throw expiryError;
+      }
     }
-    const r = await db().from("products").update(write).eq("id", p.id);
-    if (r.error) console.log(`      ERROR ${r.error.message}`);
   }
-  console.log("summary:", JSON.stringify(tally), `| UPCitemdb calls ${upcitemdbCalls}`);
 }
 
 main().catch((err) => {

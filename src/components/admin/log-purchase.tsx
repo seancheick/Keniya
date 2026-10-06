@@ -65,6 +65,8 @@ export function LogPurchase({
   const [boxes, setBoxes] = useState("1");
   const [boxFor, setBoxFor] = useState({ query: "", productId: "", units: "" });
   const [savingBox, startBox] = useTransition();
+  const [newBarcodeOn, setNewBarcodeOn] = useState("");
+  const [newBoxUnits, setNewBoxUnits] = useState("");
   const [creatingPending, startCreate] = useTransition();
   const [lastState, setLastState] = useState(state);
 
@@ -104,6 +106,8 @@ export function LogPurchase({
 
   async function onScan(code: string) {
     setScanning(false);
+    setNewBarcodeOn("");
+    setNewBoxUnits("");
     setBox(null);
     const found = list.find((p) => sameBarcode(p.upc, code));
     if (found) {
@@ -252,8 +256,8 @@ export function LogPurchase({
                 code: "new",
                 name,
                 brand: (fd.get("brand") as string) || null,
-                upc: (fd.get("upc") as string) || null,
-                packs: [],
+                upc: newBarcodeOn === "box" ? null : (fd.get("upc") as string) || null,
+                packs: newBarcodeOn === "box" ? [{ gtin: String(fd.get("upc")), units: Number(newBoxUnits), description: null }] : [],
                 status: "Candidate",
                 onHand: 0,
                 lotAvgCents: null,
@@ -263,6 +267,7 @@ export function LogPurchase({
               };
               setList((l) => [...l, p]);
               setSelected(p);
+              if (newBarcodeOn === "box") pickBox(p, String(fd.get("upc")), Number(newBoxUnits));
               setCreating(null);
               toast.success("Added as a Candidate. Finish nutrition later.");
             })
@@ -323,7 +328,16 @@ export function LogPurchase({
             </div>
           )}
           <p className="font-semibold">New product</p>
-          {/* creating.upc is only ever set from a scan, so the package itself verifies the barcode. */}
+          {creating.upc && <Field label="Where is the scanned barcode?">
+            <select name="barcode_on" required value={newBarcodeOn} onChange={(e) => setNewBarcodeOn(e.target.value)} className={fieldClass}>
+              <option value="">Choose packaging</option>
+              <option value="unit">Single pack going in a Keniya box</option>
+              <option value="box">Outer box containing several single packs</option>
+            </select>
+          </Field>}
+          {creating.upc && newBarcodeOn === "box" && <Field label="Single packs per outer box">
+            <input name="units_per_box" type="number" required min={2} max={1000} value={newBoxUnits} onChange={(e) => setNewBoxUnits(e.target.value)} className={fieldClass} />
+          </Field>}
           {creating.upc && <input type="hidden" name="upc_source" value="scan" />}
           {creating.draft && <DraftNotice draft={creating.draft} />}
           <Field label="Name">

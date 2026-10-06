@@ -23,7 +23,7 @@ export function cleanBarcode(raw: string | null | undefined): string | null {
 /** GS1 mod-10 check digit, valid for GTIN-8/12/13/14 (and 8-digit UPC-E is not handled). */
 export function validCheckDigit(code: string): boolean {
   const d = cleanBarcode(code);
-  if (!d) return false;
+  if (!d || d !== code) return false;
   const body = d.slice(0, -1);
   const check = Number(d.at(-1));
   let sum = 0;
