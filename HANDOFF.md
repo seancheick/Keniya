@@ -1,6 +1,13 @@
 # Handoff: Keniya Admin (`/admin`)
 
-**Status, Oct 5 2026, latest: pack-floor Verify screen.**
+**Status, Oct 5 2026, latest: simpler box-builder table.**
+- `src/components/admin/box-product-table.tsx`, rendered full-width under the builder on `/admin/boxes/[slug]`. Columns: product (front photo, categories, cost), stock, ✓ per box (`eligibleFor`; this box uses the one-off mix), approval (Clinician / Legacy / Pre-approved / Candidate), package verified, earliest expiry, Add/Remove. A row expands to show the evidence.
+- Candidates and allergen "Leave out" conflicts can't be added. Add picks a category with room (below its minimum first, then below its maximum).
+- On phones the wide columns fold into a chip line under the product name.
+- The per-pick product dropdown and "+ Add pick" were removed from the lineup list; swapping is now Remove + Add in the table.
+- The page passes `allRules`, signed front-photo URLs and pre-screen findings (`splitNotes`) to `BoxBuilder`.
+
+**Status, Oct 5 2026: pack-floor Verify screen.**
 - `/admin/verify` (nav tab "Verify"): `src/app/admin/(protected)/verify/page.tsx`, `src/components/admin/verify-flow.tsx`, action `src/actions/admin/verify.ts`, pure checks `src/lib/admin/verify.ts` (+ tests).
 - Scan with a handheld scanner (keyboard input, auto-focused), the camera (`BarcodeScanner`) or by typing. Then confirm the nutrition, ingredients/allergens and single-serve format, and enter an expiry ≥ `MIN_DAYS_TO_EXPIRY` (90).
 - Success sets `products.upc` (if empty), `verified_at/by`, P8/P9 PASS, and adds an audit line under the pre-screen line in notes. Refused when: the barcode differs from the one on file, the barcode belongs to another product, the label doesn't match, or the date is too short. "Not single-serve" records P8 FAIL.

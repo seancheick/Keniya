@@ -53,8 +53,9 @@
   - A provenance record ("Verified on · source · by").
   - "Reformulated?" saves a new formula version, so past shipments keep the nutrition they actually had.
 - **Boxes**
-  - Composition rules (category ranges, type limits, box-specific minimums).
-  - "Suggest lineup" with an objective: best margin, use expiring stock, use overstock, customer favorites, or balanced.
+  - **Build box** fills all picks in one click (objective, allergen "Leave out", optional one-off snack mix).
+  - **Products table** under the lineup: one row per product with stock, ✓ per box, approval, package check and expiry. **Add** puts it in a category with room; **Remove** takes it out; tap a row for the evidence (eligibility reasons, nutrition, allergens, pre-screen finding, links to the product and Verify). By default it shows only products eligible for this box.
+  - Box recipe (category ranges, hard limits, type limits, box-specific minimums).
   - Live checks, an itemized landed cost and **Can build N**.
   - Save & activate creates a new lineup version.
 - **Orders**

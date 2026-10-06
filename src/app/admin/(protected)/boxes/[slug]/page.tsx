@@ -6,7 +6,8 @@ import { BoxBuilder } from "@/components/admin/box-builder";
 import { RulesForm } from "@/components/admin/rules-form";
 import { Badge, Card, PageHeader, Table } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
-import { db, loadPostageHistory, must, type LineupRow } from "@/lib/admin/db";
+import { db, loadPostageHistory, must, signedUrls, type LineupRow } from "@/lib/admin/db";
+import { splitNotes } from "@/lib/admin/clinical";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_LABEL, BOX_SLUGS, OBJECTIVE_LABEL, isBoxSlug, type Objective } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
@@ -16,11 +17,18 @@ export const metadata: Metadata = { title: "Box builder" };
 export default async function BoxPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   if (!isBoxSlug(slug)) notFound();
-  const [ctx, history, versionsRes] = await Promise.all([
+  const [ctx, history, versionsRes, photosRes] = await Promise.all([
     loadAdminContext(),
     loadPostageHistory(),
     db().from("box_lineups").select("*").eq("box_slug", slug).order("version", { ascending: false }).limit(20),
+    db().from("product_photos").select("product_id, path, created_at").eq("kind", "front").order("created_at", { ascending: false }),
   ]);
+  // Newest front photo per product, as short-lived signed URLs (private bucket).
+  const fronts = new Map<string, string>();
+  for (const ph of must(photosRes, "photos") as { product_id: string; path: string }[]) if (!fronts.has(ph.product_id)) fronts.set(ph.product_id, ph.path);
+  const urls = await signedUrls([...fronts.values()]);
+  const photos = Object.fromEntries([...fronts].flatMap(([id, path]) => (urls.get(path) ? [[id, urls.get(path)!]] : [])));
+  const findings = Object.fromEntries(ctx.catalog.products.map((p) => [p.id, splitNotes(p.notes).prescreen]).filter(([, f]) => f));
   const versions = must(versionsRes, "versions") as LineupRow[];
   const b = ctx.boxes[slug];
 
@@ -56,6 +64,9 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
         packagingOz={ctx.packOz}
         mailer={ctx.pkg ? { id: ctx.pkg.id, name: ctx.pkg.name, cents: ctx.pkg.cost_cents } : null}
         history={history}
+        allRules={ctx.rules}
+        photos={photos}
+        findings={findings}
       />
       <div className="mt-6 grid gap-4 lg:grid-cols-2">
         <Card title="Box recipe (saved default)">
