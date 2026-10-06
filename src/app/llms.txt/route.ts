@@ -1,13 +1,16 @@
-import { boxes } from "@/lib/box";
 import { giftLanding, landingFor } from "@/lib/landing";
 import { site } from "@/lib/site";
+import { loadPublicRules, publicBoxes } from "@/lib/public-rules";
 import { publicStandards } from "@/lib/standards";
 
-export const dynamic = "force-static";
+// Numbers come from the live box rules (revalidated on save in the admin).
+export const revalidate = 3600;
 
 // llms.txt (llmstxt.org): a plain-markdown site summary for AI tools. Generated from the
 // same data the site renders so it can't drift.
-export function GET() {
+export async function GET() {
+  const rules = await loadPublicRules();
+  const boxes = publicBoxes(rules);
   const base = site.url.replace(/\/$/, "");
   const body = `# ${site.name}
 
@@ -17,7 +20,7 @@ ${site.name} (from kɛnɛya, "health" in Dioula) is a small, founder-run US comp
 
 ## Boxes
 
-${boxes.map((b) => `- [${b.name}](${base}${landingFor(b.slug).path}) (${b.founding} founding boxes): ${b.forWho} ${b.why} Standards: ${publicStandards(b.slug).join("; ")}.`).join("\n")}
+${boxes.map((b) => `- [${b.name}](${base}${landingFor(b.slug).path}) (${b.founding} founding boxes): ${b.forWho} ${b.why} Standards: ${publicStandards(b.slug, rules).join("; ")}.`).join("\n")}
 - [Gifts](${base}${giftLanding.path}): send any box as a gift, with your note printed and packed inside.
 
 ## Pages

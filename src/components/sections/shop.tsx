@@ -9,9 +9,9 @@ import { MatchQuiz } from "@/components/quiz/match-quiz";
 import { WaitlistForm } from "@/components/waitlist-form";
 import Link from "next/link";
 import { landingFor } from "@/lib/landing";
-import { boxes, UPDATES_INTEREST, type Box } from "@/lib/box";
+import { UPDATES_INTEREST, type Box } from "@/lib/box";
+import type { BoxSlug } from "@/lib/admin/types";
 import { site } from "@/lib/site";
-import { publicStandards } from "@/lib/standards";
 import { cn } from "@/lib/utils";
 
 const promises = [
@@ -24,7 +24,7 @@ const promises = [
  * #box-heart selects that box; #gift switches to gift mode; #gift-<slug> does both
  * (e.g. #gift-blood_sugar). Links in llms.txt/JSON-LD and the gift section use these.
  */
-function readHash(): { slug?: Box["slug"]; gift?: boolean; scroll?: boolean } {
+function readHash(boxes: Box[]): { slug?: Box["slug"]; gift?: boolean; scroll?: boolean } {
   const h = typeof window === "undefined" ? "" : window.location.hash.slice(1);
   if (h === "gift") return { gift: true };
   const giftFor = boxes.find((b) => `gift-${b.slug}` === h || (h === "gift-pregnancy" && b.slug === "pregnancy_comfort"));
@@ -33,7 +33,8 @@ function readHash(): { slug?: Box["slug"]; gift?: boolean; scroll?: boolean } {
   return match ? { slug: match.slug, scroll: true } : {};
 }
 
-export function Shop() {
+/** `boxes` and `standards` are filled from the live box rules by the page (src/lib/public-rules.ts). */
+export function Shop({ boxes, standards }: { boxes: Box[]; standards: Record<BoxSlug, string[]> }) {
   const [slug, setSlug] = useState<Box["slug"]>(boxes[0].slug);
   const [gift, setGift] = useState(false);
   // After a choice the big cards fold into a compact switcher, so price + checkout sit
@@ -43,7 +44,7 @@ export function Shop() {
 
   useEffect(() => {
     const apply = () => {
-      const { slug: s, gift: g, scroll } = readHash();
+      const { slug: s, gift: g, scroll } = readHash(boxes);
       if (s) {
         setSlug(s);
         setPicked(true);
@@ -59,7 +60,7 @@ export function Shop() {
     apply();
     window.addEventListener("hashchange", apply);
     return () => window.removeEventListener("hashchange", apply);
-  }, []);
+  }, [boxes]);
 
   return (
     <section id="boxes" className="scroll-mt-20 border-b border-border">
@@ -74,7 +75,7 @@ export function Shop() {
             <strong className="font-semibold">Need a hand choosing?</strong>{" "}
             <span className="text-ink-soft">Find your box with a few quick questions.</span>
           </p>
-          <MatchQuiz>
+          <MatchQuiz boxes={boxes}>
             <Button
               type="button"
               variant="outline"
@@ -215,7 +216,7 @@ export function Shop() {
                   Every snack in this box
                 </p>
                 <ul className="mt-3 space-y-2 text-sm text-ink-soft">
-                  {publicStandards(b.slug).map((line) => (
+                  {standards[b.slug].map((line) => (
                     <li key={line} className="flex gap-2">
                       <CheckIcon className="mt-0.5 size-4 shrink-0 text-sage-deep" strokeWidth={2.5} aria-hidden />
                       <span>{line}</span>

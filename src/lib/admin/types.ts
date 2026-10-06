@@ -294,8 +294,9 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     substantialMin: 8,
     miniMax: 4,
     beverageMax: 2,
-    // Keniya curation threshold, not a medical cutoff: ACOG advises under 200 mg caffeine per
-    // day in pregnancy, so one pack stays well inside that. Chocolate (≤20 mg) passes.
+    // Keniya conservative per-pack cap, informed by ACOG's <200 mg/day pregnancy guidance.
+    // Not an ACOG number: ACOG sets a daily total, Keniya chooses 50 mg per pack so one snack
+    // never spends a large share of the day. Chocolate (≤20 mg) passes.
     caffeineMax: 50,
   },
   blood_sugar: {
@@ -382,9 +383,10 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     carbsMax: 20,
     addedSugarMax: 5,
   },
-  // Pregnancy food-safety checks still apply; caffeine is looser than in pregnancy (ACOG:
-  // about 200 mg/day while nursing is unlikely to affect the baby; CDC: ≤300 mg/day is
-  // low-to-moderate). 100 mg per pack is the Keniya threshold, not a medical cutoff.
+  // Pregnancy food-safety checks still apply. Caffeine: Keniya per-pack cap of 100 mg,
+  // informed by ACOG (about 200 mg/day while nursing is unlikely to affect the baby) and CDC
+  // (≤300 mg/day is low-to-moderate). Those are daily totals; 100 mg per pack is Keniya's
+  // own number, not an ACOG or CDC cutoff.
   postpartum: {
     ...none,
     total: 14,
@@ -393,7 +395,9 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
       { name: "Protein", min: 3, max: 5 },
       { name: "Savory", min: 2, max: 4 },
       { name: "Sweet", min: 2, max: 4 },
-      { name: "Hydration", min: 2, max: 3 },
+      // Only one hydration product is past pre-screen today (the ginger teas are a clinician
+      // call); the range opens to 1 so the box can be built, and prefers more when available.
+      { name: "Hydration", min: 1, max: 3 },
     ],
     substantialMin: 8,
     miniMax: 4,

@@ -8,7 +8,7 @@ import { site } from "@/lib/site";
 const steps: { title: string; body: string; Icon: LucideIcon }[] = [
   {
     title: "We read the labels",
-    body: "Ingredients, allergens and the nutrition that matters for your box. A snack has to pass that box's limits, like 140 mg sodium for Heart or 20 g carbs for Blood Sugar.",
+    body: "Ingredients, allergens and the nutrition that matters for your box. A snack has to pass that box's limits, which are printed on every box.",
     Icon: ScanText,
   },
   {

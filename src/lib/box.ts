@@ -65,7 +65,7 @@ const raw: Omit<Box, "founding">[] = [
     shortName: "Blood Sugar",
     forWho: "For type 1, type 2 and prediabetes, and anyone keeping carbs in check.",
     caution: "Pregnant? Choose the Gestational Diabetes box.",
-    why: "Every pack under 20 g total carbs and 5 g added sugar.",
+    why: "Every pack under {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar.",
     categories: [
       { name: "Protein & fiber", count: 6, note: "filling picks with more protein or fiber" },
       { name: "Nuts & seeds", count: 3, note: "whole-food crunch" },
@@ -82,7 +82,7 @@ const raw: Omit<Box, "founding">[] = [
     name: "Heart Wellness Box",
     shortName: "Heart",
     forWho: "For high blood pressure, high cholesterol, and anyone eating for their heart.",
-    why: "Sodium capped at 140 mg on every pack; saturated fat and added sugar checked.",
+    why: "Sodium capped at {{heart.sodiumMax}} mg on every pack; saturated fat and added sugar checked.",
     categories: [
       { name: "Nuts & seeds", count: 4, note: "unsaturated-fat sources in single servings" },
       { name: "Whole grains & fiber", count: 4, note: "crackers, bars and crunch" },
@@ -99,7 +99,7 @@ const raw: Omit<Box, "founding">[] = [
     name: "Gestational Diabetes Box",
     shortName: "Gestational",
     forWho: "For gestational diabetes: pregnancy screening and the Blood Sugar standard, both.",
-    why: "Every snack passes our Pregnancy checks and stays under 20 g carbs and 5 g added sugar.",
+    why: "Every snack passes our Pregnancy checks and stays under {{gestational_diabetes.carbsMax}} g carbs and {{gestational_diabetes.addedSugarMax}} g added sugar.",
     categories: [
       { name: "Protein & fiber", count: 5, note: "filling picks that lead with protein or fiber" },
       { name: "Comfort", count: 3, note: "gentle picks for rough days" },

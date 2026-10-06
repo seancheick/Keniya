@@ -6,7 +6,8 @@ import { BuyButton } from "@/components/buy-button";
 import { JsonLd } from "@/components/json-ld";
 import { ReviewerCard } from "@/components/reviewer-card";
 import { boxes, type Box } from "@/lib/box";
-import { giftLanding, landingFor, landings, type BoxLanding } from "@/lib/landing";
+import { giftLanding, landings } from "@/lib/landing";
+import { loadPublicRules, publicBoxes, publicLanding } from "@/lib/public-rules";
 import { breadcrumbJsonLd, faqJsonLd, productJsonLd } from "@/lib/schema";
 import { site } from "@/lib/site";
 import { publicStandards } from "@/lib/standards";
@@ -20,7 +21,9 @@ export const promises = [
   "Full refund any time before it ships",
 ];
 
-export function landingMetadata(l: BoxLanding): Metadata {
+/** Metadata from the filled landing copy; pages call this from generateMetadata. */
+export async function landingMetadata(slug: Box["slug"]): Promise<Metadata> {
+  const l = publicLanding(slug, await loadPublicRules());
   const box = boxes.find((b) => b.slug === l.slug)!;
   return {
     title: l.title,
@@ -87,9 +90,10 @@ export function OtherBoxes({ current }: { current?: Box["slug"] | "gifts" }) {
   );
 }
 
-export function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
-  const l = landingFor(slug);
-  const box = boxes.find((b) => b.slug === slug)!;
+export async function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
+  const rules = await loadPublicRules();
+  const l = publicLanding(slug, rules);
+  const box = publicBoxes(rules).find((b) => b.slug === slug)!;
   const url = `${base}${l.path}`;
 
   return (
@@ -141,7 +145,7 @@ export function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
       <section className="mt-14" aria-labelledby="standard">
         <h2 id="standard" className="font-display text-3xl text-ink">Every snack in this box</h2>
         <ul className="mt-4 space-y-2 text-ink-soft">
-          {[...publicStandards(slug), "Every lineup reviewed by our clinician"].map((line) => (
+          {[...publicStandards(slug, rules), "Every lineup reviewed by our clinician"].map((line) => (
             <li key={line} className="flex gap-2">
               <CheckIcon className="mt-1 size-4 shrink-0 text-sage-deep" strokeWidth={2.5} aria-hidden />
               {line}

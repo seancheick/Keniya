@@ -49,9 +49,16 @@ export const ccPortionedTreat = (p: RuleInput) =>
 export const ccUnsweetenedDrink = (p: RuleInput) =>
   p.type === "Beverage" && p.added_sugar_g === 0 && p.carbs_g! <= 5;
 
-/** Qualifies for Blood Sugar only as a portioned treat: no protein, fiber, whole-food or drink anchor. */
+/**
+ * Qualifies for Blood Sugar only as a portioned treat: no protein, fiber or whole-food anchor.
+ * Unsweetened fruit and whole-grain picks (0 g added sugar) are plain food, not treats.
+ */
 export const ccTreatOnly = (p: RuleInput) =>
-  ccPortionedTreat(p) && !ccProteinForward(p) && !ccFiberForward(p) && !ccWholeFood(p);
+  ccPortionedTreat(p) &&
+  !ccProteinForward(p) &&
+  !ccFiberForward(p) &&
+  !ccWholeFood(p) &&
+  !((p.roles.MF === true || p.roles.WG === true) && p.added_sugar_g === 0);
 
 // Heart helpers.
 export const heartFiberForward = (p: RuleInput) => num(p.fiber_g) && p.fiber_g >= 3;

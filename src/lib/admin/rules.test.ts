@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { gingerChews, popcorn, settings, snack } from "./__fixtures__/snacks";
-import { checkLineup, eligibleFor, fitsBoxes, isReady, packBlockers, shipsUnderPolicy, type Pick } from "./rules";
-import { DEFAULT_BOX_RULES } from "./types";
+import { optimize } from "./optimizer";
+import { blockingFailures, checkLineup, eligibleFor, fitsBoxes, isReady, packBlockers, shipsUnderPolicy, type Pick } from "./rules";
+import { BOX_SLUGS, DEFAULT_BOX_RULES, type Snack } from "./types";
 
 describe("product fit (workbook v4 formulas)", () => {
   it("popcorn: pregnancy ✓, carb ✓ via portioned treat (fiber alone isn't fiber-forward), heart ✓ via whole grain", () => {
@@ -130,6 +131,36 @@ describe("final eligibility (qualifies + gates)", () => {
   });
 });
 
+describe("box recipes are satisfiable on paper", () => {
+  it("every default recipe allows exactly `total` picks and each range is sane", () => {
+    for (const slug of BOX_SLUGS) {
+      const r = DEFAULT_BOX_RULES[slug];
+      const lo = r.categories.reduce((t, c) => t + c.min, 0);
+      const hi = r.categories.reduce((t, c) => t + c.max, 0);
+      expect(lo, `${slug} minimums`).toBeLessThanOrEqual(r.total);
+      expect(hi, `${slug} maximums`).toBeGreaterThanOrEqual(r.total);
+      for (const c of r.categories) expect(c.min, `${slug} ${c.name}`).toBeLessThanOrEqual(c.max);
+      if (r.substantialMin !== null) expect(r.substantialMin).toBeLessThanOrEqual(r.total);
+      if (r.beverageMax !== null) expect(r.beverageMax).toBeLessThanOrEqual(r.total);
+    }
+  });
+  it("the optimizer can build a READY lineup for every box from a catalog that only meets the rules", () => {
+    // One eligible product per category per box, no slack, so a recipe no catalog can satisfy fails here.
+    for (const slug of BOX_SLUGS) {
+      const r = DEFAULT_BOX_RULES[slug];
+      const pool: Snack[] = r.categories.flatMap((c) =>
+        Array.from({ length: c.max }, () =>
+          c.name === "Hydration"
+            ? snack({ type: "Beverage", form: "Powder", calories: 0, protein_g: 0, fiber_g: 0, carbs_g: 0, added_sugar_g: 0, sodium_mg: 50, sat_fat_g: 0, unit_wt_oz: 0.2, categories: ["Hydration"] })
+            : snack({ roles: { NS: true, WG: true, MF: true, WHOLE_FOOD: true }, protein_g: 6, fiber_g: 3, carbs_g: 10, added_sugar_g: 1, sodium_mg: 90, sat_fat_g: 1, categories: [c.name] }),
+        ),
+      );
+      const res = optimize({ slug, rules: r, settings, snacks: pool, objective: "balanced", packagingOz: 6, requireStock: false });
+      expect(isReady(res.checks), `${slug}: ${blockingFailures(res.checks).map((c) => `${c.label} ${c.value}`).join("; ")}`).toBe(true);
+    }
+  });
+});
+
 describe("pack gate", () => {
   it("blocks packing until every pick is eligible, approved, has a UPC and a verified package", () => {
     const ok = snack({ status: "Approved" });
@@ -185,11 +216,15 @@ describe("lineup checks", () => {
     expect(isReady(checks)).toBe(false);
   });
 
-  it("Blood Sugar counts treat-only picks against treatMax", () => {
+  it("Blood Sugar counts treat-only picks against treatMax; unsweetened fruit isn't a treat", () => {
     const treatOnly = () => snack({ protein_g: 1, fiber_g: 1, calories: 120, added_sugar_g: 4, carbs_g: 18, categories: ["Sweet"] });
     const picks: Pick[] = Array.from({ length: 4 }, () => ({ snack: treatOnly(), category: "Sweet" }));
     const treats = checkLineup("blood_sugar", DEFAULT_BOX_RULES.blood_sugar, picks, settings, 6).find((c) => c.key === "treats")!;
     expect(treats).toMatchObject({ pass: false, deficit: 1, value: "4 (need ≤ 3)" });
+    const applesauce = snack({ protein_g: 0, fiber_g: 1, calories: 60, added_sugar_g: 0, carbs_g: 15, roles: { MF: true } });
+    expect(fitsBoxes(applesauce).blood_sugar.via).toEqual(["Portioned treat"]);
+    const ok = checkLineup("blood_sugar", DEFAULT_BOX_RULES.blood_sugar, Array.from({ length: 4 }, () => ({ snack: applesauce, category: "Sweet" })), settings, 6).find((c) => c.key === "treats")!;
+    expect(ok.pass).toBe(true);
   });
 
   it("a pre-approved pick still counts as not clinically approved", () => {

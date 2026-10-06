@@ -6,7 +6,7 @@ import { BoxVisual } from "@/components/box-visual";
 import { BuyButton } from "@/components/buy-button";
 import { Faqs, OtherBoxes, promises } from "@/components/box-landing";
 import { JsonLd } from "@/components/json-ld";
-import { boxes } from "@/lib/box";
+import { loadPublicRules, publicBoxes } from "@/lib/public-rules";
 import { giftImage } from "@/lib/gift-image";
 import { giftLanding, landingFor } from "@/lib/landing";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/schema";
@@ -69,7 +69,11 @@ const faqs = [
   },
 ];
 
-export default function GiftPage() {
+// Box copy comes from the live box rules.
+export const revalidate = 3600;
+
+export default async function GiftPage() {
+  const boxes = publicBoxes(await loadPublicRules());
   const url = `${site.url.replace(/\/$/, "")}${giftLanding.path}`;
   return (
     <article className="mx-auto max-w-5xl px-5 py-10 lg:py-16">

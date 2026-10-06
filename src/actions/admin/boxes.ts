@@ -103,5 +103,7 @@ export async function saveBoxRules(_prev: BoxState, fd: FormData): Promise<BoxSt
   const res = await db().from("box_rules").upsert({ box_slug: slug.data, rules: r, updated_at: new Date().toISOString(), updated_by: admin.name });
   if (res.error) return { error: res.error.message };
   revalidatePath("/admin", "layout");
+  // The public site prints these rules (src/lib/public-rules.ts), so a save re-renders it too.
+  revalidatePath("/", "layout");
   return { ok: true };
 }

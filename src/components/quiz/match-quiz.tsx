@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { BuyButton } from "@/components/buy-button";
-import { boxes, requestable, cravings, UPDATES_INTEREST, type Box } from "@/lib/box";
+import { requestable, cravings, UPDATES_INTEREST, type Box } from "@/lib/box";
 import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -77,7 +77,7 @@ const check = <CheckIcon className="mt-0.5 size-4 shrink-0 text-sage-deep" strok
 
 type StepId = "who" | "box" | "avoid" | "craving" | "result" | "soon" | "email";
 
-export function MatchQuiz({ children }: { children: ReactNode }) {
+export function MatchQuiz({ boxes, children }: { boxes: Box[]; children: ReactNode }) {
   const [step, setStep] = useState(0);
   const [isGift, setIsGift] = useState<boolean | null>(null);
   const [pick, setPick] = useState<string | null>(null);
