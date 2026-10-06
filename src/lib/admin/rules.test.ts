@@ -51,7 +51,7 @@ describe("product fit (workbook v4 formulas)", () => {
     const tea = snack({ type: "Beverage", form: "Tea", calories: 0, protein_g: 0, fiber_g: 0, carbs_g: 0, added_sugar_g: 0, sodium_mg: 0 });
     const f = fitsBoxes(tea);
     expect(f.blood_sugar.via).toEqual(["Unsweetened drink"]);
-    expect(f.heart.via).toEqual(["Unsweetened low-sodium drink"]);
+    expect(f.heart.via).toEqual(["Unsweetened drink"]);
   });
 
   it("shipping policy: liquids and heavy items don't ship", () => {
@@ -68,13 +68,31 @@ describe("final eligibility (qualifies + gates)", () => {
     expect(fitsBoxes(seeds).heart.fits).toBe(true); // qualifies
     const e = eligibleFor("heart", seeds, DEFAULT_BOX_RULES.heart, policy);
     expect(e.fits).toBe(false);
-    expect(e.reasons.join(" ")).toMatch(/2142 mg sodium \(max 230 mg\)/);
+    expect(e.reasons.join(" ")).toMatch(/2142 mg sodium \(max 140 mg\)/);
     expect(e.reasons.join(" ")).toMatch(/4.6 g saturated fat \(max 4 g for nuts\/seeds\)/);
   });
   it("allows nut sat fat up to 4 g but holds others to 2 g, and requires sat fat for Heart", () => {
     expect(eligibleFor("heart", snack({ roles: { NS: true }, sat_fat_g: 3 }), DEFAULT_BOX_RULES.heart, policy).fits).toBe(true);
     expect(eligibleFor("heart", snack({ roles: { WG: true }, sat_fat_g: 3 }), DEFAULT_BOX_RULES.heart, policy).fits).toBe(false);
     expect(eligibleFor("heart", snack({ roles: { WG: true }, sat_fat_g: null }), DEFAULT_BOX_RULES.heart, policy).reasons).toContain("Saturated fat not recorded");
+  });
+  it("the nut/seed allowance is for intrinsic fat: an unsaturated-fat role alone or added tropical oil doesn't earn it", () => {
+    const r = DEFAULT_BOX_RULES.heart;
+    expect(eligibleFor("heart", snack({ roles: { UF: true }, sat_fat_g: 3 }), r, policy).reasons).toContain("3 g saturated fat (max 2 g)");
+    const palm = snack({ roles: { NS: true }, sat_fat_g: 3, ingredients: "Almonds, Palm Kernel Oil, Sea Salt" });
+    expect(eligibleFor("heart", palm, r, policy).reasons.join()).toMatch(/added tropical oil voids/);
+    expect(eligibleFor("heart", snack({ roles: { NS: true }, sat_fat_g: 3, ingredients: "Almonds, sunflower oil" }), r, policy).fits).toBe(true);
+  });
+  it("Heart caps added sugar at 5 g on core picks and 8 g on a controlled treat", () => {
+    const r = DEFAULT_BOX_RULES.heart;
+    expect(eligibleFor("heart", snack({ roles: { WG: true }, added_sugar_g: 6 }), r, policy).reasons).toContain("6 g added sugar (max 5 g)");
+    expect(eligibleFor("heart", snack({ roles: { CT: true }, added_sugar_g: 7 }), r, policy).fits).toBe(true);
+    expect(eligibleFor("heart", snack({ roles: { CT: true }, added_sugar_g: 9 }), r, policy).reasons.join()).toMatch(/9 g added sugar \(treat\) \(max 8 g\)/);
+  });
+  it("Pregnancy caps caffeine per pack (chocolate passes, an energy product doesn't)", () => {
+    const r = DEFAULT_BOX_RULES.pregnancy_comfort;
+    expect(eligibleFor("pregnancy_comfort", snack({ caffeine_mg: 17 }), r, policy).fits).toBe(true);
+    expect(eligibleFor("pregnancy_comfort", snack({ caffeine_mg: 80 }), r, policy).reasons).toContain("80 mg caffeine (max 50 mg)");
   });
   it("caps Carb Conscious carbs and added sugar for every pick", () => {
     const fruit = snack({ protein_g: 2, fiber_g: 4, carbs_g: 31, added_sugar_g: 0, roles: { MF: true } });
@@ -138,16 +156,23 @@ describe("lineup checks", () => {
     expect(isReady(checks)).toBe(true);
   });
 
-  it("flags category ranges, sodium cap and weight with deficits", () => {
+  it("flags category ranges, the sodium limit and weight with deficits", () => {
     const picks = heartLineup();
-    for (let i = 0; i < 3; i++) picks[i].snack = { ...picks[i].snack, sodium_mg: 400 };
+    for (let i = 0; i < 3; i++) picks[i].snack = { ...picks[i].snack, sodium_mg: 160 };
     picks[13] = { snack: snack({ unit_wt_oz: 20, categories: ["Savory"], roles: { NS: true } }), category: "Savory" };
     const checks = checkLineup("heart", heartRules, picks, settings, 6);
     const failing = Object.fromEntries(checks.filter((c) => !c.pass).map((c) => [c.key, c.deficit]));
-    expect(failing.sodium).toBe(1);
+    expect(failing.fit).toBe(4); // three at 160 mg (over the 140 mg limit) plus the 20 oz pick that doesn't ship
     expect(failing["cat:Hydration"]).toBeUndefined(); // one tea left is still within 1–2
     expect(failing.weight).toBeGreaterThan(0);
     expect(isReady(checks)).toBe(false);
+  });
+
+  it("Blood Sugar counts treat-only picks against treatMax", () => {
+    const treatOnly = () => snack({ protein_g: 1, fiber_g: 1, calories: 120, added_sugar_g: 4, carbs_g: 18, categories: ["Sweet"] });
+    const picks: Pick[] = Array.from({ length: 4 }, () => ({ snack: treatOnly(), category: "Sweet" }));
+    const treats = checkLineup("blood_sugar", DEFAULT_BOX_RULES.blood_sugar, picks, settings, 6).find((c) => c.key === "treats")!;
+    expect(treats).toMatchObject({ pass: false, deficit: 1, value: "4 (need ≤ 3)" });
   });
 
   it("a pre-approved pick still counts as not clinically approved", () => {

@@ -92,6 +92,8 @@ export type RuleInput = Nutrition & {
   unit_wt_oz: number | null;
   pregnancy_checks: Record<string, string | undefined>;
   roles: Partial<Record<RoleKey, boolean>>;
+  /** Label ingredient list; the nut/seed saturated-fat exception checks it for added tropical oils. */
+  ingredients?: string | null;
 };
 
 /** A product as the builder, optimizer and dashboards see it. */
@@ -230,17 +232,19 @@ export const boxRulesSchema = z.object({
   nutSeedMin: z.number().int().min(0).nullable(),
   /** Heart: fiber-forward (≥3 g) picks. */
   fiberMin: z.number().int().min(0).nullable(),
-  /** Heart: picks with sodium > 300 mg. */
-  highSodiumMax: z.number().int().min(0).nullable(),
-  /** Heart: controlled treats. */
+  /** Treats: controlled treats (Heart: CT role; Blood Sugar: picks that qualify only as a portioned treat). */
   treatMax: z.number().int().min(0).nullable(),
   // Hard limits every pick must meet before any pathway counts (null = no limit).
   carbsMax: z.number().min(0).nullable().default(null),
   addedSugarMax: z.number().min(0).nullable().default(null),
+  /** Added-sugar limit for controlled treats (CT role) instead of addedSugarMax. */
+  treatAddedSugarMax: z.number().min(0).nullable().default(null),
   sodiumMax: z.number().min(0).nullable().default(null),
   satFatMax: z.number().min(0).nullable().default(null),
-  /** Sat-fat limit for nut/seed or unsaturated-fat picks (fat that comes from nuts and seeds). */
+  /** Sat-fat limit for nut/seed picks whose fat is intrinsic (no added tropical or hydrogenated oils). */
   satFatNutMax: z.number().min(0).nullable().default(null),
+  /** Caffeine per pack; unknown caffeine already fails Pregnancy. */
+  caffeineMax: z.number().min(0).nullable().default(null),
 });
 export type BoxRules = z.infer<typeof boxRulesSchema>;
 
@@ -252,13 +256,14 @@ const none = {
   wholeFoodMin: null,
   nutSeedMin: null,
   fiberMin: null,
-  highSodiumMax: null,
   treatMax: null,
   carbsMax: null,
   addedSugarMax: null,
+  treatAddedSugarMax: null,
   sodiumMax: null,
   satFatMax: null,
   satFatNutMax: null,
+  caffeineMax: null,
 };
 
 /** Starting rules (workbook v4 + v3.1 proposals). Editable on the Boxes tab. */
@@ -276,6 +281,9 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     substantialMin: 8,
     miniMax: 4,
     beverageMax: 2,
+    // Keniya curation threshold, not a medical cutoff: ACOG advises under 200 mg caffeine per
+    // day in pregnancy, so one pack stays well inside that. Chocolate (≤20 mg) passes.
+    caffeineMax: 50,
   },
   blood_sugar: {
     ...none,
@@ -289,7 +297,10 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     ],
     proteinOrFiberMin: 5,
     wholeFoodMin: 2,
-    // Founder decision 2026-10-05 (clinician to confirm): every pick ≤20 g carbs, ≤5 g added sugar.
+    // Picks that qualify only as a portioned treat (no protein/fiber/whole-food anchor).
+    treatMax: 3,
+    // Keniya standard (2026-10-06): ≤20 g total carbs (ADA snack examples use 15–20 g carbs
+    // plus protein; ADA counts total carbs, not "net carbs") and ≤5 g added sugar per pack.
     carbsMax: 20,
     addedSugarMax: 5,
   },
@@ -305,11 +316,14 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     ],
     nutSeedMin: 4,
     fiberMin: 3,
-    highSodiumMax: 2,
     treatMax: 2,
-    // Founder decision 2026-10-05 (clinician to confirm): FDA "healthy" sodium (10% DV);
-    // sat fat ≤2 g, or ≤4 g when the fat comes from nuts/seeds.
-    sodiumMax: 230,
+    // Keniya Heart standard (2026-10-06, clinician-confirmed): sodium ≤140 mg per pack (FDA
+    // "low sodium" / AHA snack guidance); sat fat ≤2 g, or ≤4 g when intrinsic to nuts/seeds
+    // (AHA Heart-Check nut category); added sugar ≤5 g on core picks (FDA "healthy" range),
+    // ≤8 g on a controlled treat.
+    sodiumMax: 140,
+    addedSugarMax: 5,
+    treatAddedSugarMax: 8,
     satFatMax: 2,
     satFatNutMax: 4,
   },

@@ -48,11 +48,19 @@ export const ccPortionedTreat = (p: RuleInput) =>
 export const ccUnsweetenedDrink = (p: RuleInput) =>
   p.type === "Beverage" && p.added_sugar_g === 0 && p.carbs_g! <= 5;
 
+/** Qualifies for Blood Sugar only as a portioned treat: no protein, fiber, whole-food or drink anchor. */
+export const ccTreatOnly = (p: RuleInput) =>
+  ccPortionedTreat(p) && !ccProteinForward(p) && !ccFiberForward(p) && !ccWholeFood(p);
+
 // Heart helpers.
 export const heartFiberForward = (p: RuleInput) => num(p.fiber_g) && p.fiber_g >= 3;
-export const highSodium = (p: RuleInput) => num(p.sodium_mg) && p.sodium_mg > 300;
 export const heartNutSeed = (p: RuleInput) => p.roles.UF === true || p.roles.NS === true;
 export const heartTreat = (p: RuleInput) => p.roles.CT === true;
+/** Added fats AHA sets apart from liquid plant oils; they void the nut/seed saturated-fat exception. */
+const TROPICAL_OIL = /\b(palm|palm[- ]kernel|coconut)\s+oil\b|partially\s+hydrogenated/i;
+export const hasAddedTropicalOil = (p: RuleInput) => TROPICAL_OIL.test(p.ingredients ?? "");
+/** The ≤4 g sat-fat allowance is for fat intrinsic to nuts/seeds (AHA Heart-Check), not added oils. */
+export const nutFatException = (p: RuleInput) => p.roles.NS === true && !hasAddedTropicalOil(p);
 
 export type BoxFit = {
   box: BoxSlug;
@@ -114,12 +122,13 @@ export function heartFit(p: RuleInput, rejectReason?: string | null): BoxFit {
   if (p.roles.MF) via.push("Minimally processed fruit");
   if (heartFiberForward(p)) via.push("Fiber-forward");
   if (p.roles.CT && p.added_sugar_g! <= 8) via.push("Controlled treat");
-  if (p.type === "Beverage" && p.added_sugar_g === 0 && p.sodium_mg! <= 200) via.push("Unsweetened low-sodium drink");
+  // Sodium is held by the box's hard limit like every other pick.
+  if (p.type === "Beverage" && p.added_sugar_g === 0) via.push("Unsweetened drink");
   if (via.length) return { box: "heart", fits: true, via, reasons: [] };
   const why = p.roles.CT
     ? `Treat with ${p.added_sugar_g} g added sugar (max 8 g)`
     : "No heart role: needs a judged role (unsaturated fat, nut/seed, whole grain, fruit), fiber ≥3 g, " +
-      "a controlled treat ≤8 g added sugar, or an unsweetened low-sodium drink";
+      "a controlled treat ≤8 g added sugar, or an unsweetened drink";
   return { box: "heart", fits: false, via: [], reasons: [why] };
 }
 
@@ -171,13 +180,19 @@ export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, polic
     if (max !== null && num(v) && v > max) out.push(`${v} ${unit} ${what} (max ${max} ${unit})`);
   };
   over(p.carbs_g, rules.carbsMax, "carbs", "g");
-  over(p.added_sugar_g, rules.addedSugarMax, "added sugar", "g");
+  // A controlled treat gets its own added-sugar ceiling when the box sets one.
+  const treat = heartTreat(p) && rules.treatAddedSugarMax !== null;
+  over(p.added_sugar_g, treat ? rules.treatAddedSugarMax : rules.addedSugarMax, treat ? "added sugar (treat)" : "added sugar", "g");
   over(p.sodium_mg, rules.sodiumMax, "sodium", "mg");
+  over(p.caffeine_mg, rules.caffeineMax, "caffeine", "mg");
   if (rules.satFatMax !== null) {
-    const nutFat = p.roles.NS === true || p.roles.UF === true;
-    const max = nutFat && rules.satFatNutMax !== null ? rules.satFatNutMax : rules.satFatMax;
+    const nutFat = nutFatException(p) && rules.satFatNutMax !== null;
+    const max = nutFat ? rules.satFatNutMax! : rules.satFatMax;
     if (!num(p.sat_fat_g)) out.push("Saturated fat not recorded");
-    else if (p.sat_fat_g > max) out.push(`${p.sat_fat_g} g saturated fat (max ${max} g${nutFat ? " for nuts/seeds" : ""})`);
+    else if (p.sat_fat_g > max)
+      out.push(
+        `${p.sat_fat_g} g saturated fat (max ${max} g${nutFat ? " for nuts/seeds" : p.roles.NS && hasAddedTropicalOil(p) ? "; added tropical oil voids the nut/seed allowance" : ""})`,
+      );
   }
   return out;
 }
@@ -373,9 +388,10 @@ export function checkLineup(
     checks.push(check("nutseed", "Nut / seed / unsaturated-fat picks", count(heartNutSeed), { min: rules.nutSeedMin }));
   if (rules.fiberMin !== null)
     checks.push(check("fiber", "Fiber-forward picks (≥3 g)", count(heartFiberForward), { min: rules.fiberMin }));
-  if (rules.highSodiumMax !== null)
-    checks.push(check("sodium", "Higher-sodium picks (>300 mg)", count(highSodium), { max: rules.highSodiumMax }));
-  if (rules.treatMax !== null) checks.push(check("treats", "Controlled treats", count(heartTreat), { max: rules.treatMax }));
+  if (rules.treatMax !== null) {
+    const isTreat = slug === "blood_sugar" ? (x: Snack) => ok(x) && ccTreatOnly(x) : heartTreat;
+    checks.push(check("treats", slug === "blood_sugar" ? "Treat-only picks (no protein/fiber anchor)" : "Controlled treats", count(isTreat), { max: rules.treatMax }));
+  }
 
   checks.push(info("treenuts", "Picks containing tree nuts", `${count((x) => x.freeFrom.tree_nut_free === false)}`));
   checks.push(info("peanuts", "Picks containing peanuts", `${count((x) => x.freeFrom.peanut_free === false)}`));

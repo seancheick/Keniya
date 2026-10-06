@@ -132,7 +132,7 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[], ruleSumm
   line("Eligible <box>", "The nutrition rules qualify it AND it passes the box's hard limits, the shipping policy (no liquids, max item weight), single-serve (P8 must be PASS: blank means not yet confirmed) and status (not Rejected/Retired).");
   line("Product verification", "The last steps after eligibility: approved by a named clinician (legacy workbook approvals need re-attestation), UPC on file, and the label checked with the package in hand. Shipment readiness also requires box rules, customer restrictions and packable stock.");
   line("Ladder", "Candidate → Pre-approved (pre-screen passed) → Approved (clinician) → Package verified → Ready to pack. Candidates can't be in a lineup; a lineup with Pre-approved or unverified picks is PROVISIONAL.");
-  line("<box>: why", "If eligible: the qualifying pathway. If not: every reason, nutrition rule or hard limit (e.g. '2142 mg sodium (max 230 mg)').");
+  line("<box>: why", "If eligible: the qualifying pathway. If not: every reason, nutrition rule or hard limit (e.g. '2142 mg sodium (max 140 mg)').");
   line("Nutrition rules alone", "Whether the label numbers and roles qualify it before the hard limits and status; shown for transparency only.");
   line("Current rules", ruleSummary.length ? ruleSummary.join("\n") : "Eligibility reasons on Details reflect the rules supplied for this export. Consult current admin settings for the configured limits.");
   line("Pre-screened by/on", "Who ran the source and ingredient pre-screen. Not a clinical decision.");

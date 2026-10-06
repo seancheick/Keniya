@@ -19,16 +19,17 @@ const HEALTH: [key: keyof BoxRules, label: string, hint: string][] = [
   ["wholeFoodMin", "Whole-food snacks: at least", "Nuts, seeds, cheese, jerky and similar"],
   ["nutSeedMin", "Nut, seed or healthy-fat snacks: at least", "Marked nut/seed or unsaturated fat"],
   ["fiberMin", "Fiber snacks (3 g+): at least", "3 g or more fiber"],
-  ["highSodiumMax", "Salty snacks (over 300 mg sodium): at most", "Keeps the box lower in salt"],
-  ["treatMax", "Treats: at most", "Products marked as a controlled treat"],
+  ["treatMax", "Treats: at most", "Heart: products marked as a controlled treat. Blood Sugar: picks that qualify only as a portioned treat"],
 ];
 // Checked on every pick before any pathway counts; a pick over a limit isn't eligible.
 const GATES: [key: keyof BoxRules, label: string, hint: string][] = [
   ["carbsMax", "Total carbs: at most (g)", "Per pack"],
   ["addedSugarMax", "Added sugar: at most (g)", "Per pack"],
+  ["treatAddedSugarMax", "Added sugar on a controlled treat: at most (g)", "Replaces the limit above for picks marked as a treat"],
   ["sodiumMax", "Sodium: at most (mg)", "Per pack"],
   ["satFatMax", "Saturated fat: at most (g)", "Per pack; blank sat fat counts as not eligible when set"],
-  ["satFatNutMax", "Saturated fat from nuts/seeds: at most (g)", "For nut/seed or healthy-fat picks"],
+  ["satFatNutMax", "Saturated fat from nuts/seeds: at most (g)", "Nut/seed picks only, and not when the label lists added palm, palm-kernel, coconut or partially hydrogenated oil"],
+  ["caffeineMax", "Caffeine: at most (mg)", "Per pack; a Keniya threshold, not a medical cutoff"],
 ];
 
 export function RulesForm({ slug, rules }: { slug: BoxSlug; rules: BoxRules }) {

@@ -84,13 +84,14 @@ export async function saveBoxRules(_prev: BoxState, fd: FormData): Promise<BoxSt
     wholeFoodMin: int(fd.get("wholeFoodMin")),
     nutSeedMin: int(fd.get("nutSeedMin")),
     fiberMin: int(fd.get("fiberMin")),
-    highSodiumMax: int(fd.get("highSodiumMax")),
     treatMax: int(fd.get("treatMax")),
     carbsMax: dec(fd.get("carbsMax")),
     addedSugarMax: dec(fd.get("addedSugarMax")),
+    treatAddedSugarMax: dec(fd.get("treatAddedSugarMax")),
     sodiumMax: dec(fd.get("sodiumMax")),
     satFatMax: dec(fd.get("satFatMax")),
     satFatNutMax: dec(fd.get("satFatNutMax")),
+    caffeineMax: dec(fd.get("caffeineMax")),
   });
   if (!rules.success) return { error: rules.error.issues[0].message };
   const r = rules.data;
