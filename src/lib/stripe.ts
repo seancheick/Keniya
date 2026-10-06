@@ -28,6 +28,9 @@ export function priceIdForBox(slug: string): string | null {
     pregnancy_comfort: process.env.STRIPE_PRICE_PREGNANCY_BOX,
     blood_sugar: process.env.STRIPE_PRICE_BLOOD_SUGAR_BOX,
     heart: process.env.STRIPE_PRICE_HEART_BOX,
+    gestational_diabetes: process.env.STRIPE_PRICE_GESTATIONAL_DIABETES_BOX,
+    glp1: process.env.STRIPE_PRICE_GLP1_BOX,
+    postpartum: process.env.STRIPE_PRICE_POSTPARTUM_BOX,
   };
   const id = (map[slug] ?? "").trim();
   return id || null;

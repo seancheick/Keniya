@@ -8,10 +8,9 @@ import { Button } from "@/components/ui/button";
 import { fmt$ } from "@/lib/admin/costing";
 import { daysUntil } from "@/lib/admin/optimizer";
 import { eligibleFor, isClinicianApproved, type BoxFit } from "@/lib/admin/rules";
-import { BOX_LABEL, BOX_SLUGS, type BoxRules, type BoxSlug, type Settings, type Snack } from "@/lib/admin/types";
+import { BOX_LABEL, BOX_SHORT, BOX_SLUGS, type BoxRules, type BoxSlug, type Settings, type Snack } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
-const SHORT: Record<BoxSlug, string> = { pregnancy_comfort: "Preg", blood_sugar: "Carb", heart: "Heart" };
 /** Columns shown from the sm breakpoint up; on phones they fold into the product cell. */
 const WIDE = "hidden sm:table-cell";
 
@@ -89,7 +88,7 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
               <th className={cn(WIDE, "p-2 font-medium")}>Stock</th>
               {BOX_SLUGS.map((b) => (
                 <th key={b} className={cn(WIDE, "p-2 text-center font-medium", b === slug && "text-foreground")}>
-                  {SHORT[b]}
+                  {BOX_SHORT[b]}
                 </th>
               ))}
               <th className={cn(WIDE, "p-2 font-medium")}>Approval</th>

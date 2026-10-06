@@ -29,6 +29,9 @@ function leanFor(slug: Box["slug"], craving: string | null): string {
     blood_sugar: "more of the smarter sweets",
     heart: "extra fruit and a dark chocolate treat",
     pregnancy_comfort: "extra sweet treats",
+    gestational_diabetes: "more of the smarter sweets",
+    glp1: "a couple of small, portioned sweets",
+    postpartum: "extra sweet treats",
   };
   if (craving === "sweet") return sweet[slug];
   if (craving === "salty") return "more of the salty, crunchy picks";

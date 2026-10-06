@@ -84,11 +84,13 @@ export type Workbook = {
 };
 
 const BOX_BY_NAME: Record<string, BoxSlug> = { Pregnancy: "pregnancy_comfort", "Carb Conscious": "blood_sugar", Heart: "heart" };
-const BUILDER: Record<BoxSlug, { sheet: string; first: number }> = {
+// The workbook only ever had the first three boxes; the others start empty in the admin.
+const BUILDER: Partial<Record<BoxSlug, { sheet: string; first: number }>> = {
   pregnancy_comfort: { sheet: "Builder — Pregnancy", first: 21 },
   blood_sugar: { sheet: "Builder — Carb Conscious", first: 20 },
   heart: { sheet: "Builder — Heart", first: 21 },
 };
+const emptyPerBox = <T,>(make: () => T) => Object.fromEntries(BOX_SLUGS.map((b) => [b, make()])) as Record<BoxSlug, T>;
 // Products columns are found by their row-4 header (first line, prefix match), so inserted
 // columns (v5 added the stock block after "Your quote $") don't shift what we read.
 const CHECK_COLS: [string, string][] = [
@@ -195,7 +197,7 @@ export async function readWorkbook(path: string): Promise<Workbook> {
 
   // ---- Slots → categories per product, category counts per box
   const S = sheet("Slots");
-  const slotCats: Record<BoxSlug, (string | null)[]> = { pregnancy_comfort: [], blood_sugar: [], heart: [] };
+  const slotCats = emptyPerBox<(string | null)[]>(() => []);
   for (let r = 5; r <= S.rowCount; r++) {
     const row = S.getRow(r);
     const box = BOX_BY_NAME[text(row.getCell("A").value) ?? ""];
@@ -210,18 +212,23 @@ export async function readWorkbook(path: string): Promise<Workbook> {
   }
 
   // ---- Builders → current lineup (+ extras)
-  const lineups = { pregnancy_comfort: [], blood_sugar: [], heart: [] } as Workbook["lineups"];
-  const extras = { pregnancy_comfort: [], blood_sugar: [], heart: [] } as Workbook["extras"];
+  const lineups = emptyPerBox<Workbook["lineups"][BoxSlug]>(() => []);
+  const extras = emptyPerBox<string[]>(() => []);
   const rules = {} as Workbook["rules"];
   for (const box of BOX_SLUGS) {
-    const B = sheet(BUILDER[box].sheet);
+    const builder = BUILDER[box];
+    if (!builder) {
+      rules[box] = DEFAULT_BOX_RULES[box];
+      continue;
+    }
+    const B = sheet(builder.sheet);
     for (let i = 0; i < 14; i++) {
-      const name = text(B.getRow(BUILDER[box].first + i).getCell("B").value);
+      const name = text(B.getRow(builder.first + i).getCell("B").value);
       const p = name ? byName.get(name) : undefined;
       if (p) lineups[box].push({ code: p.code, category: slotCats[box][i] ?? p.categories[0] ?? null });
     }
     // Extras sit after the selections table ("Extra 1 (product name)").
-    for (let r = BUILDER[box].first + 15; r <= B.rowCount; r++) {
+    for (let r = builder.first + 15; r <= B.rowCount; r++) {
       const label = text(B.getRow(r).getCell("A").value) ?? "";
       const name = text(B.getRow(r).getCell("B").value);
       if (/^Extra \d/.test(label) && name && byName.get(name)) extras[box].push(byName.get(name)!.code);
@@ -247,13 +254,14 @@ export async function readWorkbook(path: string): Promise<Workbook> {
   const flatRateBox = /flat-rate box/i.test(text(T.getCell("B26").value) ?? "");
   const settings: Settings = {
     ...DEFAULT_SETTINGS,
-    prices: { pregnancy_comfort: $("B5"), blood_sugar: $("B6"), heart: $("B7") },
-    runSize: { pregnancy_comfort: v("C5") ?? 50, blood_sugar: v("C6") ?? 50, heart: v("C7") ?? 50 },
+    prices: { ...DEFAULT_SETTINGS.prices, pregnancy_comfort: $("B5"), blood_sugar: $("B6"), heart: $("B7") },
+    runSize: { ...DEFAULT_SETTINGS.runSize, pregnancy_comfort: v("C5") ?? 50, blood_sugar: v("C6") ?? 50, heart: v("C7") ?? 50 },
     shipping: {
       ...DEFAULT_SETTINGS.shipping,
       method: /flat/i.test(method) ? "flat" : /custom/i.test(method) ? "custom" : "table",
       flatCents: $("B11"),
       customCents: {
+        ...DEFAULT_SETTINGS.shipping.customCents,
         pregnancy_comfort: v("B12") === null ? null : $("B12"),
         blood_sugar: v("B13") === null ? null : $("B13"),
         heart: v("B14") === null ? null : $("B14"),

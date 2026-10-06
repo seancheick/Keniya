@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { BoxFit } from "@/lib/admin/rules";
-import { BOX_LABEL, BOX_SLUGS, type BoxSlug, type Status } from "@/lib/admin/types";
+import { BOX_LABEL, BOX_SHORT, BOX_SLUGS, type BoxSlug, type Status } from "@/lib/admin/types";
 
 export function PageHeader({
   title,
@@ -96,7 +96,6 @@ export function StatusBadge({ status }: { status: Status }) {
   return <Badge tone={STATUS_TONE[status]}>{status}</Badge>;
 }
 
-const SHORT: Record<BoxSlug, string> = { pregnancy_comfort: "Preg", blood_sugar: "Carb", heart: "Heart" };
 
 /** "Fits 2 boxes" + one chip per box; hover a chip for the reason. */
 export function FitBadges({ fits, compact }: { fits: Record<BoxSlug, BoxFit>; compact?: boolean }) {
@@ -115,7 +114,7 @@ export function FitBadges({ fits, compact }: { fits: Record<BoxSlug, BoxFit>; co
           title={`${BOX_LABEL[s]}: ${fits[s].fits ? `✓ ${fits[s].via.join(", ")}` : fits[s].reasons.join("; ")}`}
           className={fits[s].fits ? "" : "line-through decoration-1"}
         >
-          {fits[s].fits ? "✓" : "✕"} {SHORT[s]}
+          {fits[s].fits ? "✓" : "✕"} {BOX_SHORT[s]}
         </Badge>
       ))}
     </div>

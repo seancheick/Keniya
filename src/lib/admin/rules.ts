@@ -3,6 +3,7 @@
 // Curation aid only, not medical advice: final lineups need clinical sign-off.
 import {
   BOX_LABEL,
+  BOX_SLUGS,
   PREGNANCY_BLOCKING,
   type BoxRules,
   type BoxSlug,
@@ -132,20 +133,59 @@ export function heartFit(p: RuleInput, rejectReason?: string | null): BoxFit {
   return { box: "heart", fits: false, via: [], reasons: [why] };
 }
 
-/** Future boxes (marked * in the workbook). */
-export const glp1Fit = (p: RuleInput) => nutritionComplete(p) && p.protein_g! >= 5 && p.added_sugar_g! <= 5;
-export const postpartumFit = (p: RuleInput) =>
-  pregnancyFit(p).fits && (p.protein_g! >= 3 || p.fiber_g! >= 3);
-
-export function fitsBoxes(p: RuleInput, rejectReason?: string | null): Record<BoxSlug, BoxFit> {
+/** Gestational diabetes: the Pregnancy screening and the Blood Sugar pathways, both. */
+export function gdmFit(p: RuleInput, rejectReason?: string | null): BoxFit {
+  const preg = pregnancyFit(p, rejectReason);
+  const carb = carbFit(p, rejectReason);
+  const fits = preg.fits && carb.fits;
   return {
-    pregnancy_comfort: pregnancyFit(p, rejectReason),
-    blood_sugar: carbFit(p, rejectReason),
-    heart: heartFit(p, rejectReason),
+    box: "gestational_diabetes",
+    fits,
+    via: fits ? [...preg.via, ...carb.via] : [],
+    reasons: [...new Set([...preg.reasons, ...carb.reasons])],
   };
 }
 
-const FIT = { pregnancy_comfort: pregnancyFit, blood_sugar: carbFit, heart: heartFit } as const;
+/** GLP-1 companion: protein- or fiber-forward, whole-food, a small portioned treat, or an unsweetened drink. */
+export function glp1Fit(p: RuleInput, rejectReason?: string | null): BoxFit {
+  const reasons = base(p, rejectReason);
+  if (reasons.length) return { box: "glp1", fits: false, via: [], reasons };
+  const via: string[] = [];
+  if (p.protein_g! >= 5) via.push("Protein-forward");
+  if (ccFiberForward(p)) via.push("Fiber-forward");
+  if (ccWholeFood(p)) via.push("Whole-food");
+  if (ccPortionedTreat(p) && p.calories! <= 150) via.push("Small portioned treat");
+  if (ccUnsweetenedDrink(p)) via.push("Unsweetened drink");
+  if (via.length) return { box: "glp1", fits: true, via, reasons: [] };
+  return {
+    box: "glp1",
+    fits: false,
+    via: [],
+    reasons: [
+      `${p.protein_g} g protein, ${p.fiber_g} g fiber, ${p.calories} cal: needs protein ≥5 g, fiber ≥3 g with a protein or nut/seed anchor, ` +
+        "whole-food, a small portioned treat (≤150 cal, ≤8 g added sugar), or an unsweetened drink",
+    ],
+  };
+}
+
+/**
+ * Postpartum & nursing: the same food-safety checks as Pregnancy (comfort picks matter here
+ * too); the box differs in its caffeine limit and composition (more protein and hydration).
+ */
+export const postpartumFit = (p: RuleInput, rejectReason?: string | null): BoxFit => ({ ...pregnancyFit(p, rejectReason), box: "postpartum" });
+
+const FIT = {
+  pregnancy_comfort: pregnancyFit,
+  blood_sugar: carbFit,
+  heart: heartFit,
+  gestational_diabetes: gdmFit,
+  glp1: glp1Fit,
+  postpartum: postpartumFit,
+} as const;
+
+export function fitsBoxes(p: RuleInput, rejectReason?: string | null): Record<BoxSlug, BoxFit> {
+  return Object.fromEntries(BOX_SLUGS.map((b) => [b, FIT[b](p, rejectReason)])) as Record<BoxSlug, BoxFit>;
+}
 // Lineup checks and the optimizer ask the same question thousands of times per run; inputs
 // are treated as immutable, so cache per object.
 const fitCache = new WeakMap<RuleInput, Partial<Record<BoxSlug, BoxFit>>>();
@@ -210,11 +250,7 @@ export function eligibleBoxes(
   policy: Settings["policy"],
   rejectReason?: string | null,
 ): Record<BoxSlug, BoxFit> {
-  return {
-    pregnancy_comfort: eligibleFor("pregnancy_comfort", p, rules.pregnancy_comfort, policy, rejectReason),
-    blood_sugar: eligibleFor("blood_sugar", p, rules.blood_sugar, policy, rejectReason),
-    heart: eligibleFor("heart", p, rules.heart, policy, rejectReason),
-  };
+  return Object.fromEntries(BOX_SLUGS.map((b) => [b, eligibleFor(b, p, rules[b], policy, rejectReason)])) as Record<BoxSlug, BoxFit>;
 }
 
 /** Approved by a named clinician (legacy workbook approvals don't count until re-attested). */
@@ -371,7 +407,8 @@ export function checkLineup(
   if (rules.beverageMax !== null)
     checks.push(check("beverage", "Beverage / tea", count((x) => x.type === "Beverage"), { max: rules.beverageMax }));
 
-  if (slug === "pregnancy_comfort") {
+  // Any box with a caffeine limit needs the number on every pick.
+  if (rules.caffeineMax !== null) {
     checks.push(check("caffeine", "Picks without caffeine disclosed", count((x) => !num(x.caffeine_mg)), { max: 0 }));
   }
 
@@ -388,15 +425,16 @@ export function checkLineup(
     checks.push(check("nutseed", "Nut / seed / unsaturated-fat picks", count(heartNutSeed), { min: rules.nutSeedMin }));
   if (rules.fiberMin !== null)
     checks.push(check("fiber", "Fiber-forward picks (≥3 g)", count(heartFiberForward), { min: rules.fiberMin }));
+  // Boxes built on the carb pathways count "treat-only" picks; Heart counts the judged treat role.
+  const carbBox = rules.carbsMax !== null;
   if (rules.treatMax !== null) {
-    const isTreat = slug === "blood_sugar" ? (x: Snack) => ok(x) && ccTreatOnly(x) : heartTreat;
-    checks.push(check("treats", slug === "blood_sugar" ? "Treat-only picks (no protein/fiber anchor)" : "Controlled treats", count(isTreat), { max: rules.treatMax }));
+    const isTreat = carbBox ? (x: Snack) => ok(x) && ccTreatOnly(x) : heartTreat;
+    checks.push(check("treats", carbBox ? "Treat-only picks (no protein/fiber anchor)" : "Controlled treats", count(isTreat), { max: rules.treatMax }));
   }
 
   checks.push(info("treenuts", "Picks containing tree nuts", `${count((x) => x.freeFrom.tree_nut_free === false)}`));
   checks.push(info("peanuts", "Picks containing peanuts", `${count((x) => x.freeFrom.peanut_free === false)}`));
-  if (slug === "blood_sugar")
-    checks.push(info("carbs", "Total carbs across the box", `${s.reduce((t, x) => t + (x.carbs_g ?? 0), 0)} g`));
+  if (carbBox) checks.push(info("carbs", "Total carbs across the box", `${s.reduce((t, x) => t + (x.carbs_g ?? 0), 0)} g`));
 
   return checks;
 }

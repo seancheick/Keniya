@@ -46,6 +46,15 @@ export const env = {
   get STRIPE_PRICE_HEART_BOX() {
     return process.env.STRIPE_PRICE_HEART_BOX ?? "";
   },
+  get STRIPE_PRICE_GESTATIONAL_DIABETES_BOX() {
+    return process.env.STRIPE_PRICE_GESTATIONAL_DIABETES_BOX ?? "";
+  },
+  get STRIPE_PRICE_GLP1_BOX() {
+    return process.env.STRIPE_PRICE_GLP1_BOX ?? "";
+  },
+  get STRIPE_PRICE_POSTPARTUM_BOX() {
+    return process.env.STRIPE_PRICE_POSTPARTUM_BOX ?? "";
+  },
   get RESEND_API_KEY() {
     return req("RESEND_API_KEY");
   },

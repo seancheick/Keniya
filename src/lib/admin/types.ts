@@ -2,12 +2,24 @@
 // the optimizer run the same in server components, client forms and tests.
 import { z } from "zod";
 
-export const BOX_SLUGS = ["pregnancy_comfort", "blood_sugar", "heart"] as const;
+export const BOX_SLUGS = ["pregnancy_comfort", "blood_sugar", "heart", "gestational_diabetes", "glp1", "postpartum"] as const;
 export type BoxSlug = (typeof BOX_SLUGS)[number];
 export const BOX_LABEL: Record<BoxSlug, string> = {
   pregnancy_comfort: "Pregnancy",
-  blood_sugar: "Carb Conscious",
+  blood_sugar: "Blood Sugar",
   heart: "Heart",
+  gestational_diabetes: "Gestational Diabetes",
+  glp1: "GLP-1",
+  postpartum: "Postpartum",
+};
+/** Column-width labels for tables and chips. */
+export const BOX_SHORT: Record<BoxSlug, string> = {
+  pregnancy_comfort: "Preg",
+  blood_sugar: "Sugar",
+  heart: "Heart",
+  gestational_diabetes: "GDM",
+  glp1: "GLP-1",
+  postpartum: "Post",
 };
 export const isBoxSlug = (v: unknown): v is BoxSlug => BOX_SLUGS.includes(v as BoxSlug);
 
@@ -158,12 +170,13 @@ export type Settings = z.infer<typeof settingsSchema>;
 // Business costs are deliberately zero here (this repo is public): the workbook import or
 // the Settings tab fills in the real numbers. Prices and public policy are not secret.
 export const DEFAULT_SETTINGS: Settings = {
-  prices: { pregnancy_comfort: 4700, blood_sugar: 4700, heart: 4700 },
-  runSize: { pregnancy_comfort: 50, blood_sugar: 50, heart: 50 },
+  prices: { pregnancy_comfort: 4700, blood_sugar: 4700, heart: 4700, gestational_diabetes: 4700, glp1: 4700, postpartum: 4700 },
+  // Founding run per box: the first three at 50, the new boxes smaller until they prove out.
+  runSize: { pregnancy_comfort: 50, blood_sugar: 50, heart: 50, gestational_diabetes: 20, glp1: 20, postpartum: 20 },
   shipping: {
     method: "table",
     flatCents: 0,
-    customCents: { pregnancy_comfort: null, blood_sugar: null, heart: null },
+    customCents: { pregnancy_comfort: null, blood_sugar: null, heart: null, gestational_diabetes: null, glp1: null, postpartum: null },
     varianceCents: 0,
     table: [{ fromOz: 0, cents: 0 }],
     defaultCarrier: "USPS",
@@ -326,6 +339,67 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     treatAddedSugarMax: 8,
     satFatMax: 2,
     satFatNutMax: 4,
+  },
+  // Pregnancy screening AND the Blood Sugar limits: a snack must pass both. ADA notes GDM
+  // nutrition is individualized with a carbohydrate floor, so this is a screened snack
+  // assortment, never a GDM diet.
+  gestational_diabetes: {
+    ...none,
+    total: 14,
+    categories: [
+      { name: "Comfort", min: 2, max: 4 },
+      { name: "Protein", min: 3, max: 5 },
+      { name: "Savory", min: 3, max: 6 },
+      { name: "Sweet", min: 2, max: 3 },
+      { name: "Hydration", min: 1, max: 2 },
+    ],
+    substantialMin: 8,
+    miniMax: 4,
+    beverageMax: 2,
+    proteinOrFiberMin: 5,
+    treatMax: 2,
+    carbsMax: 20,
+    addedSugarMax: 5,
+    caffeineMax: 50,
+  },
+  // 2025 joint GLP-1 nutrition guidance (ASN/OMA/TOS/ACLM): adequate protein, nutrient-dense,
+  // smaller portions, hydration, GI-tolerable foods; ginger and peppermint for nausea.
+  glp1: {
+    ...none,
+    total: 14,
+    categories: [
+      { name: "Protein", min: 5, max: 8 },
+      { name: "Savory", min: 2, max: 5 },
+      { name: "Comfort", min: 1, max: 3 },
+      { name: "Sweet", min: 1, max: 2 },
+      { name: "Hydration", min: 1, max: 3 },
+    ],
+    substantialMin: 6,
+    beverageMax: 3,
+    proteinOrFiberMin: 6,
+    wholeFoodMin: 2,
+    treatMax: 2,
+    carbsMax: 20,
+    addedSugarMax: 5,
+  },
+  // Pregnancy food-safety checks still apply; caffeine is looser than in pregnancy (ACOG:
+  // about 200 mg/day while nursing is unlikely to affect the baby; CDC: ≤300 mg/day is
+  // low-to-moderate). 100 mg per pack is the Keniya threshold, not a medical cutoff.
+  postpartum: {
+    ...none,
+    total: 14,
+    categories: [
+      { name: "Comfort", min: 2, max: 4 },
+      { name: "Protein", min: 3, max: 5 },
+      { name: "Savory", min: 2, max: 4 },
+      { name: "Sweet", min: 2, max: 4 },
+      { name: "Hydration", min: 2, max: 3 },
+    ],
+    substantialMin: 8,
+    miniMax: 4,
+    beverageMax: 3,
+    proteinOrFiberMin: 5,
+    caffeineMax: 100,
   },
 };
 

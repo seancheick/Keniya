@@ -7,13 +7,12 @@ import { cn } from "@/lib/utils";
 import { fmt$ } from "@/lib/admin/costing";
 import { loadBoxRules, loadCatalog, loadSettings } from "@/lib/admin/db";
 import { eligibleBoxes, isClinicianApproved, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
-import { BOX_LABEL, BOX_SLUGS, CATEGORIES, isBoxSlug, type BoxSlug } from "@/lib/admin/types";
+import { BOX_LABEL, BOX_SHORT, BOX_SLUGS, CATEGORIES, isBoxSlug, type BoxSlug } from "@/lib/admin/types";
 
 export const metadata: Metadata = { title: "Products" };
 
 type SP = { q?: string; status?: string; box?: string; cat?: string; issue?: string };
 
-const SHORT: Record<BoxSlug, string> = { pregnancy_comfort: "Preg", blood_sugar: "Carb", heart: "Heart" };
 
 /** Review stages in the order a product moves through them. "Legacy" = approved in the old workbook, no named clinician. */
 const TABS = [
@@ -161,7 +160,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
                     {eligibleChips(fits).map((b) => (
-                      <Badge key={b} tone="good">{`✓ ${SHORT[b]}`}</Badge>
+                      <Badge key={b} tone="good">{`✓ ${BOX_SHORT[b]}`}</Badge>
                     ))}
                     {eligibleChips(fits).length === 0 && <Badge tone="muted">No box</Badge>}
                     {stage(s) === "Legacy" && <Badge tone="warn">Legacy approval</Badge>}

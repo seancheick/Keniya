@@ -3,11 +3,12 @@
 import type Stripe from "stripe";
 import { z } from "zod";
 import { boxes, cravings } from "@/lib/box";
+import { BOX_SLUGS } from "@/lib/admin/types";
 import { site } from "@/lib/site";
 import { getStripe, isCheckoutConfigured, priceIdForBox } from "@/lib/stripe";
 
 const schema = z.object({
-  boxSlug: z.enum(["pregnancy_comfort", "blood_sugar", "heart"]),
+  boxSlug: z.enum(BOX_SLUGS),
   gift: z.boolean().optional(),
   // Quiz answers only prefill checkout (the buyer can change them there), so a bad value is
   // dropped rather than blocking the purchase.

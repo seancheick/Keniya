@@ -1,5 +1,7 @@
+import type { BoxSlug } from "@/lib/admin/types";
+
 export type Box = {
-  slug: "pregnancy_comfort" | "blood_sugar" | "heart";
+  slug: BoxSlug;
   name: string;
   shortName: string;
   forWho: string;
