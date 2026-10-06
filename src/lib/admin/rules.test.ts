@@ -54,6 +54,23 @@ describe("product fit (workbook v4 formulas)", () => {
     expect(f.heart.via).toEqual(["Unsweetened drink"]);
   });
 
+  it("gestational diabetes needs both the pregnancy checks and a carb pathway", () => {
+    const ok = snack({ protein_g: 6, carbs_g: 12 });
+    expect(fitsBoxes(ok).gestational_diabetes.via).toEqual(expect.arrayContaining(["All pregnancy checks pass", "Protein-forward"]));
+    const unchecked = fitsBoxes({ ...ok, pregnancy_checks: { ...ok.pregnancy_checks, P2: "" } }).gestational_diabetes;
+    expect(unchecked.fits).toBe(false);
+    expect(unchecked.reasons).toContain("Not yet checked: P2");
+    expect(fitsBoxes(gingerChews()).gestational_diabetes.fits).toBe(false); // pregnancy-safe, no carb pathway
+  });
+
+  it("GLP-1 takes protein, fiber, whole-food, small treats and unsweetened drinks; postpartum mirrors the pregnancy checks", () => {
+    expect(fitsBoxes(snack({ protein_g: 5 })).glp1.via).toContain("Protein-forward");
+    const bigTreat = snack({ protein_g: 1, fiber_g: 1, calories: 190, added_sugar_g: 4, carbs_g: 18 });
+    expect(fitsBoxes(bigTreat).blood_sugar.via).toEqual(["Portioned treat"]);
+    expect(fitsBoxes(bigTreat).glp1.fits).toBe(false); // 190 cal is over the 150 cal small-treat line
+    expect(fitsBoxes(popcorn()).postpartum).toMatchObject({ box: "postpartum", fits: true });
+  });
+
   it("shipping policy: liquids and heavy items don't ship", () => {
     expect(shipsUnderPolicy(snack({ form: "Liquid" }), settings.policy).ok).toBe(false);
     expect(shipsUnderPolicy(snack({ unit_wt_oz: 4 }), settings.policy).reason).toMatch(/over the 3.5 oz/);

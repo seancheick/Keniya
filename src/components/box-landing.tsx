@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { BoxVisual } from "@/components/box-visual";
 import { BuyButton } from "@/components/buy-button";
 import { JsonLd } from "@/components/json-ld";
 import { ReviewerCard } from "@/components/reviewer-card";
@@ -9,6 +9,7 @@ import { boxes, type Box } from "@/lib/box";
 import { giftLanding, landingFor, landings, type BoxLanding } from "@/lib/landing";
 import { breadcrumbJsonLd, faqJsonLd, productJsonLd } from "@/lib/schema";
 import { site } from "@/lib/site";
+import { publicStandards } from "@/lib/standards";
 
 const base = site.url.replace(/\/$/, "");
 
@@ -32,9 +33,9 @@ export function landingMetadata(l: BoxLanding): Metadata {
       url: l.path,
       title: l.title,
       description: l.description,
-      images: [{ url: box.image, width: 1600, height: 1200, alt: box.imageAlt }],
+      ...(box.image && { images: [{ url: box.image, width: 1600, height: 1200, alt: box.imageAlt }] }),
     },
-    twitter: { card: "summary_large_image", title: l.title, description: l.description, images: [box.image] },
+    twitter: { card: "summary_large_image", title: l.title, description: l.description, ...(box.image && { images: [box.image] }) },
   };
 }
 
@@ -112,7 +113,7 @@ export function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
             <p className="font-display text-4xl text-ink">
               ${site.preorderPriceUSD}
               <span className="ml-2 font-sans text-sm text-ink-soft">
-                {site.snackCount} snacks · only {site.firstRunPerBox} made
+                {site.snackCount} snacks · only {box.founding} made
               </span>
             </p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
@@ -133,9 +134,25 @@ export function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
           </div>
         </div>
         <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-cream-deep">
-          <Image src={box.image} alt={box.imageAlt} fill priority sizes="(max-width: 1024px) 100vw, 480px" className="object-cover" />
+          <BoxVisual box={box} priority sizes="(max-width: 1024px) 100vw, 480px" />
         </div>
       </div>
+
+      <section className="mt-14" aria-labelledby="standard">
+        <h2 id="standard" className="font-display text-3xl text-ink">Every snack in this box</h2>
+        <ul className="mt-4 space-y-2 text-ink-soft">
+          {[...publicStandards(slug), "Every lineup reviewed by our clinician"].map((line) => (
+            <li key={line} className="flex gap-2">
+              <CheckIcon className="mt-1 size-4 shrink-0 text-sage-deep" strokeWidth={2.5} aria-hidden />
+              {line}
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 max-w-[65ch] text-sm text-ink-soft">
+          These are Keniya curation standards, informed by published guidance; they aren&rsquo;t
+          medical cutoffs and this isn&rsquo;t medical advice.
+        </p>
+      </section>
 
       <section className="mt-16" aria-labelledby="who">
         <h2 id="who" className="font-display text-3xl text-ink">Who it&rsquo;s for</h2>
@@ -202,7 +219,7 @@ export function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
 
       <div className="mt-12 flex flex-col items-start gap-4 rounded-3xl bg-sage-deep p-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="font-display text-2xl text-cream">
-          Only {site.firstRunPerBox} {box.name}es in the founding batch.
+          Only {box.founding} {box.name}es in the founding batch.
         </p>
         <BuyButton box={box} showNote={false} className="sm:w-auto" label={`Preorder, $${site.preorderPriceUSD}`} />
       </div>

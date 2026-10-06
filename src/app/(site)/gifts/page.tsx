@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { CheckIcon } from "lucide-react";
+import { BoxVisual } from "@/components/box-visual";
 import { BuyButton } from "@/components/buy-button";
 import { Faqs, OtherBoxes, promises } from "@/components/box-landing";
 import { JsonLd } from "@/components/json-ld";
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
 };
 
 const steps = [
-  { t: "Choose their box", b: "Pregnancy, carb conscious or heart. Each one is screened for what they're navigating." },
+  { t: "Choose their box", b: "Pregnancy, postpartum, blood sugar, heart, gestational diabetes or GLP-1. Each one is screened to its own standards." },
   { t: "Add their address and a note", b: "Checkout asks where to send it and what to write." },
   { t: "We pack it by hand", b: "Your message is printed on a note inside, next to their Packed for You card." },
   { t: "It ships to their door", b: `Founding boxes ship ${site.shipDate}, free. Your receipt comes to you.` },
@@ -112,7 +113,7 @@ export default function GiftPage() {
           {boxes.map((b) => (
             <li key={b.slug} className="flex flex-col overflow-hidden rounded-3xl border border-border bg-cream-card">
               <div className="relative aspect-[16/10] bg-cream-deep">
-                <Image src={b.image} alt={b.imageAlt} fill sizes="(max-width: 768px) 100vw, 320px" className="object-cover" />
+                <BoxVisual box={b} sizes="(max-width: 768px) 100vw, 320px" />
               </div>
               <div className="flex flex-1 flex-col p-5">
                 <h3 className="font-display text-2xl text-ink">{b.name}</h3>

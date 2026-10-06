@@ -40,9 +40,10 @@ export default function AboutPage() {
           marketing.
         </p>
         <p data-reveal>
-          We&rsquo;re starting small on purpose — fifty of each box, packed by hand,
-          with any allergies or foods you tell us to avoid steered around where we can. All three founding edits open together:
-          Pregnancy Comfort, Carb Conscious, and Heart Wellness. This is a family
+          We&rsquo;re starting small on purpose: a founding run of each box, packed by hand,
+          with any allergies or foods you tell us to avoid steered around where we can. Six
+          founding boxes open together: Pregnancy Comfort, Blood Sugar, Heart Wellness,
+          Gestational Diabetes, GLP-1 Companion, and Postpartum &amp; Nursing. This is a family
           company; it will grow at the speed of trust.
         </p>
         <p data-reveal>

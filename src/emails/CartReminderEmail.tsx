@@ -7,7 +7,7 @@ import { Button, EmailShell, Panel, CategoryList, c, t } from "@/emails/layout";
 export function CartReminderEmail({ box, recoveryUrl }: { box: Box; recoveryUrl: string }) {
   return (
     <EmailShell
-      preview={`Your ${box.name} is still waiting. Only ${site.firstRunPerBox} were made.`}
+      preview={`Your ${box.name} is still waiting. Only ${box.founding} were made.`}
       image={box.image}
       imageAlt={box.imageAlt}
       footerNote="This is the only reminder we'll send about this checkout."
@@ -15,7 +15,7 @@ export function CartReminderEmail({ box, recoveryUrl }: { box: Box; recoveryUrl:
       <Text style={t.eyebrow}>Still thinking it over?</Text>
       <Heading style={t.h1}>You left your {box.shortName} box behind.</Heading>
       <Text style={t.body}>
-        No rush, but there are only {site.firstRunPerBox} founding {box.name}es, and once they&apos;re
+        No rush, but there are only {box.founding} founding {box.name}es, and once they&apos;re
         gone, they&apos;re gone. Your checkout is saved, so it takes about a minute to finish.
       </Text>
 

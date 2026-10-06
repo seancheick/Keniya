@@ -42,13 +42,13 @@ export function WaitlistConfirmEmail({
       {updates ? (
         <Text style={t.body}>
           You&apos;re subscribed to updates on new boxes and shipping. Founding boxes ship{" "}
-          {site.shipDate}, and there are only {site.firstRunPerBox} of each.
+          {site.shipDate}, in small founding runs.
         </Text>
       ) : (
         <Text style={t.body}>
           We saved your spot for the <strong style={{ color: c.ink }}>{boxName}</strong>.{" "}
           {box
-            ? `Preorders are open now, and there are only ${site.firstRunPerBox} of each box. Founding boxes ship ${site.shipDate}.`
+            ? `Preorders are open now, and there are only ${box.founding} founding ${box.name}es. Founding boxes ship ${site.shipDate}.`
             : "Thanks for the request. Requests decide what we build next, and if we make it, you'll be the first to know."}
         </Text>
       )}

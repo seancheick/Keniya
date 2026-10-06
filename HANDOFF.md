@@ -1,5 +1,13 @@
 # Handoff: Keniya Admin (`/admin`)
 
+**Status, Oct 6 2026, evening: six boxes, published standards, Blood Sugar rename (branch `boxes-v2` → main).**
+- **Decision (owner, with the clinician):** no customers and no stock yet, so everything changed at once. Six founding boxes: Pregnancy Comfort, **Blood Sugar** (was Carb Conscious; same slug `blood_sugar`, `/blood-sugar-snack-box`, old URL redirects), Heart Wellness (now names high blood pressure and cholesterol), **Gestational Diabetes** (= Pregnancy screening ∩ Blood Sugar standard), **GLP-1 Companion**, **Postpartum & Nursing**. Menopause and kidney stay as requests. Founding runs 50 / 50 / 50 / 20 / 20 / 20 (`DEFAULT_SETTINGS.runSize`; the public `box.founding` reads the same default).
+- **Standards are Keniya curation thresholds with sources** (comments in `types.ts`); the clinician reviews lineups, not arithmetic. Laurie chose the lower sodium number. Per pack: Blood Sugar ≤20 g total carbs, ≤5 g added sugar (ADA 15–20 g snack pattern; total carbs, never net). Heart ≤**140 mg sodium** (FDA "low sodium" / AHA snack line; was 230), sat fat ≤2 g or ≤4 g only when the nut/seed role is set **and** the label has no palm, palm-kernel, coconut or partially hydrogenated oil (`hasAddedTropicalOil`), added sugar ≤5 g core / ≤8 g on a controlled treat (`treatAddedSugarMax`). Pregnancy `caffeineMax` 50 mg (ACOG <200 mg/day; not an ACOG cutoff). Postpartum caffeineMax 100 mg. Blood Sugar `treatMax` 3 counts treat-only picks. The old 300 mg "higher-sodium picks" check is gone. **The public site prints these numbers from `DEFAULT_BOX_RULES` via `src/lib/standards.ts`**, so an admin edit to a hard limit must be mirrored in the default or the site drifts (the rules form says so).
+- **Catalog after the change (live data, 78 live products):** eligible Pregnancy 40, Blood Sugar 34, Heart **29** (was 40: 5 nut products with added palm/coconut oil, 3 over 5 g sugar, 2–3 between 140 and 230 mg sodium), Gestational Diabetes 24, GLP-1 34, Postpartum 40. 40 products pass more than one box.
+- **Lineups:** Pregnancy v2 and Blood Sugar v3 still READY · PROVISIONAL. **Heart v3 is FIX: 4 picks are no longer eligible** (rebuild with "Build box"). The three new boxes have **no lineup yet** (build, then clinician approval, then package checks).
+- **Not done / needs the owner:** photography for the three new boxes (they render a tinted name panel, `BoxVisual`); optional Stripe prices `STRIPE_PRICE_{GESTATIONAL_DIABETES,GLP1,POSTPARTUM}_BOX` (checkout falls back to an ad-hoc $47 line item, so the boxes sell without them); the sold-out check per box is still missing (HANDOFF §3). The GLP-1 and Postpartum rule numbers (protein/fiber minimums, 150 cal small-treat line, 100 mg caffeine) are founder-set from the 2025 ASN/OMA/TOS/ACLM GLP-1 guidance and ACOG/CDC nursing caffeine guidance; the clinician reviews the first lineups.
+- **Verified:** 83 tests, typecheck, lint, production build (all six landing routes static). Live probes of eligibility and lineup state were run with `npx tsx` on Node 22 (`NODE_OPTIONS=--conditions=react-server`); the shell's default Node 18 can't run vitest or the Supabase client.
+
 **Status, Oct 6 2026, end of day: stock/packing audit deployed; state of play.**
 - **Production runs `fce25bc`** (Vercel success). It contains: Codex's stock and packing audit fixes (`571d713`), both mobile passes, the box-builder table, Verify screen and approval ladder. Tests: **75 pass**; typecheck, lint and production build are clean.
 - **The audit** is written up in `docs/admin-stock-audit.md` (full finding-by-finding table). In short:
@@ -65,7 +73,7 @@
   - `verified_at`/`verified_by` were left blank on purpose: they mean "label checked with the package in hand".
 - **Eligibility gates (after the clinician's first review):**
   - "Eligible" = nutrition rules qualify (`fitFor`) + box hard limits + shipping policy + single-serve (P8 FAIL blocks every box) + status. `eligibleFor`/`eligibleBoxes`/`gateFailures` in `rules.ts` now drive badges, the box builder, the optimizer, orders, lineup checks and the export.
-  - Hard limits live in `box_rules` (editable in each box recipe). Founder defaults, clinician to confirm: Carb Conscious ≤20 g carbs and ≤5 g added sugar; Heart sodium ≤230 mg and sat fat ≤2 g (≤4 g when the fat comes from nuts/seeds; blank sat fat counts as not eligible).
+  - Hard limits live in `box_rules` (editable in each box recipe), defaults in `DEFAULT_BOX_RULES`. Current numbers are in the Oct 6 evening status at the top (Heart sodium is 140 mg since then, not 230).
   - Carb "fiber-forward" now also needs ≥3 g protein or nut/seed fat.
   - Eligible counts: Pregnancy 41, Carb Conscious 48 (was 80), Heart 50 (was 69).
 - **Provisional lineups and the pack gate:** a READY lineup with any non-Approved pick shows **READY · PROVISIONAL**. `packShipment` refuses unless every pick is eligible, Approved, has a UPC and has `verified_at` (`packBlockers` in `rules.ts`).
@@ -226,7 +234,7 @@ Results last run: every tab returned 200; `$0.50/unit`; optimizer READY; pack us
 
 ## 6. Owner context
 
-- **Business:** Keniya sells condition-aware snack boxes (Pregnancy, Carb Conscious = `blood_sugar`, Heart), 14 snacks each, $47, founding run 50 per box, ships Nov 11 2026.
+- **Business:** Keniya sells condition-aware snack boxes (Pregnancy, Blood Sugar = `blood_sugar`, Heart, Gestational Diabetes, GLP-1, Postpartum), 14 snacks each, $47, founding runs 50 / 50 / 50 / 20 / 20 / 20, ships Nov 11 2026.
 - **Owner wants:** phone-first purchase logging, accurate per-box and per-order cost, inventory, and shipments. Box fit follows clinical-style rules plus manual review.
 - **Shipping:** Pirate Ship, USPS Ground Advantage / Cubic, default box 12×9×4. Pirate Ship appears to have **no public API**, so the integration is a CSV round trip. Live in-app label quotes would need Shippo, EasyPost or ShipEngine; ask the owner before adding a paid service.
 - **Repo is public:** never commit costs, vendors or the workbook. Defaults in `types.ts` keep business costs at 0 on purpose.

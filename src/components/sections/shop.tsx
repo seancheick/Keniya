@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ArrowRightIcon, CheckIcon } from "lucide-react";
+import { BoxVisual } from "@/components/box-visual";
 import { BuyButton } from "@/components/buy-button";
 import { Button } from "@/components/ui/button";
 import { MatchQuiz } from "@/components/quiz/match-quiz";
@@ -11,6 +11,7 @@ import Link from "next/link";
 import { landingFor } from "@/lib/landing";
 import { boxes, UPDATES_INTEREST, type Box } from "@/lib/box";
 import { site } from "@/lib/site";
+import { publicStandards } from "@/lib/standards";
 import { cn } from "@/lib/utils";
 
 const promises = [
@@ -93,7 +94,7 @@ export function Shop() {
             "mt-8 scroll-mt-24",
             picked
               ? "flex gap-2 overflow-x-auto rounded-full bg-cream-deep p-1"
-              : "grid gap-3 sm:grid-cols-3 sm:gap-4",
+              : "grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3",
           )}
         >
           {boxes.map((b) => {
@@ -142,13 +143,7 @@ export function Shop() {
                 )}
               >
                 <div className="relative aspect-[4/3] w-32 shrink-0 self-start bg-cream-deep sm:w-full lg:aspect-[16/9]">
-                  <Image
-                    src={b.image}
-                    alt={b.imageAlt}
-                    fill
-                    sizes="(max-width: 640px) 128px, 360px"
-                    className="object-cover"
-                  />
+                  <BoxVisual box={b} sizes="(max-width: 640px) 128px, 360px" />
                   <span
                     className={cn(
                       "absolute right-2 top-2 grid size-6 place-items-center rounded-full border-2 sm:size-7",
@@ -216,10 +211,25 @@ export function Shop() {
                     </li>
                   ))}
                 </ul>
-                <p className="mt-5 max-w-[52ch] text-xs leading-relaxed text-ink-soft">
-                  A snack has to pass this box&rsquo;s screening before it can go in. Exact picks
-                  rotate with the season, and every box includes a{" "}
-                  <strong className="text-ink">Packed for You</strong> card on how we choose.
+                <p className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-sage-deep">
+                  Every snack in this box
+                </p>
+                <ul className="mt-3 space-y-2 text-sm text-ink-soft">
+                  {publicStandards(b.slug).map((line) => (
+                    <li key={line} className="flex gap-2">
+                      <CheckIcon className="mt-0.5 size-4 shrink-0 text-sage-deep" strokeWidth={2.5} aria-hidden />
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                  <li className="flex gap-2">
+                    <CheckIcon className="mt-0.5 size-4 shrink-0 text-sage-deep" strokeWidth={2.5} aria-hidden />
+                    <span>Every lineup reviewed by our clinician</span>
+                  </li>
+                </ul>
+                <p className="mt-4 max-w-[52ch] text-xs leading-relaxed text-ink-soft">
+                  Keniya standards, not medical cutoffs. Exact picks rotate with the season, and
+                  every box includes a <strong className="text-ink">Packed for You</strong> card
+                  on how we choose.
                 </p>
                 <Link
                   href={landingFor(b.slug).path}
@@ -234,15 +244,8 @@ export function Shop() {
 
           <div className="order-1 self-start rounded-3xl bg-blush/60 p-5 sm:p-7 lg:sticky lg:top-24 lg:order-2">
             {picked && (
-              <div className="relative -mx-1 -mt-1 mb-5 aspect-[16/10] overflow-hidden rounded-2xl bg-cream-deep">
-                <Image
-                  key={box.slug}
-                  src={box.image}
-                  alt={box.imageAlt}
-                  fill
-                  sizes="(max-width: 1024px) 90vw, 440px"
-                  className="object-cover animate-in fade-in duration-300"
-                />
+              <div key={box.slug} className="relative -mx-1 -mt-1 mb-5 aspect-[16/10] overflow-hidden rounded-2xl bg-cream-deep">
+                <BoxVisual box={box} sizes="(max-width: 1024px) 90vw, 440px" className="animate-in fade-in duration-300" />
               </div>
             )}
             <p className="mb-1 font-display text-2xl text-ink">{box.name}</p>
@@ -254,7 +257,7 @@ export function Shop() {
                 </span>
               </p>
               <p className="text-sm font-semibold text-blush-ink">
-                Only {site.firstRunPerBox} made
+                Only {box.founding} made
               </p>
             </div>
 

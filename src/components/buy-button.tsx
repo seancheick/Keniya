@@ -83,7 +83,7 @@ export function BuyButton({
       {showNote && (
         <p className="mt-2 text-xs text-ink-soft">
           One-time · free shipping · refundable before ship · only{" "}
-          {site.firstRunPerBox} of each box
+          {box.founding} founding {box.shortName} boxes
         </p>
       )}
       {error && (

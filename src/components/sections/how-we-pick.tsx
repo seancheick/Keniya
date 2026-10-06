@@ -8,7 +8,7 @@ import { site } from "@/lib/site";
 const steps: { title: string; body: string; Icon: LucideIcon }[] = [
   {
     title: "We read the labels",
-    body: "Ingredients, allergens and the nutrition that matters for your box. A snack has to pass that box's screening.",
+    body: "Ingredients, allergens and the nutrition that matters for your box. A snack has to pass that box's limits, like 140 mg sodium for Heart or 20 g carbs for Blood Sugar.",
     Icon: ScanText,
   },
   {
@@ -110,7 +110,7 @@ export function TrustStory() {
         >
           It started with years of reading labels for our own family. Now we do that work for
           everyone: whatever you&rsquo;re living with, you get a box that already did the reading,
-          so you can just enjoy the snack. Pregnancy, carb-conscious and heart boxes today, with
+          so you can just enjoy the snack. Six boxes today, each with its own standards, with
           more as you ask for them. Every snack is screened with the same care as{" "}
           <a
             href={site.pharmaguide.url}

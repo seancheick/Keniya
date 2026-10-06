@@ -6,7 +6,7 @@ export function PreorderCta() {
       <div className="mx-auto flex max-w-6xl flex-col items-start gap-5 px-5 py-12 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-display text-3xl text-cream">
-            Only {site.firstRunPerBox} of each box.
+            Small founding runs. Six boxes.
           </p>
           <p className="mt-1 text-cream">
             ${site.preorderPriceUSD} · ships {site.shipDate}

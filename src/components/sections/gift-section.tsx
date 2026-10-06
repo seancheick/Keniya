@@ -24,8 +24,8 @@ export function GiftSection() {
             A thoughtful box, for someone you care about.
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-ink-soft">
-            Choose their box, add a message, and we send it to their door. Pregnancy, carb
-            conscious or heart: any box can be a gift. Your note is printed and tucked inside,
+            Choose their box, add a message, and we send it to their door. Pregnancy,
+            postpartum, blood sugar, heart or GLP-1: any box can be a gift. Your note is printed and tucked inside,
             and the receipt comes to you.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">

@@ -25,7 +25,7 @@ const row = (k: string, v: React.ReactNode) => (
 
 /** Founder packing slip: sent to hello@ for every paid order. */
 export function OrderAlertEmail(p: OrderAlertProps) {
-  const left = p.soldCount == null ? null : Math.max(site.firstRunPerBox - p.soldCount, 0);
+  const left = p.soldCount == null ? null : Math.max(p.box.founding - p.soldCount, 0);
   const stripeUrl = p.paymentIntentId
     ? `https://dashboard.stripe.com/payments/${p.paymentIntentId}`
     : "https://dashboard.stripe.com/payments";
@@ -45,7 +45,7 @@ export function OrderAlertEmail(p: OrderAlertProps) {
         <tbody>
           <tr>
             {[
-              [p.soldCount != null ? `#${p.soldCount}` : "—", `of ${site.firstRunPerBox}`],
+              [p.soldCount != null ? `#${p.soldCount}` : "—", `of ${p.box.founding}`],
               [left != null ? String(left) : "—", "left"],
               [`$${(p.amountCents / 100).toFixed(0)}`, "paid"],
             ].map(([big, small], i) => (

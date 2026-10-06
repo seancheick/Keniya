@@ -90,7 +90,7 @@ export async function sendOrderEmails(
     react: OrderConfirmEmail(props),
   });
   // Founder packing slip; reply goes straight to the buyer.
-  const left = alert.soldCount == null ? "" : ` · ${Math.max(site.firstRunPerBox - alert.soldCount, 0)} left`;
+  const left = alert.soldCount == null ? "" : ` · ${Math.max(props.box.founding - alert.soldCount, 0)} left`;
   const founder = await sendOnce("order alert", `alert-${sessionId}`, {
     from: env.RESEND_FROM_EMAIL,
     to: site.email,

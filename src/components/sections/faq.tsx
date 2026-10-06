@@ -4,7 +4,7 @@ import { site } from "@/lib/site";
 export const faqs = [
   {
     q: "What exactly is in the box?",
-    a: `${site.snackCount} snacks across the categories shown for each box, like comfort, protein, sweets and sips. Each box has its own screening rules, so a snack has to qualify for your box before it can go in. Exact picks rotate with the season. At least 8 are full single servings, a pack of chews or two tea bags counts as one snack, and small extras are free and never counted. Every box includes a Packed for You card on how we choose.`,
+    a: `${site.snackCount} snacks across the categories shown for each box, like comfort, protein, sweets and sips. Each box has its own standards with real numbers, like 140 mg sodium for Heart or 20 g carbs for Blood Sugar, so a snack has to pass them before it can go in. Exact picks rotate with the season. At least 8 are full single servings, a pack of chews or two tea bags counts as one snack, and small extras are free and never counted. Every box includes a Packed for You card on how we choose.`,
   },
   {
     q: "When does it ship?",
@@ -16,7 +16,7 @@ export const faqs = [
   },
   {
     q: "How do I send it as a gift?",
-    a: "Choose \"It's a gift\" when you choose your box, then enter their address at checkout and write a message. We print it on a note inside the box. Any of the three boxes can be a gift.",
+    a: "Choose \"It's a gift\" when you choose your box, then enter their address at checkout and write a message. We print it on a note inside the box. Any box can be a gift.",
   },
   {
     q: "What about allergies?",

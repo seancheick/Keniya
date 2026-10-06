@@ -1,6 +1,7 @@
 import { boxes } from "@/lib/box";
 import { giftLanding, landingFor } from "@/lib/landing";
 import { site } from "@/lib/site";
+import { publicStandards } from "@/lib/standards";
 
 export const dynamic = "force-static";
 
@@ -12,11 +13,11 @@ export function GET() {
 
 > ${site.description}
 
-${site.name} (from kɛnɛya, "health" in Dioula) is a small, founder-run US company. Every box is a one-time purchase at $${site.preorderPriceUSD} with ${site.freeShippingLabel.toLowerCase()} to US addresses, no subscription, and a full refund any time before it ships. The founding release is limited to ${site.firstRunPerBox} of each box. ${site.name} curates sealed, packaged snacks and does not give medical or nutritional advice.
+${site.name} (from kɛnɛya, "health" in Dioula) is a small, founder-run US company. Every box is a one-time purchase at $${site.preorderPriceUSD} with ${site.freeShippingLabel.toLowerCase()} to US addresses, no subscription, and a full refund any time before it ships. Each box has its own nutrition and ingredient standards; a snack has to pass its box's limits, and every lineup is reviewed by a pharmacist. The founding release is a small run per box (shown below). ${site.name} curates sealed, packaged snacks and does not give medical or nutritional advice.
 
 ## Boxes
 
-${boxes.map((b) => `- [${b.name}](${base}${landingFor(b.slug).path}): ${b.forWho} ${b.why}`).join("\n")}
+${boxes.map((b) => `- [${b.name}](${base}${landingFor(b.slug).path}) (${b.founding} founding boxes): ${b.forWho} ${b.why} Standards: ${publicStandards(b.slug).join("; ")}.`).join("\n")}
 - [Gifts](${base}${giftLanding.path}): send any box as a gift, with your note printed and packed inside.
 
 ## Pages

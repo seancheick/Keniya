@@ -65,12 +65,13 @@ export function Hero() {
       <div className="mx-auto grid max-w-6xl gap-16 px-6 pb-16 pt-14 sm:pt-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:pb-24 lg:pt-24">
         <div>
           <h1 className="hero-title font-display text-display text-ink">
-            The snack box that did the{" "}
-            <em className="text-terracotta-deep">label reading</em> for you.
+            Snacks screened with{" "}
+            <em className="text-terracotta-deep">your needs</em> in mind.
           </h1>
           <p className="hero-sub mt-6 max-w-[48ch] text-lg leading-relaxed text-ink-soft">
-            For pregnancy, carb-conscious eating or heart health: {site.snackCount} snacks
-            already screened for you, with a card on how we choose.
+            Six boxes, each with its own nutrition and ingredient standards. Every one of the{" "}
+            {site.snackCount} snacks has to pass its box&rsquo;s limits, and every lineup is
+            reviewed by our clinician.
           </p>
           <div className="hero-actions mt-9">
             <div className="flex flex-wrap items-center gap-3">

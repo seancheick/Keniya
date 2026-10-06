@@ -88,7 +88,7 @@ export function RulesForm({ slug, rules }: { slug: BoxSlug; rules: BoxRules }) {
           ))}
         </datalist>
       </div>
-      <Limits title="Hard limits (every pick)" note="A snack over any of these can't go in this box, whatever else it qualifies for. Leave empty for no limit." items={GATES} rules={rules} />
+      <Limits title="Hard limits (every pick)" note="A snack over any of these can't go in this box, whatever else it qualifies for. Leave empty for no limit. The website prints the standard numbers from the code defaults, so if you change one here, have the default changed too so the site keeps matching." items={GATES} rules={rules} />
       <Limits title="Snack sizes" items={SIZE} rules={rules} />
       <Limits title="Health rules" note="Leave a box empty if this box doesn't need that rule." items={HEALTH} rules={rules} />
       <Button disabled={pending}>{pending ? "Saving…" : "Save recipe"}</Button>

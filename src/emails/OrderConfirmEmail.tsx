@@ -43,8 +43,8 @@ export function OrderConfirmEmail({
       </Heading>
       <Text style={t.body}>
         {gift
-          ? `Your gift is one of only ${site.firstRunPerBox} founding ${box.name}es. We'll pack it by hand and send it straight to them.`
-          : `You got one of only ${site.firstRunPerBox} founding ${box.name}es. We'll pack it by hand and email you when it's on the way.`}
+          ? `Your gift is one of only ${box.founding} founding ${box.name}es. We'll pack it by hand and send it straight to them.`
+          : `You got one of only ${box.founding} founding ${box.name}es. We'll pack it by hand and email you when it's on the way.`}
       </Text>
 
       <Panel>

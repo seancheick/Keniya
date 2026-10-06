@@ -12,7 +12,7 @@ export function productJsonLd(box: Box) {
     "@id": `${url}#product`,
     name: box.name,
     description: `${box.forWho} ${box.why}`,
-    image: `${base}${box.image}`,
+    ...(box.image && { image: `${base}${box.image}` }),
     sku: box.slug,
     url,
     brand: { "@type": "Brand", name: site.name },

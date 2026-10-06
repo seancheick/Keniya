@@ -49,7 +49,7 @@ export default function OpenGraphImage() {
             maxWidth: 820,
           }}
         >
-          {`Pregnancy · Carb conscious · Heart health · ${site.snackCount} snacks · $${site.preorderPriceUSD} · Free shipping · Founding 50`}
+          {`Pregnancy · Blood sugar · Heart · Gestational diabetes · GLP-1 · Postpartum · ${site.snackCount} snacks · $${site.preorderPriceUSD} · Free shipping`}
         </div>
         <div
           style={{

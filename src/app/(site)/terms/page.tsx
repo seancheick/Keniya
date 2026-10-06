@@ -25,8 +25,8 @@ export default function TermsPage() {
 
       <h2>Preorders, shipping, and cancellation</h2>
       <p>
-        Founding boxes are preorders, packed by hand in small batches — only{" "}
-        {site.firstRunPerBox} of each box in the founding release. Founding boxes ship {site.shipDate}. You can cancel for a full refund any time before your box ships:
+        Founding boxes are preorders, packed by hand in small batches; the founding run for
+        each box is shown on its page. Founding boxes ship {site.shipDate}. You can cancel for a full refund any time before your box ships:
         just email{" "}
         <a className="text-sage-deep underline-offset-2 hover:underline" href={`mailto:${site.email}`}>
           {site.email}

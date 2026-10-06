@@ -237,7 +237,7 @@ export function MatchQuiz({ children }: { children: ReactNode }) {
               ))}
               <Option
                 selected={pick === SOMETHING_ELSE}
-                hint="Gestational diabetes, postpartum, GLP-1, menopause or your idea."
+                hint="Menopause, kidney-conscious or your idea."
                 onClick={() => {
                   setPick(SOMETHING_ELSE);
                   next();
