@@ -1,3 +1,5 @@
+import { ProductDelete } from "@/components/admin/product-delete";
+import { requireAdmin } from "@/lib/admin/auth";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Download, Plus, SlidersHorizontal } from "lucide-react";
@@ -20,12 +22,13 @@ const TABS = [
   { key: "Candidate", label: "Candidate", hint: "Not reviewed yet" },
   { key: "Pre-approved", label: "Pre-approved", hint: "Waiting for the clinician" },
   { key: "Approved", label: "Approved", hint: "Named clinician approved it" },
-  { key: "Legacy", label: "Legacy approval", hint: "Approved in the workbook; needs re-attestation" },
+  { key: "Legacy", label: "Needs clinician review", hint: "Imported status is not a clinician approval" },
   { key: "Rejected", label: "Rejected" },
   { key: "Retired", label: "Retired" },
 ] as const;
 
 export default async function ProductsPage({ searchParams }: { searchParams: Promise<SP> }) {
+  const admin = await requireAdmin();
   const sp = await searchParams;
   const [{ snacks, products }, settings, rules] = await Promise.all([loadCatalog(), loadSettings(), loadBoxRules()]);
   const productBy = new Map(products.map((p) => [p.id, p]));
@@ -83,7 +86,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
 
       <PillTabs
         label="Review stage"
-        tabs={TABS.filter((t) => !["Rejected", "Retired"].includes(t.key) || count(t.key) > 0 || t.key === activeTab).map((t) => ({
+        tabs={TABS.filter((t) => !["Rejected", "Retired", "Legacy"].includes(t.key) || count(t.key) > 0 || t.key === activeTab).map((t) => ({
           key: t.key,
           label: t.label,
           href: tabHref(t.key),
@@ -152,8 +155,9 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
           {/* Phones: one card per product. */}
           <ul className="space-y-2 sm:hidden">
             {rows.map(({ s, fits }) => (
-              <li key={s.id}>
-                <Link href={`/admin/products/${s.id}`} className="block rounded-xl border bg-card p-3 active:bg-muted/50">
+              <li key={s.id} className="relative">
+                {admin.role === "admin" && <div className="absolute right-1 top-1"><ProductDelete id={s.id} name={s.name} /></div>}
+                <Link href={`/admin/products/${s.id}`} className="block rounded-xl border bg-card p-3 pr-14 active:bg-muted/50">
                   <div className="flex items-start gap-2">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-balance">{s.name}</p>
@@ -168,7 +172,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                       <Badge key={b} tone="good">{`✓ ${BOX_SHORT[b]}`}</Badge>
                     ))}
                     {eligibleChips(fits).length === 0 && <Badge tone="muted">No box</Badge>}
-                    {stage(s) === "Legacy" && <Badge tone="warn">Legacy approval</Badge>}
+                    {stage(s) === "Legacy" && <Badge tone="warn">Needs clinician review</Badge>}
                     {!nutritionComplete(s) && <Badge tone="bad">no nutrition</Badge>}
                     {!shipsUnderPolicy(s, settings.policy).ok && <Badge tone="warn">doesn&apos;t ship</Badge>}
                     <span className="ml-auto text-muted-foreground tabular-nums">
@@ -192,6 +196,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                   <th>Categories</th>
                   <th className="num">On hand</th>
                   <th className="num">Unit cost</th>
+                  {admin.role === "admin" && <th><span className="sr-only">Delete product</span></th>}
                 </tr>
               </thead>
               <tbody>
@@ -226,6 +231,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                     <td className="text-xs text-muted-foreground">{s.categories.join(", ") || "—"}</td>
                     <td className="num">{s.onHand || "—"}</td>
                     <td className="num">{fmt$(s.unitCostCents)}</td>
+                    {admin.role === "admin" && <td><ProductDelete id={s.id} name={s.name} /></td>}
                   </tr>
                 ))}
               </tbody>

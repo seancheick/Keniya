@@ -1,0 +1,14 @@
+import { beforeEach, expect, it, vi } from "vitest";
+const m=vi.hoisted(()=>({role:"admin",rpc:vi.fn(),from:vi.fn(),remove:vi.fn()}));
+vi.mock("server-only",()=>({}));
+vi.mock("@/lib/admin/auth",()=>({requireAdmin:async()=>({name:"Test",role:m.role})}));
+vi.mock("@/lib/admin/db",()=>({db:()=>({rpc:m.rpc,from:m.from,storage:{from:()=>({remove:m.remove})}}),PHOTO_BUCKET:"keniya-admin"}));
+vi.mock("@/lib/commerce-reconcile",()=>({expireInvalidCheckoutSessions:vi.fn()}));
+vi.mock("next/cache",()=>({revalidatePath:vi.fn()}));
+import {deleteProduct} from "./products";
+const fd=()=>{const f=new FormData();f.set("id","c1fab328-e49b-4542-b19a-851ff37bab6d");f.set("confirmed","yes");return f};
+beforeEach(()=>{vi.clearAllMocks();m.role="admin";m.rpc.mockResolvedValue({error:null});m.remove.mockResolvedValue({error:null});m.from.mockImplementation(()=>({select:()=>({eq:async()=>({data:[{path:"products/test/front.jpg"}],error:null})}),delete:()=>({eq:async()=>({error:null})})}));});
+it("rejects clinician deletion and missing confirmation before mutation",async()=>{m.role="clinician";expect((await deleteProduct({},fd())).error).toBeTruthy();m.role="admin";const f=fd();f.delete("confirmed");expect((await deleteProduct({},f)).error).toBeTruthy();expect(m.rpc).not.toHaveBeenCalled();});
+it("preserves photos when linked-product protection refuses deletion",async()=>{m.rpc.mockResolvedValue({error:{message:"Linked product"}});expect((await deleteProduct({},fd())).error).toBe("Linked product");expect(m.remove).not.toHaveBeenCalled();});
+it("only reports success after photos and cleanup receipt are removed",async()=>{expect(await deleteProduct({},fd())).toEqual({ok:true});expect(m.remove).toHaveBeenCalledWith(["products/test/front.jpg"]);});
+it("reports incomplete cleanup and keeps a retryable receipt on storage failure",async()=>{m.remove.mockResolvedValue({error:{message:"offline"}});expect((await deleteProduct({},fd())).error).toContain("retry deletion");});

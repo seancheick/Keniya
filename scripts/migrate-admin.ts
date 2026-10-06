@@ -61,7 +61,7 @@ const MIGRATIONS: { file: string; applied: string }[] = [
   { file: "supabase/migrations/20261006030933_admin_function_hardening.sql", applied: "select not exists (select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname in ('products_assign_code','purchase_lots_received','adjust_lot','pack_shipment','unpack_shipment','pack_shipment_checked','activate_box_lineup','save_box_lineup','save_package_profile','set_lot_expiry') and not coalesce(p.proconfig @> array['search_path=pg_catalog, public, pg_temp'],false)) and not coalesce(has_function_privilege('anon',to_regprocedure('public.rls_auto_enable()'),'execute'),false) as ok" },
   {
     file: "supabase/migrations/20261007000000_purchase_packs.sql",
-    applied: "select to_regclass('public.purchase_packs') is not null and position('purchase_packs' in pg_get_functiondef('public.pack_shipment(uuid,text,integer,integer,numeric,integer)'::regprocedure)) > 0 as ok",
+    applied: "select to_regclass('public.purchase_packs') is not null and exists(select 1 from information_schema.columns where table_schema='public' and table_name='products' and column_name='gtin14') as ok",
   },
   {
     file: "supabase/migrations/20261007010000_barcode_trigger_fix.sql",
@@ -73,15 +73,17 @@ const MIGRATIONS: { file: string; applied: string }[] = [
   { file: "supabase/migrations/20261008040000_public_abuse_controls.sql", applied: "select to_regprocedure('public.allow_public_attempt(text,integer,integer)') is not null as ok" },
   { file: "supabase/migrations/20261008050000_commerce_observation_fencing.sql", applied: "select to_regprocedure('public.bind_checkout_session(uuid,text,text)') is not null and to_regprocedure('public.begin_financial_observation(text)') is not null as ok" },
   { file: "supabase/migrations/20261008060000_payment_admission_provenance.sql", applied: "select to_regprocedure('public.preorder_admission_guard()') is not null as ok" },
+  { file: "supabase/migrations/20261006203303_permanent_product_deletion.sql", applied: "select to_regprocedure('public.delete_product_permanently(uuid)') is not null as ok" },
+
 ];
 
 const TABLES = [
-  "vendors", "products", "product_versions", "product_photos", "vendor_prices", "purchase_lots", "stock_movements",
+  "product_deletion_files", "vendors", "products", "product_versions", "product_photos", "vendor_prices", "purchase_lots", "stock_movements",
   "barcode_identities", "purchase_packs", "checkout_reservations", "public_attempt_windows",
   "box_rules", "box_lineups", "lineup_items", "package_profiles", "shipments", "shipment_items", "expenses", "admin_settings", "watchlist",
 ];
 
-const RPCS = ['pack_shipment','unpack_shipment','adjust_lot','pack_shipment_checked','activate_box_lineup','save_box_lineup','save_package_profile','set_lot_expiry','set_product_review','product_diligence_complete','commerce_capacity','reserve_checkout','save_paid_order','save_product','verify_product_package','invalidate_package_check','allow_public_attempt','begin_financial_observation','finish_financial_observation','bind_checkout_session'];
+const RPCS = ['delete_product_permanently','pack_shipment','unpack_shipment','adjust_lot','pack_shipment_checked','activate_box_lineup','save_box_lineup','save_package_profile','set_lot_expiry','set_product_review','product_diligence_complete','commerce_capacity','reserve_checkout','save_paid_order','save_product','verify_product_package','invalidate_package_check','allow_public_attempt','begin_financial_observation','finish_financial_observation','bind_checkout_session'];
 
 /** Explicit setup only: missing boxes start at zero capacity, never an implicit sale default. */
 async function initializeCatalog(write: boolean): Promise<boolean> {

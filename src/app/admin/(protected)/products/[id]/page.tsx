@@ -1,3 +1,4 @@
+import { ProductDelete } from "@/components/admin/product-delete";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -100,6 +101,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         }
         actions={
           <>
+            {admin.role === "admin" && <ProductDelete id={id} name={p.name} detail />}
             <Button asChild variant="outline">
               <Link href={`/admin/products/${id}/edit`}>Edit / new version</Link>
             </Button>
@@ -120,7 +122,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <p className="mb-2 text-xs text-muted-foreground">
                 Review
                 {p.prescreened_by ? ` · pre-screened by ${p.prescreened_by} on ${date(p.prescreened_at)}` : ""}
-                {p.reviewed_by ? ` · clinician decision by ${p.reviewed_by} on ${date(p.reviewed_at)}` : p.status === "Approved" ? " · legacy workbook approval: needs clinician re-attestation" : ""}
+                {p.reviewed_by ? ` · clinician decision by ${p.reviewed_by} on ${date(p.reviewed_at)}` : p.status === "Approved" ? " · imported status: needs clinician review" : ""}
               </p>
               <StatusControls clinician={admin.role === "clinician"} id={id} status={p.status} legacyApproval={p.status === "Approved" && !p.reviewed_by} />
             </div>

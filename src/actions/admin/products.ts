@@ -166,3 +166,25 @@ export async function logPriceSighting(_prev: FormState, fd: FormData): Promise<
   refresh();
   return { ok: true };
 }
+
+/** Permanently remove an unused catalog product and its private photos. */
+export async function deleteProduct(_prev: FormState, fd: FormData): Promise<FormState> {
+  const admin = await requireAdmin();
+  if (admin.role !== "admin") return { error: "Only the admin can delete products." };
+  const id = z.uuid().safeParse(fd.get("id"));
+  if (!id.success || fd.get("confirmed") !== "yes") return { error: "Confirm permanent deletion first." };
+  const client = db();
+  const removed = await client.rpc("delete_product_permanently", { p_id: id.data });
+  if (removed.error) return { error: removed.error.message };
+  refresh();
+  const files = await client.from("product_deletion_files").select("path").eq("product_id", id.data);
+  if (files.error) return { error: "Product deleted. Photo cleanup could not finish; retry deletion to finish cleanup." };
+  const paths = (files.data ?? []).map(f => f.path as string);
+  if (paths.length) {
+    const cleanup = await client.storage.from(PHOTO_BUCKET).remove(paths);
+    if (cleanup.error) return { error: "Product deleted. Photo cleanup could not finish; retry deletion to finish cleanup." };
+    const acknowledged = await client.from("product_deletion_files").delete().eq("product_id", id.data);
+    if (acknowledged.error) return { error: "Product and photos deleted. Retry to clear the cleanup receipt." };
+  }
+  return { ok: true };
+}

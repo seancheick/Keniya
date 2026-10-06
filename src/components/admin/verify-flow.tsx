@@ -127,7 +127,7 @@ export function VerifyFlow({ items, minDays, minDate }: { items: VerifyItem[]; m
                         <Badge key={b} tone="info">{b}</Badge>
                       ))}
                       <Badge tone={i.clinicianApproved ? "good" : "warn"}>
-                        {i.clinicianApproved ? "Clinician-approved" : i.status === "Approved" ? "Legacy approval" : i.status}
+                        {i.clinicianApproved ? "Clinician-approved" : i.status === "Approved" ? "Needs clinician review" : i.status}
                       </Badge>
                       <Badge tone={isVerified(i) ? "good" : "muted"}>{isVerified(i) ? "Package verified" : i.upc ? "Barcode on file" : "No barcode yet"}</Badge>
                     </button>

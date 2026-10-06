@@ -102,7 +102,7 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
               const folded = !showAll && idx >= inBox.size + 12;
               const added = inBox.has(s.id);
               const d = daysUntil(s.earliestExpiry);
-              const approval = isClinicianApproved(s) ? "Clinician" : s.status === "Approved" ? "Legacy" : s.status;
+              const approval = isClinicianApproved(s) ? "Clinician" : s.status === "Approved" ? "Needs review" : s.status;
               const action = added ? (
                 <Button size="xs" className="max-sm:h-11 max-sm:px-4" variant="outline" onClick={() => onRemove(s.id)}>
                   <X /> Remove
