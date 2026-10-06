@@ -14,12 +14,15 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end gap-3">
-      <div className="min-w-0 flex-1">
-        <h1 className="font-display text-2xl sm:text-3xl">{title}</h1>
-        {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
+    <div className="mb-5 flex flex-wrap items-end gap-3 sm:mb-6">
+      {/* Full width on phones so the title never shares a row with the buttons. */}
+      <div className="min-w-0 basis-full sm:basis-0 sm:flex-1">
+        <h1 className="font-display text-2xl text-balance sm:text-3xl">{title}</h1>
+        {description && <div className="mt-1 text-sm text-muted-foreground">{description}</div>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+      {actions && (
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto max-sm:*:min-h-11 max-sm:*:flex-1 max-sm:[&_a]:min-h-11 max-sm:[&_button]:min-h-11">{actions}</div>
+      )}
     </div>
   );
 }
@@ -38,9 +41,9 @@ export function Card({
   return (
     <section className={cn("rounded-xl border bg-card p-4 sm:p-5", className)}>
       {(title || action) && (
-        <div className="mb-3 flex items-center gap-2">
+        <div className="mb-3 flex flex-wrap items-center gap-x-2 gap-y-1.5">
           {title && <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase">{title}</h2>}
-          {action && <div className="ml-auto">{action}</div>}
+          {action && <div className="ml-auto max-w-full">{action}</div>}
         </div>
       )}
       {children}

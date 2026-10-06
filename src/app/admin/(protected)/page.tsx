@@ -4,7 +4,7 @@ import { Badge, Card, PageHeader, Stat, TextLink, expiryTone } from "@/component
 import { fmt$, fmtPct, shipmentProfit } from "@/lib/admin/costing";
 import { db, must } from "@/lib/admin/db";
 import { daysUntil } from "@/lib/admin/optimizer";
-import { blockingFailures, eligibleFor, lineupStage, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
+import { blockingFailures, eligibleFor, isClinicianApproved, lineupStage, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_LABEL, BOX_SLUGS, type BoxSlug } from "@/lib/admin/types";
 
@@ -74,7 +74,8 @@ export default async function Dashboard() {
     ["Missing nutrition", catalog.snacks.filter((s) => !nutritionComplete(s)).length, "/admin/products?issue=nutrition"],
     ["No cost yet", catalog.snacks.filter((s) => s.unitCostCents === null).length, "/admin/products?issue=cost"],
     ["Don't ship (policy)", catalog.snacks.filter((s) => !shipsUnderPolicy(s, settings.policy).ok).length, "/admin/products?issue=ships"],
-    ["Approved", catalog.snacks.filter((s) => s.status === "Approved").length, "/admin/products?status=Approved"],
+    ["Clinician-approved", catalog.snacks.filter((s) => isClinicianApproved(s)).length, "/admin/products?status=Approved"],
+    ["Legacy approvals (re-attest)", catalog.snacks.filter((s) => s.status === "Approved" && !isClinicianApproved(s)).length, "/admin/products?status=Legacy"],
     ["Pre-approved (awaiting clinician)", catalog.snacks.filter((s) => s.status === "Pre-approved").length, "/admin/products?status=Pre-approved"],
     ["Candidates", catalog.snacks.filter((s) => s.status === "Candidate").length, "/admin/products?status=Candidate"],
     ["Eligible for all three boxes", catalog.snacks.filter((s) => BOX_SLUGS.every((b) => eligible(b, s))).length, "/admin/products"],
@@ -170,7 +171,7 @@ export default async function Dashboard() {
         </Card>
 
         <Card title="Library health" className="lg:col-span-2">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-7">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
             {health.map(([label, n, href]) => (
               <Link key={label} href={href}>
                 <Stat label={label} value={n} tone={(label === "Missing nutrition" || label === "No cost yet") && n > 0 ? "warn" : undefined} />

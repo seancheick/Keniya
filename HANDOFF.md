@@ -1,5 +1,11 @@
 # Handoff: Keniya Admin (`/admin`)
 
+**Status, Oct 6 2026: mobile polish (branch `ui-mobile-polish`, merged to main).**
+- Root cause of the "product page looks off on phones": `PageHeader` let the title share a row with the action buttons (title squeezed to ~70 px), and grid tracks grew to their widest child (a 990 px card on a 375 px screen). Fixes: `PageHeader` stacks on phones; `<main>` has `[&_.grid>*]:min-w-0`; long badges wrap; card headers wrap. Every admin page was measured at 375 px: no sideways scroll.
+- Products list: review-stage tabs with counts (All, Candidate, Pre-approved, **Approved = named clinician only**, **Legacy approval**, Rejected, Retired when non-empty); search always visible, other filters behind "More filters"; phones get one card per product (status, ✓ boxes, flags, stock, cost) instead of the table. `?status=Legacy` is a view, not a DB status.
+- Dashboard "Library health" now shows Clinician-approved and Legacy approvals separately, linking to those tabs.
+- Tap targets ≥ 44 px on phones: nav tabs, logo, Log purchase, search/filters, status buttons; nav scrolls the current tab into view.
+
 **Status, Oct 5 2026, latest: simpler box-builder table.**
 - `src/components/admin/box-product-table.tsx`, rendered full-width under the builder on `/admin/boxes/[slug]`. Columns: product (front photo, categories, cost), stock, ✓ per box (`eligibleFor`; this box uses the one-off mix), approval (Clinician / Legacy / Pre-approved / Candidate), package verified, earliest expiry, Add/Remove. A row expands to show the evidence.
 - Candidates and allergen "Leave out" conflicts can't be added. Add picks a category with room (below its minimum first, then below its maximum).

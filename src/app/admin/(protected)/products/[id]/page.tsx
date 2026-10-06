@@ -118,12 +118,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
             title={`Nutrition · formula v${current?.version ?? "—"}`}
             action={
               current?.verified_at ? (
-                <Badge tone="good">
+                <Badge tone="good" className="max-w-full text-left whitespace-normal">
                   Verified {date(current.verified_at)} · {current.nutrition_source ?? "source?"}
                   {current.verified_by ? ` · ${current.verified_by}` : ""}
                 </Badge>
               ) : (
-                <Badge tone="warn">Not verified{current?.nutrition_source ? ` · ${current.nutrition_source}` : ""}</Badge>
+                <Badge tone="warn" className="max-w-full text-left whitespace-normal">Not verified{current?.nutrition_source ? ` · ${current.nutrition_source}` : ""}</Badge>
               )
             }
           >

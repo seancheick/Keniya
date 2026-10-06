@@ -30,27 +30,27 @@ export function StatusControls({ id, status, legacyApproval }: { id: string; sta
       <form action={action} className="flex flex-wrap gap-2">
         <input type="hidden" name="id" value={id} />
         {(status !== "Approved" || legacyApproval) && (
-          <Button size="sm" name="status" value="Approved" disabled={pending} title="Records the clinician's name and date">
+          <Button size="sm" className="max-sm:min-h-11" name="status" value="Approved" disabled={pending} title="Records the clinician's name and date">
             {legacyApproval ? "Re-attest approval (clinician)" : "Approve (clinician)"}
           </Button>
         )}
         {status === "Candidate" && (
-          <Button size="sm" variant="outline" name="status" value="Pre-approved" disabled={pending} title="Passed your source and ingredient check; waits for the clinician">
+          <Button size="sm" variant="outline" className="max-sm:min-h-11" name="status" value="Pre-approved" disabled={pending} title="Passed your source and ingredient check; waits for the clinician">
             Pre-approve
           </Button>
         )}
         {status !== "Candidate" && (
-          <Button size="sm" variant="outline" name="status" value="Candidate" disabled={pending}>
+          <Button size="sm" variant="outline" className="max-sm:min-h-11" name="status" value="Candidate" disabled={pending}>
             Back to candidate
           </Button>
         )}
         {status !== "Rejected" && (
-          <Button size="sm" variant="outline" type="button" onClick={() => setRejecting((r) => !r)}>
+          <Button size="sm" variant="outline" type="button" className="max-sm:min-h-11" onClick={() => setRejecting((r) => !r)}>
             Reject…
           </Button>
         )}
         {status !== "Retired" && (
-          <Button size="sm" variant="ghost" name="status" value="Retired" disabled={pending}>
+          <Button size="sm" variant="ghost" className="max-sm:min-h-11" name="status" value="Retired" disabled={pending}>
             Retire
           </Button>
         )}
@@ -60,7 +60,7 @@ export function StatusControls({ id, status, legacyApproval }: { id: string; sta
           <input type="hidden" name="id" value={id} />
           <input type="hidden" name="status" value="Rejected" />
           <input name="reason" required autoFocus placeholder="Why? e.g. 9 g added sugar, contains aloe" className={fieldClass} />
-          <Button size="sm" variant="destructive" disabled={pending}>
+          <Button size="sm" variant="destructive" className="max-sm:min-h-11" disabled={pending}>
             Reject
           </Button>
         </form>
