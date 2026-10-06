@@ -176,7 +176,6 @@ export async function deleteProduct(_prev: FormState, fd: FormData): Promise<For
   const client = db();
   const removed = await client.rpc("delete_product_permanently", { p_id: id.data });
   if (removed.error) return { error: removed.error.message };
-  refresh();
   const files = await client.from("product_deletion_files").select("path").eq("product_id", id.data);
   if (files.error) return { error: "Product deleted. Photo cleanup could not finish; retry deletion to finish cleanup." };
   const paths = (files.data ?? []).map(f => f.path as string);
@@ -186,5 +185,6 @@ export async function deleteProduct(_prev: FormState, fd: FormData): Promise<For
     const acknowledged = await client.from("product_deletion_files").delete().eq("product_id", id.data);
     if (acknowledged.error) return { error: "Product and photos deleted. Retry to clear the cleanup receipt." };
   }
+  refresh();
   return { ok: true };
 }
