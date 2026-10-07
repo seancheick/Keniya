@@ -10,7 +10,7 @@ export function proxy(request: NextRequest) {
   if (session?.role === "clinician") {
     if (pathname === "/admin/review") return NextResponse.next();
     if (pathname === "/admin/reports/export") {
-      return request.nextUrl.searchParams.get("table") === "clinician_packet"
+      return ["team_packet", "clinician_packet"].includes(request.nextUrl.searchParams.get("table") ?? "")
         ? NextResponse.next() : new NextResponse("Operator access required", { status: 403 });
     }
     return NextResponse.redirect(new URL("/admin/review", request.url));

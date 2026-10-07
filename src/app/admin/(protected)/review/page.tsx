@@ -10,15 +10,15 @@ import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_LABEL, BOX_SLUGS } from "@/lib/admin/types";
 import { limitsLine } from "@/lib/admin/clinical-packet";
 
-export const metadata: Metadata = { title: "Laurie's review" };
+export const metadata: Metadata = { title: "PharmaGuide Team review" };
 
 export default async function ReviewPage() {
   const admin = await requireAdmin();
   const ctx = await loadAdminContext(undefined, true);
   const rows = packetProductRows(packetInput(ctx));
   return <>
-    <PageHeader title="Laurie's review" description="Internally complete products from validated lineups. Approve, request a specific change, or reject."
-      actions={<Button asChild><a href="/admin/reports/export?table=clinician_packet" download><Download /> Download finished packet</a></Button>} />
+    <PageHeader title="PharmaGuide Team review" description="Review by the PharmaGuide Team, led by Dr. Pham. Internally complete products from validated lineups. Approve, request a specific change, or reject."
+      actions={<Button asChild><a href="/admin/reports/export?table=team_packet" download><Download /> Download finished packet</a></Button>} />
     <Card title="Current box standards"><div className="space-y-2 text-sm">{BOX_SLUGS.map((slug) => <p key={slug}><strong>{BOX_LABEL[slug]}: </strong>{limitsLine(ctx.rules[slug])}</p>)}</div></Card>
     {!rows.length ? <Empty><strong>Nothing ready for review yet</strong><p>Keniya is completing exact-label evidence, internal screening and lineup validation. Unfinished products stay with the diligence team.</p></Empty> :
       <div className="space-y-4">{rows.map((row) => {

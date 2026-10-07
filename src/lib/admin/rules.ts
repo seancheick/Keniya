@@ -282,10 +282,10 @@ export function lineupStage(picks: { snack: Snack }[], ready: boolean): { label:
   if (!ready) return { label: "FIX", tone: "bad", detail: "Fails a box rule" };
   const needApproval = picks.filter((p) => !isClinicianApproved(p.snack)).length;
   const needPackage = picks.filter((p) => p.snack.packageVerified !== true).length;
-  if (!needApproval && !needPackage) return { label: "CLEARED TO PACK", tone: "good", detail: "Every pick is clinician-approved and package-verified" };
+  if (!needApproval && !needPackage) return { label: "CLEARED TO PACK", tone: "good", detail: "Every pick is PharmaGuide Team-approved and package-verified" };
   // Keniya's diligence is done and the clinician has signed every pick; only the package-in-hand checks remain.
-  if (!needApproval) return { label: "READY · CLINICIAN APPROVED", tone: "good", detail: `${needPackage} need a package check; packing is blocked until done` };
-  const parts = [`${needApproval} await the clinician`, needPackage && `${needPackage} need a package check`].filter(Boolean);
+  if (!needApproval) return { label: "READY · PharmaGuide Team APPROVED", tone: "good", detail: `${needPackage} need a package check; packing is blocked until done` };
+  const parts = [`${needApproval} await the PharmaGuide Team`, needPackage && `${needPackage} need a package check`].filter(Boolean);
   return { label: "READY · PROVISIONAL", tone: "warn", detail: `Pre-approved by Keniya; ${parts.join(", ")}; packing is blocked until done` };
 }
 
@@ -303,8 +303,8 @@ export function packBlockers(
     const why: string[] = [];
     const e = eligibleFor(slug, snack, rules, policy, snack.rejectReason);
     if (!e.fits) why.push(`not eligible (${e.reasons[0]})`);
-    if (snack.status !== "Approved") why.push(`${snack.status}, not clinician-approved`);
-    else if (!isClinicianApproved(snack)) why.push("legacy approval, needs clinician re-attestation");
+    if (snack.status !== "Approved") why.push(`${snack.status}, not PharmaGuide Team-approved`);
+    else if (!isClinicianApproved(snack)) why.push("legacy approval, needs PharmaGuide Team re-attestation");
     if (!upc) why.push("no UPC");
     if (!verifiedAt) why.push("package not verified");
     return why.length ? [`${snack.code} ${snack.name}: ${why.join(", ")}`] : [];
@@ -405,7 +405,7 @@ export function checkLineup(
   );
   // Candidates haven't passed the pre-screen: they can't be in a lineup at all.
   checks.push(check("candidate", "Unreviewed picks (Candidate)", count((x) => x.status === "Candidate"), { max: 0 }));
-  checks.push(check("approved", "Picks not yet clinician-approved (incl. legacy approvals)", count((x) => !isClinicianApproved(x)), { max: 0 }, "warn"));
+  checks.push(check("approved", "Picks not yet PharmaGuide Team-approved (incl. legacy approvals)", count((x) => !isClinicianApproved(x)), { max: 0 }, "warn"));
   checks.push(check("verified", "Picks without a verified package (UPC + label in hand)", count((x) => x.packageVerified !== true), { max: 0 }, "warn"));
   checks.push(
     check("stock", "Picks out of stock", count((x) => x.onHand <= 0), { max: 0 }, "warn"),

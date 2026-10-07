@@ -25,7 +25,7 @@ describe("clinicalReviewRows", () => {
   });
   it("does not treat a typed reviewer name as authenticated approval", () => {
     const [row] = clinicalReviewRows([snack({ clinicalDecision: "pending", approvalRole: null })], () => ({ upc: "036000291452", reviewedBy: "Laurie Pham", verifiedAt: "2026-10-06" }) as never, () => []);
-    expect(row["Product verification"]).toContain("clinician re-attestation");
+    expect(row["Product verification"]).toContain("PharmaGuide Team re-attestation");
   });
   it("shows every rule decision with its reason and no costs", () => {
     const ok = snack({ name: "Roasted chickpeas", unitCostCents: 55 });
@@ -50,7 +50,7 @@ describe("clinicalReviewRows", () => {
     expect(r["Heart nutrition rules alone"]).toBe("qualify");
     expect(r["Eligible Heart"]).toBe("no");
     expect(String(r["Heart: why"])).toContain("2142 mg sodium");
-    expect(r["Clinician decision by"]).toBe("Legacy workbook approval: re-attestation needed");
+    expect(r["PharmaGuide Team decision by"]).toBe("Legacy workbook approval: re-attestation needed");
   });
 
   it("splits the pre-screen line out of the notes", () => {
@@ -96,6 +96,6 @@ describe("clinicalReviewRows", () => {
     expect(wb.worksheets.map((s) => s.name)).toEqual(["Start here", "Review", "Details", "Legend"]);
     const legend = wb.getWorksheet("Legend")!.getSheetValues().flat().join(" ");
     expect(legend).toContain("Pasteurized or fully cooked");
-    expect(legend).toContain("waiting for authenticated clinician approval");
+    expect(legend).toContain("waiting for authenticated PharmaGuide Team approval");
   });
 });

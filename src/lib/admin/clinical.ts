@@ -1,3 +1,4 @@
+import { reviewTeamRow } from "./review-wording";
 // Clinician review sheet: one row per product with the label data and every rule decision,
 // so a reviewer can audit box fit without the admin. No costs or vendors (not theirs to audit).
 import { fitFor, isClinicianApproved, type BoxFit } from "./rules";
@@ -33,7 +34,7 @@ export type ClinicalExtra = {
 /** Last two rungs of the ladder: clinician approval (named) and package verification. */
 function readyToPack(s: Snack, x: ClinicalExtra | undefined): string {
   const missing = [
-    s.status !== "Approved" ? "clinician approval" : !isClinicianApproved(s) || !x?.reviewedBy?.trim() ? "clinician re-attestation" : null,
+    s.status !== "Approved" ? "PharmaGuide Team approval" : !isClinicianApproved(s) || !x?.reviewedBy?.trim() ? "PharmaGuide Team re-attestation" : null,
     !s.packageVerified ? "verified package identity and label" : null,
     !x?.verifiedAt ? "label checked in hand" : null,
   ].filter(Boolean);
@@ -51,16 +52,16 @@ export function splitNotes(notes: string | null | undefined): { prescreen: strin
   return PRESCREEN.test(first) ? { prescreen: first.replace(PRESCREEN, ""), other: rest.join("\n").trim() } : { prescreen: "", other: (notes ?? "").trim() };
 }
 
-export const CLINICIAN_VERDICT = "Clinician verdict (OK / change / reject)";
-export const CLINICIAN_COMMENTS = "Clinician comments";
+export const CLINICIAN_VERDICT = "PharmaGuide Team decision (OK / change / reject)";
+export const CLINICIAN_COMMENTS = "PharmaGuide Team comments";
 export const pCheckHeader = (k: (typeof PREGNANCY_CHECK_KEYS)[number]) => `${k} · ${PREGNANCY_CHECK_LABEL[k]}`;
 
 /** Recommendations follow current evidence and eligibility, never imported verdict notes. */
 export function reviewRecommendation(s: Snack, fits: boolean): string {
   if (s.status === "Rejected" || s.status === "Retired" || !fits) return "Do not approve for these boxes";
   if (!s.diligenceComplete) return "Hold — complete internal diligence";
-  if (s.clinicalDecision === "changes_requested") return "Hold — resolve clinician changes";
-  return isClinicianApproved(s) ? "Already clinically approved" : "Recommend Approve — clinician decision required";
+  if (s.clinicalDecision === "changes_requested") return "Hold — resolve PharmaGuide Team changes";
+  return isClinicianApproved(s) ? "Already approved by PharmaGuide Team" : "Recommend Approve — PharmaGuide Team decision required";
 }
 
 /** Diagnostics only: the database's diligence predicate remains the approval gate. */
@@ -144,14 +145,14 @@ export function clinicalReviewRows(
       "Reject reason": s.rejectReason,
       "Pre-screened by": x?.prescreenedBy,
       "Pre-screened on": day(x?.prescreenedAt ?? null),
-      "Clinician decision by": x?.reviewedBy ?? (s.status === "Approved" ? "Legacy workbook approval: re-attestation needed" : null),
-      "Clinician decision on": day(x?.reviewedAt ?? null),
+      "PharmaGuide Team decision by": x?.reviewedBy ?? (s.status === "Approved" ? "Legacy workbook approval: re-attestation needed" : null),
+      "PharmaGuide Team decision on": day(x?.reviewedAt ?? null),
       "Unit UPC": x?.upc,
       "Verified outer-pack barcode": x?.verifiedPackBarcode,
       "Other notes": notes.other,
-      "Authenticated clinician approval": isClinicianApproved(s) ? "yes" : "no",
-      "Clinical review state": s.clinicalDecision ?? "pending",
+      "Authenticated PharmaGuide Team approval": isClinicianApproved(s) ? "yes" : "no",
+      "PharmaGuide Team review state": s.clinicalDecision ?? "pending",
     });
-    return row;
+    return reviewTeamRow(row);
   });
 }

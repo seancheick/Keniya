@@ -20,9 +20,9 @@ type SP = { q?: string; status?: string; box?: string; cat?: string; issue?: str
 const TABS = [
   { key: "", label: "All" },
   { key: "Candidate", label: "Candidate", hint: "Not reviewed yet" },
-  { key: "Pre-approved", label: "Pre-approved", hint: "Waiting for the clinician" },
-  { key: "Approved", label: "Approved", hint: "Named clinician approved it" },
-  { key: "Legacy", label: "Needs clinician review", hint: "Imported status is not a clinician approval" },
+  { key: "Pre-approved", label: "Pre-approved", hint: "Waiting for the PharmaGuide Team" },
+  { key: "Approved", label: "Approved", hint: "Approved by PharmaGuide Team" },
+  { key: "Legacy", label: "Needs PharmaGuide Team review", hint: "Imported status is not a PharmaGuide Team approval" },
   { key: "Rejected", label: "Rejected" },
   { key: "Retired", label: "Retired" },
 ] as const;
@@ -65,13 +65,13 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
         description={`${snacks.length} snacks. A ✓ box means eligible: nutrition rules, hard limits, shipping policy and status all pass. Tap or hover it for the reason.`}
         actions={
           <>
-            <Button asChild title="The finished lineups only: each product with its label values, the rule applied, the pass rationale, source and decision fields. This is what the clinician signs.">
-              <a href="/admin/reports/export?table=clinician_packet" download>
-                <Download /> Clinician packet
+            <Button asChild title="The finished lineups only: each product with its label values, the rule applied, the pass rationale, source and decision fields. This is what the PharmaGuide Team signs.">
+              <a href="/admin/reports/export?table=team_packet" download>
+                <Download /> PharmaGuide Team packet
               </a>
             </Button>
             <Button asChild variant="outline" title="Internal audit workbook: every product in the catalog with full label evidence and decision fields. No costs.">
-              <a href="/admin/reports/export?table=clinical_review" download>
+              <a href="/admin/reports/export?table=team_review" download>
                 <Download /> Full catalog review
               </a>
             </Button>
@@ -172,7 +172,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                       <Badge key={b} tone="good">{`✓ ${BOX_SHORT[b]}`}</Badge>
                     ))}
                     {eligibleChips(fits).length === 0 && <Badge tone="muted">No box</Badge>}
-                    {stage(s) === "Legacy" && <Badge tone="warn">Needs clinician review</Badge>}
+                    {stage(s) === "Legacy" && <Badge tone="warn">Needs PharmaGuide Team review</Badge>}
                     {!nutritionComplete(s) && <Badge tone="bad">no nutrition</Badge>}
                     {!shipsUnderPolicy(s, settings.policy).ok && <Badge tone="warn">doesn&apos;t ship</Badge>}
                     <span className="ml-auto text-muted-foreground tabular-nums">

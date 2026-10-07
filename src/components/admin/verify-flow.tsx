@@ -127,7 +127,7 @@ export function VerifyFlow({ items, minDays, minDate }: { items: VerifyItem[]; m
                         <Badge key={b} tone="info">{b}</Badge>
                       ))}
                       <Badge tone={i.clinicianApproved ? "good" : "warn"}>
-                        {i.clinicianApproved ? "Clinician-approved" : i.status === "Approved" ? "Needs clinician review" : i.status}
+                        {i.clinicianApproved ? "PharmaGuide Team-approved" : i.status === "Approved" ? "Needs PharmaGuide Team review" : i.status}
                       </Badge>
                       <Badge tone={isVerified(i) ? "good" : "muted"}>{isVerified(i) ? "Package verified" : i.upc ? "Barcode on file" : "No barcode yet"}</Badge>
                     </button>
@@ -348,7 +348,7 @@ function VerifyPanel({
           {pending ? "Saving…" : "Verify package"}
         </Button>
         {!item.clinicianApproved && (
-          <p className="text-xs text-muted-foreground">Still needs clinician approval before it can be packed.</p>
+          <p className="text-xs text-muted-foreground">Still needs PharmaGuide Team approval before it can be packed.</p>
         )}
       </form>
     </div>

@@ -3,7 +3,7 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/lib/supabase", () => ({ getSupabaseAdminStrict: vi.fn() }));
 import { allRows, toSnack, identityCode, type ProductRow, type VersionRow } from "./db";
 const product: ProductRow = {
-  id: "p", created_at: "2026-01-01", updated_at: "2026-01-01", code: "P001", name: "Test", brand: null, upc: "123456789012", type: "Substantial", form: "Solid", categories: [], url: null, default_vendor_id: null, retail_cents: null, estimate_cost_cents: 100, quote_cost_cents: null, price_checked_on: null, status: "Approved", reject_reason: null, reviewed_by: "Clinician", reviewed_at: null, prescreened_by: null, prescreened_at: null, sensory: null, notes: null, created_by: null,
+  id: "p", created_at: "2026-01-01", updated_at: "2026-01-01", code: "P001", name: "Test", brand: null, upc: "123456789012", type: "Substantial", form: "Solid", categories: [], url: null, default_vendor_id: null, retail_cents: null, estimate_cost_cents: 100, quote_cost_cents: null, price_checked_on: null, status: "Approved", reject_reason: null, reviewed_by: "PharmaGuide Team", reviewed_at: null, prescreened_by: null, prescreened_at: null, sensory: null, notes: null, created_by: null,
 };
 const version: VersionRow = {
   id: "v", created_at: "2026-01-01", product_id: "p", version: 1, is_current: true, effective_from: "2026-01-01", effective_to: null, calories: 100, protein_g: 5, fiber_g: 3, carbs_g: 10, added_sugar_g: 0, sodium_mg: 100, caffeine_mg: 0, sat_fat_g: 0, sugar_alcohols_g: 0, unit_wt_oz: 1, ingredients: null, allergens: null, free_from: {}, shelf_life: null, pregnancy_checks: {}, roles: {}, nutrition_source: null, verified_at: "2026-01-01", verified_by: "Reviewer", created_by: null,

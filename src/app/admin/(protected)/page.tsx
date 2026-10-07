@@ -73,9 +73,9 @@ export default async function Dashboard() {
     ["Missing nutrition", catalog.snacks.filter((s) => !nutritionComplete(s)).length, "/admin/products?issue=nutrition"],
     ["No cost yet", catalog.snacks.filter((s) => s.unitCostCents === null).length, "/admin/products?issue=cost"],
     ["Don't ship (policy)", catalog.snacks.filter((s) => !shipsUnderPolicy(s, settings.policy).ok).length, "/admin/products?issue=ships"],
-    ["Clinician-approved", catalog.snacks.filter((s) => isClinicianApproved(s)).length, "/admin/products?status=Approved"],
+    ["PharmaGuide Team-approved", catalog.snacks.filter((s) => isClinicianApproved(s)).length, "/admin/products?status=Approved"],
     ["Legacy approvals (re-attest)", catalog.snacks.filter((s) => s.status === "Approved" && !isClinicianApproved(s)).length, "/admin/products?status=Legacy"],
-    ["Pre-approved (awaiting clinician)", catalog.snacks.filter((s) => s.status === "Pre-approved").length, "/admin/products?status=Pre-approved"],
+    ["Pre-approved (awaiting PharmaGuide Team)", catalog.snacks.filter((s) => s.status === "Pre-approved").length, "/admin/products?status=Pre-approved"],
     ["Candidates", catalog.snacks.filter((s) => s.status === "Candidate").length, "/admin/products?status=Candidate"],
     ["Eligible for all three boxes", catalog.snacks.filter((s) => BOX_SLUGS.every((b) => eligible(b, s))).length, "/admin/products"],
   ] as const;

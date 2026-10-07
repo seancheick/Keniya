@@ -72,7 +72,7 @@ export default async function VerifyPage() {
     <>
       <PageHeader
         title="Verify packages"
-        description={`With the package in your hand: scan its barcode, compare the label, confirm it's one sealed serving and check the date (at least ${MIN_DAYS_TO_EXPIRY} days left). Verified + clinician-approved = ready to pack.`}
+        description={`With the package in your hand: scan its barcode, compare the label, confirm it's one sealed serving and check the date (at least ${MIN_DAYS_TO_EXPIRY} days left). Verified + PharmaGuide Team-approved = ready to pack.`}
       />
       <VerifyFlow items={items} minDays={MIN_DAYS_TO_EXPIRY} minDate={minExpiryDate()} />
     </>

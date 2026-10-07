@@ -35,13 +35,14 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[], ruleSumm
   const start = wb.addWorksheet("Start here");
   start.columns = [{ width: 28 }, { width: 100 }];
   const instructions = [
-    ["Keniya clinician review", `Exported ${new Date().toISOString().slice(0, 10)}. ${rows.length} products. This is a snapshot.`],
-    ["1. Open Review", "Start with Recommend Approve rows. Hold rows need operator diligence before clinician review. Active lineup products appear first within each group."],
+    ["Keniya PharmaGuide Team review", `Exported ${new Date().toISOString().slice(0, 10)}. ${rows.length} products. This is a snapshot.`],
+    ["Review team", "PharmaGuide Team, led by Dr. Pham, brings together pharmacy, nutrition and other expertise. Team members contribute review comments; recorded decisions retain the reviewer name and date."],
+    ["1. Open Review", "Start with Recommend Approve rows. Hold rows need operator diligence before PharmaGuide Team review. Active lineup products appear first within each group."],
     ["2. Check the evidence", "Click the product name to open its row on Details, or use the same product code to check ingredients, allergens, per-pack nutrition, sources and Pregnancy checks. Blank values mean not recorded, not zero or safe."],
     ["3. Record your decision", "Fill the yellow Decision, Comments, Reviewer and Review date cells. Use Approve, Changes needed or Reject. State which boxes your decision covers and any corrections or restrictions in Comments."],
-    ["4. Record in the clinician account", "Workbook decisions are comments only and do not approve a product. Laurie records her decision through her authenticated clinician account after internal diligence is complete. Check the Product ID and Label version ID for changes since export; the operator corrects evidence and requested changes."],
-    ["Before packing", "Product verification is only clinician approval, unit or verified outer-pack barcode and package-in-hand verification. Box rules, customer restrictions, current lot availability and expiry are checked separately when packing."],
-    ["Review groups", `Awaiting clinician = completed internal diligence. Operator work required = evidence or diligence remains. Label / initial review = Candidate. Rejected and Retired remain in Details.${rows.some((r) => r.Status === "Approved" && r["Authenticated clinician approval"] !== "yes") ? " Re-attest legacy approval = recorded Approved without authenticated clinician approval." : ""}`],
+    ["4. Record in the PharmaGuide Team account", "Workbook decisions are comments only and do not approve a product. The PharmaGuide Team records its decision through the authenticated review account after internal diligence is complete. Check the Product ID and Label version ID for changes since export; the operator corrects evidence and requested changes."],
+    ["Before packing", "Product verification is only PharmaGuide Team approval, unit or verified outer-pack barcode and package-in-hand verification. Box rules, customer restrictions, current lot availability and expiry are checked separately when packing."],
+    ["Review groups", `Awaiting PharmaGuide Team = completed internal diligence. Operator work required = evidence or diligence remains. Label / initial review = Candidate. Rejected and Retired remain in Details.${rows.some((r) => r.Status === "Approved" && r["Authenticated PharmaGuide Team approval"] !== "yes") ? " Re-attest legacy approval = recorded Approved without authenticated PharmaGuide Team approval." : ""}`],
     ["Review total", String(rows.filter((r) => !["Rejected", "Retired"].includes(String(r.Status))).length)],
   ];
   for (const values of instructions) { const r = start.addRow(values); r.height = 60; r.alignment = { wrapText: true, vertical: "top" }; r.getCell(1).font = { bold: true }; }
@@ -49,8 +50,8 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[], ruleSumm
   const review = wb.addWorksheet("Review", { views: [{ state: "frozen", xSplit: 2, ySplit: 1 }] });
   const reviewHeaders = ["Code", "Product", "Review group", "In active box lineup", "Keniya recommendation", "Decision", "Comments", "Reviewer", "Review date"];
   review.columns = reviewHeaders.map((header) => ({ header, key: header, width: header === "Product" ? 34 : header === "Comments" || header.startsWith("Pre-screen") ? 48 : header === "Code" ? 12 : 24 }));
-  const group = (r: Record<string, unknown>) => r.Status === "Approved" && r["Authenticated clinician approval"] !== "yes" ? "Re-attest legacy approval" : String(r["Keniya recommendation"]).startsWith("Hold") ? "Operator work required" : r.Status === "Pre-approved" ? "Awaiting clinician" : r.Status === "Candidate" ? "Label / initial review" : "Already approved";
-  const rank = ["Awaiting clinician", "Operator work required", "Re-attest legacy approval", "Label / initial review", "Already approved"];
+  const group = (r: Record<string, unknown>) => r.Status === "Approved" && r["Authenticated PharmaGuide Team approval"] !== "yes" ? "Re-attest legacy approval" : String(r["Keniya recommendation"]).startsWith("Hold") ? "Operator work required" : r.Status === "Pre-approved" ? "Awaiting PharmaGuide Team" : r.Status === "Candidate" ? "Label / initial review" : "Already approved";
+  const rank = ["Awaiting PharmaGuide Team", "Operator work required", "Re-attest legacy approval", "Label / initial review", "Already approved"];
   const queue = rows.filter((r) => !["Rejected", "Retired"].includes(String(r.Status))).sort((a, b) => rank.indexOf(group(a)) - rank.indexOf(group(b)) || Number(Boolean(b["In active box lineup"])) - Number(Boolean(a["In active box lineup"])) || String(a.Product).localeCompare(String(b.Product)));
   for (const r of queue) {
     const row = review.addRow([r.Code, r.Product, group(r), r["In active box lineup"] || null, r["Keniya recommendation"] || null, null, null, null, null]);
@@ -112,9 +113,9 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[], ruleSumm
   };
   section("How to review");
   line("1", "Start here explains the workflow. Review has the short decision queue; Details contains every product and all evidence.");
-  line("2", "Read Keniya recommendation first. Historical pre-screen notes do not establish current diligence or clinical approval.");
-  line("3", "The yellow workbook cells capture review comments. Approval is recorded only through Laurie's authenticated clinician account after internal diligence is complete.");
-  line("4", "Candidate rows need operator diligence before an authenticated clinician decision. Missing label values stay unknown.");
+  line("2", "Read Keniya recommendation first. Historical pre-screen notes do not establish current diligence or PharmaGuide Team approval.");
+  line("3", "The yellow workbook cells capture review comments. Approval is recorded only through the authenticated PharmaGuide Team review account after internal diligence is complete.");
+  line("4", "Candidate rows need operator diligence before an authenticated PharmaGuide Team decision. Missing label values stay unknown.");
   lg.addRow([]);
   section("Status");
   for (const s of STATUSES) {
@@ -130,13 +131,13 @@ export async function clinicalWorkbook(rows: Record<string, unknown>[], ruleSumm
   lg.addRow([]);
   section("Other columns");
   line("Eligible <box>", "The nutrition rules qualify it AND it passes the box's hard limits, the shipping policy (no liquids, max item weight), single-serve (P8 must be PASS: blank means not yet confirmed) and status (not Rejected/Retired).");
-  line("Product verification", "The last steps after eligibility: approved by a named clinician (legacy workbook approvals need re-attestation), unit UPC or verified outer-pack identity on file, and the label checked with the package in hand. Shipment readiness also requires box rules, customer restrictions and packable stock.");
-  line("Ladder", "Candidate → Pre-approved (internal diligence complete) → Approved (clinician) → Package verified → Ready to pack. Candidates can't be in a lineup; a lineup with Pre-approved or unverified picks is PROVISIONAL.");
+  line("Product verification", "The last steps after eligibility: approved by PharmaGuide Team with the reviewer name and date recorded (legacy workbook approvals need re-attestation), unit UPC or verified outer-pack identity on file, and the label checked with the package in hand. Shipment readiness also requires box rules, customer restrictions and packable stock.");
+  line("Ladder", "Candidate → Pre-approved (internal diligence complete) → Approved (PharmaGuide Team) → Package verified → Ready to pack. Candidates can't be in a lineup; a lineup with Pre-approved or unverified picks is PROVISIONAL.");
   line("<box>: why", "If eligible: the qualifying pathway. If not: every reason, nutrition rule or hard limit (e.g. '2142 mg sodium (max 140 mg)').");
   line("Nutrition rules alone", "Whether the label numbers and roles qualify it before the hard limits and status; shown for transparency only.");
   line("Current rules", ruleSummary.length ? ruleSummary.join("\n") : "Eligibility reasons on Details reflect the rules supplied for this export. Consult current admin settings for the configured limits.");
-  line("Pre-screened by/on", "Who completed the internal diligence. Not a clinical decision.");
-  line("Clinician decision by/on", "Who approved or rejected it clinically. Blank until the clinician decides.");
+  line("Pre-screened by/on", "Who completed the internal diligence. Not a PharmaGuide Team decision.");
+  line("PharmaGuide Team decision by/on", "Who approved or rejected it clinically. Blank until the PharmaGuide Team decides.");
   line("Free-from columns", "yes = free from it; no = contains it or may contain it (cross-contact counts as 'no'); unknown = not recorded.");
   line("Nutrition source", "Where the numbers come from (USDA FoodData Central label data, manufacturer site, NIH DSLD, Open Food Facts).");
   line("Verified on (package in hand)", "Blank until someone checks the actual package; the pre-screen used published label data only.");

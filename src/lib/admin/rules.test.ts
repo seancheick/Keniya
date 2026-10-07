@@ -168,7 +168,7 @@ describe("pack gate", () => {
     const r = DEFAULT_BOX_RULES.blood_sugar;
     expect(packBlockers("blood_sugar", [{ snack: ok, upc: "012", verifiedAt: "2026-10-05" }], r, settings.policy)).toEqual([]);
     const out = packBlockers("blood_sugar", [{ snack: pre, upc: null, verifiedAt: null }], r, settings.policy);
-    expect(out[0]).toMatch(/Pre-approved, not clinician-approved, no UPC, package not verified/);
+    expect(out[0]).toMatch(/Pre-approved, not PharmaGuide Team-approved, no UPC, package not verified/);
   });
 });
 
@@ -189,12 +189,12 @@ describe("approval ladder", () => {
     expect(checks.find((c) => c.key === "costed")).toMatchObject({ pass: false, level: "warn" });
     expect(isReady(checks)).toBe(true);
   });
-  it("lineup stage: provisional → clinician approved → cleared to pack", () => {
+  it("lineup stage: provisional → PharmaGuide Team approved → cleared to pack", () => {
     const pre = { snack: snack({ status: "Pre-approved", clinicianApprovedBy: null, packageVerified: false }) };
     const approved = { snack: snack({ clinicianApprovedBy: "Laurie Pham", packageVerified: false }) };
     const verified = { snack: snack({ clinicianApprovedBy: "Laurie Pham", packageVerified: true }) };
     expect(lineupStage([pre, approved], true).label).toBe("READY · PROVISIONAL");
-    expect(lineupStage([approved, verified], true).label).toBe("READY · CLINICIAN APPROVED");
+    expect(lineupStage([approved, verified], true).label).toBe("READY · PharmaGuide Team APPROVED");
     expect(lineupStage([verified], true).label).toBe("CLEARED TO PACK");
     expect(lineupStage([verified], false).label).toBe("FIX");
   });
@@ -242,7 +242,7 @@ describe("lineup checks", () => {
     expect(ok.pass).toBe(true);
   });
 
-  it("a pre-approved pick still counts as not clinically approved", () => {
+  it("a pre-approved pick still counts as not approved by PharmaGuide Team", () => {
     const picks = heartLineup();
     picks[0] = { ...picks[0], snack: { ...picks[0].snack, status: "Pre-approved" } };
     const checks = checkLineup("heart", heartRules, picks, settings, 6);

@@ -30,12 +30,12 @@ export function StatusControls({ id, status, legacyApproval, clinician = false }
       <form action={action} className="flex flex-wrap gap-2">
         <input type="hidden" name="id" value={id} />
         {clinician && (status !== "Approved" || legacyApproval) && (
-          <Button size="sm" className="max-sm:min-h-11" name="status" value="Approved" disabled={pending} title="Records the clinician's name and date">
-            {legacyApproval ? "Re-attest approval (clinician)" : "Approve (clinician)"}
+          <Button size="sm" className="max-sm:min-h-11" name="status" value="Approved" disabled={pending} title="Records the reviewer name and date for PharmaGuide Team">
+            {legacyApproval ? "Re-attest approval (PharmaGuide Team)" : "Approve (PharmaGuide Team)"}
           </Button>
         )}
         {status === "Candidate" && (
-          <Button size="sm" variant="outline" className="max-sm:min-h-11" name="status" value="Pre-approved" disabled={pending} title="Passed your source and ingredient check; waits for the clinician">
+          <Button size="sm" variant="outline" className="max-sm:min-h-11" name="status" value="Pre-approved" disabled={pending} title="Passed your source and ingredient check; waits for the PharmaGuide Team">
             Pre-approve
           </Button>
         )}
@@ -46,7 +46,7 @@ export function StatusControls({ id, status, legacyApproval, clinician = false }
         )}
         {status !== "Rejected" && (
           <Button size="sm" variant="outline" type="button" className="max-sm:min-h-11" onClick={() => setRejecting((r) => !r)}>
-            {clinician ? "Reject (clinician)…" : "Reject internally…"}
+            {clinician ? "Reject (PharmaGuide Team)…" : "Reject internally…"}
           </Button>
         )}
         {!clinician && status !== "Retired" && (
@@ -55,7 +55,7 @@ export function StatusControls({ id, status, legacyApproval, clinician = false }
           </Button>
         )}
       </form>
-      {clinician && <form action={action} className="flex gap-2"><input type="hidden" name="id" value={id} /><input type="hidden" name="status" value="Candidate" /><input type="hidden" name="clinical_decision" value="changes_requested" /><input name="reason" required placeholder="Clinical change needed" className={fieldClass} /><Button size="sm" variant="outline" disabled={pending}>Request changes</Button></form>}
+      {clinician && <form action={action} className="flex gap-2"><input type="hidden" name="id" value={id} /><input type="hidden" name="status" value="Candidate" /><input type="hidden" name="clinical_decision" value="changes_requested" /><input name="reason" required placeholder="Team change needed" className={fieldClass} /><Button size="sm" variant="outline" disabled={pending}>Request changes</Button></form>}
       {rejecting && (
         <form action={action} className="flex gap-2">
           <input type="hidden" name="id" value={id} />

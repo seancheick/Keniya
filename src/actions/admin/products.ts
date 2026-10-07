@@ -13,6 +13,7 @@ import { validCheckDigit } from "@/lib/admin/barcode";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { packetInput } from "@/lib/admin/packet-data";
 import { packetProductRows } from "@/lib/admin/clinical-packet";
+import { reviewTeamText } from "@/lib/admin/review-wording";
 import { STATUSES } from "@/lib/admin/types";
 
 export type FormState = { error?: string; ok?: boolean; id?: string };
@@ -93,15 +94,15 @@ export async function setProductStatus(_prev: FormState, fd: FormData): Promise<
   if (admin.role === "clinician") {
     if (!["Approved", "Rejected"].includes(status) && !clinical_decision) return { error: "Choose approve, request changes or reject." };
     const rows = packetProductRows(packetInput(await loadAdminContext(undefined, true)));
-    if (!rows.some((row) => row["Product ID"] === id)) return { error: "Internal diligence and lineup validation must be complete before clinical review." };
+    if (!rows.some((row) => row["Product ID"] === id)) return { error: "Internal diligence and lineup validation must be complete before PharmaGuide Team review." };
   }
-  if (clinical_decision && admin.role !== "clinician") return { error: "Only Laurie can request clinical changes." };
+  if (clinical_decision && admin.role !== "clinician") return { error: "Sign in with the PharmaGuide Team review account to request changes." };
   if (status === "Rejected" && !reason) return { error: "Say why it's rejected (shown wherever it's offered)." };
-  if (status === "Approved" && admin.role !== "clinician") return { error: "Sign in with Laurie's clinician credential to approve." };
+  if (status === "Approved" && admin.role !== "clinician") return { error: "Sign in with the PharmaGuide Team review account to approve." };
   const res = await db().rpc("set_product_review", {
     p_id: id, p_status: clinical_decision === "changes_requested" ? "Changes requested" : status, p_reason: reason ?? null, p_actor: admin.name, p_role: admin.role,
   });
-  if (res.error) return { error: res.error.message };
+  if (res.error) return { error: reviewTeamText(res.error.message) };
   await expireInvalidCheckoutSessions(BOX_SLUGS);
   refresh();
   return { ok: true };
@@ -170,7 +171,7 @@ export async function logPriceSighting(_prev: FormState, fd: FormData): Promise<
     note: parsed.data.note || null,
     created_by: admin.name,
   });
-  if (res.error) return { error: res.error.message };
+  if (res.error) return { error: reviewTeamText(res.error.message) };
   refresh();
   return { ok: true };
 }

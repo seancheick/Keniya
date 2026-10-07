@@ -20,6 +20,8 @@ describe("clinician review routes", () => {
   it("allows the review page and finished packet, but blocks internal exports", () => {
     expect(proxy(request("/admin/review")).status).toBe(200);
     expect(proxy(request("/admin/reports/export?table=clinician_packet")).status).toBe(200);
+    expect(proxy(request("/admin/reports/export?table=team_packet")).status).toBe(200);
+    expect(proxy(request("/admin/reports/export?table=team_review")).status).toBe(403);
     expect(proxy(request("/admin/reports/export?table=clinical_review")).status).toBe(403);
     expect(proxy(request("/admin/reports/export?table=products")).status).toBe(403);
   });

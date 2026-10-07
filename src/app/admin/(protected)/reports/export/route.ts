@@ -24,14 +24,15 @@ const TABLES = {
 
 export async function GET(request: Request) {
   const admin = await requireAdmin();
-  const t = new URL(request.url).searchParams.get("table") as keyof typeof TABLES | "clinical_review" | "clinician_packet" | null;
+  const requested = new URL(request.url).searchParams.get("table");
+  const t = (requested === "team_packet" ? "clinician_packet" : requested === "team_review" ? "clinical_review" : requested) as keyof typeof TABLES | "clinical_review" | "clinician_packet" | null;
   if (admin.role === "clinician" && t !== "clinician_packet") return new Response("Operator access required", { status: 403 });
   if (t === "clinical_review") {
     const review = await clinicalReview();
     return new Response(new Uint8Array(await clinicalWorkbook(review.rows, review.ruleSummary)), {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="keniya-clinician-review-${new Date().toISOString().slice(0, 10)}.xlsx"`,
+        "Content-Disposition": `attachment; filename="keniya-pharmaguide-team-review-${new Date().toISOString().slice(0, 10)}.xlsx"`,
         "Cache-Control": "no-store",
       },
     });
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
     return new Response(new Uint8Array(buf), {
       headers: {
         "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="keniya-clinician-packet-${new Date().toISOString().slice(0, 10)}.xlsx"`,
+        "Content-Disposition": `attachment; filename="keniya-pharmaguide-team-packet-${new Date().toISOString().slice(0, 10)}.xlsx"`,
         "Cache-Control": "no-store",
       },
     });

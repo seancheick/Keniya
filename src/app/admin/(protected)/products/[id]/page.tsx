@@ -1,3 +1,4 @@
+import { reviewTeamText } from "@/lib/admin/review-wording";
 import { ProductDelete } from "@/components/admin/product-delete";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -122,7 +123,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <p className="mb-2 text-xs text-muted-foreground">
                 Review
                 {p.prescreened_by ? ` · pre-screened by ${p.prescreened_by} on ${date(p.prescreened_at)}` : ""}
-                {p.reviewed_by ? ` · clinician decision by ${p.reviewed_by} on ${date(p.reviewed_at)}` : p.status === "Approved" ? " · imported status: needs clinician review" : ""}
+                {p.reviewed_by ? ` · PharmaGuide Team decision by ${p.reviewed_by} on ${date(p.reviewed_at)}` : p.status === "Approved" ? " · imported status: needs PharmaGuide Team review" : ""}
               </p>
               <StatusControls clinician={admin.role === "clinician"} id={id} status={p.status} legacyApproval={p.status === "Approved" && !p.reviewed_by} />
             </div>
@@ -307,7 +308,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               {p.notes && (
                 <div className="col-span-2">
                   <dt className="text-xs text-muted-foreground">Operator notes and history — not approval</dt>
-                  <dd className="whitespace-pre-wrap">{p.notes}</dd>
+                  <dd className="whitespace-pre-wrap">{reviewTeamText(p.notes)}</dd>
                 </div>
               )}
             </dl>

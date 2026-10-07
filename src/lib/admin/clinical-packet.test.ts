@@ -17,15 +17,15 @@ const input: PacketInput = {
   extra: () => ({ upc: "1", form: "Solid", shelfLife: null, ingredients: "ALMONDS", nutritionSource: "USDA FDC 1", verifiedAt: null, verifiedBy: null, reviewedBy: null, reviewedAt: null, prescreenedBy: "Sean", notes: "[Pre-screen x] fine." }),
 };
 
-describe("clinician packet", () => {
+describe("PharmaGuide Team packet", () => {
   it("does not promote historical approval notes over current diligence or box limits", () => {
     const held = { ...input, boxes: [{ ...input.boxes[0], picks: [{ snack: snack({ diligenceComplete: false, status: "Candidate" }), category: null }] }],
-      extra: () => ({ ...input.extra("x")!, notes: "[Pre-screen old] Pre-approved, awaiting clinician" }) };
+      extra: () => ({ ...input.extra("x")!, notes: "[Pre-screen old] Pre-approved, awaiting PharmaGuide Team" }) };
     expect(packetProductRows(held)[0]["Keniya recommendation"]).toBe("Hold — complete internal diligence");
     const fail = { ...held, boxes: [{ ...held.boxes[0], picks: [{ snack: snack({ sodium_mg: 180, diligenceComplete: true }), category: null }] }] };
     expect(packetProductRows(fail)[0]["Keniya recommendation"]).toBe("Do not approve for these boxes");
     const ready = { ...held, boxes: [{ ...held.boxes[0], picks: [{ snack: snack({ diligenceComplete: true, status: "Pre-approved", clinicalDecision: "pending", clinicianApprovedBy: null }), category: null }] }] };
-    expect(packetProductRows(ready)[0]["Keniya recommendation"]).toBe("Recommend Approve — clinician decision required");
+    expect(packetProductRows(ready)[0]["Keniya recommendation"]).toBe("Recommend Approve — PharmaGuide Team decision required");
   });
   it("includes completed proposals in Laurie's packet and excludes failed lineups or held extras", () => {
     const ready: PacketInput = { ...input, audience: "clinician", boxes: [{ ...input.boxes[0], state: "draft", checks: [], picks: [{ snack: shared, category: "Protein" }], extras: [] }] };

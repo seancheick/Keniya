@@ -22,7 +22,7 @@ describe("order planning uses current readiness", () => {
   });
   it("rejects provisional extras even when the recipe is ready", async () => {
     m.context.mockResolvedValue({ boxes: { heart: { lineup: { id: "lineup" }, ready: true, picks: [{ snack: approved }], extras: [{ ...approved, clinicalDecision: "pending" }] } } });
-    await expect(createShipmentForPreorder(form())).rejects.toThrow("needs clinician approval");
+    await expect(createShipmentForPreorder(form())).rejects.toThrow("needs PharmaGuide Team approval");
     expect(m.insert).not.toHaveBeenCalled();
   });
 });

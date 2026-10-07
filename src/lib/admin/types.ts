@@ -58,8 +58,8 @@ export const PREGNANCY_CHECK_LABEL: Record<(typeof PREGNANCY_CHECK_KEYS)[number]
 /** What each status means for a reviewer. */
 export const STATUS_MEANING: Record<Status, string> = {
   Candidate: "Not reviewed yet, or waiting on a label check",
-  "Pre-approved": "Internal diligence complete; waiting for authenticated clinician approval",
-  Approved: "Authenticated clinician approval of the current formula; legacy workbook approval needs re-attestation",
+  "Pre-approved": "Internal diligence complete; waiting for authenticated PharmaGuide Team approval",
+  Approved: "Authenticated PharmaGuide Team approval of the current formula; legacy workbook approval needs re-attestation",
   Rejected: "Not used; reason given",
   Retired: "No longer sold or used",
 };

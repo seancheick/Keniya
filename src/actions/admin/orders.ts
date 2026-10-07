@@ -41,7 +41,7 @@ async function planItems(slug: BoxSlug, avoid: string | null) {
   const box = ctx.boxes[slug];
   if (!box.lineup || !box.picks.length) return { error: `No active ${slug} lineup. Build one on the Boxes tab first.` } as const;
   if (!box.ready) return { error: `The active ${slug} lineup fails current rules. Update it before planning orders.` } as const;
-  if ([...box.picks.map((p) => p.snack), ...box.extras].some((s) => !isClinicianApproved(s))) return { error: "The active lineup needs clinician approval before planning orders." } as const;
+  if ([...box.picks.map((p) => p.snack), ...box.extras].some((s) => !isClinicianApproved(s))) return { error: "The active lineup needs PharmaGuide Team approval before planning orders." } as const;
   const conflicts = ctx.catalog.snacks
     .map((s) => ({ s, why: avoidConflict({ ...s, ingredients: ctx.catalog.versions.get(s.id)?.ingredients }, avoid) }))
     .filter((x) => x.why);

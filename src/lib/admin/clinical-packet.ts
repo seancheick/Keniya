@@ -1,3 +1,4 @@
+import { reviewTeamRow } from "./review-wording";
 // Clinician packet: the finished work for the clinician's final decision. Only the products in
 // the active lineups, each with the exact label values, the rule it was judged against, why it
 // passed (or the exception it used), the source and verification date, plus each lineup's own
@@ -88,16 +89,16 @@ export function packetProductRows(input: PacketInput): Record<string, unknown>[]
       s.clinicalDecision !== "rejected" && s.clinicalDecision !== "changes_requested")),
       "Internal diligence": s.diligenceComplete ? "complete" : "incomplete",
       "Review work remaining": reviewWorkRemaining(s, x),
-      "Clinical review state": s.clinicalDecision ?? "pending",
-      "Authenticated clinician approval": isClinicianApproved(s) ? "yes" : "no",
+      "PharmaGuide Team review state": s.clinicalDecision ?? "pending",
+      "Authenticated PharmaGuide Team approval": isClinicianApproved(s) ? "yes" : "no",
       "Package verified": s.packageVerified ? "yes" : "no",
       "Pre-screened by": x?.prescreenedBy,
       "Pre-screened on": day(x?.prescreenedAt),
       "Label source": x?.nutritionSource,
       "Label checked in hand on": day(x?.verifiedAt),
-      "Clinician decision": "",
-      "Clinician comments": "",
-      "Clinician decision by": x?.reviewedBy ?? (s.status === "Approved" ? "Legacy workbook approval: re-attestation needed" : null),
+      "PharmaGuide Team decision": "",
+      "PharmaGuide Team comments": "",
+      "PharmaGuide Team decision by": x?.reviewedBy ?? (s.status === "Approved" ? "Legacy workbook approval: re-attestation needed" : null),
     };
     for (const slug of BOX_SLUGS) {
       const used = boxes.find((b) => b.slug === slug);
@@ -134,7 +135,7 @@ export function packetProductRows(input: PacketInput): Record<string, unknown>[]
       "Product ID": s.id,
       "Label version ID": x?.versionId,
     });
-    rows.push(row);
+    rows.push(reviewTeamRow(row));
   }
   return rows;
 }
@@ -154,9 +155,10 @@ export async function clinicianPacketWorkbook(input: PacketInput): Promise<Buffe
   const clinicalPending = used.filter((s) => !isClinicianApproved(s)).length;
   const packagePending = used.filter((s) => !s.packageVerified).length;
   const lines = [
-    ["Keniya clinician packet", `Exported ${new Date().toISOString().slice(0, 10)}. ${input.boxes.length} lineups, ${products.length} products. ${failedLineups} lineups missing or failing checks; ${diligencePending} products need internal diligence; ${clinicalPending} need authenticated clinical approval; ${packagePending} need package verification. Review the recorded evidence and each lineup result.`],
-    ["What to do", input.audience !== "operator" ? "Only internally complete products in validated lineups are included. If no products are listed, internal diligence must be completed before Laurie receives a review packet. Laurie can approve, request a specific change, or reject through her clinician account." : "Start with Keniya recommendation. Hold rows need operator work before clinical approval; Do not approve rows fail the recorded box rules. Only Recommend Approve rows have completed internal diligence and pass every box they serve. Fill the yellow Clinician decision and Comments for reviewable rows. Historical notes are retained as history and never establish current approval."],
-    ["What a decision means", "Workbook decisions do not update the admin. Laurie records approval through her clinician account after internal diligence is complete. Changes needed or Reject: tell us the specific clinical or compliance concern so we can fix the data or the rule, not just the pick."],
+    ["Keniya PharmaGuide Team packet", `Exported ${new Date().toISOString().slice(0, 10)}. ${input.boxes.length} lineups, ${products.length} products. ${failedLineups} lineups missing or failing checks; ${diligencePending} products need internal diligence; ${clinicalPending} need authenticated PharmaGuide Team approval; ${packagePending} need package verification. Review the recorded evidence and each lineup result.`],
+    ["Review team", "PharmaGuide Team, led by Dr. Pham, brings together pharmacy, nutrition and other expertise. Team members contribute review comments; recorded decisions retain the reviewer name and date."],
+    ["What to do", input.audience !== "operator" ? "Only internally complete products in validated lineups are included. If no products are listed, internal diligence must be completed before the PharmaGuide Team receives a review packet. The PharmaGuide Team, led by Dr. Pham, can approve, request a specific change, or reject through the review account." : "Start with Keniya recommendation. Hold rows need operator work before PharmaGuide Team approval; Do not approve rows fail the recorded box rules. Only Recommend Approve rows have completed internal diligence and pass every box they serve. Fill the yellow PharmaGuide Team decision and Comments for reviewable rows. Historical notes are retained as history and never establish current approval."],
+    ["What a decision means", "Workbook decisions do not update the admin. The PharmaGuide Team records approval through the review account after internal diligence is complete. Changes needed or Reject: tell us the specific clinical or compliance concern so we can fix the data or the rule, not just the pick."],
     ["Scope", input.audience !== "operator" ? "Only validated lineups and internally complete products are included. Unfinished evidence and operator holds remain in the internal catalog workbook. Package checks and current-lot expiry remain required before packing." : "The latest active or draft lineup for each box is shown with its actual stage. Drafts are proposals, not released recipes. Products outside these lineups, costs and vendors are omitted. Package checks and current-lot expiry remain required before packing."],
     ["Limits are Keniya standards", "Per-pack thresholds are Keniya curation standards informed by published guidance (FDA, AHA, ADA, ACOG/CDC), not medical cutoffs; sources are recorded in the rules."],
   ];
@@ -169,7 +171,7 @@ export async function clinicianPacketWorkbook(input: PacketInput): Promise<Buffe
   start.getRow(1).fill = fill(HEADER_FILL);
 
   const lu = wb.addWorksheet("Lineups", { views: [{ state: "frozen", ySplit: 1 }] });
-  const luHeaders = ["Box", "Lineup version", "Stage", "Validation", "Blocking failures", "Warnings", "Composition", "Per-pack limits", "Picks (codes)", "Clinician decision", "Clinician comments"];
+  const luHeaders = ["Box", "Lineup version", "Stage", "Validation", "Blocking failures", "Warnings", "Composition", "Per-pack limits", "Picks (codes)", "PharmaGuide Team decision", "PharmaGuide Team comments"];
   lu.columns = luHeaders.map((h) => ({ header: h, key: h, width: h === "Box" ? 20 : /Picks|Composition|Blocking|Warnings|comments/.test(h) ? 48 : 26 }));
   for (const b of input.boxes) {
     const fails = b.checks.filter((c) => c.level === "block" && !c.pass);
@@ -203,8 +205,8 @@ export async function clinicianPacketWorkbook(input: PacketInput): Promise<Buffe
   for (const r of products) {
     const row = ws.addRow(headers.map((h) => nz(r[h])));
     row.alignment = { wrapText: true, vertical: "top" };
-    for (const h of ["Clinician decision", "Clinician comments"]) row.getCell(headers.indexOf(h) + 1).fill = fill(INPUT_FILL);
-    row.getCell(headers.indexOf("Clinician decision") + 1).dataValidation = { type: "list", allowBlank: true, formulae: ['"Approve,Changes needed,Reject"'] };
+    for (const h of ["PharmaGuide Team decision", "PharmaGuide Team comments"]) row.getCell(headers.indexOf(h) + 1).fill = fill(INPUT_FILL);
+    row.getCell(headers.indexOf("PharmaGuide Team decision") + 1).dataValidation = { type: "list", allowBlank: true, formulae: ['"Approve,Changes needed,Reject"'] };
   }
   ws.getRow(1).height = 60;
   ws.getRow(1).font = { bold: true };
