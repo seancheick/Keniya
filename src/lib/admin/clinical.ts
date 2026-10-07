@@ -71,7 +71,7 @@ export function reviewWorkRemaining(s: Snack, x: ClinicalExtra | undefined): str
     !x?.ingredients?.trim() && "ingredients",
     !s.allergens?.trim() && "allergen statement",
     !(typeof s.unit_wt_oz === "number" && s.unit_wt_oz > 0) && "pack weight",
-    ...(["calories", "protein_g", "fiber_g", "carbs_g", "added_sugar_g", "sodium_mg", "sat_fat_g", "caffeine_mg", "sugar_alcohols_g"] as const)
+    ...(["calories", "protein_g", "fiber_g", "carbs_g", "added_sugar_g", "sodium_mg", "sat_fat_g", "caffeine_mg"] as const)
       .filter((k) => typeof s[k] !== "number" || s[k]! < 0).map((k) => k.replaceAll("_", " ")),
     ...(["P1", "P2", "P3", "P4", "P5", "P6", "P7a", "P7b", "P8"] as const)
       .filter((k) => !["PASS", "FAIL"].includes(String(s.pregnancy_checks[k] ?? "").toUpperCase())).map((k) => `${k} screening decision`),

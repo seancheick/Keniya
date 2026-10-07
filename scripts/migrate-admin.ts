@@ -73,6 +73,7 @@ const MIGRATIONS: { file: string; applied: string }[] = [
   { file: "supabase/migrations/20261008040000_public_abuse_controls.sql", applied: "select to_regprocedure('public.allow_public_attempt(text,integer,integer)') is not null as ok" },
   { file: "supabase/migrations/20261008050000_commerce_observation_fencing.sql", applied: "select to_regprocedure('public.bind_checkout_session(uuid,text,text)') is not null and to_regprocedure('public.begin_financial_observation(text)') is not null as ok" },
   { file: "supabase/migrations/20261008060000_payment_admission_provenance.sql", applied: "select to_regprocedure('public.preorder_admission_guard()') is not null as ok" },
+  { file: "supabase/migrations/20261008070000_optional_sugar_alcohol_disclosure.sql", applied: "select position('v.sugar_alcohols_g IS NULL' in pg_get_functiondef('public.product_diligence_complete(uuid)'::regprocedure)) > 0 as ok" },
   { file: "supabase/migrations/20261006203303_permanent_product_deletion.sql", applied: "select to_regprocedure('public.delete_product_permanently(uuid)') is not null as ok" },
 
 ];

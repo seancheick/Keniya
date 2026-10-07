@@ -1,0 +1,916 @@
+{
+  "date": "2026-10-07",
+  "records": [
+    {
+      "code": "P019",
+      "decision": "HOLD",
+      "source": "https://www.onceagain.com/products/once-again-organic-peanut-butter-squeeze-pack-10-ct",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer confirms organic peanut-butter squeeze-pack family; retain exact plain variant and 1.15 oz panel, not neighboring flavors. Stored limits fit; finish ingredient/allergen and pregnancy decisions."
+    },
+    {
+      "code": "P012",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Ready-to-drink 16 fl oz liquid fails the snapshot's liquid/shipping format rule. Do not infer caffeine merely from the brand; any future format needs exact flavor evidence."
+    },
+    {
+      "code": "P108",
+      "decision": "HOLD",
+      "source": "https://www.truecitrus.com/collections/all-products",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Listed unsweetened raspberry 0.75 g water enhancer is not current raspberry lemonade 3 g. Exact old SKU/current label unresolved; do not substitute lemonade panel or declare discontinued without proof."
+    },
+    {
+      "code": "P026",
+      "decision": "HOLD",
+      "source": "https://unrealsnacks.com/products/dark-chocolate-covered-almonds-standard-bags",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact 1.2 oz unit unresolved. Current brand bags/servings differ; 1 oz serving panel cannot validate this pack. Full-pack carbs, added sugar and saturated fat are needed."
+    },
+    {
+      "code": "P022",
+      "decision": "HOLD",
+      "source": "https://skinnydipped.com/products/dark-chocolate-cocoa",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current brand sizes found are 3.5 oz and 0.46 oz; a 1 oz serving does not establish a 1 oz unit. Milk fat contradicts dairy-free/vegan claims; exact pack and full panel needed."
+    },
+    {
+      "code": "P032",
+      "decision": "HOLD",
+      "source": "https://www.traditionalmedicinals.com/collections/all/products/ginger-tea",
+      "changes": {},
+      "screening_reset": true,
+      "reason": "Pure ginger tea exists; an assembled two-bag portion needs proof of complete ingredient/identity labeling on the actual supplied unit. Do not approve loose/unlabeled bags; caffeine-free does not close pregnancy review."
+    },
+    {
+      "code": "P013",
+      "decision": "HOLD",
+      "source": "https://www.justins.com/products/classic-almond-butter-1-15-oz/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact manufacturer 32 g/1.15 oz pouch: 5 g carbs, 0 g added sugar, 10 mg sodium, 3 g saturated fat; roasted almonds and palm oil. Blood Sugar limits fit; Heart fails saturated-fat gate because palm oil prevents the nut exception."
+    },
+    {
+      "code": "P085",
+      "decision": "HOLD",
+      "source": "https://88acres.com/pages/product-sitemap",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Oats & Cinnamon name does not match current Cinnamon Maple catalog. Confirm exact SKU/formula rather than silently renaming. Stored 21 g carbs/6 g added sugar fail Blood Sugar and Heart/GLP-1 sugar gates."
+    },
+    {
+      "code": "P051",
+      "decision": "HOLD",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Resolve Candidate status versus historical rejection for 112-day shelf life and required packing window. Verify exact 1 oz label and usable delivered expiry; stored 23 g carbs/370 mg sodium fail Blood Sugar/Heart."
+    },
+    {
+      "code": "P014",
+      "decision": "HOLD",
+      "source": "https://www.kindsnacks.com/products/minis/dark-chocolate-nuts-and-sea-salt",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact manufacturer mini 20 g: 8 g carbs, 2 g added sugar, 70 mg sodium, 1.5 g saturated fat, 0 g sugar alcohols. Numerical Blood Sugar/Heart limits fit. Chocolate caffeine and P1-P7b decisions/sign-off remain."
+    },
+    {
+      "code": "P056",
+      "decision": "HOLD",
+      "source": "https://www.saffronroad.com/products/sea-salt",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "1.25 oz product has conflicting copied nutrition versus historical panel. Resolve exact mass/SKU and full panel before screening; stored 21 g carbs/270 mg sodium fail Blood Sugar/Heart."
+    },
+    {
+      "code": "P023",
+      "decision": "HOLD",
+      "source": "https://www.hersheyland.com/products/skinnypop-original-popcorn-0-65-oz-bag.html",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact manufacturer 18 g/0.65 oz bag: 10 g carbs, 0 g added sugar, 85 mg sodium, 0.5 g saturated fat, 100 calories. Ingredients popcorn, sunflower oil, salt. Finish recorded screening and sign-off."
+    },
+    {
+      "code": "P011",
+      "decision": "HOLD",
+      "source": "https://gogosqueez.com/wp-content/uploads/2024/04/GoGo-squeeZ-Restaurants-Sell-Sheets-Digital.pdf",
+      "changes": {
+        "calories": 70,
+        "carbs_g": 16,
+        "fiber_g": 3
+      },
+      "screening_reset": true,
+      "reason": "Manufacturer foodservice sheet for standard Apple Apple 90 g shows 16 g total carbs, 0 g added sugar, 0 mg sodium, 70 calories. This fails the new Blood Sugar/GDM snack carb ceiling. Do not substitute the organic variant's 15 g panel."
+    },
+    {
+      "code": "P046",
+      "decision": "HOLD",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Resolve listed 1.23 oz versus evidence for 1.4 oz mango. No interchangeable scaling for approval; exact current unit label required. Stored carbs exceed Blood Sugar."
+    },
+    {
+      "code": "P047",
+      "decision": "HOLD",
+      "source": "https://fruitforthought.com/products/dried-mango?variant=27903272714345",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer confirms 1 oz packs (12/48-count choices). Capture full label image; remove unsupported organic claim. Stored 21 g carbs fails Blood Sugar, while low sodium may fit Heart subject to screening."
+    },
+    {
+      "code": "P030",
+      "decision": "HOLD",
+      "source": "https://www.bluediamond.com/brand/blue-diamond/nut-thins/snacking/hint-of-sea-salt/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact 0.74 oz Mini Nut-Thins current pack not proven. Standard 4.25/7.7 oz product panel is different; do not borrow it. Stored 17 g carbs fails Blood Sugar provisionally."
+    },
+    {
+      "code": "P007",
+      "decision": "HOLD",
+      "source": "https://smartlabel.bluediamond.com/887335159388-0001-en-US/index.html",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "A 100-calorie pack requires its own panel, not a scaled larger bag. Reconcile 0.6 oz/17 g identity, allergens and processing."
+    },
+    {
+      "code": "P018",
+      "decision": "HOLD",
+      "source": "https://www.lesserevil.com/products/himalayan-pink-salt-organic-popcorn",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact 0.88 oz unit panel not established. Stored 170 mg sodium and 2.5 g saturated fat exceed Heart gates; coconut oil is not covered by a nuts/seeds exception."
+    },
+    {
+      "code": "P038",
+      "decision": "HOLD",
+      "source": "https://www.wonderfulpistachios.com/products/lightly-salted",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Resolve in-shell net-weight versus edible serving and exact 1 oz unit. Stored sodium 75 mg alone does not close Heart eligibility; the snapshot's other Heart failure needs resolution."
+    },
+    {
+      "code": "P027",
+      "decision": "REJECT-EXCLUDE",
+      "source": "https://www.popus.com/collections/best-sellers/products/prince-of-peace-ginger-candy-chews-original-8oz",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Three-chew assembled portion is not a manufacturer labeled snack unit. Exclude this presentation; review a genuinely labeled manufacturer single-serve SKU separately."
+    },
+    {
+      "code": "P021",
+      "decision": "HOLD",
+      "source": "https://simplemills.com/Products/Product/Fine-Ground-Sea-Salt-Almond-Flour-Cracker-Snack-Pa.aspx",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer confirms 0.8 oz snack pouches and current ingredients/allergens. Capture the panel image for this pouch; stored 180 mg sodium fails Heart, 13 g carbs fits Blood Sugar if exact."
+    },
+    {
+      "code": "P082",
+      "decision": "HOLD",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact 1 oz HIPPEAS unit not proved; old 2018 panel differs from current formulation. Current serving information cannot establish a 1 oz snack pack. Resolve exact pack before applying limits."
+    },
+    {
+      "code": "P044",
+      "decision": "HOLD",
+      "source": "https://unrealsnacks.com/products/dark-chocolate-covered-almonds-standard-bags",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current manufacturer 1 oz value is a serving in a 4 oz bag; separate 2 oz snack bags also exist. No proof of a 1 oz sealed unit. Current serving has 10 g carbs/5 g added sugar/4 g saturated fat, failing Blood Sugar sugar and Heart fat gates."
+    },
+    {
+      "code": "P039",
+      "decision": "HOLD",
+      "source": "https://www.ultimareplenisher.com/products/lemonade-electrolyte-powder-drink",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current manufacturer lemonade stick: 0 g carbs/added sugar, 55 mg sodium. Formula includes stevia and supplemental electrolytes/vitamins; review full nutrient dose and pregnancy screen. Stevia preference alone does not block."
+    },
+    {
+      "code": "P102",
+      "decision": "HOLD",
+      "source": "https://www.thatsitfruit.com/collections/shop-mini-fruit-bars/products/strawberry-blueberry-mango-minis-variety-pack",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer mini variety pack exists; isolate blueberry 0.7 oz unit panel. Different sodium between flavors is plausible and must be retained, not normalized."
+    },
+    {
+      "code": "P010",
+      "decision": "HOLD",
+      "source": "https://store.edenfoods.com/pumpkin-seeds-pocket-snacks-organic-1-oz/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer confirms organic 1 oz dry-roasted pocket snack. Capture current full panel and shared-facility allergen statement; complete pregnancy screening and sign-off."
+    },
+    {
+      "code": "P008",
+      "decision": "HOLD",
+      "source": "https://crispygreen.com/products/freeze-dried-strawberry",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer confirms freeze-dried strawberry product and fruit ingredient. Capture exact 0.42 oz panel; less-than-1 g protein must not be replaced with an invented number."
+    },
+    {
+      "code": "P031",
+      "decision": "HOLD",
+      "source": "https://www.tomsturgispretzels.com/product/little-ones-pretzels-1-oz-snack-pack-assortment/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer lists 1 oz Little Ones snack pack and links a 2023 panel; current label version still needs capture. Stored 22 g carbs/390 mg sodium fail Blood Sugar/Heart."
+    },
+    {
+      "code": "P020",
+      "decision": "HOLD",
+      "source": "https://www.hormelfoodservice.com/products/planters-salted-peanuts-6-10-1oz/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact foodservice 1 oz salted peanuts, product 123174, case GTIN 10029000018461: 5 g carbs, 95 mg sodium, 2 g saturated fat. Use this SKU rather than another salted-peanut panel. Case GTIN is not automatically the unit UPC."
+    },
+    {
+      "code": "P029",
+      "decision": "REJECT-EXCLUDE",
+      "source": "https://gingerpeople.com/products/gin-gins-original-ginger-chews/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Two-chew assembled portion is not a labeled manufacturer snack unit. Current original chews contain soy lecithin; reconcile soy allergen records. Exclude current presentation."
+    },
+    {
+      "code": "P033",
+      "decision": "HOLD",
+      "source": "https://www.buddhateas.com/collections/digestive-support/products/ginger-root-tea",
+      "changes": {},
+      "screening_reset": true,
+      "reason": "Manufacturer confirms pure ginger-root tea. Two-bag assembled presentation needs actual unit-label evidence; otherwise exclude that format. Complete pregnancy review rather than treating herbal tea as automatically cleared."
+    },
+    {
+      "code": "P103",
+      "decision": "HOLD",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact strawberry granola-mini 0.85 oz panel needed; stored 17 g carbs fails Blood Sugar. Full ingredients/allergens/process and current primary evidence remain unresolved."
+    },
+    {
+      "code": "P083",
+      "decision": "HOLD",
+      "source": "https://www.campbellsfoodservice.com/product/baked-with-whole-grain-cheddar-crackers/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact manufacturer 21 g/0.75 oz whole-grain cheddar pack: 14 g carbs, 0 g added sugar, 170 mg sodium, 0.5 g saturated fat. Correct prior sodium claims; Heart fails, Blood Sugar numerical limits fit."
+    },
+    {
+      "code": "P003",
+      "decision": "HOLD",
+      "source": "https://www.baresnacks.com/products",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact 1.23 oz mango pack not established by the current brand catalog. Open Food Facts is secondary evidence; obtain manufacturer unit label."
+    },
+    {
+      "code": "P017",
+      "decision": "HOLD",
+      "source": "https://www.kindsnacks.com/products/nut-bar/caramel-almond-sea-salt",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current 40 g bar: 16 g carbs, 4 g added sugar, 125 mg sodium, 3 g saturated fat, 0 g sugar alcohols. Blood Sugar fails; Heart fails fat gate with palm oil. Contains milk, almond and soy."
+    },
+    {
+      "code": "P081",
+      "decision": "HOLD",
+      "source": "https://bienasnacks.com/products/sea-salt",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current Biena page shows 1 oz SERVING, with 15 g carbs, 190 mg sodium; bag choices include 1.2 oz. Prove a sealed 1 oz unit rather than substituting the serving. If exact, sodium fails Heart."
+    },
+    {
+      "code": "P077",
+      "decision": "HOLD",
+      "source": "https://www.wonderfulpistachios.com/products/roasted-salted-no-shells",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current no-shell product family does not establish 21 g sealed pack. Resolve exact unit, current panel and serving basis; stored low sodium is insufficient by itself."
+    },
+    {
+      "code": "P058",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "2.12 oz cheese-crisp bag is multi-serving. Exclude current unit; stored 330 mg sodium is not established whole-pack nutrition."
+    },
+    {
+      "code": "P060",
+      "decision": "REJECT-EXCLUDE",
+      "source": "https://parmcrisps.com/products/original/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer labels 1.75 oz Original ParmCrisps as about two 28 g servings. Exclude current multi-serving unit. Each serving already has 370 mg sodium and 7 g saturated fat."
+    },
+    {
+      "code": "P068",
+      "decision": "HOLD",
+      "source": "https://www.thatsitfruit.com/collections/fruit-bars-mini-fruit-bars",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact 1.2 oz blueberry bar current full panel needed. Stored 26 g carbs fails Blood Sugar; fruit sugars are still total carbs. Current fruit-bar family alone does not close exact label review."
+    },
+    {
+      "code": "P069",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "16.9 fl oz ready-to-drink liquid excluded by current format rule."
+    },
+    {
+      "code": "P071",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "14 fl oz ready-to-drink shake excluded by liquid rule."
+    },
+    {
+      "code": "P076",
+      "decision": "HOLD",
+      "source": "https://smartlabel.labelinsight.com/product/14100342/nutrition",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer SmartLabel for whole-natural on-the-go identified; capture exact 18 g panel, allergens and processing. Historical scaled 28 g values do not close approval."
+    },
+    {
+      "code": "P065",
+      "decision": "HOLD",
+      "source": "https://www.kindsnacks.com/products/protein/dark-chocolate-nut",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current 50 g protein bar: 18 g carbs, 6 g added sugar, 125 mg sodium, 4 g saturated fat, 12 g protein. Blood Sugar/Heart/GLP-1 gates fail; protein does not override sugar/fat ceilings."
+    },
+    {
+      "code": "P090",
+      "decision": "HOLD",
+      "source": "https://www.baresnacks.com/products",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact 0.53 oz apple unit current panel unverified; stored values are scaled from 28 g. Do not clear a borderline 14.5 g carb value without exact pack evidence."
+    },
+    {
+      "code": "P084",
+      "decision": "HOLD",
+      "source": "https://www.annies.com/products/organic-cheddar-bunnies-12ct-snack-pack",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "0.75 oz foodservice pack differs from current 1 oz retail snack packs. Resolve sodium conflict (historical 130 mg versus scaled 183 mg) using the exact current unit; cannot clear Heart on either borrowed panel."
+    },
+    {
+      "code": "P070",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "11.5 fl oz ready-to-drink shake excluded by liquid rule. Sucralose preference is not an independent pregnancy-safety conclusion."
+    },
+    {
+      "code": "P088",
+      "decision": "HOLD",
+      "source": "https://www.thatsitfruit.com/collections/fruit-bars-mini-fruit-bars",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current fruit-bar family exists; exact mango 1.2 oz panel/version needed. Stored 27 g carbs fails Blood Sugar; low sodium only supports provisional Heart consideration."
+    },
+    {
+      "code": "P002",
+      "decision": "HOLD",
+      "source": "https://www.badabeansnacks.com/products/sea-salt",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer confirms 24 x 1 oz units and ingredients; full current panel still needs capture. Stored 160 mg sodium exceeds Heart; added sugar in ingredients does not establish its numeric grams."
+    },
+    {
+      "code": "P064",
+      "decision": "HOLD",
+      "source": "https://smartlabel.kelloggs.com/Product/Index/10857777004307",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current manufacturer SmartLabel identified, but exact 1.83 oz full panel/process still needs capture. Egg-white ingredient requires processing evidence for P1; stored 23 g carbs/260 mg sodium fail Blood Sugar/Heart."
+    },
+    {
+      "code": "P092",
+      "decision": "HOLD",
+      "source": "https://88acres.com/products/dark-chocolate-sea-salt-seed-bars",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current dark-chocolate sea-salt bar family found; exact 1.6 oz fat/sugar panel needed. Stored 2.5 g saturated fat may fail Heart despite low sodium; seed status is not an automatic exception."
+    },
+    {
+      "code": "P094",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "12 fl oz ready-to-drink liquid excluded by format rule."
+    },
+    {
+      "code": "P096",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "16 fl oz liquid variety pack excluded by format rule; unspecified flavors also require separate labels if reconsidered."
+    },
+    {
+      "code": "P093",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "12 fl oz ready-to-drink liquid excluded by format rule."
+    },
+    {
+      "code": "P067",
+      "decision": "HOLD",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer confirms 0.8 oz pack, but current 1 oz serving formulation differs from stored scaled panel. Obtain actual 0.8 oz label; do not apply a 28 g panel directly or silently scale."
+    },
+    {
+      "code": "P079",
+      "decision": "HOLD",
+      "source": "https://stage.emeraldnuts.com/product/almonds-walnuts-100-calories/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Brand staging page confirms 100-calorie almond/walnut product family, not a current verified 16 g panel. Obtain production manufacturer label and processing/allergen review."
+    },
+    {
+      "code": "P086",
+      "decision": "HOLD",
+      "source": "https://88acres.com/collections/best-sellers/products/triple-berry-crumble-seed-bars",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current triple-berry bar family exists, but exact 1.6 oz full panel still needed. Stored 23 g carbs/7 g added sugar fail Blood Sugar and Heart/GLP-1 sugar gates."
+    },
+    {
+      "code": "P059",
+      "decision": "REJECT-EXCLUDE",
+      "source": "https://mooncheese.com/products/cheddar-believe-it-large",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "2 oz cheese-crisp bag contains multiple servings. Exclude current unit; do not repack or reuse per-serving nutrition as pack values."
+    },
+    {
+      "code": "P091",
+      "decision": "HOLD",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "2021 branded label is not current exact 1 oz freeze-dried mango proof. Obtain manufacturer/actual-unit panel; stored 25 g carbs fails Blood Sugar."
+    },
+    {
+      "code": "P024",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Ready-to-drink 12 fl oz liquid excluded by current format/shipping rule."
+    },
+    {
+      "code": "P066",
+      "decision": "REJECT-EXCLUDE",
+      "source": "https://www.pureprotein.com/products/chocolate-peanut-butter-protein-bar",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Retain exclusion for maltitol under P7b brand preference, subject to exact current ingredient confirmation. Do not describe maltitol or sucralose as inherently pregnancy-unsafe; P7c alone must not block."
+    },
+    {
+      "code": "P072",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "11.5 fl oz ready-to-drink shake excluded by liquid rule."
+    },
+    {
+      "code": "P074",
+      "decision": "HOLD",
+      "source": "https://goraw.com/collections/seeds",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current brand sprouted sea-salt seeds differ from dry-roasted SKU; exact 1 oz unit and P1 processing evidence needed. Do not equate all dried sprouted seeds with raw sprouts, or claim safety without a documented process."
+    },
+    {
+      "code": "P073",
+      "decision": "HOLD",
+      "source": "https://www.hormelfoodservice.com/products/justins-classic-peanut-butter-1-15-squeeze-packs/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer lists exact 1.15 oz classic peanut-butter pouch. Retain full current panel; stored 3 g saturated fat with palm oil fails Heart, despite 25 mg sodium. Blood Sugar limits fit provisionally."
+    },
+    {
+      "code": "P080",
+      "decision": "HOLD",
+      "source": "https://roasterycoast.com/products/roastery-coast-original-mix-7-tree-nuts-mix-almonds-cashews-hazelnuts-pecans-macadamias-walnuts-pistachios-22-or-48-pack",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer confirms 1 oz seven-tree-nut packs. Missing full nutrition is a real blocker: obtain carbs, sodium, saturated fat, protein/fiber and exact allergen/process record."
+    },
+    {
+      "code": "P063",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "3.25 oz jerky is multi-serving. Exclude supplied unit; do not construct unlabeled portions."
+    },
+    {
+      "code": "P095",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "16 fl oz ready-to-drink liquid excluded by format rule."
+    },
+    {
+      "code": "P105",
+      "decision": "HOLD",
+      "source": "https://www.eatiqbar.com/collections/all-products/products/chocolate-sea-salt",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current chocolate-sea-salt formula includes lion's mane and differs in protein/prebiotic ingredients. Pregnancy/GDM/Postpartum need ingredient-specific review; absence of pregnancy evidence is not proof of established harm. Stored coconut-oil fat fails Heart provisionally."
+    },
+    {
+      "code": "P087",
+      "decision": "HOLD",
+      "source": "https://www.kindsnacks.com/products/healthy-grains-energy-bars/dark-chocolate-chunk",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer current dark-chocolate-chunk bar found; reconcile stored 8 g added sugar versus conflicting note of 5 g using exact 1.2 oz unit. Do not clear Heart/GLP-1 from the lower historical number."
+    },
+    {
+      "code": "P016",
+      "decision": "HOLD",
+      "source": "https://www.kindsnacks.com/products/nut-bar/dark-chocolate-cherry-cashew",
+      "changes": {
+        "added_sugar_g": 7,
+        "sugar_alcohols_g": 0,
+        "ingredients": "Cashews, peanuts, chicory root fiber, cane sugar, almonds, dried cherries, dried cranberries, honey, palm kernel oil, glucose syrup, rice flour, unsweetened chocolate, raisins, alkalized cocoa, soy lecithin, sea salt, natural flavor, cocoa butter.",
+        "allergens": "Contains cashews, peanuts, almonds and soy. May contain tree nuts. May contain nut shell fragments and pits."
+      },
+      "screening_reset": true,
+      "reason": "Current manufacturer 40 g bar shows 22 g carbs and 7 g added sugar (snapshot says 6), 20 mg sodium, 3 g saturated fat. Blood Sugar/GDM and Heart/GLP-1 sugar gates fail. Preserve exact current ingredient/allergen version."
+    },
+    {
+      "code": "P106",
+      "decision": "HOLD",
+      "source": "https://www.larabar.com/our-products/larabar-minis/chocolate-chip-cookie-dough-mini",
+      "changes": {
+        "calories": 100,
+        "sodium_mg": 45,
+        "ingredients": "Cashews, dates, semisweet chocolate chips (unsweetened chocolate, sugar, cocoa butter, vanilla extract), apples, sea salt, vanilla extract."
+      },
+      "screening_reset": true,
+      "reason": "Exact current 22 g mini: 12 g carbs, 2 g added sugar, 45 mg sodium (not 30), 1.5 g saturated fat, 100 calories. Numerical Blood Sugar/Heart limits fit; chocolate caffeine and screening/sign-off remain."
+    },
+    {
+      "code": "P107",
+      "decision": "HOLD",
+      "source": "https://artisanamarket.com/collections/whole30-approved/products/almond-butter-on-the-go-snack-packs",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer market confirms raw almond on-the-go pouch; full exact 1.06 oz panel missing. Raw almonds are not automatically a pregnancy no-go, but literal P1 cooked/pasteurized criterion needs documented processing or an authorized standard clarification."
+    },
+    {
+      "code": "P100",
+      "decision": "HOLD",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact caramel mini 0.7 oz panel required; do not use full-size bar's 16 g carbs/4 g sugar. Stored 8 g carbs/2 g sugar/60 mg sodium remain provisional."
+    },
+    {
+      "code": "P104",
+      "decision": "HOLD",
+      "source": "https://www.madegoodfoods.com/products/chocolate-chip-granola-minis",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer chocolate-chip granola minis found; exact 24 g unit panel must replace scaled 29 g values, especially 5.8 g added sugar near a hard gate. Cannot declare Heart/GLP-1 fit from scaled numbers."
+    },
+    {
+      "code": "P099",
+      "decision": "HOLD",
+      "source": "https://sunbutter.com/collections/on-the-go",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact natural 1.1 oz pouch not established by current on-the-go collection. Historical scaled 32 g panel is insufficient; obtain unit label and processing/allergen evidence."
+    },
+    {
+      "code": "P015",
+      "decision": "HOLD",
+      "source": "https://www.kindsnacks.com/products/nut-bar/dark-chocolate-nuts-sea-salt",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact manufacturer 40 g bar: 16 g carbs, 4 g added sugar, 140 mg sodium, 3 g saturated fat, 0 g sugar alcohols. Blood Sugar/GDM fail both limits; Heart fails saturated-fat gate with palm oil, despite sodium meeting 140 mg."
+    },
+    {
+      "code": "P057",
+      "decision": "HOLD",
+      "source": "https://www.wonderfulpistachios.com/products/lightly-salted",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact 1 oz lightly salted pack and edible basis unresolved; possible overlap with P038. Do not duplicate eligibility from a family-level panel."
+    },
+    {
+      "code": "P061",
+      "decision": "HOLD",
+      "source": "https://shop.countryarcher.com/products/original-beef-jerky",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Listed Original Beef Jerky Bar is not established by evidence for Original Beef Jerky. Resolve identity and added-sugar panel. Document cooking/process and pregnancy screen; cured/dried meat is not cleared by shelf stability alone."
+    },
+    {
+      "code": "P062",
+      "decision": "HOLD",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact 1 oz peppered turkey stick current primary panel not obtained. Resolve stick versus jerky, milk allergen claim and cook/process evidence. Stored 230 mg sodium fails Heart."
+    },
+    {
+      "code": "P075",
+      "decision": "HOLD",
+      "source": "https://goraw.com/collections/seeds",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact 1 oz sunflower-seed unit and processing not established. Stored 210 mg sodium fails Heart; P1 requires process-specific evidence, not a generic raw-sprout inference."
+    },
+    {
+      "code": "P078",
+      "decision": "HOLD",
+      "source": "https://www.planters.com/product/nut-rition-heart-healthy-nut-mix/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer 30.6 g panel: 6 g carbs, 0 g added sugar, 40 mg sodium, 2 g saturated fat, 6 g protein/3 g fiber. Page also contains differing size/nut lists, including hazelnut; capture actual supplied unit allergen/version."
+    },
+    {
+      "code": "P089",
+      "decision": "HOLD",
+      "source": "https://santacruzorganic.com/products-szqhv/p/apple-sauces/apple-pouches",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer apple pouch exists, but 90 g panel must replace scaled 113 g cup values. Sold-out listing does not prove retirement; obtain actual current unit panel."
+    },
+    {
+      "code": "P097",
+      "decision": "HOLD",
+      "source": "https://whisps.com/product/cheddar-cheese-crisps-0-63oz-8-pack/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer confirms 0.63 oz units and pasteurized cheddar ingredients. Capture tiny-unit panel; do not use generic 10 g protein claim as its per-pack value. Stored 220 mg sodium/6 g saturated fat fail Heart."
+    },
+    {
+      "code": "P098",
+      "decision": "HOLD",
+      "source": "https://shop.harvestsnaps.com/products/harvest-snaps-snack-crisps-lightly-salted-1-75oz-bag",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current exact 1.75 oz panel: 28 g carbs, 0 g added sugar, 135 mg sodium, 1 g saturated fat, 9 g protein/7 g fiber, 230 calories, 0 g sugar alcohols. Blood Sugar fails. Reconcile conflicting oil text/image and barcode variant; whole-pack serving is shown, so not automatically multi-serving."
+    },
+    {
+      "code": "P101",
+      "decision": "HOLD",
+      "source": "https://www.thatsitfruit.com/collections/shop-mini-fruit-bars/products/strawberry-blueberry-mango-minis-variety-pack",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer mini variety pack exists; isolate strawberry 0.7 oz unit full panel rather than borrowing another fruit. Stored limits fit pending exact version."
+    },
+    {
+      "code": "P109",
+      "decision": "HOLD",
+      "source": "https://www.truecitrus.com/collections/all-products",
+      "changes": {},
+      "screening_reset": true,
+      "reason": "Apply same exact-SKU hold as P108: 0.75 g strawberry enhancer differs from 3 g lemonade. Snapshot P8 pass does not resolve identity/current evidence."
+    },
+    {
+      "code": "P110",
+      "decision": "HOLD",
+      "source": "https://www.truecitrus.com/products/true-lemon-strawberry-lemonade",
+      "changes": {
+        "ingredients": "Crystallized Lemon [Citric Acid, Lemon Oil, Lemon Juice], Cane Sugar, Natural Flavor, Stevia Leaf Extract, Vegetable Juice (For Color), Vitamin C (Ascorbic Acid)."
+      },
+      "screening_reset": true,
+      "reason": "Exact current 3 g strawberry lemonade stick: 3 g total carbs, 1 g added sugar, 0 mg sodium, 10 calories, vitamin C 45 mg. Blood Sugar hydration limit passes; GDM additionally needs renewed Pregnancy screen of current formula. Current ingredient list includes vegetable juice color/ascorbic acid, unlike stored beet-powder version. Heart/GLP-1 unsweetened-only pathway remains unchanged."
+    },
+    {
+      "code": "P004",
+      "decision": "HOLD",
+      "source": "https://barneybutter.com/products/bare-smooth-almond-butter-snack-pack",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current manufacturer snack packs do not establish the listed 1 oz dip cup. Resolve cup versus pouch, exact grams and complete panel."
+    },
+    {
+      "code": "P005",
+      "decision": "HOLD",
+      "source": "https://bienasnacks.com/products/sea-salt",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current brand panel is 1 oz serving; listed product is 1.2 oz pack. Obtain whole-pack label; stored 21 g carbs/200 mg sodium already exceed Blood Sugar/Heart."
+    },
+    {
+      "code": "P009",
+      "decision": "HOLD",
+      "source": "https://www.davidseeds.com/pumpkin-seeds/pumpkin-seeds",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer lists 2.25 oz pumpkin seeds. Resolve shell/net/edible serving basis before scaling; stored 2,142 mg sodium is not an independently verified current whole-pack figure."
+    },
+    {
+      "code": "P041",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "11.1 fl oz ready-to-drink coconut water is a liquid, not an eligible hydration stick. Exclude current shipping format; stored 15 g carbs also exceeds the 3 g hydration ceiling."
+    },
+    {
+      "code": "P037",
+      "decision": "HOLD",
+      "source": "https://www.saffronroad.com/products/sea-salt",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "40 g pack nutrition is scaled from a 30 g serving; obtain exact current whole-pack panel. Stored 24 g carbs/280 mg sodium fail Blood Sugar/Heart provisionally."
+    },
+    {
+      "code": "P043",
+      "decision": "HOLD",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "2018 branded database panel is insufficient current exact 0.5 oz proof. Obtain manufacturer unit nutrition, ingredient/allergen and processing evidence; stored limits are provisional."
+    },
+    {
+      "code": "P028",
+      "decision": "REJECT-EXCLUDE",
+      "source": "https://chimesgourmet.com/collections/original",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Three-chew assembled portion fails the no-repacked/unlabeled-unit rule even though snapshot P8 says pass. Correct P8; bulk brand evidence does not validate the assembled snack."
+    },
+    {
+      "code": "P040",
+      "decision": "HOLD",
+      "source": "https://keynutrients.com/products/electrolyte-recovery-plus",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Tub/scoop evidence is not exact lemon packet evidence. Confirm stick mass, formula and full micronutrient doses; current variants may include copper/chromium. Do not auto-clear pregnancy from zero sugar."
+    },
+    {
+      "code": "P042",
+      "decision": "HOLD",
+      "source": "https://brothersallnatural.com/strawberry-freeze-dried-fruit-crisps-sliced-24-pack/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer confirms 0.26 oz strawberry units and UPC 894185000401, single fruit ingredient. Capture exact panel and complete screening/sign-off; stored limits fit."
+    },
+    {
+      "code": "P036",
+      "decision": "HOLD",
+      "source": "https://treetop.com/products/no-sugar-added-apple-sauce-pouch-2/",
+      "changes": {
+        "calories": 45,
+        "protein_g": 1,
+        "fiber_g": 1,
+        "carbs_g": 12,
+        "ingredients": "Apples, water, ascorbic acid (vitamin C)."
+      },
+      "screening_reset": true,
+      "reason": "Current manufacturer 90 g pouch: 12 g carbs, 0 g added sugar, 0 mg sodium, 45 calories, 1 g protein and fiber. Ingredients apples, water, ascorbic acid. Replace scaled cup values and complete review."
+    },
+    {
+      "code": "P048",
+      "decision": "HOLD",
+      "source": "https://sunnyfruit.com/products/organic-dried-apricots",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer confirms organic apricots/water with no added sugar or added sulfites. Exact 1.76 oz panel still needed; stored 31 g carbs fails Blood Sugar. Confirm those claims on supplied unit."
+    },
+    {
+      "code": "P034",
+      "decision": "HOLD",
+      "source": "",
+      "changes": {},
+      "screening_reset": true,
+      "reason": "Historical NIH label is not current manufacturer proof of a two-bag unit. Establish current formula, supplier and full supplied-unit labeling before eligibility."
+    },
+    {
+      "code": "P049",
+      "decision": "HOLD",
+      "source": "https://mariani.com/blogs/weve-got-news/mariani-packing-launches-probiotics-in-single-serve-packs",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "2021 manufacturer launch proves historical 1.4 oz packs; current pages show other sizes. Confirm ongoing exact SKU and panel. Sulfites and probiotic strain/dose require documented review; probiotic marketing is not pregnancy clearance."
+    },
+    {
+      "code": "P052",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Listed 5 oz apricot bag is a multi-serving retail format. Exclude this SKU/presentation; do not repack portions or treat per-serving values as whole-pack values."
+    },
+    {
+      "code": "P054",
+      "decision": "HOLD",
+      "source": "https://smartsweets.com/pages/faqs/",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Sour Bears exact 1.8 oz formula unresolved; old stevia/fiber versus allulose/monk-fruit evidence must not be merged. Use total carbs, not net carbs: stored 36 g fails Blood Sugar. Full formula and brand polyol review needed."
+    },
+    {
+      "code": "P001",
+      "decision": "HOLD",
+      "source": "https://www.conagrafoodservice.com/products/angies-sea-salt-popcorn-125-oz-pack",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current manufacturer lists a 1.25 oz unit, but its current avocado-oil formula differs from the historical scaled panel. Obtain exact current unit panel; do not scale a 4.8 oz bag."
+    },
+    {
+      "code": "P006",
+      "decision": "HOLD",
+      "source": "https://thegoodbean.com/products/sea-salt-grab-go-crunchy-chickpeas",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Current grab-and-go product exists, but listed 1.4 oz nutrition is scaled from 28 g. Exact whole-pack panel and ingredient version remain unverified."
+    },
+    {
+      "code": "P025",
+      "decision": "HOLD",
+      "source": "https://www.superseedz.com/collections/all-products/products/superseedz-sea-salt",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer sea-salt family found, but exact 1 oz current panel not captured. Stored 210 mg sodium fails Heart; do not transfer lower-sodium marketing claims from a different formulation."
+    },
+    {
+      "code": "P045",
+      "decision": "HOLD",
+      "source": "https://www.hersheyland.com/barkthins",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Exact 1.1 oz unit not established by current 4.7/20 oz family. Stored 11 g added sugar fails Blood Sugar, Heart and GLP-1; obtain exact unit before Pregnancy/Postpartum consideration."
+    },
+    {
+      "code": "P050",
+      "decision": "HOLD",
+      "source": "https://fruitbliss.com/products/organic-turkish-mini-apricots-1-76-oz-caddy-of-12-pouches",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer confirms organic Turkish mini-apricot 1.76 oz pouches. Obtain current full panel and unit allergen/ingredient record; stored 31 g carbs fails Blood Sugar."
+    },
+    {
+      "code": "P053",
+      "decision": "HOLD",
+      "source": "https://yumearth.com/products/organic-sour-giggles?variant=43868972810485",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer snack-pack family found; exact 0.5 oz label still needed. Stored 9 g added sugar fails Blood Sugar/Heart/GLP-1. Pregnancy/Postpartum need ingredient and screening completion."
+    },
+    {
+      "code": "P055",
+      "decision": "REJECT-EXCLUDE",
+      "source": "",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "4 oz chew bag is multi-serving; proposed portions would be repacked/unlabeled. Exclude current presentation regardless of flavor/nutrition."
+    },
+    {
+      "code": "P035",
+      "decision": "HOLD",
+      "source": "https://www.motts.com/products/applesauce/no-sugar-added-apple-applesauce",
+      "changes": {},
+      "screening_reset": false,
+      "reason": "Manufacturer offers no-sugar-added apple 3.2 oz pouches, but the current exact panel must be retained; distinguish cups/flavors. Snapshot screen is complete except polyol field/sign-off. No declared polyol ingredient is more useful than demanding a mandatory numeric zero line."
+    }
+  ],
+  "verified_statuses": [
+    {
+      "status": "Candidate",
+      "count": 89
+    },
+    {
+      "status": "Rejected",
+      "count": 21
+    }
+  ]
+}

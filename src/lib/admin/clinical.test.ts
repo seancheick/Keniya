@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { settings, snack } from "./__fixtures__/snacks";
 import { eligibleFor } from "./rules";
 import { DEFAULT_BOX_RULES } from "./types";
-import { CLINICIAN_VERDICT, clinicalReviewRows, pCheckHeader, splitNotes } from "./clinical";
+import { CLINICIAN_VERDICT, clinicalReviewRows, pCheckHeader, splitNotes, reviewWorkRemaining } from "./clinical";
 import { clinicalWorkbook } from "./clinical-xlsx";
 import ExcelJS from "exceljs";
 
@@ -98,4 +98,9 @@ describe("clinicalReviewRows", () => {
     expect(legend).toContain("Pasteurized or fully cooked");
     expect(legend).toContain("waiting for authenticated PharmaGuide Team approval");
   });
+});
+
+it("does not invent a missing sugar-alcohol amount or make it a diligence blocker", () => {
+ const remaining = reviewWorkRemaining(snack({sugar_alcohols_g: null}), undefined);
+ expect(remaining).not.toContain("sugar alcohols g");
 });

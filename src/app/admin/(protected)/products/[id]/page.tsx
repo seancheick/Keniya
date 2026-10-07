@@ -39,7 +39,7 @@ const NUTRIENT_LABEL: Record<(typeof NUTRIENT_KEYS)[number], string> = {
   sodium_mg: "Sodium mg",
   caffeine_mg: "Caffeine mg",
   sat_fat_g: "Sat fat g",
-  sugar_alcohols_g: "Sugar alcohols g",
+  sugar_alcohols_g: "Sugar alcohols g (if disclosed)",
 };
 
 const date = (d: string | null) => (d ? new Date(`${d.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "—");

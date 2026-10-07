@@ -15,6 +15,11 @@ begin
  update public.product_versions set nutrition_source='Label',ingredients='Almonds',allergens='Tree nuts',unit_wt_oz=1,
   calories=150,protein_g=6,fiber_g=3,carbs_g=12,added_sugar_g=0,sodium_mg=0,caffeine_mg=0,sat_fat_g=1,sugar_alcohols_g=0,
   pregnancy_checks='{"P1":"PASS","P2":"PASS","P3":"PASS","P4":"PASS","P5":"PASS","P6":"PASS","P7a":"PASS","P7b":"PASS","P8":"PASS"}' where id=v;
+ update public.product_versions set sugar_alcohols_g=null where id=v;
+ assert public.product_diligence_complete(p), 'Optional sugar-alcohol disclosure must not block completed ingredient/P7b screening';
+ update public.product_versions set pregnancy_checks=pregnancy_checks-'P7b' where id=v;
+ assert not public.product_diligence_complete(p), 'Ingredient screening stays mandatory';
+ update public.product_versions set pregnancy_checks=pregnancy_checks||'{"P7b":"PASS"}'::jsonb where id=v;
  perform public.set_product_review(p,'Pre-approved',null,'Sean','admin');
  assert (select reviewed_by is null and clinical_decision='pending' and diligence_status='complete' from public.products where id=p);
  perform public.set_product_review(p,'Approved',null,'Laurie Pham','clinician');
