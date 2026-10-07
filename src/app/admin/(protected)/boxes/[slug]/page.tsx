@@ -7,6 +7,7 @@ import { RulesForm } from "@/components/admin/rules-form";
 import { Badge, Disclosure, PageHeader, Table } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { db, loadPostageHistory, must, signedUrls, type LineupRow } from "@/lib/admin/db";
+import { reviewTeamText } from "@/lib/admin/review-wording";
 import { splitNotes } from "@/lib/admin/clinical";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_LABEL, BOX_SLUGS, OBJECTIVE_LABEL, isBoxSlug, type Objective } from "@/lib/admin/types";
@@ -29,7 +30,7 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
   const urls = await signedUrls([...fronts.values()]);
   const photos = Object.fromEntries([...fronts].flatMap(([id, path]) => (urls.get(path) ? [[id, urls.get(path)!]] : [])));
   const findings = Object.fromEntries(ctx.catalog.products.map((p) => {
-    const first = p.notes?.split("\n")[0] ?? "";
+    const first = reviewTeamText(p.notes?.split("\n")[0] ?? "");
     const historical = splitNotes(p.notes).prescreen;
     return [p.id, first.startsWith("[Label audit ") ? first : historical ? `Historical note — not a current decision: ${historical}` : ""];
   }).filter(([, f]) => f));

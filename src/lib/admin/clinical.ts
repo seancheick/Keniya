@@ -1,4 +1,4 @@
-import { reviewTeamRow } from "./review-wording";
+import { reviewTeamRow, reviewTeamText } from "./review-wording";
 // Clinician review sheet: one row per product with the label data and every rule decision,
 // so a reviewer can audit box fit without the admin. No costs or vendors (not theirs to audit).
 import { fitFor, isClinicianApproved, type BoxFit } from "./rules";
@@ -49,7 +49,7 @@ const PRESCREEN = /^\[Pre-screen[^\]]*\]\s*/;
 /** The "[Pre-screen …]" verdict line at the top of a product's notes, split from the rest. */
 export function splitNotes(notes: string | null | undefined): { prescreen: string; other: string } {
   const [first, ...rest] = (notes ?? "").split("\n");
-  return PRESCREEN.test(first) ? { prescreen: first.replace(PRESCREEN, ""), other: rest.join("\n").trim() } : { prescreen: "", other: (notes ?? "").trim() };
+  return PRESCREEN.test(first) ? { prescreen: reviewTeamText(first.replace(PRESCREEN, "")), other: reviewTeamText(rest.join("\n").trim()) } : { prescreen: "", other: reviewTeamText((notes ?? "").trim()) };
 }
 
 export const CLINICIAN_VERDICT = "PharmaGuide Team decision (OK / change / reject)";
