@@ -140,6 +140,34 @@ export function packetProductRows(input: PacketInput): Record<string, unknown>[]
   return rows;
 }
 
+/**
+ * Products whose own evidence and screening are complete can go to the PharmaGuide Team
+ * before a full box lineup is assembled. The finished packet remains lineup-gated.
+ */
+export function clinicianReviewRows(input: PacketInput, products: Snack[]): Record<string, unknown>[] {
+  const pending = products.filter((s) =>
+    s.diligenceComplete === true &&
+    s.status === "Pre-approved" &&
+    s.clinicalDecision !== "approved" &&
+    s.clinicalDecision !== "rejected" &&
+    s.clinicalDecision !== "changes_requested"
+  );
+  const boxes: PacketBox[] = input.boxes.map((box) => ({
+    ...box,
+    checks: [],
+    picks: pending
+      .filter((snack) => eligibleFor(box.slug, snack, input.rules[box.slug], input.policy, snack.rejectReason).fits)
+      .map((snack) => ({ snack, category: null })),
+    extras: [],
+  }));
+
+  // The product-level gates above replace the lineup gate for this queue only.
+  return packetProductRows({ ...input, audience: "operator", boxes }).map((row) => ({
+    ...row,
+    "Eligible boxes": row["Used in"],
+  }));
+}
+
 export async function clinicianPacketWorkbook(input: PacketInput): Promise<Buffer> {
   input = reviewableInput(input);
   const wb = new ExcelJS.Workbook();

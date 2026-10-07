@@ -12,7 +12,7 @@ import { dollarsToFractionalCents, productSchema, readProductForm, versionSchema
 import { validCheckDigit } from "@/lib/admin/barcode";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { packetInput } from "@/lib/admin/packet-data";
-import { packetProductRows } from "@/lib/admin/clinical-packet";
+import { clinicianReviewRows } from "@/lib/admin/clinical-packet";
 import { reviewTeamText } from "@/lib/admin/review-wording";
 import { STATUSES } from "@/lib/admin/types";
 
@@ -93,8 +93,9 @@ export async function setProductStatus(_prev: FormState, fd: FormData): Promise<
   const { id, status, reason, clinical_decision } = parsed.data;
   if (admin.role === "clinician") {
     if (!["Approved", "Rejected"].includes(status) && !clinical_decision) return { error: "Choose approve, request changes or reject." };
-    const rows = packetProductRows(packetInput(await loadAdminContext(undefined, true)));
-    if (!rows.some((row) => row["Product ID"] === id)) return { error: "Internal diligence and lineup validation must be complete before PharmaGuide Team review." };
+    const ctx = await loadAdminContext(undefined, true);
+    const rows = clinicianReviewRows(packetInput(ctx), ctx.catalog.snacks);
+    if (!rows.some((row) => row["Product ID"] === id)) return { error: "Internal diligence must be complete and the product must fit at least one box before PharmaGuide Team review." };
   }
   if (clinical_decision && admin.role !== "clinician") return { error: "Sign in with the PharmaGuide Team review account to request changes." };
   if (status === "Rejected" && !reason) return { error: "Say why it's rejected (shown wherever it's offered)." };

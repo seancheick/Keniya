@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
 import { settings, snack } from "./__fixtures__/snacks";
-import { clinicianPacketWorkbook, limitsLine, packetProductRows, type PacketInput } from "./clinical-packet";
+import { clinicianPacketWorkbook, clinicianReviewRows, limitsLine, packetProductRows, type PacketInput } from "./clinical-packet";
 import { DEFAULT_BOX_RULES } from "./types";
 
 const shared = snack({ code: "P001", name: "Almonds", roles: { NS: true }, status: "Pre-approved", clinicianApprovedBy: null });
@@ -33,6 +33,26 @@ describe("PharmaGuide Team packet", () => {
     expect(packetProductRows({ ...ready, boxes: [{ ...ready.boxes[0], checks: [{ key: "gap", label: "Missing picks", value: "1", level: "block", pass: false, deficit: 1 }] }] })).toEqual([]);
     expect(packetProductRows({ ...ready, boxes: [{ ...ready.boxes[0], extras: [snack({ diligenceComplete: false })] }] })).toEqual([]);
     expect(packetProductRows({ ...ready, boxes: [{ ...ready.boxes[0], picks: [{ snack: { ...shared, clinicalDecision: "changes_requested" }, category: "Protein" }] }] })).toEqual([]);
+  });
+  it("offers an individually completed product for review before its box lineup is finished", () => {
+    const pending = snack({ code: "P010", status: "Pre-approved", diligenceComplete: true, clinicalDecision: "pending", clinicianApprovedBy: null });
+    const held = snack({ code: "P011", status: "Candidate", diligenceComplete: false, clinicalDecision: "pending", clinicianApprovedBy: null });
+    const unfinished: PacketInput = {
+      ...input,
+      audience: "clinician",
+      boxes: [{
+        slug: "heart",
+        version: 1,
+        state: "draft",
+        checks: [{ key: "gap", label: "Missing picks", value: "1", level: "block", pass: false, deficit: 1 }],
+        picks: [{ snack: pending, category: "Protein" }],
+        extras: [],
+      }],
+    };
+
+    expect(packetProductRows(unfinished)).toEqual([]);
+    expect(clinicianReviewRows(unfinished, [pending, held]).map((row) => row.Code)).toEqual(["P010"]);
+    expect(clinicianReviewRows(unfinished, [pending, held])[0]["Eligible boxes"]).toBe("Heart");
   });
   it("has one row per product used, with the rule and rationale for each box it serves", () => {
     const rows = packetProductRows(input);
