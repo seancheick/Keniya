@@ -148,7 +148,8 @@ const raw: Omit<Box, "founding">[] = [
       Hydration: { name: "Sips", note: "caffeine-checked drink mixes and water enhancers, because nursing is thirsty work" },
     },
     tint: "cream",
-    imageAlt: "The Postpartum & Nursing Box (photography coming)",
+    image: "/images/box-postpartum.jpg",
+    imageAlt: "An open Postpartum & Nursing Box of 14 snacks: granola, pistachios, pumpkin seeds, roasted chickpeas, nut butter packs, seed crackers, dried apricots, freeze-dried strawberries, a fruit pouch, popcorn, a fig bar, a fruit bar and almond flour crackers",
   },
 ];
 
