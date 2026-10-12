@@ -58,6 +58,11 @@ export async function saveSettings(_prev: SettingsState, fd: FormData): Promise<
       maxBoxOz: num(fd.get("max_box_oz")) ?? 32,
     },
     expiryTiersDays: [0, 1, 2].map((i) => Math.round(num(fd.getAll("tier")[i] ?? null) ?? [30, 60, 90][i])) as Settings["expiryTiersDays"],
+    // Blank = target off.
+    value: {
+      minRetailCents: String(fd.get("value_min_retail") ?? "").trim() === "" ? null : cents(fd.get("value_min_retail")),
+      maxSnackCostCents: String(fd.get("value_max_cost") ?? "").trim() === "" ? null : cents(fd.get("value_max_cost")),
+    },
   };
   if (!data.shipping.table.length) data.shipping.table = [{ fromOz: 0, cents: 0 }];
   const parsed = settingsSchema.safeParse(data);

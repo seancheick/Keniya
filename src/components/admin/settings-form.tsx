@@ -165,6 +165,17 @@ export function SettingsForm({ settings: s }: { settings: Settings }) {
           ))}
         </div>
       </Section>
+      <Section title="Box value targets (flag thin lineups; never blocks)">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Field label="Min shelf value of picks $">
+            <input name="value_min_retail" defaultValue={s.value.minRetailCents === null ? "" : (s.value.minRetailCents / 100).toFixed(2)} inputMode="decimal" className={fieldClass} />
+          </Field>
+          <Field label="Max snack cost of picks $">
+            <input name="value_max_cost" defaultValue={s.value.maxSnackCostCents === null ? "" : (s.value.maxSnackCostCents / 100).toFixed(2)} inputMode="decimal" className={fieldClass} />
+          </Field>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">Leave blank to turn a target off. Each lineup also flags repeated brands and repeated snack types.</p>
+      </Section>
       <Button disabled={pending}>{pending ? "Saving…" : "Save settings"}</Button>
     </form>
   );

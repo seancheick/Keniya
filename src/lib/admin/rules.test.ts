@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { gingerChews, popcorn, settings, snack } from "./__fixtures__/snacks";
 import { optimize } from "./optimizer";
-import { blockingFailures, checkLineup, eligibleFor, fitsBoxes, isReady, isClinicianApproved, lineupStage, packBlockers, shipsUnderPolicy, type Pick } from "./rules";
+import { blockingFailures, checkLineup, eligibleFor, fitsBoxes, isReady, isClinicianApproved, lineupStage, packBlockers, productKind, shipsUnderPolicy, type Pick } from "./rules";
 import { BOX_SLUGS, DEFAULT_BOX_RULES, resolveBoxRules, type Snack } from "./types";
 
 describe("product fit (workbook v4 formulas)", () => {
@@ -284,5 +284,58 @@ describe("approval and live standards fail closed", () => {
     expect(() => resolveBoxRules("heart", { total: "14" })).toThrow(/Invalid live rules/);
     expect(() => resolveBoxRules("heart", {})).toThrow(/Invalid live rules/);
     expect(() => resolveBoxRules("heart", null)).toThrow(/Invalid live rules/);
+  });
+});
+
+describe("value and variety checks", () => {
+  const rules = { ...DEFAULT_BOX_RULES.blood_sugar, categories: [] };
+  const lineup = (over: (i: number) => Partial<Snack> = () => ({})): Pick[] =>
+    Array.from({ length: 14 }, (_, i) => ({ snack: snack({ brand: `Brand ${i}`, retailCents: 300, ...over(i) }), category: null }));
+  const find = (picks: Pick[], key: string, s = settings) => checkLineup("blood_sugar", rules, picks, s, 6).find((c) => c.key === key);
+
+  it("names kinds from real catalog names", () => {
+    expect(productKind("Mott's No Sugar Added Applesauce Pouch")).toBe("Fruit pouch");
+    expect(productKind("GoGo squeeZ Apple Apple Pouch")).toBe("Fruit pouch");
+    expect(productKind("That's It Apple + Mango Fruit Bar 1.2 oz")).toBe("Fruit bar"); // not "Dried mango"
+    expect(productKind("Sunny Fruit Organic Dried Apricots Single-Serve Pouch 1.76 oz")).toBe("Dried apricots");
+    expect(productKind("Justin's Classic Peanut Butter Squeeze Pack 1.15 oz")).toBe("Nut butter pack");
+    expect(productKind("SunButter Natural Sunflower Butter On-the-Go Pouch 1.1 oz")).toBe("Nut butter pack");
+    expect(productKind("UNREAL Dark Chocolate Covered Almonds 1 oz Snack Pack")).toBe("Chocolate nuts");
+    expect(productKind("Blue Diamond Lightly Salted Almonds 100 Calorie Pack 0.6 oz")).toBe("Almonds");
+    expect(productKind("Biena Roasted Chickpea Snacks Sea Salt 1.2 oz Single Serve")).toBe("Roasted beans");
+    expect(productKind("RXBAR Chocolate Sea Salt 1.83 oz")).toBeNull();
+    expect(productKind("True Lemon Lemon Strawberry Water Enhancer Packets")).toBe("Water enhancer"); // not dried strawberries
+    expect(productKind("Ultima Replenisher Daily Electrolyte Drink Mix Lemonade Stickpack")).toBe("Electrolyte mix");
+    expect(productKind("MadeGood Strawberry Granola Minis Pouch 0.85 oz")).toBe("Granola minis");
+    expect(productKind("Crispy Fruit Strawberry Single-Serve 0.42 oz")).toBe("Dried strawberries");
+    expect(productKind("Emerald Natural Walnuts & Almonds 100-Calorie 16g")).toBe("Nut mix");
+    expect(productKind("Artisana Organic Raw Almond Butter Packet 1.06 oz")).toBe("Nut butter pack");
+  });
+
+  it("flags repeated brands and kinds as warnings that never block READY", () => {
+    const picks = lineup((i) => (i < 2 ? { brand: "Justin's", name: `Justin's Classic ${i ? "Peanut" : "Almond"} Butter Squeeze Pack` } : i < 4 ? { name: "Mott's Applesauce Pouch" } : {}));
+    const brand = find(picks, "brand")!;
+    const kind = find(picks, "kind")!;
+    expect([brand.level, brand.pass, brand.deficit]).toEqual(["warn", false, 1]);
+    expect(brand.value).toBe("1 repeat: Justin's ×2");
+    expect(kind.pass).toBe(false);
+    expect(kind.value).toMatch(/Nut butter pack ×2.*Fruit pouch ×2|Fruit pouch ×2.*Nut butter pack ×2/);
+    expect(blockingFailures(checkLineup("blood_sugar", rules, picks, settings, 6)).map((c) => c.key)).not.toContain("brand");
+  });
+
+  it("checks shelf value against the target and counts a missing retail price as not passing", () => {
+    expect(find(lineup(), "value")!.pass).toBe(true); // 14 × $3.00 = $42 ≥ $40
+    const thin = find(lineup(() => ({ retailCents: 150 })), "value")!;
+    expect([thin.pass, thin.deficit]).toEqual([false, 19]); // $21 vs $40
+    const unknown = find(lineup((i) => (i === 0 ? { retailCents: null } : {})), "value")!;
+    expect(unknown.pass).toBe(false);
+    expect(unknown.value).toMatch(/1 without a retail price/);
+  });
+
+  it("checks snack cost only when a ceiling is set", () => {
+    expect(find(lineup(), "snackcost")).toBeUndefined(); // off by default (public repo)
+    const s = { ...settings, value: { ...settings.value, maxSnackCostCents: 1000 } };
+    const c = find(lineup(), "snackcost", s)!; // 14 × $0.80 = $11.20
+    expect([c.level, c.pass, c.value]).toEqual(["warn", false, "$11.20 (target ≤ $10.00)"]);
   });
 });

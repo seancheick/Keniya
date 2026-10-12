@@ -171,6 +171,8 @@ export const settingsSchema = z.object({
     maxBoxOz: z.number().positive(),
   }),
   expiryTiersDays: z.tuple([z.number().int(), z.number().int(), z.number().int()]),
+  /** Lineup value targets (warnings only, never block): shelf value of the picks and their snack cost. null = off. */
+  value: z.object({ minRetailCents: cents.nullable(), maxSnackCostCents: cents.nullable() }),
 });
 export type Settings = z.infer<typeof settingsSchema>;
 
@@ -213,6 +215,9 @@ export const DEFAULT_SETTINGS: Settings = {
     maxBoxOz: 32,
   },
   expiryTiersDays: [30, 60, 90],
+  // A $47 box should hold snacks worth at least ~$40 at a store. The cost ceiling is a
+  // business number, so it stays off here (public repo) and is set on the Settings tab.
+  value: { minRetailCents: 4000, maxSnackCostCents: null },
 };
 
 /** Stored settings merged over defaults, so new fields never break an old row. */
@@ -231,6 +236,7 @@ export function resolveSettings(stored: unknown): Settings {
     },
     fees: { ...DEFAULT_SETTINGS.fees, ...s.fees },
     policy: { ...DEFAULT_SETTINGS.policy, ...s.policy },
+    value: { ...DEFAULT_SETTINGS.value, ...s.value },
   };
   const parsed = settingsSchema.safeParse(merged);
   if (!parsed.success) throw new Error("Invalid live settings");

@@ -366,6 +366,53 @@ const info = (key: string, label: string, value: string): Check => ({
   deficit: 0,
 });
 
+/**
+ * What kind of snack a product is, for the variety check (two applesauce pouches or three
+ * dried-apricot packs read as filler). Brand repeats are caught separately; only kinds that
+ * span brands are listed. Order matters: the first match wins.
+ */
+const KINDS: [RegExp, string][] = [
+  [/electrolyte|hydration multiplier|replenisher/, "Electrolyte mix"],
+  [/water enhancer|drink mix|lemonade/, "Water enhancer"],
+  [/granola minis|granola bites/, "Granola minis"],
+  [/that'?s it|fruit bar|fig bar/, "Fruit bar"],
+  // Before the pouch rule: "Squeeze Pack" is also how nut butters are sold.
+  [/sunbutter|(almond|peanut|sunflower|nut|seed) butter.*(squeeze|pouch|dip|cup|packet)/, "Nut butter pack"],
+  [/apple ?sauce|gogo squeez/, "Fruit pouch"],
+  [/apricot/, "Dried apricots"],
+  [/mango/, "Dried mango"],
+  [/crispy fruit|fruit crisps|just strawberries|freeze-dried strawberr/, "Dried strawberries"],
+  [/chocolate[- ](covered|cocoa)?\s*almond|almond.*dark chocolate|barkthins/, "Chocolate nuts"],
+  [/pumpkin seed|pepita|superseedz/, "Pumpkin seeds"],
+  [/chickpea|bada bean|broad bean/, "Roasted beans"],
+  [/popcorn|boomchickapop/, "Popcorn"],
+  [/pistachio/, "Pistachios"],
+  [/\bpeanuts\b/, "Peanuts"],
+  [/nut mix|\d-nut|walnuts & almonds/, "Nut mix"],
+  [/\balmonds\b/, "Almonds"],
+  [/cracker|nut-thins|goldfish|bunnies/, "Crackers"],
+  [/pretzel/, "Pretzels"],
+  [/cheese crisps|moon cheese|parmcrisps/, "Cheese crisps"],
+  [/jerky|meat stick|beef stick|beef bar/, "Jerky"],
+  [/\btea\b/, "Tea"],
+  [/gumm|chews?\b|candy|giggles|lollies|pop drops/, "Candy"],
+];
+export const productKind = (name: string): string | null => {
+  const n = name.toLowerCase();
+  return KINDS.find(([re]) => re.test(n))?.[1] ?? null;
+};
+const brandKey = (brand: string | null) => (brand ?? "").toLowerCase().replace(/\(.*?\)/g, "").replace(/^the\s+/, "").replace(/[^a-z0-9]/g, "");
+/** Picks beyond the first that share a key (null keys never count); labelled by the first pick's label. */
+const repeats = (keys: (string | null)[], labels: string[] = []) => {
+  const seen = new Map<string, { n: number; label: string }>();
+  keys.forEach((k, i) => {
+    if (k) seen.set(k, { n: (seen.get(k)?.n ?? 0) + 1, label: seen.get(k)?.label ?? labels[i] ?? k });
+  });
+  const extra = [...seen.values()].filter((v) => v.n > 1);
+  return { count: extra.reduce((t, v) => t + v.n - 1, 0), which: extra.map((v) => `${v.label} ×${v.n}`) };
+};
+const dollars = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
 export const packedWeightOz = (picks: Pick[], packagingOz: number) =>
   picks.reduce((s, p) => s + (p.snack.unit_wt_oz ?? 0), 0) + packagingOz;
 
@@ -453,6 +500,44 @@ export function checkLineup(
   if (rules.treatMax !== null) {
     const isTreat = carbBox ? (x: Snack) => ok(x) && ccTreatOnly(x) : heartTreat;
     checks.push(check("treats", carbBox ? "Treat-only picks (no protein/fiber anchor)" : "Controlled treats", count(isTreat), { max: rules.treatMax }));
+  }
+
+  // Value and variety: a box that's mostly grocery minis or repeats looks thin next to its
+  // price. Warnings only — like cost, they never block a lineup.
+  const brands = repeats(s.map((x) => brandKey(x.brand) || null), s.map((x) => x.brand ?? ""));
+  checks.push({
+    ...check("brand", "Repeated brands (one per brand)", brands.count, { max: 0 }, "warn"),
+    ...(brands.count ? { value: `${brands.count} repeat${brands.count > 1 ? "s" : ""}: ${brands.which.join(", ")}` } : {}),
+  });
+  const kinds = repeats(s.map((x) => productKind(x.name)));
+  checks.push({
+    ...check("kind", "Repeated snack types (one of each kind)", kinds.count, { max: 0 }, "warn"),
+    ...(kinds.count ? { value: `${kinds.count} repeat${kinds.count > 1 ? "s" : ""}: ${kinds.which.join(", ")}` } : {}),
+  });
+  const { minRetailCents, maxSnackCostCents } = settings.value;
+  if (minRetailCents !== null) {
+    const known = s.filter((x) => x.retailCents !== null);
+    const retail = known.reduce((t, x) => t + x.retailCents!, 0);
+    const missing = s.length - known.length;
+    checks.push({
+      key: "value",
+      label: "Shelf value of the picks (what they'd cost at a store)",
+      value: `${dollars(retail)}${missing ? ` known, ${missing} without a retail price` : ""} (target ≥ ${dollars(minRetailCents)})`,
+      level: "warn",
+      pass: retail >= minRetailCents && missing === 0,
+      deficit: Math.max(0, minRetailCents - retail) / 100 + missing,
+    });
+  }
+  if (maxSnackCostCents !== null) {
+    const cost = s.reduce((t, x) => t + (x.unitCostCents ?? 0), 0);
+    checks.push({
+      key: "snackcost",
+      label: "Snack cost of the picks",
+      value: `${dollars(cost)} (target ≤ ${dollars(maxSnackCostCents)})`,
+      level: "warn",
+      pass: cost <= maxSnackCostCents,
+      deficit: Math.max(0, cost - maxSnackCostCents) / 100,
+    });
   }
 
   checks.push(info("treenuts", "Picks containing tree nuts", `${count((x) => x.freeFrom.tree_nut_free === false)}`));
