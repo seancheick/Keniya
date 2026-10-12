@@ -174,8 +174,8 @@ export async function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
       <section className="mt-14" aria-labelledby="inside">
         <h2 id="inside" className="font-display text-3xl text-ink">What goes in</h2>
         <p className="mt-2 max-w-2xl text-ink-soft">
-          {site.snackCount}{" "}snacks across these categories. The exact snacks rotate with the season;
-          the categories and rules don&rsquo;t. A pack of chews counts as one snack, and small
+          {site.snackCount}{" "}snacks across these categories. The photo shows an example box: the exact
+          snacks rotate with the season; the categories and rules don&rsquo;t. A pack of chews counts as one snack, and small
           extras are free and never counted.
         </p>
         <ul className="mt-6 grid gap-3 sm:grid-cols-2">

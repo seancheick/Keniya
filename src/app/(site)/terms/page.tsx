@@ -36,7 +36,8 @@ export default function TermsPage() {
 
       <h2>What&rsquo;s inside, and substitutions</h2>
       <p>
-        Each box holds {site.snackCount} distinct snacks. Contents rotate with the
+        Each box holds {site.snackCount} distinct snacks. Product photos show an example
+        box, not a promise of specific snacks. Contents rotate with the
         seasons, availability, and your preferences, and specific brands may vary batch
         to batch. If an item runs out, we substitute within the same category and the
         same selection standards.

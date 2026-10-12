@@ -228,9 +228,9 @@ export function Shop({ boxes, standards }: { boxes: PublicBox[]; standards: Reco
                   </li>
                 </ul>
                 <p className="mt-4 max-w-[52ch] text-xs leading-relaxed text-ink-soft">
-                  Keniya standards, not medical cutoffs. Exact picks rotate with the season, and
-                  every box includes a <strong className="text-ink">Packed for You</strong> card
-                  on how we choose.
+                  Keniya standards, not medical cutoffs. Photos show an example box: exact picks
+                  rotate with the season, and every one meets this box&rsquo;s standards. Each box includes a{" "}
+                  <strong className="text-ink">Packed for You</strong> card on how we choose.
                 </p>
                 <Link
                   href={landingFor(b.slug).path}

@@ -65,7 +65,7 @@ const raw: Omit<Box, "founding">[] = [
     },
     tint: "blush",
     image: "/images/box-pregnancy.jpg",
-    imageAlt: "An open Pregnancy Comfort Box: ginger chews, crackers, a fruit pouch, almond butter, roasted chickpeas, fruit bars, peppermint tea, an electrolyte stick and popcorn",
+    imageAlt: "Example Pregnancy Comfort Box: ginger chews, crackers, a fruit pouch, almond butter, roasted chickpeas, fruit bars, peppermint tea, an electrolyte stick and popcorn",
   },
   {
     slug: "blood_sugar",
@@ -83,7 +83,7 @@ const raw: Omit<Box, "founding">[] = [
     },
     tint: "sage",
     image: "/images/box-carb-conscious.jpg",
-    imageAlt: "An open Keniya box of 14 blood-sugar-screened snacks: roasted chickpeas, almond butter, almonds, pumpkin seeds, cheese crisps, jerky, a protein bar, fruit bar, popcorn and an electrolyte stick",
+    imageAlt: "Example Blood Sugar Box of 14 snacks: roasted chickpeas, almond butter, almonds, pumpkin seeds, cheese crisps, jerky, a protein bar, fruit bar, popcorn and an electrolyte stick",
   },
   {
     slug: "heart",
@@ -100,7 +100,7 @@ const raw: Omit<Box, "founding">[] = [
     },
     tint: "cream",
     image: "/images/box-heart.jpg",
-    imageAlt: "An open Heart Wellness Box of 14 snacks: almond butter, pumpkin seeds, almonds, a heart-healthy nut mix, chickpeas, whole-grain crackers, seed bars, fruit, popcorn, an electrolyte stick and ginger tea",
+    imageAlt: "Example Heart Wellness Box of 14 snacks: almond butter, pumpkin seeds, almonds, a heart-healthy nut mix, chickpeas, whole-grain crackers, seed bars, fruit, popcorn, an electrolyte stick and ginger tea",
   },
   {
     slug: "gestational_diabetes",
@@ -132,7 +132,8 @@ const raw: Omit<Box, "founding">[] = [
       Hydration: { name: "Sips", note: "{{glp1.beverageStandard}} hydration" },
     },
     tint: "sage",
-    imageAlt: "The GLP-1 Companion Box (photography coming)",
+    image: "/images/box-glp1.jpg",
+    imageAlt: "Example GLP-1 Companion Box of 14 snacks: roasted edamame, chickpeas, pumpkin seeds, almonds, pistachios, almond butter, almond flour crackers, popcorn, a mini fruit bar, apple chips, an applesauce pouch, a nut bar, ginger tea and an electrolyte stick",
   },
   {
     slug: "postpartum",
@@ -149,7 +150,7 @@ const raw: Omit<Box, "founding">[] = [
     },
     tint: "cream",
     image: "/images/box-postpartum.jpg",
-    imageAlt: "An open Postpartum & Nursing Box of 14 snacks: granola, pistachios, pumpkin seeds, roasted chickpeas, nut butter packs, seed crackers, dried apricots, freeze-dried strawberries, a fruit pouch, popcorn, a fig bar, a fruit bar and almond flour crackers",
+    imageAlt: "Example Postpartum & Nursing Box of 14 snacks: granola, pistachios, pumpkin seeds, roasted chickpeas, nut butter packs, seed crackers, dried apricots, freeze-dried strawberries, a fruit pouch, popcorn, a fig bar, a fruit bar and almond flour crackers",
   },
 ];
 

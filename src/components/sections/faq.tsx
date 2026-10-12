@@ -4,7 +4,7 @@ import { site } from "@/lib/site";
 export const faqs = [
   {
     q: "What exactly is in the box?",
-    a: `${site.snackCount} snacks across the categories shown for each box, like comfort, protein, sweets and sips. Each box has its own standards with real numbers, shown on every box, so a snack has to pass them before it can go in. Exact picks rotate with the season. At least 8 are full single servings, a pack of chews or two tea bags counts as one snack, and small extras are free and never counted. Every box includes a Packed for You card on how we choose.`,
+    a: `${site.snackCount} snacks across the categories shown for each box, like comfort, protein, sweets and sips. Each box has its own standards with real numbers, shown on every box, so a snack has to pass them before it can go in. Exact picks rotate with the season, so the photos show an example box and your snacks may differ. At least 8 are full single servings, a pack of chews or two tea bags counts as one snack, and small extras are free and never counted. Every box includes a Packed for You card on how we choose.`,
   },
   {
     q: "When does it ship?",
