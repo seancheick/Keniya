@@ -116,7 +116,8 @@ const raw: Omit<Box, "founding">[] = [
       Hydration: { name: "Sips", note: "Hydration picks: {{gestational_diabetes.beverageCarbsMax}} g total carbs or less per stick, plus full Pregnancy screening. 0 g added sugar options preferred." },
     },
     tint: "blush",
-    imageAlt: "The Gestational Diabetes Box (photography coming)",
+    image: "/images/box-gestational-diabetes.jpg",
+    imageAlt: "Example Gestational Diabetes Box of 14 snacks: pistachios, pumpkin seeds, almonds, edamame, chickpeas, sunflower seeds, broad beans, almond flour crackers, whole grain crackers, popcorn, soy nuts, freeze-dried strawberries, a fruit bar and a seed bar",
   },
   {
     slug: "glp1",
