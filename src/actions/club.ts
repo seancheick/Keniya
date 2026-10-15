@@ -74,10 +74,10 @@ export async function clubAction(input: ClubActionInput): Promise<{ ok: boolean;
 
   const stripe = getStripe();
   if (!stripe) return { ok: false, message: `We couldn't reach billing. Email ${site.email} and we'll help right away.` };
-  const sub = await stripe.subscriptions.retrieve(owned.stripe_subscription_id);
-  if (sub.status === "canceled") return { ok: false, message: "This Snack Club is already cancelled." };
-  const end = periodEnd(sub);
   try {
+    const sub = await stripe.subscriptions.retrieve(owned.stripe_subscription_id);
+    if (sub.status === "canceled") return { ok: false, message: "This Snack Club is already cancelled." };
+    const end = periodEnd(sub);
     const updated = await stripe.subscriptions.update(sub.id, (() => {
       switch (input.action) {
         // Void just the next renewal: paused through the renewal date, back on a few days later.

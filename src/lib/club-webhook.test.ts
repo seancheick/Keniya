@@ -111,16 +111,33 @@ describe("Snack Club renewals", () => {
     expect(m.mail).not.toHaveBeenCalled();
   });
   it("mirrors changes and confirms a cancellation by email", async () => {
-    const f = fakes();
+    const f = fakes({ sub: sub({ status: "canceled" }) });
     await handleClubEvent(ev("customer.subscription.deleted", sub({ status: "canceled" })), f.stripe, f.db);
     expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ status: "canceled", stripe_subscription_id: "sub_1" }));
     expect(m.mail).toHaveBeenCalledWith("club@example.com", "sub_1", expect.objectContaining({ kind: "cancelled" }));
   });
   it("confirms by email as soon as a cancellation is scheduled", async () => {
-    const f = fakes();
+    const f = fakes({ sub: sub({ cancel_at_period_end: true }) });
     const event = { id: "evt_2", type: "customer.subscription.updated", data: { object: sub({ cancel_at_period_end: true }), previous_attributes: { cancel_at_period_end: false } } } as unknown as Stripe.Event;
     await handleClubEvent(event, f.stripe, f.db);
     expect(m.mail).toHaveBeenCalledWith("club@example.com", "sub_1-scheduled", expect.objectContaining({ kind: "cancelled", endsLabel: expect.any(String) }));
+  });
+  it("does not restore active state from an old event after cancellation", async () => {
+    const f = fakes({ sub: sub({ status: "canceled" }) });
+    await handleClubEvent(ev("customer.subscription.updated", sub()), f.stripe, f.db);
+    expect(f.update).toHaveBeenCalledWith(expect.objectContaining({ status: "canceled" }));
+  });
+  it("retries lifecycle email failures instead of acknowledging lost mail", async () => {
+    const f = fakes();
+    m.mail.mockResolvedValue({ ok: false, error: "mail offline" });
+    await expect(handleClubEvent(ev("invoice.upcoming", invoice()), f.stripe, f.db)).rejects.toThrow(/email/i);
+  });
+  it.each(["invoice.created", "invoice.paid", "invoice.upcoming"])("ignores unrelated subscriptions for %s", async (type) => {
+    const f = fakes({ sub: sub({ metadata: {} }) });
+    await handleClubEvent(ev(type, invoice()), f.stripe, f.db);
+    expect(f.raw.invoices.finalizeInvoice).not.toHaveBeenCalled();
+    expect(f.rawDb.rpc).not.toHaveBeenCalled();
+    expect(m.mail).not.toHaveBeenCalled();
   });
   it("leaves other events to the checkout handler", async () => {
     const f = fakes();

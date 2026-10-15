@@ -5,7 +5,7 @@ begin
  -- The first box is an admitted order recording its subscription.
  insert into public.checkout_reservations(request_key,box_slug,fingerprint,client_hash,session_id,admission_rules,admission_settings,admission_lineup)
  values(key,'heart','test','test','cs_club','{}','{}',gen_random_uuid());
- assert public.save_paid_order(jsonb_build_object('stripe_event_id','evt_club','stripe_session_id','cs_club','stripe_payment_intent_id','pi_club','email','club@example.com','amount_total',3900,'currency','usd','box_slug','heart','kind','subscription','stripe_subscription_id','sub_1'),key), 'first box admitted';
+ assert public.save_paid_order(jsonb_build_object('stripe_event_id','evt_club','stripe_session_id','cs_club','stripe_payment_intent_id','pi_club','email','club@example.com','amount_total',3900,'currency','usd','box_slug','heart','kind','subscription','stripe_subscription_id','sub_1','avoid','peanuts','craving','Salty'),key), 'first box admitted';
  assert (select kind='subscription' and stripe_subscription_id='sub_1' from public.preorders where stripe_session_id='cs_club');
  -- A one-time order records the code that discounted it.
  insert into public.checkout_reservations(request_key,box_slug,fingerprint,client_hash,session_id,admission_rules,admission_settings,admission_lineup)
@@ -17,6 +17,8 @@ begin
  assert public.save_renewal_order(jsonb_build_object('stripe_event_id','evt_r1','stripe_invoice_id','in_1','stripe_subscription_id','sub_1','stripe_payment_intent_id','pi_r1','email','club@example.com','amount_total',3900,'box_slug','heart')), 'renewal admitted';
  assert public.save_renewal_order(jsonb_build_object('stripe_event_id','evt_r1','stripe_invoice_id','in_1','stripe_subscription_id','sub_1','stripe_payment_intent_id','pi_r1','email','club@example.com','amount_total',3900,'box_slug','heart')), 'retried webhook is idempotent';
  assert (select count(*)=1 and bool_and(status='paid' and kind='renewal' and stripe_session_id is null) from public.preorders where stripe_invoice_id='in_1');
+
+ assert (select avoid = 'peanuts' and craving = 'Salty' from public.preorders where stripe_invoice_id='in_1'), 'renewal must preserve checkout food restrictions and preference';
 
  -- Renewals never use first-shipment capacity.
  select used into n from public.commerce_capacity() where box_slug='heart';

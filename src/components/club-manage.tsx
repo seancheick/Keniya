@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { clubAction, requestClubLink, type ClubActionInput } from "@/actions/club";
 import { CANCEL_REASONS, SKIP_CHOICES } from "@/lib/club-shared";
+import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const field =
@@ -40,6 +41,7 @@ export type ClubCard = {
   priceLabel: string;
   state: "active" | "skipping" | "paused" | "cancelling" | "ended";
   statusLine: string;
+  paymentIssue?: string | null;
   shipTo: string | null;
   address: { name: string; line1: string; line2: string; city: string; state: string; postal_code: string };
 };
@@ -80,6 +82,12 @@ function ClubSubscription({ token, card }: { token: string; card: ClubCard }) {
         <p className="font-display text-xl font-extrabold text-ink">{card.priceLabel}/mo</p>
       </div>
       <p className="paper mt-3 rounded-[3px] bg-butter px-3 py-2 text-sm font-semibold text-ink">{card.statusLine}</p>
+
+      {card.paymentIssue && (
+        <p role="alert" className="mt-3 rounded-[6px] border-2 border-coral-deep p-3 text-sm text-ink">
+          {card.paymentIssue} <a href={`mailto:${site.email}`} className="font-semibold underline">Contact us for billing help</a>.
+        </p>
+      )}
 
       {card.state !== "ended" && (
         <div className="mt-4 flex flex-wrap gap-2">

@@ -25,6 +25,8 @@ export async function handleClubEvent(event: Stripe.Event, stripe: Stripe, db: S
       const subId = invoiceSubscriptionId(inv);
       if (!subId) return true;
       const sub = await stripe.subscriptions.retrieve(subId);
+      // This endpoint may receive invoices for other products in the same Stripe account.
+      if (!sub.metadata.box_slug) return true;
       // A skipped or paused month is already voided by Stripe's pause_collection.
       if (sub.pause_collection) return true;
       const slug = sub.metadata.box_slug;
@@ -32,7 +34,7 @@ export async function handleClubEvent(event: Stripe.Event, stripe: Stripe, db: S
       if (slug && sales[slug as keyof typeof sales]?.clinicianApproved) return true;
       await holdRenewal(stripe, inv.id);
       const email = inv.customer_email;
-      if (email) await sendClubEmail(email, inv.id, { kind: "held", boxName: boxName(slug) });
+      if (email) await sendClubEmailRequired(email, inv.id, { kind: "held", boxName: boxName(slug) });
       return true;
     }
 
@@ -42,6 +44,8 @@ export async function handleClubEvent(event: Stripe.Event, stripe: Stripe, db: S
       const subId = invoiceSubscriptionId(inv);
       if (!subId) return true;
       const sub = await stripe.subscriptions.retrieve(subId);
+      // This endpoint may receive invoices for other products in the same Stripe account.
+      if (!sub.metadata.box_slug) return true;
       const { data: club, error: clubError } = await db.from("subscriptions").select("email, shipping, box_slug").eq("stripe_subscription_id", subId).maybeSingle();
       if (clubError) throw new Error(clubError.message);
       const email = club?.email ?? inv.customer_email ?? "";
@@ -67,7 +71,7 @@ export async function handleClubEvent(event: Stripe.Event, stripe: Stripe, db: S
         console.error("Renewal requires admission review", inv.id);
         return true;
       }
-      if (email) await sendClubEmail(email, inv.id, { kind: "renewed", boxName: boxName(sub.metadata.box_slug), amountLabel: usd(inv.amount_paid) });
+      if (email) await sendClubEmailRequired(email, inv.id, { kind: "renewed", boxName: boxName(sub.metadata.box_slug), amountLabel: usd(inv.amount_paid) });
       return true;
     }
 
@@ -76,9 +80,11 @@ export async function handleClubEvent(event: Stripe.Event, stripe: Stripe, db: S
       const subId = invoiceSubscriptionId(inv);
       if (!subId || !inv.customer_email) return true;
       const sub = await stripe.subscriptions.retrieve(subId);
+      // This endpoint may receive invoices for other products in the same Stripe account.
+      if (!sub.metadata.box_slug) return true;
       if (sub.pause_collection || sub.cancel_at_period_end || sub.status !== "active") return true;
       const when = inv.next_payment_attempt ?? periodEnd(sub);
-      await sendClubEmail(inv.customer_email, `${subId}-${when}`, {
+      await sendClubEmailRequired(inv.customer_email, `${subId}-${when}`, {
         kind: "upcoming",
         boxName: boxName(sub.metadata.box_slug),
         amountLabel: usd(inv.amount_due),
@@ -89,8 +95,10 @@ export async function handleClubEvent(event: Stripe.Event, stripe: Stripe, db: S
 
     case "customer.subscription.updated":
     case "customer.subscription.deleted": {
-      const sub = event.data.object;
-      if (!sub.metadata?.box_slug) return true;
+      const snapshot = event.data.object;
+      if (!snapshot.metadata?.box_slug) return true;
+      // Deliveries can be delayed or out of order; never mirror an old event snapshot.
+      const sub = await stripe.subscriptions.retrieve(snapshot.id);
       await syncSubscription(db, sub);
       // Confirm a cancellation the moment it's made (at period end), and again if it ends now.
       const previous = (event.data as { previous_attributes?: Partial<Stripe.Subscription> }).previous_attributes;
@@ -98,7 +106,7 @@ export async function handleClubEvent(event: Stripe.Event, stripe: Stripe, db: S
       if (scheduled || event.type === "customer.subscription.deleted") {
         const { data } = await db.from("subscriptions").select("email").eq("stripe_subscription_id", sub.id).maybeSingle();
         if (data?.email)
-          await sendClubEmail(data.email, scheduled ? `${sub.id}-scheduled` : sub.id, {
+          await sendClubEmailRequired(data.email, scheduled ? `${sub.id}-scheduled` : sub.id, {
             kind: "cancelled",
             boxName: boxName(sub.metadata.box_slug),
             endsLabel: scheduled ? dateLabel(periodEnd(sub)) : null,
@@ -123,4 +131,10 @@ async function holdRenewal(stripe: Stripe, invoiceId: string) {
   const finalized = await stripe.invoices.retrieve(invoiceId);
   if (finalized.status === "open") await stripe.invoices.voidInvoice(invoiceId);
   else if (finalized.status === "paid") throw new Error(`Renewal ${invoiceId} was paid before it could be held`);
+}
+
+/** Failed delivery must fail the webhook so Stripe retries the idempotent email. */
+async function sendClubEmailRequired(...args: Parameters<typeof sendClubEmail>) {
+  const result = await sendClubEmail(...args);
+  if (!result.ok) throw new Error(`Club email failed: ${result.error}`);
 }

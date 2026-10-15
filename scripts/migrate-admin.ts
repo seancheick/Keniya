@@ -76,6 +76,7 @@ const MIGRATIONS: { file: string; applied: string }[] = [
   { file: "supabase/migrations/20261008070000_optional_sugar_alcohol_disclosure.sql", applied: "select position('v.sugar_alcohols_g is null' in lower(pg_get_functiondef('public.product_diligence_complete(uuid)'::regprocedure))) > 0 as ok" },
   { file: "supabase/migrations/20261006203303_permanent_product_deletion.sql", applied: "select to_regprocedure('public.delete_product_permanently(uuid)') is not null as ok" },
   { file: "supabase/migrations/20261015010000_snack_club.sql", applied: "select to_regprocedure('public.save_renewal_order(jsonb)') is not null and to_regclass('public.subscriptions') is not null as ok" },
+  { file: "supabase/migrations/20261015223113_renewal_preferences.sql", applied: "select position('first_order.avoid' in pg_get_functiondef('public.save_renewal_order(jsonb)'::regprocedure)) > 0 as ok" },
 ];
 
 const TABLES = [
@@ -133,11 +134,18 @@ async function verify() {
 }
 
 async function main() {
-  if (!process.argv.includes("--check")) {
+  const checkOnly = process.argv.includes("--check");
+  let migrationsReady = true;
+  {
     for (const m of MIGRATIONS) {
       const [{ ok }] = await sql<{ ok: boolean }>(m.applied);
       if (ok) {
         console.log(`✓ ${m.file} already applied`);
+        continue;
+      }
+      if (checkOnly) {
+        console.error(`Missing migration: ${m.file}`);
+        migrationsReady = false;
         continue;
       }
       // One request = one transaction: a failure leaves nothing half-applied.
@@ -146,7 +154,7 @@ async function main() {
     }
   }
   const catalogReady = await initializeCatalog(!process.argv.includes("--check"));
-  const ok = await verify() && catalogReady;
+  const ok = await verify() && catalogReady && migrationsReady;
   console.log(ok ? "Database ready for the admin." : "Something is off: see above.");
   process.exit(ok ? 0 : 1);
 }

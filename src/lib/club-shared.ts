@@ -15,3 +15,10 @@ export function skipUntil(periodEndUnix: number, months: SkipMonths): number {
   d.setUTCMonth(d.getUTCMonth() + (months - 1));
   return Math.floor(d.getTime() / 1000) + SKIP_GRACE_S;
 }
+
+/** An unpaid renewal must not look like a healthy upcoming shipment. */
+export function clubPaymentIssue(status: string): string | null {
+  return ["past_due", "unpaid", "incomplete"].includes(status)
+    ? "Payment needs attention. Your unpaid box is not ready to ship. Existing unpaid invoices may still be collected even if you skip, pause or cancel future renewals."
+    : null;
+}

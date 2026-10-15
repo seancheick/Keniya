@@ -74,6 +74,11 @@ describe("self-service changes", () => {
     expect(await clubAction({ token: signClubLink(["sub_1"], 0)!, subscriptionId: "sub_1", action: "cancel" })).toMatchObject({ ok: false, message: expect.stringContaining("expired") });
     expect(m.update).not.toHaveBeenCalled();
   });
+  it("returns a retryable result when billing retrieval fails", async () => {
+    m.retrieve.mockRejectedValueOnce(new Error("offline"));
+    await expect(clubAction({ token: token(), subscriptionId: "sub_1", action: "cancel" })).resolves.toMatchObject({ ok: false });
+    expect(m.update).not.toHaveBeenCalled();
+  });
   it("saves a valid US address and rejects a bad ZIP", async () => {
     const address = { name: "Ada", line1: "1 Main St", city: "Providence", state: "ri", postal_code: "02903" };
     expect((await clubAction({ token: token(), subscriptionId: "sub_1", action: "address", address })).ok).toBe(true);

@@ -46,8 +46,10 @@ function mirror(sub: Stripe.Subscription) {
 
 /** First sight of a subscription (its checkout completed): the full row, with who and where. */
 export async function saveSubscription(db: SupabaseClient, sub: Stripe.Subscription, email: string, shipping: unknown) {
-  const { error } = await db.from("subscriptions").upsert({ ...mirror(sub), email, shipping }, { onConflict: "stripe_subscription_id" });
+  const { error } = await db.from("subscriptions").upsert({ ...mirror(sub), email, shipping }, { onConflict: "stripe_subscription_id", ignoreDuplicates: true });
   if (error) throw new Error(`Subscription save failed: ${error.message}`);
+  // A checkout retry must not undo an address changed through self-service.
+  await syncSubscription(db, sub);
 }
 
 /**

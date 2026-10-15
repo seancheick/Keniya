@@ -5,6 +5,7 @@ import { boxes } from "@/lib/box";
 import { verifyClubLink } from "@/lib/club-link";
 import { getSupabaseAdminStrict } from "@/lib/supabase";
 import { dateLabel, subscriptionsById, usd, type ClubRow } from "@/lib/subscriptions";
+import { clubPaymentIssue } from "@/lib/club-shared";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -26,7 +27,7 @@ function card(row: ClubRow): ClubCard {
             : "active";
   const statusLine = {
     active: next ? `Next renewal: ${next}. We email you a few days before.` : "Active.",
-    skipping: `Skipping your ${next} box. Renews again the month after.`,
+    skipping: `Skipping renewals until ${dateLabel(row.resumes_at)}. Billing resumes on the next scheduled renewal after that.`,
     paused: "Paused. No boxes and no charges until you resume.",
     cancelling: `Cancels after ${next}. No more charges after that.`,
     ended: "Cancelled. Thanks for snacking with us.",
@@ -38,6 +39,7 @@ function card(row: ClubRow): ClubCard {
     priceLabel: usd(row.price_cents),
     state,
     statusLine,
+    paymentIssue: clubPaymentIssue(row.status),
     shipTo: row.shipping ? [row.shipping.name, a.line1, a.line2, [a.city, a.state, a.postal_code].filter(Boolean).join(" ")].filter(Boolean).join(", ") : null,
     address: { name: row.shipping?.name ?? "", line1: a.line1 ?? "", line2: a.line2 ?? "", city: a.city ?? "", state: a.state ?? "", postal_code: a.postal_code ?? "" },
   };

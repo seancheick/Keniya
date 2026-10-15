@@ -94,8 +94,9 @@ export async function POST(req: Request) {
       // Snack Club: the first box is this order; the subscription renews it monthly.
       const subscriptionId = session.mode === "subscription" ? (typeof session.subscription === "string" ? session.subscription : session.subscription?.id ?? null) : null;
       const subscription = subscriptionId ? await stripe.subscriptions.retrieve(subscriptionId) : null;
-      const latestInvoice = typeof subscription?.latest_invoice === "string" ? subscription.latest_invoice : subscription?.latest_invoice?.id;
-      const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? (latestInvoice ? await invoicePaymentIntent(stripe, latestInvoice) : null);
+      // The session owns the first invoice; latest_invoice may already be a later renewal on replay.
+      const checkoutInvoice = typeof session.invoice === "string" ? session.invoice : session.invoice?.id;
+      const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? (checkoutInvoice ? await invoicePaymentIntent(stripe, checkoutInvoice) : null);
 
       const row = {
         stripe_event_id: event.id,

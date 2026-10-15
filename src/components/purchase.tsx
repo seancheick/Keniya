@@ -40,7 +40,10 @@ export function Purchase({
   const list = site.preorderPriceUSD * 100;
   const sub = gift ? null : offers.subscription;
   const monthly = plan === "monthly" && sub !== null;
-  const claimed = !monthly && offers.welcome && welcome?.status === "claimed" ? welcome : null;
+  // Browser storage remembers the email; current server settings own the advertised terms.
+  const claimed = !monthly && offers.welcome && welcome?.status === "claimed"
+    ? { ...welcome, code: offers.welcome.code, priceCents: offers.welcome.priceCents }
+    : null;
   const price = monthly ? sub.priceCents : claimed ? claimed.priceCents : list;
   const open = Boolean(box.sale?.available);
 

@@ -20,7 +20,7 @@ import { publicStandards } from "@/lib/standards";
 const base = site.url.replace(/\/$/, "");
 
 export const promises = [
-  "No subscription, no surprise renewal",
+  "One-time purchase or optional monthly delivery",
   `${site.freeShippingLabel} (US)`,
   `First boxes ship ${site.shipDate}`,
   "Full refund any time before it ships",
@@ -204,7 +204,7 @@ export async function BoxLandingPage({ slug }: { slug: Box["slug"] }) {
           <p className="font-display text-3xl font-extrabold tracking-tight text-ink">{box.name}</p>
           <p className="mt-1 font-semibold text-tissue-ink">{status}</p>
         </div>
-        <BuyButton box={box} showNote={false} className="sm:w-auto" label={`Order now, $${site.preorderPriceUSD}`} />
+        <BuyButton box={box} showNote={false} className="sm:w-auto" label={`Buy once, $${site.preorderPriceUSD}`} />
       </div>
 
       <OtherBoxes current={slug} />
