@@ -2,7 +2,7 @@ export const site = {
   name: "Keniya",
   tagline: "Snack boxes with a why",
   description:
-    "Snack boxes screened to their own standards for pregnancy, blood sugar, heart and blood pressure, gestational diabetes, GLP-1 and postpartum: 14 snacks, free US shipping, no subscription.",
+    "Thoughtfully selected snack boxes for pregnancy, blood sugar, heart, GLP-1 and postpartum. Explore a little care, packed for you.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://keniyahealth.com",
   email: "hello@keniyahealth.com",
   preorderPriceUSD: 47,

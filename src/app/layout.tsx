@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Bricolage_Grotesque, Figtree } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { site } from "@/lib/site";
+import { socialImage } from "@/lib/social";
 import "./globals.css";
 
 const bricolage = Bricolage_Grotesque({
@@ -28,11 +29,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     siteName: site.name,
+    images: [socialImage()],
     title: `${site.name} — ${site.tagline}`,
     description: site.description,
   },
   twitter: {
     card: "summary_large_image",
+    images: [socialImage()],
     title: `${site.name} — ${site.tagline}`,
     description: site.description,
   },

@@ -14,6 +14,7 @@ import { giftImage } from "@/lib/gift-image";
 import { giftLanding, landingFor } from "@/lib/landing";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/schema";
 import { site } from "@/lib/site";
+import { socialImage } from "@/lib/social";
 
 const img = giftImage();
 
@@ -28,13 +29,13 @@ export const metadata: Metadata = {
     url: giftLanding.path,
     title: giftLanding.title,
     description: giftLanding.description,
-    images: [{ url: img.src, width: img.width, height: img.height, alt: img.alt }],
+    images: [socialImage("gifts")],
   },
   twitter: {
     card: "summary_large_image",
     title: giftLanding.title,
     description: giftLanding.description,
-    images: [img.src],
+    images: [socialImage("gifts")],
   },
 };
 

@@ -1,3 +1,4 @@
+import { socialMetadata } from "@/lib/social";
 import type { Metadata } from "next";
 import { ClubLinkForm, ClubManage, type ClubCard } from "@/components/club-manage";
 import { Sticker } from "@/components/wrap";
@@ -9,6 +10,7 @@ import { clubPaymentIssue } from "@/lib/club-shared";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
+  ...socialMetadata("Manage your Snack Club", "Skip a month, pause, change your address or cancel your Keniya Monthly Snack Club.", "/club", "default"),
   title: "Manage your Snack Club",
   description: "Skip a month, pause, change your address or cancel your Keniya Monthly Snack Club.",
   alternates: { canonical: "/club" },

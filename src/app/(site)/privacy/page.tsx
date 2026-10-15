@@ -1,7 +1,9 @@
+import { socialMetadata } from "@/lib/social";
 import type { Metadata } from "next";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
+  ...socialMetadata("Privacy policy", "What Keniya collects, why, and who helps us handle it \u2014 plain-language privacy for our snack boxes, waitlists, and quiz.", "/privacy", "default"),
   title: "Privacy policy",
   description:
     "What Keniya collects, why, and who helps us handle it — plain-language privacy for our snack boxes, waitlists, and quiz.",

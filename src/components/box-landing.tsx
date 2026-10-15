@@ -15,6 +15,7 @@ import { giftLanding, landings } from "@/lib/landing";
 import { publicLanding } from "@/lib/public-rules";
 import { breadcrumbJsonLd, faqJsonLd, productJsonLd } from "@/lib/schema";
 import { site } from "@/lib/site";
+import { socialImage } from "@/lib/social";
 import { publicStandards } from "@/lib/standards";
 
 const base = site.url.replace(/\/$/, "");
@@ -29,7 +30,6 @@ export const promises = [
 /** Metadata from the filled landing copy; pages call this from generateMetadata. */
 export async function landingMetadata(slug: Box["slug"]): Promise<Metadata> {
   const l = publicLanding(slug, (await loadPublicCatalog()).rules);
-  const box = boxes.find((b) => b.slug === l.slug)!;
   return {
     title: l.title,
     description: l.description,
@@ -41,9 +41,9 @@ export async function landingMetadata(slug: Box["slug"]): Promise<Metadata> {
       url: l.path,
       title: l.title,
       description: l.description,
-      ...(box.image && { images: [{ url: box.image, width: 1600, height: 1200, alt: box.imageAlt }] }),
+      images: [socialImage(slug)],
     },
-    twitter: { card: "summary_large_image", title: l.title, description: l.description, ...(box.image && { images: [box.image] }) },
+    twitter: { card: "summary_large_image", title: l.title, description: l.description, images: [socialImage(slug)] },
   };
 }
 

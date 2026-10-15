@@ -1,4 +1,6 @@
+import { socialMetadata } from "@/lib/social";
 export const metadata = {
+  ...socialMetadata("Our story", "Keniya started in the middle of a first trimester \u2014 one couple, a snack aisle, and too many labels. Here's why we pack every box with the why.", "/about", "about"),
   title: "Our story",
   description:
     "Keniya started in the middle of a first trimester — one couple, a snack aisle, and too many labels. Here's why we pack every box with the why.",

@@ -31,6 +31,7 @@ const nextConfig: NextConfig = {
   // Renamed pages keep their old URLs alive (308). Paths are owned by src/lib/landing.ts.
   async redirects() {
     return [
+      { source: "/opengraph-image", destination: "/og/default", permanent: true },
       ...[...landings, giftLanding].flatMap((page) =>
         (page.redirectFrom ?? []).map((source) => ({ source, destination: page.path, permanent: true })),
       ),

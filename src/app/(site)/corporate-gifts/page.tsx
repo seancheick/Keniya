@@ -5,6 +5,7 @@ import { CorporateForm } from "@/components/corporate-form";
 import { Sticker } from "@/components/wrap";
 import { boxes } from "@/lib/box";
 import { site } from "@/lib/site";
+import { socialImage } from "@/lib/social";
 
 const title = "Corporate & Team Snack Gifts";
 const description = `Thoughtful snack boxes for teams: welcome packages, parental-leave gifts and milestones. ${site.corporateMinBoxes}+ boxes, each person picks the box that fits them.`;
@@ -13,7 +14,8 @@ export const metadata: Metadata = {
   title,
   description,
   alternates: { canonical: "/corporate-gifts" },
-  openGraph: { type: "website", locale: "en_US", siteName: site.name, url: "/corporate-gifts", title, description },
+  openGraph: { type: "website", locale: "en_US", siteName: site.name, url: "/corporate-gifts", title, description, images: [socialImage("corporate")] },
+  twitter: { card: "summary_large_image", title, description, images: [socialImage("corporate")] },
 };
 
 const occasions: { t: string; b: string; Icon: LucideIcon }[] = [

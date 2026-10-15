@@ -1,7 +1,9 @@
+import { socialMetadata } from "@/lib/social";
 import type { Metadata } from "next";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
+  ...socialMetadata("Terms of service", "Keniya's terms in plain words: $47 boxes, the optional Monthly Snack Club, free US shipping, full refunds before your box ships, and honest substitution rules.", "/terms", "default"),
   title: "Terms of service",
   description:
     "Keniya's terms in plain words: $47 boxes, the optional Monthly Snack Club, free US shipping, full refunds before your box ships, and honest substitution rules.",
