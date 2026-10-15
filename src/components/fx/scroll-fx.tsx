@@ -31,9 +31,11 @@ export function ScrollFx() {
 
         gsap.utils.toArray<HTMLElement>("[data-reveal]").forEach((el) => {
           const dir = el.dataset.reveal;
+          // "left" slides in from the left, "right" from the right; distance is per element.
+          const dist = parseFloat(el.dataset.revealDistance ?? "40");
           const from: gsap.TweenVars = { autoAlpha: 0, y: 28 };
-          if (dir === "left") Object.assign(from, { x: -40, y: 0 });
-          if (dir === "right") Object.assign(from, { x: 40, y: 0 });
+          if (dir === "left") Object.assign(from, { x: -dist, y: 0 });
+          if (dir === "right") Object.assign(from, { x: dist, y: 0 });
           gsap.fromTo(el, from, {
             autoAlpha: 1,
             x: 0,
@@ -45,24 +47,39 @@ export function ScrollFx() {
           });
         });
 
-        gsap.utils.toArray<HTMLElement>("[data-reveal-group]").forEach((group) => {
-          const items = group.querySelectorAll<HTMLElement>("[data-reveal-item]");
-          if (!items.length) return;
+        // Scroll-linked slides: data-scrub="left"|"right" moves an element in from that side in
+        // step with the scroll (and back out if you scroll up), smoothed so it never jitters.
+        // Each starts as soon as its top edge enters the screen. When siblings share a row
+        // (md and up), data-scrub-index nudges them so they settle one after another; stacked,
+        // their own positions already stagger them.
+        const inRow = () => window.matchMedia("(min-width: 768px)").matches;
+        gsap.utils.toArray<HTMLElement>("[data-scrub]").forEach((el) => {
+          const side = el.dataset.scrub === "left" ? -1 : 1;
+          const dist = parseFloat(el.dataset.scrubDistance ?? "90");
+          const lag = () => (inRow() ? parseFloat(el.dataset.scrubIndex ?? "0") * 6 : 0);
           gsap.fromTo(
-            items,
-            { autoAlpha: 0, y: 24 },
+            el,
+            { autoAlpha: 0, x: side * dist, rotate: side * 2 },
             {
               autoAlpha: 1,
-              y: 0,
-              duration: 0.7,
-              ease: "power3.out",
-              stagger: 0.09,
-              scrollTrigger: { trigger: group, start: "top 80%", once: true },
+              x: 0,
+              rotate: 0,
+              ease: "power2.out",
+              scrollTrigger: {
+                trigger: el,
+                start: () => `top ${100 - lag()}%`,
+                end: () => `top ${68 - lag()}%`,
+                scrub: 0.6,
+                invalidateOnRefresh: true,
+              },
             },
           );
         });
 
         ScrollTrigger.refresh();
+        // Web fonts can land after this runs and shift layout a few pixels; re-measure then.
+        let live = true;
+        document.fonts?.ready.then(() => live && ScrollTrigger.refresh());
 
         // Pinned sections (if any) insert their spacers after this effect, pushing every
         // #hash target further down. Re-measure next frame, then land on the hash —
@@ -76,6 +93,7 @@ export function ScrollFx() {
         });
 
         return () => {
+          live = false;
           cancelAnimationFrame(settle);
           gsap.ticker.remove(raf);
           lenis.destroy();

@@ -1,49 +1,32 @@
 import { site } from "@/lib/site";
 
-const items = [
-  { label: `Ships ${site.shipDate.replace(/, \d{4}$/, "")}`, detail: "Free US shipping" },
-  { label: "No subscription", detail: "One-time purchase" },
-  { label: "Refundable before ship", detail: "One email, full refund" },
-  {
-    label: "Reviewed by a pharmacist",
-    detail: "Laurie Pham, PharmD",
-    href: "/#reviewer",
-  },
+const items: { label: string; href?: string }[] = [
+  { label: "No subscription needed" },
+  { label: "Free US shipping" },
+  { label: "Full refund until it ships" },
+  { label: `First boxes ship ${site.shipDate.replace(/, \d{4}$/, "")}` },
+  { label: "Criteria reviewed by a pharmacist", href: "/#reviewer" },
 ];
 
+/** The ribbon across the box: the facts a buyer checks before anything else. */
 export function TrustStrip() {
   return (
-    <section
-      aria-label="Trust highlights"
-      className="border-y border-border bg-cream-deep/50"
-    >
-      <div className="mx-auto grid max-w-6xl grid-cols-2 gap-x-4 gap-y-4 px-6 py-5 lg:grid-cols-4">
-        {items.map((item) => {
-          const inner = (
-            <>
-              <p className="text-sm font-medium text-ink">{item.label}</p>
-              <p className="text-xs text-ink-soft">{item.detail}</p>
-            </>
-          );
-          const className =
-            "lg:border-l lg:border-border lg:pl-4 lg:first:border-l-0 lg:first:pl-0";
-          if ("href" in item && item.href) {
-            return (
-              <a
-                key={item.label}
-                href={item.href}
-                className={`${className} transition-colors hover:text-ink`}
-              >
-                {inner}
-              </a>
-            );
-          }
-          return (
-            <div key={item.label} className={className}>
-              {inner}
-            </div>
-          );
-        })}
+    <section aria-label="Good to know" className="relative overflow-x-clip py-3">
+      <div className="paper -mx-4 -rotate-[1.2deg] bg-coral shadow-[0_10px_20px_-14px_rgb(37_37_37/0.6)]">
+        <ul className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-5 gap-y-1.5 px-8 py-3.5 text-sm font-semibold text-ink sm:gap-x-7">
+          {items.map((item, i) => (
+            <li key={item.label} className="flex items-center gap-x-5 sm:gap-x-7">
+              {i > 0 && <span aria-hidden className="hidden size-1.5 rounded-full bg-ink/70 lg:block" />}
+              {item.href ? (
+                <a href={item.href} className="underline decoration-ink/40 underline-offset-4 hover:decoration-ink">
+                  {item.label}
+                </a>
+              ) : (
+                item.label
+              )}
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

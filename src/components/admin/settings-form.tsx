@@ -176,6 +176,59 @@ export function SettingsForm({ settings: s }: { settings: Settings }) {
         </div>
         <p className="mt-2 text-xs text-muted-foreground">Leave blank to turn a target off. Each lineup also flags repeated brands and repeated snack types.</p>
       </Section>
+      <Section title="Offers (the site shows only what's on)" hint="Saving settings ends any open checkouts, so change offers when the shop is quiet.">
+        <div className="space-y-5">
+          <div>
+            <label className="flex min-h-11 items-center gap-2 text-sm font-medium">
+              <input type="checkbox" name="welcome_on" defaultChecked={s.offers.welcome.enabled} className="size-5" /> First-box offer (pop-up + checkout)
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Code">
+                <input name="welcome_code" defaultValue={s.offers.welcome.code} className={`${fieldClass} uppercase`} />
+              </Field>
+              <Field label="% off">
+                <input name="welcome_pct" defaultValue={s.offers.welcome.percentOff} inputMode="numeric" className={fieldClass} />
+              </Field>
+              <Field label="Max uses (blank = no cap)">
+                <input name="welcome_limit" defaultValue={s.offers.welcome.limit ?? ""} inputMode="numeric" className={fieldClass} />
+              </Field>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              One-time boxes and gifts only, one per email with no earlier order. Changing % or max uses starts a new Stripe coupon.
+            </p>
+          </div>
+          <div>
+            <label className="flex min-h-11 items-center gap-2 text-sm font-medium">
+              <input type="checkbox" name="bonus_on" defaultChecked={s.offers.foundingBonus.enabled} className="size-5" /> Founding bonus
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="First N orders">
+                <input name="bonus_limit" defaultValue={s.offers.foundingBonus.limit} inputMode="numeric" className={fieldClass} />
+              </Field>
+              <div className="col-span-2">
+                <Field label="What it is (shown on the site)">
+                  <input name="bonus_description" defaultValue={s.offers.foundingBonus.description} maxLength={120} className={fieldClass} />
+                </Field>
+              </div>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">Set N to the bonus stock you actually have. Orders show &ldquo;Founding bonus&rdquo; on the packing view.</p>
+          </div>
+          <div>
+            <label className="flex min-h-11 items-center gap-2 text-sm font-medium">
+              <input type="checkbox" name="sub_on" defaultChecked={s.offers.subscription.enabled} className="size-5" /> Monthly Snack Club
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Monthly price $">
+                <input name="sub_price" defaultValue={$(s.offers.subscription.priceCents)} inputMode="decimal" className={fieldClass} />
+              </Field>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Check each box&rsquo;s cost card first (target: 25%+ contribution at this price). Renewals for a box without an approved,
+              in-stock lineup are held, not charged.
+            </p>
+          </div>
+        </div>
+      </Section>
       <Button disabled={pending}>{pending ? "Saving…" : "Save settings"}</Button>
     </form>
   );

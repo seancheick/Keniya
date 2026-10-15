@@ -3,7 +3,8 @@
 import { headers } from "next/headers";
 import { createHash } from "node:crypto";
 import { reconcileCheckoutHolds } from "@/lib/commerce-reconcile";
-import { loadSaleSnapshot } from "@/lib/commerce";
+import { loadCommerceState } from "@/lib/commerce";
+import { ensureWelcomeCoupon, likeExact, loadWelcomeOffer } from "@/lib/offers";
 import { getSupabaseAdminStrict } from "@/lib/supabase";
 import type Stripe from "stripe";
 import { z } from "zod";
@@ -26,6 +27,10 @@ const schema = z.object({
     .string()
     .optional()
     .transform((v) => v?.trim().slice(0, 255) || undefined),
+  // First-order offer: the buyer's email, checked against past orders and locked into checkout.
+  welcomeEmail: z.string().trim().toLowerCase().pipe(z.email().max(255)).optional(),
+  // "monthly" = the Snack Club (only while it's switched on in Settings).
+  plan: z.enum(["once", "monthly"]).default("once"),
 });
 
 const CHECKOUT_DOWN =
@@ -41,16 +46,23 @@ export type CheckoutInput = {
   gift?: boolean;
   craving?: string;
   avoid?: string;
+  welcomeEmail?: string;
+  plan?: "once" | "monthly";
 };
 
 export async function startCheckout(input: CheckoutInput): Promise<CheckoutResult> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: "Pick a box to preorder.", code: "bad_box" };
+    if (parsed.error.issues.some((i) => i.path[0] === "welcomeEmail"))
+      return { ok: false, message: "That email doesn't look right. Mind checking it?", code: "bad_email" };
+    return { ok: false, message: "Pick a box to order.", code: "bad_box" };
   }
 
   const gift = parsed.data.gift === true;
-  const { craving, avoid } = parsed.data;
+  const { craving, avoid, welcomeEmail, plan } = parsed.data;
+  const monthly = plan === "monthly";
+  if (monthly && gift) return { ok: false, code: "gift_subscription", message: "Gifts are one-time. Choose Buy once to send a gift." };
+  if (monthly && welcomeEmail) return { ok: false, code: "offer_subscription", message: "The first-box offer is for one-time boxes. Choose Buy once to use it." };
   const box = boxes.find((b) => b.slug === parsed.data.boxSlug);
   if (!box) {
     return { ok: false, message: "That box isn’t available.", code: "missing_box" };
@@ -90,11 +102,27 @@ export async function startCheckout(input: CheckoutInput): Promise<CheckoutResul
     const { data: allowed, error: limitError } = await db.rpc("allow_public_attempt", { p_key: `checkout:${clientHash}`, p_limit: 15, p_window_seconds: 600 });
     if (limitError || allowed !== true) return { ok: false, code: "rate_limit", message: "Please wait a few minutes before trying checkout again." };
     await reconcileCheckoutHolds(db, stripe, box.slug);
-    const sale = (await loadSaleSnapshot())[box.slug];
-    if (!sale.clinicianApproved || sale.priceCents !== site.preorderPriceUSD * 100) return { ok: false, needsEmail: true, code: "unavailable", message: "This box is not open for preorder yet. Join the list for an update." };
-    if (priceId) {
+    const { sales, settings } = await loadCommerceState();
+    const sale = sales[box.slug];
+    if (!sale.clinicianApproved || sale.priceCents !== site.preorderPriceUSD * 100) return { ok: false, needsEmail: true, code: "unavailable", message: "This box isn't open for orders yet. Join the list and we'll email you." };
+    const club = settings.offers.subscription;
+    if (monthly && (!club.enabled || club.priceCents <= 0)) return { ok: false, code: "no_subscription", message: "The Snack Club isn't open yet. You can still order one box." };
+    if (priceId && !monthly) {
       const price = await stripe.prices.retrieve(priceId);
       if (!price.active || price.type !== "one_time" || price.currency !== "usd" || price.unit_amount !== sale.priceCents) throw new Error("Stripe price does not match the published price");
+    }
+    // WELCOME20: a buyer's first order only. Stripe counts every guest checkout as a first
+    // purchase, so the check is ours: no earlier order on this email, and the email is locked
+    // into checkout so the discount can't move to another address.
+    let welcomeCoupon: string | null = null;
+    if (welcomeEmail) {
+      const offer = await loadWelcomeOffer(stripe, settings);
+      if (!offer) return { ok: false, code: "offer_ended", message: `The first-box offer has ended. You can still order at $${site.preorderPriceUSD}.` };
+      const { data: prior, error: priorError } = await db.from("preorders").select("id").ilike("email", likeExact(welcomeEmail)).limit(1);
+      if (priorError) throw new Error(priorError.message);
+      // Deliberately vague: the reason is "this email has ordered", which isn't ours to reveal.
+      if (prior?.length) return { ok: false, code: "offer_used", message: `The first-box offer can't be used with this email. You can still order at $${site.preorderPriceUSD}.` };
+      welcomeCoupon = await ensureWelcomeCoupon(stripe, settings.offers.welcome);
     }
     const fingerprint = createHash("sha256").update(JSON.stringify(parsed.data)).digest("hex");
     const { data: hold, error: holdError } = await db.rpc("reserve_checkout", {
@@ -108,7 +136,22 @@ export async function startCheckout(input: CheckoutInput): Promise<CheckoutResul
       if (existing.status === "open" && existing.payment_status !== "paid" && existing.url) return { ok: true, url: existing.url };
       return { ok: false, code: "expired_session", message: "This checkout has finished or expired. Please start a new checkout." };
     }
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = priceId
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = monthly
+      ? [
+          {
+            quantity: 1,
+            price_data: {
+              currency: "usd",
+              unit_amount: club.priceCents,
+              recurring: { interval: "month" },
+              product_data: {
+                name: `${box.name} · Monthly Snack Club`,
+                description: `${site.snackCount} snacks every month · Free shipping · First box ships ${site.shipDate} · Skip, pause or cancel online`,
+              },
+            },
+          },
+        ]
+      : priceId
       ? [{ price: priceId, quantity: 1 }]
       : [
           {
@@ -117,15 +160,19 @@ export async function startCheckout(input: CheckoutInput): Promise<CheckoutResul
               currency: "usd",
               unit_amount: sale.priceCents,
               product_data: {
-                name: `${box.name}${gift ? " (Gift)" : ""} (Founding preorder)`,
-                description: `${site.snackCount} snacks · Free shipping · Ships ${site.shipDate} · Refundable before it ships`,
+                name: `${box.name}${gift ? " (Gift)" : ""}`,
+                description: `${site.snackCount} snacks · Free shipping · First boxes ship ${site.shipDate} · Refundable until it ships`,
               },
             },
           },
         ];
 
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
+      mode: monthly ? "subscription" : "payment",
+      ...(monthly && {
+        // The box rides on the subscription so renewals know what to pack.
+        subscription_data: { metadata: { box_slug: box.slug, plan: "monthly" }, description: `${box.name} · Monthly Snack Club` },
+      }),
       payment_method_types: ["card"],
       line_items: lineItems,
       success_url: `${base}/thanks?session_id={CHECKOUT_SESSION_ID}&box=${box.slug}${gift ? "&gift=1" : ""}`,
@@ -170,11 +217,22 @@ export async function startCheckout(input: CheckoutInput): Promise<CheckoutResul
         founding_release: "fall_26",
         reservation_key: parsed.data.requestKey,
         gift: gift ? "yes" : "no",
+        plan,
+        ...(welcomeCoupon && { offer: settings.offers.welcome.code }),
       },
-      allow_promotion_codes: true,
+      // One discount per order: the checked welcome coupon, or a code typed at checkout.
+      // The Snack Club takes no codes (its price is already the saving).
+      ...(monthly
+        ? {}
+        : welcomeCoupon && welcomeEmail
+          ? { discounts: [{ coupon: welcomeCoupon }], customer_email: welcomeEmail }
+          : { allow_promotion_codes: true }),
       custom_text: {
         submit: {
-          message: `Want a different box? Use the ← arrow at the top to switch. Every box is $${site.preorderPriceUSD}.`,
+          // Express consent to the recurring charge, stated where they click (ROSCA).
+          message: monthly
+            ? `By subscribing you agree to $${(club.priceCents / 100).toFixed(2)} today and every month on this date until you cancel. Skip, pause or cancel anytime at ${base.replace(/^https?:\/\//, "")}/club.`
+            : `Want a different box? Use the ← arrow at the top to switch. Every box is $${site.preorderPriceUSD}.`,
         },
       },
       // Unfinished checkouts expire after 2h. Reminders return to fresh admission on the box page.

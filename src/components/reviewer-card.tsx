@@ -10,16 +10,16 @@ export function ReviewerCard({ className }: { className?: string }) {
     <div
       id="reviewer"
       className={cn(
-        "flex max-w-lg scroll-mt-28 items-center gap-4 rounded-2xl border border-border bg-cream-card p-4",
+        "flex max-w-lg scroll-mt-28 items-center gap-4 rounded-[6px] border-2 border-ink bg-cream-card p-4 shadow-[0_18px_30px_-24px_rgb(37_37_37/0.6)] sm:p-5",
         className,
       )}
     >
       <Image
         src="/images/laurie-pham.webp"
         alt="Laurie Pham, PharmD, Keniya's clinical reviewer"
-        width={56}
-        height={56}
-        className="size-14 shrink-0 rounded-full object-cover"
+        width={64}
+        height={64}
+        className="size-16 shrink-0 rounded-full object-cover ring-4 ring-butter"
       />
       <p className="text-sm leading-relaxed text-ink-soft">
         <strong className="text-ink">Reviewed by Laurie Pham, PharmD.</strong>{" "}

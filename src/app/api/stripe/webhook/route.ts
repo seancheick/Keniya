@@ -8,12 +8,16 @@ import { getStripe } from "@/lib/stripe";
 import { stripeFeeForSession } from "@/lib/stripe-fee";
 import { getSupabaseAdminStrict } from "@/lib/supabase";
 import { loadCommerceState } from "@/lib/commerce";
+import { handleClubEvent } from "@/lib/club-webhook";
+import { invoicePaymentIntent, saveSubscription } from "@/lib/subscriptions";
+import { sessionPromoCode } from "@/lib/promo-codes";
 
 /**
  * Stripe → Keniya. Handles:
  * - checkout.session.completed / async_payment_succeeded (paid): save the order, email the
  *   customer a confirmation and the founder a packing alert.
  * - checkout.session.expired: one box-page reminder when fresh preorder admission is available.
+ * - Snack Club renewals, reminders and changes: see handleClubEvent.
  * Emails are idempotent per session (see sendOnce), so Stripe retries are safe.
  */
 export async function POST(req: Request) {
@@ -68,6 +72,7 @@ export async function POST(req: Request) {
     if (error) throw new Error(error.message);
     return NextResponse.json({ received: true });
   }
+  if (await handleClubEvent(event, stripe, db)) return NextResponse.json({ received: true });
   if (!event.type.startsWith("checkout.session.")) return NextResponse.json({ received: true });
   const session = event.data.object as Stripe.Checkout.Session;
   // Emails list what goes in, so they use the same live-recipe composition as the site.
@@ -86,11 +91,17 @@ export async function POST(req: Request) {
         session.custom_fields.find((f) => f.key === "avoid")?.text?.value?.trim() || undefined;
       const cravingValue = session.custom_fields.find((f) => f.key === "craving")?.dropdown?.value;
       const craving = cravings.find((c) => c.value === cravingValue)?.label;
+      // Snack Club: the first box is this order; the subscription renews it monthly.
+      const subscriptionId = session.mode === "subscription" ? (typeof session.subscription === "string" ? session.subscription : session.subscription?.id ?? null) : null;
+      const subscription = subscriptionId ? await stripe.subscriptions.retrieve(subscriptionId) : null;
+      // The session owns the first invoice; latest_invoice may already be a later renewal on replay.
+      const checkoutInvoice = typeof session.invoice === "string" ? session.invoice : session.invoice?.id;
+      const paymentIntent = typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? (checkoutInvoice ? await invoicePaymentIntent(stripe, checkoutInvoice) : null);
 
       const row = {
         stripe_event_id: event.id,
         stripe_session_id: session.id,
-        stripe_payment_intent_id: typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id ?? null,
+        stripe_payment_intent_id: paymentIntent,
         email,
         customer_name: session.customer_details?.name ?? ship?.name ?? null,
         amount_total: session.amount_total ?? 0,
@@ -100,11 +111,16 @@ export async function POST(req: Request) {
         avoid: avoid ?? null,
         craving: craving ?? null,
         status: "paid",
+        kind: subscriptionId ? "subscription" : "one_time",
+        stripe_subscription_id: subscriptionId,
+        promo_code: await sessionPromoCode(stripe, session),
       };
       const reservationKey = session.metadata?.reservation_key;
       const validKey = reservationKey && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(reservationKey) ? reservationKey : null;
       const { data: admitted, error } = await db.rpc("save_paid_order", { p_order: row, p_key: validKey });
       if (error) throw new Error(`Order persistence failed: ${error.message}`);
+      // Saved even when admission is held, so the admin sees every live subscription.
+      if (subscription && email) await saveSubscription(db, subscription, email, ship ?? null);
 
       if (admitted !== true) {
         console.error("Paid session requires admission review", session.id);
@@ -139,6 +155,7 @@ export async function POST(req: Request) {
         {
           box: { ...emailBox, founding: sale.founding, sale: { available: sale.available, clinicianApproved: sale.clinicianApproved, priceCents: sale.priceCents, remaining: sale.remaining, state: sale.available ? "preorder" : "waitlist" } },
           firstName: (session.customer_details?.name ?? "").split(" ")[0] || undefined,
+          ...(subscription && { club: { priceCents: subscription.items.data[0]?.price.unit_amount ?? session.amount_total ?? 0 } }),
           amountCents: session.amount_total ?? 0,
           orderRef: session.id.slice(-8).toUpperCase(),
           gift: session.metadata?.gift === "yes",
@@ -158,8 +175,7 @@ export async function POST(req: Request) {
         {
           customerName: session.customer_details?.name ?? undefined,
           soldCount: count ?? null,
-          paymentIntentId:
-            typeof session.payment_intent === "string" ? session.payment_intent : undefined,
+          paymentIntentId: paymentIntent ?? undefined,
         },
         session.id,
       );

@@ -73,18 +73,19 @@ const MIGRATIONS: { file: string; applied: string }[] = [
   { file: "supabase/migrations/20261008040000_public_abuse_controls.sql", applied: "select to_regprocedure('public.allow_public_attempt(text,integer,integer)') is not null as ok" },
   { file: "supabase/migrations/20261008050000_commerce_observation_fencing.sql", applied: "select to_regprocedure('public.bind_checkout_session(uuid,text,text)') is not null and to_regprocedure('public.begin_financial_observation(text)') is not null as ok" },
   { file: "supabase/migrations/20261008060000_payment_admission_provenance.sql", applied: "select to_regprocedure('public.preorder_admission_guard()') is not null as ok" },
-  { file: "supabase/migrations/20261008070000_optional_sugar_alcohol_disclosure.sql", applied: "select position('v.sugar_alcohols_g IS NULL' in pg_get_functiondef('public.product_diligence_complete(uuid)'::regprocedure)) > 0 as ok" },
+  { file: "supabase/migrations/20261008070000_optional_sugar_alcohol_disclosure.sql", applied: "select position('v.sugar_alcohols_g is null' in lower(pg_get_functiondef('public.product_diligence_complete(uuid)'::regprocedure))) > 0 as ok" },
   { file: "supabase/migrations/20261006203303_permanent_product_deletion.sql", applied: "select to_regprocedure('public.delete_product_permanently(uuid)') is not null as ok" },
-
+  { file: "supabase/migrations/20261015010000_snack_club.sql", applied: "select to_regprocedure('public.save_renewal_order(jsonb)') is not null and to_regclass('public.subscriptions') is not null as ok" },
+  { file: "supabase/migrations/20261015223113_renewal_preferences.sql", applied: "select position('first_order.avoid' in pg_get_functiondef('public.save_renewal_order(jsonb)'::regprocedure)) > 0 as ok" },
 ];
 
 const TABLES = [
   "product_deletion_files", "vendors", "products", "product_versions", "product_photos", "vendor_prices", "purchase_lots", "stock_movements",
   "barcode_identities", "purchase_packs", "checkout_reservations", "public_attempt_windows",
-  "box_rules", "box_lineups", "lineup_items", "package_profiles", "shipments", "shipment_items", "expenses", "admin_settings", "watchlist",
+  "box_rules", "box_lineups", "lineup_items", "package_profiles", "shipments", "shipment_items", "expenses", "admin_settings", "watchlist", "subscriptions",
 ];
 
-const RPCS = ['delete_product_permanently','pack_shipment','unpack_shipment','adjust_lot','pack_shipment_checked','activate_box_lineup','save_box_lineup','save_package_profile','set_lot_expiry','set_product_review','product_diligence_complete','commerce_capacity','reserve_checkout','save_paid_order','save_product','verify_product_package','invalidate_package_check','allow_public_attempt','begin_financial_observation','finish_financial_observation','bind_checkout_session'];
+const RPCS = ['delete_product_permanently','pack_shipment','unpack_shipment','adjust_lot','pack_shipment_checked','activate_box_lineup','save_box_lineup','save_package_profile','set_lot_expiry','set_product_review','product_diligence_complete','commerce_capacity','reserve_checkout','save_paid_order','save_product','verify_product_package','invalidate_package_check','allow_public_attempt','begin_financial_observation','finish_financial_observation','bind_checkout_session','save_renewal_order'];
 
 /** Explicit setup only: missing boxes start at zero capacity, never an implicit sale default. */
 async function initializeCatalog(write: boolean): Promise<boolean> {
@@ -133,11 +134,18 @@ async function verify() {
 }
 
 async function main() {
-  if (!process.argv.includes("--check")) {
+  const checkOnly = process.argv.includes("--check");
+  let migrationsReady = true;
+  {
     for (const m of MIGRATIONS) {
       const [{ ok }] = await sql<{ ok: boolean }>(m.applied);
       if (ok) {
         console.log(`✓ ${m.file} already applied`);
+        continue;
+      }
+      if (checkOnly) {
+        console.error(`Missing migration: ${m.file}`);
+        migrationsReady = false;
         continue;
       }
       // One request = one transaction: a failure leaves nothing half-applied.
@@ -146,7 +154,7 @@ async function main() {
     }
   }
   const catalogReady = await initializeCatalog(!process.argv.includes("--check"));
-  const ok = await verify() && catalogReady;
+  const ok = await verify() && catalogReady && migrationsReady;
   console.log(ok ? "Database ready for the admin." : "Something is off: see above.");
   process.exit(ok ? 0 : 1);
 }

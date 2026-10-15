@@ -40,8 +40,8 @@ export function WaitlistConfirmEmail({
       <Heading style={t.h1}>{updates ? "You're subscribed." : "You're on the list."}</Heading>
       {updates ? (
         <Text style={t.body}>
-          You&apos;re subscribed to updates on new boxes and shipping. Founding boxes ship{" "}
-          {site.shipDate}, in small founding runs.
+          You&apos;re subscribed to updates on new boxes and shipping. Our first boxes ship{" "}
+          {site.shipDate}, packed by hand.
         </Text>
       ) : (
         <Text style={t.body}>

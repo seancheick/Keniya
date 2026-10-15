@@ -1,27 +1,36 @@
+import { Sticker } from "@/components/wrap";
 import { site } from "@/lib/site";
 
-export function PreorderCta() {
+/** The page's close. `open`: at least one box takes orders right now. */
+export function PreorderCta({ open }: { open: boolean }) {
   return (
-    <section className="bg-sage-deep">
-      <div className="mx-auto flex max-w-6xl flex-col items-start gap-5 px-5 py-12 sm:flex-row sm:items-center sm:justify-between">
+    <section className="paper relative overflow-x-clip bg-coral">
+      <div className="relative mx-auto flex max-w-6xl flex-col items-start gap-8 px-5 py-16 sm:flex-row sm:items-center sm:justify-between lg:py-20">
+        <Sticker tone="butter" className="absolute -top-9 right-5 w-24 rotate-[12deg] sm:w-28">
+          <span className="font-label text-sm uppercase leading-tight">
+            Ships
+            <br />
+            free
+          </span>
+        </Sticker>
         <div>
-          <p className="font-display text-3xl text-cream">
-            Small founding runs. Six boxes.
+          <p className="max-w-[18ch] font-display text-headline text-ink">
+            Six boxes. Packed by hand.
           </p>
-          <p className="mt-1 text-cream">
-            ${site.preorderPriceUSD} · ships {site.shipDate}
+          <p className="mt-3 font-medium text-ink">
+            ${site.preorderPriceUSD} · {site.snackCount} snacks · free shipping · {open ? "order now, " : ""}first boxes ship {site.shipDate}
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <a
             href="#boxes"
-            className="inline-flex h-12 items-center rounded-full bg-terracotta-deep px-8 text-base font-semibold text-cream transition-colors hover:bg-ink"
+            className="inline-flex h-14 items-center rounded-full bg-ink px-9 text-base font-semibold text-cream transition-colors hover:bg-ink/85"
           >
-            Choose your box
+            Find my box
           </a>
           <a
             href="#gift"
-            className="inline-flex h-12 items-center rounded-full border border-cream/50 px-6 text-base font-medium text-cream transition-colors hover:bg-cream/10"
+            className="inline-flex h-14 items-center rounded-full border-2 border-ink px-7 text-base font-semibold text-ink transition-colors hover:bg-ink hover:text-cream"
           >
             Send a gift
           </a>

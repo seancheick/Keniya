@@ -21,6 +21,10 @@ const HEALTH: [key: keyof BoxRules, label: string, hint: string][] = [
   ["fiberMin", "Fiber snacks (3 g+): at least", "3 g or more fiber"],
   ["treatMax", "Treats: at most", "Heart: products marked as a controlled treat. Blood Sugar: picks that qualify only as a portioned treat"],
 ];
+const EXTRAS: [key: keyof BoxRules, label: string, hint: string][] = [
+  ["extrasMin", "Extras: at least", "Each must still pass this box's rules"],
+  ["extrasMax", "Extras: at most", "On top of the snacks per box"],
+];
 // Checked on every pick before any pathway counts; a pick over a limit isn't eligible.
 const GATES: [key: keyof BoxRules, label: string, hint: string][] = [
   ["carbsMax", "Total carbs: at most (g)", "Per pack"],
@@ -92,6 +96,12 @@ export function RulesForm({ slug, rules }: { slug: BoxSlug; rules: BoxRules }) {
       </div>
       <Limits title="Hard limits (every pick)" note="A snack over any of these can't go in this box, whatever else it qualifies for. Leave empty for no limit. The website prints these numbers, so a change here changes the site too; a limit the site's copy mentions can't be left empty." items={GATES} rules={rules} />
       <Limits title="Snack sizes" items={SIZE} rules={rules} />
+      <Limits
+        title="Little extras (not counted in the snacks per box)"
+        note="Drink sticks, tea or a sample packed on top of the snacks. Leave both empty to keep extras optional. Set them (for example 2 and 4) and the website promises that range on this box, so every lineup must include it."
+        items={EXTRAS}
+        rules={rules}
+      />
       <Limits title="Health rules" note="Leave a box empty if this box doesn't need that rule." items={HEALTH} rules={rules} />
       <Button disabled={pending}>{pending ? "Saving…" : "Save recipe"}</Button>
     </form>

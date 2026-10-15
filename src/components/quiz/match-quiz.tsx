@@ -57,7 +57,7 @@ function Option({
       onClick={onClick}
       className={cn(
         "flex min-h-14 w-full items-center justify-between gap-3 rounded-2xl border-2 px-5 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50",
-        selected ? "border-sage-deep bg-sage/15" : "border-border bg-cream-card hover:border-sage",
+        selected ? "border-mint-deep bg-mint/15" : "border-border bg-cream-card hover:border-mint",
       )}
     >
       <span>
@@ -65,7 +65,7 @@ function Option({
         {hint && <span className="mt-0.5 block text-sm leading-snug text-ink-soft">{hint}</span>}
       </span>
       <CheckIcon
-        className={cn("size-5 shrink-0 text-sage-deep", selected ? "opacity-100" : "opacity-0")}
+        className={cn("size-5 shrink-0 text-mint-deep", selected ? "opacity-100" : "opacity-0")}
         strokeWidth={2.5}
         aria-hidden
       />
@@ -73,7 +73,7 @@ function Option({
   );
 }
 
-const check = <CheckIcon className="mt-0.5 size-4 shrink-0 text-sage-deep" strokeWidth={2.5} aria-hidden />;
+const check = <CheckIcon className="mt-0.5 size-4 shrink-0 text-mint-deep" strokeWidth={2.5} aria-hidden />;
 
 type StepId = "who" | "box" | "avoid" | "craving" | "result" | "soon" | "email";
 
@@ -173,7 +173,7 @@ export function MatchQuiz({ boxes, children }: { boxes: PublicBox[]; children: R
             aria-valuenow={done ? questions : step}
           >
             <div
-              className="h-full rounded-full bg-sage-deep transition-[width] duration-300"
+              className="h-full rounded-full bg-mint-deep transition-[width] duration-300"
               style={{ width: `${((done ? questions : step + 1) / questions) * 100}%` }}
             />
           </div>
@@ -188,10 +188,10 @@ export function MatchQuiz({ boxes, children }: { boxes: PublicBox[]; children: R
         <div key={current} className="px-6 pb-8 pt-6 animate-in fade-in slide-in-from-right-4 duration-300">
           {!done && (
             <DialogHeader className="text-left">
-              <p className="eyebrow">
+              <p className="text-xs font-semibold tabular-nums text-ink-soft">
                 Step {step + 1} of {questions}
               </p>
-              <DialogTitle className="font-display pt-2 text-3xl font-normal leading-tight text-ink">
+              <DialogTitle className="font-display pt-2 text-3xl font-extrabold leading-tight tracking-tight text-ink">
                 {titles[current as keyof typeof titles]}
               </DialogTitle>
               <DialogDescription className="sr-only">
@@ -324,7 +324,7 @@ export function MatchQuiz({ boxes, children }: { boxes: PublicBox[]; children: R
                   enterKeyHint="next"
                   maxLength={120}
                   placeholder="e.g. a kidney-friendly box"
-                  className="mt-2 h-12 w-full rounded-2xl border-2 border-border bg-cream-card px-4 text-base text-ink placeholder:text-ink-soft/70 focus:border-sage-deep focus:outline-none"
+                  className="mt-2 h-12 w-full rounded-2xl border-2 border-border bg-cream-card px-4 text-base text-ink placeholder:text-ink-soft/70 focus:border-mint-deep focus:outline-none"
                 />
               </label>
               <Button
@@ -340,8 +340,7 @@ export function MatchQuiz({ boxes, children }: { boxes: PublicBox[]; children: R
           {current === "email" && (
             <>
               <DialogHeader className="text-left">
-                <p className="eyebrow">Request a box</p>
-                <DialogTitle className="font-display pt-2 text-3xl font-normal leading-tight text-ink">
+                <DialogTitle className="font-display pt-2 text-3xl font-extrabold leading-tight tracking-tight text-ink">
                   Tell us where to reach you.
                 </DialogTitle>
                 <DialogDescription className="pt-2 text-ink-soft">
@@ -382,7 +381,7 @@ export function MatchQuiz({ boxes, children }: { boxes: PublicBox[]; children: R
                         showNote={false}
                         size="sm"
                         className="w-auto max-w-none shrink-0 [&>button]:h-10 [&>button]:w-auto [&>button]:px-5 [&>button]:text-sm"
-                        label={isGift ? "Send" : "Preorder"}
+                        label={isGift ? "Send" : "Order"}
                       />
                     </li>
                   ))}
@@ -394,11 +393,10 @@ export function MatchQuiz({ boxes, children }: { boxes: PublicBox[]; children: R
           {current === "result" && box && (
             <>
               <DialogHeader className="text-left">
-                <p className="eyebrow">Your match</p>
                 <DialogDescription className="sr-only">Your recommended Keniya box.</DialogDescription>
               </DialogHeader>
-              <div className="mt-4 rounded-3xl bg-sage/15 p-6">
-                <DialogTitle className="font-display text-3xl font-normal leading-tight text-ink">
+              <div className="mt-4 rounded-3xl bg-mint/15 p-6">
+                <DialogTitle className="font-display text-3xl font-extrabold leading-tight tracking-tight text-ink">
                   We&rsquo;d pick the {box.name}.
                 </DialogTitle>
                 <p className="mt-4 text-sm font-semibold text-ink">Why it fits:</p>
@@ -429,7 +427,7 @@ export function MatchQuiz({ boxes, children }: { boxes: PublicBox[]; children: R
                     </li>
                   )}
                 </ul>
-                {box.caution && <p className="mt-3 text-sm font-semibold text-blush-ink">{box.caution}</p>}
+                {box.caution && <p className="mt-3 text-sm font-semibold text-coral-deep">{box.caution}</p>}
                 <p className="mt-5 text-base font-semibold text-ink">
                   ${site.preorderPriceUSD} · {site.snackCount} snacks · free shipping
                 </p>
@@ -476,7 +474,7 @@ export function MatchQuiz({ boxes, children }: { boxes: PublicBox[]; children: R
             <button
               type="button"
               onClick={reset}
-              className="mt-6 block w-full text-center text-sm font-semibold text-ink hover:text-terracotta-deep"
+              className="mt-6 block w-full text-center text-sm font-semibold text-ink hover:text-coral-deep"
             >
               Start over
             </button>

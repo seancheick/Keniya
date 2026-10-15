@@ -548,4 +548,16 @@ export function checkLineup(
 }
 
 export const blockingFailures = (checks: Check[]) => checks.filter((c) => c.level === "block" && !c.pass);
+
+/**
+ * The promised range of little extras, when the recipe promises one. Extras are packed on top
+ * of the snack total and checked for eligibility separately; this only counts them.
+ */
+export function extrasCheck(rules: BoxRules, extraCount: number): Check | null {
+  if (rules.extrasMin === null && rules.extrasMax === null) return null;
+  return check("extras", "Little extras (not counted in the total)", extraCount, {
+    ...(rules.extrasMin !== null && { min: rules.extrasMin }),
+    ...(rules.extrasMax !== null && { max: rules.extrasMax }),
+  });
+}
 export const isReady = (checks: Check[]) => blockingFailures(checks).length === 0;

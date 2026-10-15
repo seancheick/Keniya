@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { site } from "@/lib/site";
 
-
 export function StickyBuyBar() {
   const [show, setShow] = useState(false);
 
@@ -28,21 +27,21 @@ export function StickyBuyBar() {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-cream/95 p-3 backdrop-blur-md md:hidden">
+    <div className="fixed inset-x-0 bottom-0 z-50 border-t-2 border-ink bg-cream/95 p-3 backdrop-blur-md md:hidden">
       <div className="mx-auto flex max-w-lg items-center justify-between gap-3 px-1">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-ink">
-            Preorder · ${site.preorderPriceUSD}
+          <p className="truncate text-sm font-semibold text-ink">
+            ${site.preorderPriceUSD} · {site.snackCount} snacks
           </p>
           <p className="truncate text-xs text-ink-soft">
-            Free shipping · ships {site.shipDate.replace(/, \d{4}$/, "")}
+            Free shipping · no subscription needed
           </p>
         </div>
         <a
           href="#boxes"
-          className="shrink-0 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground"
+          className="shrink-0 rounded-full bg-ink px-5 py-2.5 text-sm font-semibold text-cream"
         >
-          Choose your box
+          Find my box
         </a>
       </div>
     </div>

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { db, must } from "@/lib/admin/db";
 import { loadAdminContext } from "@/lib/admin/summary";
-import { blockingFailures, checkLineup, eligibleFor } from "@/lib/admin/rules";
+import { blockingFailures, checkLineup, eligibleFor, extrasCheck } from "@/lib/admin/rules";
 import { BOX_SLUGS, OBJECTIVES, boxRulesSchema } from "@/lib/admin/types";
 
 export type BoxState = { error?: string; ok?: boolean; id?: string };
@@ -47,7 +47,8 @@ async function activationProblem(slug: typeof BOX_SLUGS[number], items: { produc
   const extras = items.filter((i) => i.is_extra).map((i) => ctx.catalog.byId.get(i.product_id)!);
   const invalidExtra = extras.find((s) => !eligibleFor(slug, s, ctx.rules[slug], ctx.settings.policy, s.rejectReason).fits);
   if (invalidExtra) return `Extra ${invalidExtra.name} is not eligible for this box`;
-  const fails = blockingFailures(checkLineup(slug, ctx.rules[slug], picks, ctx.settings, ctx.packOz + extras.reduce((s, e) => s + (e.unit_wt_oz ?? 0), 0)));
+  const extrasRange = extrasCheck(ctx.rules[slug], extras.length);
+  const fails = blockingFailures([...checkLineup(slug, ctx.rules[slug], picks, ctx.settings, ctx.packOz + extras.reduce((s, e) => s + (e.unit_wt_oz ?? 0), 0)), ...(extrasRange ? [extrasRange] : [])]);
   return fails.length ? `Save as a draft first: ${fails.map((c) => `${c.label}: ${c.value}`).join("; ")}` : null;
 }
 
@@ -97,10 +98,13 @@ export async function saveBoxRules(_prev: BoxState, fd: FormData): Promise<BoxSt
     satFatMax: dec(fd.get("satFatMax")),
     satFatNutMax: dec(fd.get("satFatNutMax")),
     caffeineMax: dec(fd.get("caffeineMax")),
+    extrasMin: int(fd.get("extrasMin")),
+    extrasMax: int(fd.get("extrasMax")),
   });
   if (!rules.success) return { error: rules.error.issues[0].message };
   const r = rules.data;
   if (r.categories.some((c) => c.min > c.max)) return { error: "A category's minimum is above its maximum" };
+  if (r.extrasMin !== null && r.extrasMax !== null && r.extrasMin > r.extrasMax) return { error: "Little extras: the minimum is above the maximum" };
   const sumMin = r.categories.reduce((s, c) => s + c.min, 0);
   const sumMax = r.categories.reduce((s, c) => s + c.max, 0);
   if (r.categories.length && (sumMin > r.total || sumMax < r.total))

@@ -173,6 +173,25 @@ export const settingsSchema = z.object({
   expiryTiersDays: z.tuple([z.number().int(), z.number().int(), z.number().int()]),
   /** Lineup value targets (warnings only, never block): shelf value of the picks and their snack cost. null = off. */
   value: z.object({ minRetailCents: cents.nullable(), maxSnackCostCents: cents.nullable() }),
+  /** Customer offers. Each is off until switched on here; the site shows only what is on. */
+  offers: z.object({
+    /** First-order discount (WELCOME20): one-time boxes and gifts, never subscriptions, one per buyer email. */
+    welcome: z.object({
+      enabled: z.boolean(),
+      code: z.string().regex(/^[A-Z0-9]{3,24}$/),
+      percentOff: z.number().int().min(1).max(50),
+      /** Launch cap across all buyers (the Stripe coupon's max redemptions); null = no cap. */
+      limit: z.number().int().min(1).nullable(),
+    }),
+    /** A small surprise packed into the first `limit` paid one-time orders (real orders, real stock). */
+    foundingBonus: z.object({
+      enabled: z.boolean(),
+      limit: z.number().int().min(0),
+      description: z.string().max(120),
+    }),
+    /** Monthly Snack Club. Built, but off until the margin and fulfillment are confirmed. */
+    subscription: z.object({ enabled: z.boolean(), priceCents: cents }),
+  }),
 });
 export type Settings = z.infer<typeof settingsSchema>;
 
@@ -218,6 +237,11 @@ export const DEFAULT_SETTINGS: Settings = {
   // A $47 box should hold snacks worth at least ~$40 at a store. The cost ceiling is a
   // business number, so it stays off here (public repo) and is set on the Settings tab.
   value: { minRetailCents: 4000, maxSnackCostCents: null },
+  offers: {
+    welcome: { enabled: false, code: "WELCOME20", percentOff: 20, limit: 100 },
+    foundingBonus: { enabled: false, limit: 100, description: "A little founding-customer surprise" },
+    subscription: { enabled: false, priceCents: 3900 },
+  },
 };
 
 /** Stored settings merged over defaults, so new fields never break an old row. */
@@ -237,6 +261,11 @@ export function resolveSettings(stored: unknown): Settings {
     fees: { ...DEFAULT_SETTINGS.fees, ...s.fees },
     policy: { ...DEFAULT_SETTINGS.policy, ...s.policy },
     value: { ...DEFAULT_SETTINGS.value, ...s.value },
+    offers: {
+      welcome: { ...DEFAULT_SETTINGS.offers.welcome, ...s.offers?.welcome },
+      foundingBonus: { ...DEFAULT_SETTINGS.offers.foundingBonus, ...s.offers?.foundingBonus },
+      subscription: { ...DEFAULT_SETTINGS.offers.subscription, ...s.offers?.subscription },
+    },
   };
   const parsed = settingsSchema.safeParse(merged);
   if (!parsed.success) throw new Error("Invalid live settings");
@@ -276,10 +305,18 @@ export const boxRulesSchema = z.object({
   satFatNutMax: z.number().min(0).nullable().default(null),
   /** Caffeine per pack; unknown caffeine already fails Pregnancy. */
   caffeineMax: z.number().min(0).nullable().default(null),
+  /**
+   * Little extras (drink sticks, tea, a sample) packed on top of `total` and never counted in
+   * it. null = extras optional and not promised; set both to promise "14 snacks + 2–4 extras".
+   */
+  extrasMin: z.number().int().min(0).nullable().default(null),
+  extrasMax: z.number().int().min(0).nullable().default(null),
 });
 export type BoxRules = z.infer<typeof boxRulesSchema>;
 
 const none = {
+  extrasMin: null,
+  extrasMax: null,
   substantialMin: null,
   miniMax: null,
   beverageMax: null,

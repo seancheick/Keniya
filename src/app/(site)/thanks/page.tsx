@@ -3,7 +3,7 @@ import { site } from "@/lib/site";
 
 export const metadata = {
   title: "Thank you",
-  description: "Your Keniya founding preorder is confirmed.",
+  description: "Your Keniya order is confirmed.",
   robots: { index: false, follow: false },
 };
 
@@ -17,17 +17,17 @@ export default async function ThanksPage({
     <div className="mx-auto max-w-2xl px-6 py-20 lg:py-28">
       <h1 className="font-display text-display text-ink">
         Thank you — someone is packing this{" "}
-        <em className="text-terracotta-deep">for you</em>.
+        <em className="text-coral-deep">for you</em>.
       </h1>
       <p className="mt-6 text-lg leading-relaxed text-ink-soft">
-        Your founding preorder is confirmed
-        {sp.box ? ` (${sp.box.replaceAll("_", " ")})` : ""}. Your box ships{" "}
-        {site.shipDate} — if you listed allergies or foods to avoid, we&rsquo;ll steer around them where we can.{" "}
+        Your order is confirmed
+        {sp.box ? ` (${sp.box.replaceAll("_", " ")})` : ""}. First boxes ship{" "}
+        {site.shipDate}, and we&rsquo;ll email tracking when yours is on the way. If you listed allergies or foods to avoid, we&rsquo;ll steer around them where we can.{" "}
         {site.freeShippingLabel} is included.
       </p>
       <p className="mt-4 text-sm text-ink-soft">
         Questions anytime:{" "}
-        <a className="text-sage-deep underline-offset-2 hover:underline" href={`mailto:${site.email}`}>
+        <a className="text-mint-deep underline-offset-2 hover:underline" href={`mailto:${site.email}`}>
           {site.email}
         </a>
       </p>

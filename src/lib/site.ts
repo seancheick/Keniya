@@ -10,6 +10,8 @@ export const site = {
   shipDate: "November 11, 2026",
   freeShipping: true,
   freeShippingLabel: "Free shipping",
+  /** Team orders start here; pricing is quoted by hand until packing capacity is proven. */
+  corporateMinBoxes: 10,
   pharmaguide: {
     name: "PharmaGuide",
     url: "https://pharmaguide.io",

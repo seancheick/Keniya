@@ -55,7 +55,7 @@ export function OrderAlertEmail(p: OrderAlertProps) {
                 style={{
                   padding: "14px 8px",
                   textAlign: "center",
-                  backgroundColor: i === 1 && left != null && left <= 10 ? c.blush : c.creamDeep,
+                  backgroundColor: i === 1 && left != null && left <= 10 ? c.butter : c.creamDeep,
                   borderRadius: "14px",
                   border: `4px solid ${c.card}`,
                 }}
@@ -69,16 +69,16 @@ export function OrderAlertEmail(p: OrderAlertProps) {
       </table>
 
       {p.gift && (
-        <Panel tint={c.blush}>
-          <Text style={{ ...t.eyebrow, color: c.blushInk, margin: "0 0 6px" }}>
+        <Panel tint={c.butter}>
+          <Text style={{ ...t.eyebrow, color: c.butterInk, margin: "0 0 6px" }}>
             🎁 Gift: print this on a note card
           </Text>
           <Text
-            style={{ margin: 0, fontSize: "18px", lineHeight: 1.5, color: c.blushInk, fontFamily: "Georgia, serif", fontStyle: "italic" }}
+            style={{ margin: 0, fontSize: "18px", lineHeight: 1.5, color: c.butterInk, fontFamily: "Georgia, serif", fontStyle: "italic" }}
           >
             {p.giftNote ? `“${p.giftNote}”` : "(No message written. Use a simple “A gift for you.”)"}
           </Text>
-          <Text style={{ ...t.small, marginTop: "8px", color: c.blushInk }}>
+          <Text style={{ ...t.small, marginTop: "8px", color: c.butterInk }}>
             From {p.customerName ?? p.customerEmail}. No prices or receipt in the box.
           </Text>
         </Panel>
@@ -91,9 +91,9 @@ export function OrderAlertEmail(p: OrderAlertProps) {
       )}
 
       {p.avoid && (
-        <Panel tint={c.blush}>
-          <Text style={{ ...t.eyebrow, color: c.blushInk, margin: "0 0 6px" }}>⚠️ Avoid</Text>
-          <Text style={{ margin: 0, fontSize: "16px", color: c.blushInk, fontWeight: 600 }}>{p.avoid}</Text>
+        <Panel tint={c.butter}>
+          <Text style={{ ...t.eyebrow, color: c.butterInk, margin: "0 0 6px" }}>⚠️ Avoid</Text>
+          <Text style={{ margin: 0, fontSize: "16px", color: c.butterInk, fontWeight: 600 }}>{p.avoid}</Text>
         </Panel>
       )}
 
@@ -112,7 +112,7 @@ export function OrderAlertEmail(p: OrderAlertProps) {
             ))}
           </Text>
         ) : (
-          <Text style={{ margin: 0, color: c.terracottaDeep }}>
+          <Text style={{ margin: 0, color: c.coralDeep }}>
             No address came through. Check the payment in Stripe before packing.
           </Text>
         )}
@@ -124,7 +124,7 @@ export function OrderAlertEmail(p: OrderAlertProps) {
             {row("Buyer", p.customerName ?? "—")}
             {row(
               "Email",
-              <Link href={`mailto:${p.customerEmail}`} style={{ color: c.sage }}>
+              <Link href={`mailto:${p.customerEmail}`} style={{ color: c.mintDeep }}>
                 {p.customerEmail}
               </Link>,
             )}

@@ -1,5 +1,5 @@
 import { avoidConflict } from "./avoid";
-import { blockingFailures, checkLineup, packBlockers, type Pick } from "./rules";
+import { blockingFailures, checkLineup, extrasCheck, packBlockers, type Pick } from "./rules";
 import type { BoxRules, BoxSlug, Settings, Snack } from "./types";
 
 type PackingProduct = { snack: Snack; upc: string | null; verifiedAt: string | null; ingredients?: string | null };
@@ -51,6 +51,8 @@ export function packingProblems(input: {
   if (mainCount !== rules.total) problems.push(`Need ${rules.total} distinct snacks plus ${extraCount} extras; currently ${mainCount} snacks`);
   const main = ids.slice(0, Math.max(0, mainCount)).flatMap((id) => products.get(id)?.snack ?? []);
   const extras = ids.slice(Math.max(0, mainCount)).flatMap((id) => products.get(id)?.snack ?? []);
+  const extrasRange = extrasCheck(rules, extras.length);
+  if (extrasRange && !extrasRange.pass) problems.push(`${extrasRange.label}: ${extrasRange.value}`);
   const picks = recipePicks(main, rules);
   if (!picks) problems.push("Snack mix does not fit the box recipe; choose a replacement from the same category");
   else problems.push(...blockingFailures(checkLineup(slug, rules, picks, settings, packagingOz + extras.reduce((s, x) => s + (x.unit_wt_oz ?? 0), 0))).map((c) => `${c.label}: ${c.value}`));
