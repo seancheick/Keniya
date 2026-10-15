@@ -9,7 +9,7 @@ export default function AboutPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-16 lg:py-24">
       <h1 className="font-display text-display text-ink" data-reveal>
-        Built in the middle of a <em className="text-terracotta-deep">first trimester</em>.
+        Built in the middle of a <em className="text-coral-deep">first trimester</em>.
       </h1>
 
       <div className="mt-10 max-w-[62ch] space-y-6 text-lg leading-relaxed text-ink-soft">
@@ -52,7 +52,7 @@ export default function AboutPage() {
             href="https://pharmaguide.io"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-sage-deep underline-offset-2 hover:underline"
+            className="font-medium text-mint-deep underline-offset-2 hover:underline"
           >
             PharmaGuide
           </a>
@@ -64,7 +64,7 @@ export default function AboutPage() {
       <div className="mt-12 border-t border-border pt-8" data-reveal>
         <p className="font-display text-xl text-ink">
           — Sean &amp; the first customer
-          <span className="text-terracotta">.</span>
+          <span className="text-coral">.</span>
         </p>
         <p className="mt-2 text-sm text-ink-soft">
           Co-founders, Keniya ·{" "}
@@ -72,7 +72,7 @@ export default function AboutPage() {
             href="https://pharmaguide.io"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sage-deep underline-offset-2 hover:underline"
+            className="text-mint-deep underline-offset-2 hover:underline"
           >
             PharmaGuide
           </a>{" "}

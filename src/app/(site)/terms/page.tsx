@@ -4,11 +4,11 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Terms of service",
   description:
-    "Keniya's terms in plain words: one-time $47 boxes, free US shipping, full refunds any time before your box ships, and honest substitution rules.",
+    "Keniya's terms in plain words: $47 boxes, the optional Monthly Snack Club, free US shipping, full refunds before your box ships, and honest substitution rules.",
   alternates: { canonical: "/terms" },
 };
 
-const EFFECTIVE = "September 28, 2026";
+const EFFECTIVE = "October 15, 2026";
 
 export default function TermsPage() {
   return (
@@ -18,17 +18,38 @@ export default function TermsPage() {
 
       <h2>Orders and pricing</h2>
       <p>
-        Every box is a one-time purchase at ${site.preorderPriceUSD} in US dollars, with{" "}
-        {site.freeShippingLabel.toLowerCase()}{" "}to US addresses. There&rsquo;s no
-        subscription and nothing renews automatically.
+        A box is ${site.preorderPriceUSD} in US dollars, with {site.freeShippingLabel.toLowerCase()}{" "}
+        to US addresses. Buying a box is a one-time purchase: nothing renews unless you join the
+        Monthly Snack Club below. Gifts are always one-time.
       </p>
 
-      <h2>Preorders, shipping, and cancellation</h2>
+      <h2>First-box offer</h2>
       <p>
-        Founding boxes are preorders, packed by hand in small batches; the founding run for
-        each box is shown on its page. Founding boxes ship {site.shipDate}. You can cancel for a full refund any time before your box ships:
-        just email{" "}
-        <a className="text-sage-deep underline-offset-2 hover:underline" href={`mailto:${site.email}`}>
+        When a first-box offer is running, it applies to one one-time box (gifts included) for
+        an email address with no earlier Keniya order, at the price shown before checkout. It
+        can&rsquo;t be combined with another code, doesn&rsquo;t apply to the Snack Club, and may end
+        or reach its limit at any time; an offer already applied at checkout is honored.
+      </p>
+
+      <h2>Monthly Snack Club</h2>
+      <p>
+        If you choose the Snack Club, you authorize us to charge the monthly price shown at
+        checkout when you subscribe and again on the same date each month until you cancel.
+        There&rsquo;s no minimum term. You can skip a month, pause, change your address or cancel
+        anytime online at{" "}
+        <a className="text-mint-deep underline-offset-2 hover:underline" href="/club">keniyahealth.com/club</a>
+        , before your renewal date to stop that month&rsquo;s charge. We email you before each
+        renewal. If we can&rsquo;t fill your box to its standards in a given month, we hold that month
+        and don&rsquo;t charge you. If we ever change the monthly price, we&rsquo;ll tell you before it
+        applies, and you can cancel first.
+      </p>
+
+      <h2>Shipping and cancellation</h2>
+      <p>
+        Boxes are packed by hand. Our first boxes ship {site.shipDate}; after that, orders ship
+        as they&rsquo;re packed, and Snack Club boxes ship each month after renewal. You can cancel
+        a box for a full refund any time before it ships: just email{" "}
+        <a className="text-mint-deep underline-offset-2 hover:underline" href={`mailto:${site.email}`}>
           {site.email}
         </a>
         . If we can&rsquo;t ship your box, we refund you in full.
@@ -61,7 +82,7 @@ export default function TermsPage() {
       <h2>Questions</h2>
       <p>
         Write to{" "}
-        <a className="text-sage-deep underline-offset-2 hover:underline" href={`mailto:${site.email}`}>
+        <a className="text-mint-deep underline-offset-2 hover:underline" href={`mailto:${site.email}`}>
           {site.email}
         </a>{" "}
         — a person answers.

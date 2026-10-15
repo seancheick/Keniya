@@ -10,6 +10,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     "",
     ...landings.map((l) => l.path),
     giftLanding.path,
+    "/corporate-gifts",
     "/about",
     "/privacy",
     "/terms",

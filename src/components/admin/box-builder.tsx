@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { fmt$, landedCost } from "@/lib/admin/costing";
 import { canBuild, daysUntil, optimize } from "@/lib/admin/optimizer";
 import { estimatePostage, type PostageSample } from "@/lib/admin/postage";
-import { checkLineup, eligibleFor, isReady, isReadyToPack, lineupStage, packedWeightOz, type Pick } from "@/lib/admin/rules";
+import { checkLineup, eligibleFor, extrasCheck, isReady, isReadyToPack, lineupStage, packedWeightOz, type Pick } from "@/lib/admin/rules";
 import { BOX_LABEL, OBJECTIVES, OBJECTIVE_LABEL, type BoxRules, type BoxSlug, type Objective, type Settings, type Snack } from "@/lib/admin/types";
 import { avoidConflict } from "@/lib/admin/avoid";
 import { cn } from "@/lib/utils";
@@ -36,12 +36,16 @@ type Props = {
   findings: Record<string, string>;
 };
 
-export function BoxBuilder({ slug, rules, settings, snacks, extras, initial, packagingOz, mailer, history, allRules, photos, findings }: Props) {
+export function BoxBuilder({ slug, rules, settings, snacks, extras: savedExtras, initial, packagingOz, mailer, history, allRules, photos, findings }: Props) {
   const router = useRouter();
   const byId = useMemo(() => new Map(snacks.map((s) => [s.id, s])), [snacks]);
   const [picks, setPicks] = useState<Pick[]>(() =>
     initial.filter((i) => byId.has(i.product_id)).map((i) => ({ snack: byId.get(i.product_id)!, category: i.category })),
   );
+  // Little extras ride on top of the snack total (drink sticks, tea, a sample); each must still
+  // pass this box's rules, and the recipe may promise a range of them.
+  const [extras, setExtras] = useState<Snack[]>(savedExtras);
+  const [extraPick, setExtraPick] = useState("");
   const [objective, setObjective] = useState<Objective>("balanced");
   const [source, setSource] = useState<Objective | "manual">("manual");
   // Nothing logged yet → building from stock would return an empty box, so start unticked.
@@ -70,7 +74,14 @@ export function BoxBuilder({ slug, rules, settings, snacks, extras, initial, pac
   }, [snacks, avoidText]);
 
   const extraOz = extras.reduce((n, s) => n + (s.unit_wt_oz ?? 0), 0);
-  const checks = useMemo(() => checkLineup(slug, buildRules, picks, settings, packagingOz + extraOz), [slug, buildRules, picks, settings, packagingOz, extraOz]);
+  const checks = useMemo(() => {
+    const range = extrasCheck(rules, extras.length);
+    return [...checkLineup(slug, buildRules, picks, settings, packagingOz + extraOz), ...(range ? [range] : [])];
+  }, [slug, rules, buildRules, picks, settings, packagingOz, extraOz, extras.length]);
+  const extraCandidates = useMemo(() => {
+    const taken = new Set([...picks.map((p) => p.snack.id), ...extras.map((e) => e.id)]);
+    return snacks.filter((s) => !taken.has(s.id) && !conflict.has(s.id) && eligibleFor(slug, s, rules, settings.policy, s.rejectReason).fits);
+  }, [snacks, picks, extras, conflict, slug, rules, settings.policy]);
   const weight = packedWeightOz(picks, packagingOz + extraOz);
   const postage = estimatePostage({ settings, slug, weightOz: weight, packageProfileId: mailer?.id, history });
   const cost = landedCost({
@@ -145,7 +156,6 @@ export function BoxBuilder({ slug, rules, settings, snacks, extras, initial, pac
 
   return (
     <div className="space-y-4 max-sm:pb-24">
-      {extras.length > 0 && <p className="text-sm text-muted-foreground">Extras included in stock, weight and cost: {extras.map((s) => s.name).join(", ")}</p>}
       <div className="grid gap-4 xl:grid-cols-[1fr_340px]">
         <div className="space-y-4">
           <div className="space-y-3 rounded-xl border bg-card p-4">
@@ -306,6 +316,51 @@ export function BoxBuilder({ slug, rules, settings, snacks, extras, initial, pac
             {picks.length < rules.total && (
               <p className="border-t p-3 text-sm text-muted-foreground">{`${rules.total - picks.length} to go: add them from the products table below.`}</p>
             )}
+          </div>
+
+          <div className="rounded-xl border bg-card p-4">
+            <p className="font-semibold">
+              Little extras · {extras.length}
+              {rules.extrasMin !== null || rules.extrasMax !== null ? ` (recipe: ${rules.extrasMin ?? 0}–${rules.extrasMax ?? "any"})` : " (optional)"}
+            </p>
+            <p className="mb-2 text-xs text-muted-foreground">Packed on top of the {rules.total} snacks and never counted in them. Each one must pass this box&rsquo;s rules.</p>
+            {extras.length > 0 && (
+              <ul className="mb-3 divide-y rounded-lg border">
+                {extras.map((e) => (
+                  <li key={e.id} className="flex items-center gap-2 p-2 text-sm">
+                    <span className="min-w-0 flex-1 truncate">{e.name}</span>
+                    <span className="tabular-nums text-muted-foreground">{fmt$(e.unitCostCents)}</span>
+                    <Button size="icon-xs" className="max-sm:size-11" variant="ghost" aria-label={`Remove extra ${e.name}`} onClick={() => setExtras((xs) => xs.filter((x) => x.id !== e.id))}>
+                      ✕
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex gap-2">
+              <select value={extraPick} onChange={(e) => setExtraPick(e.target.value)} className={cn(fieldClass, "max-sm:h-11")} aria-label="Eligible product to add as an extra">
+                <option value="">Choose an eligible product…</option>
+                {extraCandidates.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} · {s.type}
+                  </option>
+                ))}
+              </select>
+              <Button
+                type="button"
+                variant="outline"
+                className="max-sm:h-11"
+                disabled={!extraPick}
+                onClick={() => {
+                  const s = snacks.find((x) => x.id === extraPick);
+                  if (s) setExtras((xs) => [...xs, s]);
+                  setExtraPick("");
+                  setSource("manual");
+                }}
+              >
+                Add extra
+              </Button>
+            </div>
           </div>
 
           <div className="rounded-xl border bg-card p-4">

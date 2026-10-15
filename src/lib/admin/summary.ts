@@ -3,7 +3,7 @@ import { landedCost, type LandedCost } from "./costing";
 import { defaultPackage, loadActiveLineups, loadBoxRules, loadCatalog, loadPackageProfiles, loadPostageHistory, loadSettings, packagingOz, type Catalog, type LineupRow, type PackageProfile } from "./db";
 import { canBuild } from "./optimizer";
 import { estimatePostage } from "./postage";
-import { checkLineup, eligibleFor, isReady, packedWeightOz, type Check, type Pick } from "./rules";
+import { checkLineup, eligibleFor, extrasCheck, isReady, packedWeightOz, type Check, type Pick } from "./rules";
 import { BOX_SLUGS, type BoxRules, type BoxSlug, type Settings, type Snack } from "./types";
 
 export type BoxSummary = {
@@ -55,6 +55,8 @@ export async function loadAdminContext(inputs?: { settings: Settings; rules: Rec
       const fit = eligibleFor(slug, extra, rules[slug], settings.policy, extra.rejectReason);
       checks.push({ key: `extra:${extra.id}`, label: `Extra: ${extra.name}`, value: fit.fits ? "Eligible" : fit.reasons.join("; "), level: "block", pass: fit.fits, deficit: fit.fits ? 0 : 1 });
     }
+    const extrasRange = extrasCheck(rules[slug], extras.length);
+    if (extrasRange) checks.push(extrasRange);
     const weightOz = packedWeightOz(picks, packOz + extras.reduce((s, e) => s + (e.unit_wt_oz ?? 0), 0));
     const postage = estimatePostage({ settings, slug, weightOz, packageProfileId: pkg?.id, history });
     boxes[slug] = {

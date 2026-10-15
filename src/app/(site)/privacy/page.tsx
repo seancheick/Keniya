@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/privacy" },
 };
 
-const EFFECTIVE = "September 28, 2026";
+const EFFECTIVE = "October 15, 2026";
 
 export default function PrivacyPage() {
   return (
@@ -29,10 +29,21 @@ export default function PrivacyPage() {
           craving.
         </li>
         <li>
-          <strong className="text-ink">When you preorder:</strong> our payment processor,
+          <strong className="text-ink">When you order:</strong> our payment processor,
           Stripe, collects your name, email, shipping and billing address, and payment
           details. We receive your order and shipping details and any gift note — never
           your full card number.
+        </li>
+        <li>
+          <strong className="text-ink">If you join the Monthly Snack Club:</strong> Stripe keeps
+          your payment method on file to charge each month until you cancel. We keep your
+          subscription status and ship-to address so we can pack each box, and you can change or
+          cancel it anytime at /club.
+        </li>
+        <li>
+          <strong className="text-ink">When you ask for the first-box code:</strong> your email
+          joins our news list (unsubscribe anytime). We check that the email&rsquo;s domain can
+          receive mail and whether it has ordered before, because the code is for first orders.
         </li>
         <li>
           <strong className="text-ink">When you browse:</strong> privacy-friendly page
@@ -46,7 +57,7 @@ export default function PrivacyPage() {
         Some quiz answers — like pregnancy, watching carbs, heart health, or
         allergies — are sensitive. We use them only to decide what goes in your box. We
         never sell them or share them for advertising. The quiz is optional: you can
-        preorder without answering anything.
+        order without answering anything.
       </p>
 
       <h2>How we use it</h2>
@@ -66,7 +77,7 @@ export default function PrivacyPage() {
       <h2>Your choices</h2>
       <p>
         Email{" "}
-        <a className="text-sage-deep underline-offset-2 hover:underline" href={`mailto:${site.email}`}>
+        <a className="text-mint-deep underline-offset-2 hover:underline" href={`mailto:${site.email}`}>
           {site.email}
         </a>{" "}
         to see, correct, or delete what we hold about you, or to leave a list. We delete

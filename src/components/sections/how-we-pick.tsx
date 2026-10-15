@@ -1,89 +1,71 @@
 import Link from "next/link";
-import { ArrowRightIcon, Gift, ScanText, Stethoscope, type LucideIcon } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import { ReviewerCard } from "@/components/reviewer-card";
+import { Sticker } from "@/components/wrap";
 import { landingFor } from "@/lib/landing";
 import { boxes } from "@/lib/box";
 import { site } from "@/lib/site";
 
-const steps: { title: string; body: string; Icon: LucideIcon }[] = [
+const steps = [
   {
-    title: "We read the labels",
-    body: "Ingredients, allergens and the nutrition that matters for your box. A snack has to pass that box's limits, which are printed on every box.",
-    Icon: ScanText,
+    title: "Pick your box.",
+    body: "Pregnancy, postpartum, blood sugar, heart, gestational diabetes or GLP-1. Or send one as a gift.",
+    color: "var(--lilac)",
   },
   {
-    title: "A pharmacist reviews the selection",
-    body: "Laurie Pham, PharmD, reviews each box's criteria and every season's snacks.",
-    Icon: Stethoscope,
+    title: "We pick the good stuff.",
+    body: "We read every label against your box's standards, and a pharmacist reviews each box's criteria and lineup.",
+    color: "var(--butter)",
   },
   {
-    title: "We pack your box",
-    body: "By hand, around any allergies or cravings you tell us, with a Packed for You card inside.",
-    Icon: Gift,
+    title: "Enjoy the surprise.",
+    body: `${site.snackCount} snacks arrive sealed and packed by hand, with a Packed for You card on how we chose them.`,
+    color: "var(--mint)",
   },
 ];
 
-export function Screening() {
+export function HowItWorks() {
   return (
-    <section id="how" className="scroll-mt-20 border-b border-border bg-cream-deep/50">
-      <div className="mx-auto max-w-6xl px-5 py-14 lg:py-16">
-        <h2 className="text-center font-display text-3xl text-ink" data-reveal>
-          How we pick every snack
+    <section id="how" className="paper scroll-mt-20 bg-cream-deep">
+      <div className="mx-auto max-w-6xl px-5 py-16 lg:py-24">
+        <h2 className="max-w-[16ch] font-display text-headline text-ink">
+          The snacks change. Our standards don&rsquo;t.
         </h2>
-        <p className="mx-auto mt-3 max-w-xl text-center text-ink-soft" data-reveal>
-          Your condition already gives you enough to think about. So every Keniya box has its own
-          screening, and a snack has to qualify for it before it can go in.
+        <p className="mt-4 max-w-[54ch] text-lg leading-relaxed text-ink-soft">
+          Every box has its own written standards. A snack has to pass them before it can go in,
+          so you get new finds each season without reading a single label.
         </p>
 
-        <ol
-          className="relative mx-auto mt-10 grid max-w-4xl gap-7 lg:mt-12 lg:grid-cols-3 lg:gap-8"
-          data-reveal-group
-        >
-          {/* The track the steps sit on: down the left on mobile, across on desktop. */}
-          <span
-            aria-hidden
-            className="absolute bottom-6 left-6 top-6 w-px bg-sage/40 lg:bottom-auto lg:left-[16%] lg:right-[16%] lg:top-6 lg:h-px lg:w-auto"
-          />
-          {steps.map(({ title, body, Icon }, i) => {
-            const last = i === steps.length - 1;
-            return (
-              <li
-                key={title}
-                data-reveal-item
-                className="relative flex gap-4 lg:flex-col lg:items-center lg:gap-0 lg:text-center"
+        {/* The steps slide in with the scroll, taking turns: 1 from the right, 2 from the left, 3 from the right. */}
+        <ol className="mt-12 grid gap-10 overflow-x-clip md:grid-cols-3 md:gap-8">
+          {steps.map((s, i) => (
+            <li key={s.title} data-scrub={i % 2 ? "left" : "right"} data-scrub-index={i} className="flex gap-5 md:flex-col md:gap-4">
+              <Sticker
+                tone="cream"
+                className="w-16 shrink-0 md:w-20"
+                style={{ backgroundColor: s.color, rotate: `${[-8, 6, -4][i]}deg` }}
               >
-                <span
-                  className={`relative grid size-12 shrink-0 place-items-center rounded-full border shadow-[0_4px_12px_-4px_rgb(51_48_43/0.18)] ${
-                    last
-                      ? "border-terracotta-deep bg-terracotta-deep text-cream"
-                      : "border-border bg-cream-card text-sage-deep"
-                  }`}
-                >
-                  <Icon className="size-5" strokeWidth={1.75} aria-hidden />
+                <span className="font-label text-3xl leading-none md:text-4xl">{i + 1}</span>
+              </Sticker>
+              <span>
+                <span className="block font-display text-2xl font-extrabold leading-tight tracking-tight text-ink">
+                  {s.title}
                 </span>
-                <span className="lg:mt-4">
-                  <span className="block text-xs font-medium tabular-nums text-ink-soft">
-                    Step {i + 1}
-                  </span>
-                  <span className="mt-0.5 block font-display text-xl leading-tight text-ink">
-                    {title}
-                  </span>
-                  <span className="mt-1.5 block max-w-[28ch] text-sm leading-snug text-ink-soft lg:mx-auto">
-                    {body}
-                  </span>
-                </span>
-              </li>
-            );
-          })}
+                <span className="mt-2 block max-w-[34ch] leading-relaxed text-ink-soft">{s.body}</span>
+              </span>
+            </li>
+          ))}
         </ol>
-        <div className="mt-12 text-center" data-reveal>
-          <p className="text-sm font-medium text-ink">See exactly how we choose for each box</p>
-          <div className="mt-4 flex flex-wrap justify-center gap-3">
+
+        <div className="mt-14">
+          <p className="text-sm font-semibold text-ink">See the standards for each box</p>
+          <div className="mt-3 flex flex-wrap gap-2.5">
             {boxes.map((b) => (
               <Link
                 key={b.slug}
                 href={landingFor(b.slug).path}
-                className="inline-flex h-11 items-center gap-2 rounded-full border-2 border-sage-deep bg-cream-card px-5 text-sm font-semibold text-sage-deep transition-colors hover:bg-sage-deep hover:text-cream"
+                data-colorway={b.colorway}
+                className="paper inline-flex h-11 items-center gap-2 rounded-full bg-tissue px-5 text-sm font-semibold text-ink shadow-[0_8px_14px_-12px_rgb(37_37_37/0.7)] transition-transform hover:-translate-y-0.5"
               >
                 {b.shortName}
                 <ArrowRightIcon className="size-4" aria-hidden />
@@ -96,36 +78,37 @@ export function Screening() {
   );
 }
 
-/** Clinical reviewer + origin story, after the gift section. */
-export function TrustStory() {
+/** Clinical reviewer + origin story: why the picking can be trusted. */
+export function WhyKeniya() {
   return (
-    <section className="border-b border-border bg-cream-deep/50">
-      <div className="mx-auto max-w-6xl px-5 py-14 lg:py-16">
-        <h2 className="sr-only">Clinical review and our story</h2>
-        <ReviewerCard className="mx-auto" />
-
-        <p
-          className="mx-auto mt-8 max-w-[60ch] text-center text-base leading-relaxed text-ink-soft"
-          data-reveal
-        >
-          It started with years of reading labels for our own family. Now we do that work for
-          everyone: whatever you&rsquo;re living with, you get a box that already did the reading,
-          so you can just enjoy the snack. Six boxes today, each with its own standards, with
-          more as you ask for them. Every snack is screened with the same care as{" "}
-          <a
-            href={site.pharmaguide.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-sage-deep underline underline-offset-4 hover:text-ink"
-          >
-            PharmaGuide
-          </a>
-          , our sister platform.
-        </p>
-        <p className="mx-auto mt-4 max-w-[70ch] text-center text-xs text-ink-soft" data-reveal>
-          Keniya picks packaged snacks. It isn&rsquo;t medical advice. Follow your
-          doctor&rsquo;s guidance and check each label for allergens.
-        </p>
+    <section aria-labelledby="why-heading">
+      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-16 lg:grid-cols-[1fr_1fr] lg:items-center lg:gap-16 lg:py-24">
+        <div>
+          <h2 id="why-heading" className="font-display text-headline text-ink">
+            Every box gets a careful second look.
+          </h2>
+          <p className="mt-5 max-w-[52ch] text-lg leading-relaxed text-ink-soft">
+            It started with years of reading labels for our own family. Now we do that work for
+            you: whatever you&rsquo;re living with, the box already did the reading, so you can
+            just enjoy the snack. Every pick gets the same care as{" "}
+            <a
+              href={site.pharmaguide.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-ink underline underline-offset-4 hover:text-coral-deep"
+            >
+              PharmaGuide
+            </a>
+            , our sister platform for ingredient intelligence.
+          </p>
+        </div>
+        <div>
+          <ReviewerCard />
+          <p className="mt-4 max-w-[60ch] text-xs leading-relaxed text-ink-soft">
+            Keniya picks packaged snacks. It isn&rsquo;t medical advice. Follow your doctor&rsquo;s
+            guidance and check each label for allergens.
+          </p>
+        </div>
       </div>
     </section>
   );

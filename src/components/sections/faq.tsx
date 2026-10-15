@@ -3,8 +3,16 @@ import { site } from "@/lib/site";
 
 export const faqs = [
   {
-    q: "What exactly is in the box?",
-    a: `${site.snackCount} snacks across the categories shown for each box, like comfort, protein, sweets and sips. Each box has its own standards with real numbers, shown on every box, so a snack has to pass them before it can go in. Exact picks rotate with the season, so the photos show an example box and your snacks may differ. At least 8 are full single servings, a pack of chews or two tea bags counts as one snack, and small extras are free and never counted. Every box includes a Packed for You card on how we choose.`,
+    q: "What's in the box?",
+    a: `${site.snackCount} snacks picked for your box: a mix of comfort, crunchy and salty, sweet, protein and sips, with the counts shown on each box's Snack Facts. Picks rotate with the season, so photos show an example box and yours may differ. At least 8 are full single servings, a pack of chews or two tea bags counts as one snack, and small extras are free and never counted. Every box includes a Packed for You card on how we choose.`,
+  },
+  {
+    q: "How do you choose the snacks?",
+    a: "Every box has its own written standards, shown on its page. We read each label against them, and a snack has to pass before it can go in. Laurie Pham, PharmD, reviews each box's criteria and every season's lineup. The snacks change; the standards don't.",
+  },
+  {
+    q: "Is this a subscription?",
+    a: "No. It's a one-time purchase with no renewal. Gifts are always one-time too.",
   },
   {
     q: "When does it ship?",
@@ -12,11 +20,11 @@ export const faqs = [
   },
   {
     q: "Can I cancel?",
-    a: `Yes. Email ${site.email} any time before your box ships for a full refund. It's a one-time purchase, not a subscription.`,
+    a: `Yes. Email ${site.email} any time before your box ships for a full refund.`,
   },
   {
     q: "How do I send it as a gift?",
-    a: "Choose \"It's a gift\" when you choose your box, then enter their address at checkout and write a message. We print it on a note inside the box. Any box can be a gift.",
+    a: "Choose \"It's a gift\" when you pick your box, then enter their address at checkout and write a message. We print it on a note inside the box, and the receipt comes to you. Any box can be a gift.",
   },
   {
     q: "What about allergies?",
@@ -31,23 +39,23 @@ export const faqs = [
 export function Faq() {
   return (
     <section id="faq">
-      <div className="mx-auto max-w-3xl px-6 py-16 lg:py-24">
-        <h2 className="font-display text-headline text-ink" data-reveal>
+      <div className="mx-auto max-w-3xl px-5 py-16 lg:py-24">
+        <h2 className="font-display text-headline text-ink">
           Questions, answered.
         </h2>
         {/* Native <details>: answers stay in the server HTML, so search and AI crawlers
             that never click (or run JS) still read them. name="faq" = one open at a time. */}
-        <div className="mt-8 divide-y divide-border border-b border-border" data-reveal>
+        <div className="mt-8 divide-y-2 divide-ink/10 border-y-2 border-ink">
           {faqs.map((item) => (
             <details key={item.q} name="faq" className="group">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-md py-4 text-left text-sm font-medium text-ink outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-md py-4 text-left text-base font-semibold text-ink outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
                 {item.q}
                 <ChevronDownIcon
                   aria-hidden
                   className="size-4 shrink-0 text-ink-soft transition-transform duration-200 group-open:rotate-180"
                 />
               </summary>
-              <p className="max-w-[56ch] pb-4 text-sm leading-relaxed text-ink-soft">{item.a}</p>
+              <p className="max-w-[62ch] pb-5 leading-relaxed text-ink-soft">{item.a}</p>
             </details>
           ))}
         </div>

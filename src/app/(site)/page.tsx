@@ -2,16 +2,18 @@ import { loadPublicCatalog } from "@/lib/public-sales";
 import { Hero } from "@/components/sections/hero";
 import { TrustStrip } from "@/components/sections/trust-strip";
 import { Shop } from "@/components/sections/shop";
-import { Screening, TrustStory } from "@/components/sections/how-we-pick";
+import { HowItWorks, WhyKeniya } from "@/components/sections/how-we-pick";
 import { Faq } from "@/components/sections/faq";
 import { PreorderCta } from "@/components/sections/preorder-cta";
 import { StickyBuyBar } from "@/components/sticky-buy-bar";
 import { JsonLd } from "@/components/json-ld";
 import { faqs } from "@/components/sections/faq";
 import { site } from "@/lib/site";
+import { sharedExtras } from "@/lib/box";
 import { faqJsonLd, productJsonLd } from "@/lib/schema";
 import { standardsForAll } from "@/lib/standards";
 import { GiftSection } from "@/components/sections/gift-section";
+import { WelcomeOffer } from "@/components/welcome-offer";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -23,7 +25,9 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function Home() {
-  const { rules, boxes } = await loadPublicCatalog();
+  const { rules, boxes, offers } = await loadPublicCatalog();
+  // Any box open for preorder decides whether the page talks about shipping or the list.
+  const open = boxes.some((b) => b.sale?.available);
   // Built from the same data the page renders, so markup can't drift from visible content.
   // Product @ids point at each box's landing page, the canonical home for that product.
   const homeJsonLd = {
@@ -33,15 +37,16 @@ export default async function Home() {
   return (
     <>
       <JsonLd data={homeJsonLd} />
-      <Hero />
+      <Hero open={open} extras={sharedExtras(boxes)} />
       <TrustStrip />
-      <Shop boxes={boxes} standards={standardsForAll(rules)} />
-      <Screening />
+      <Shop boxes={boxes} standards={standardsForAll(rules)} offers={offers} />
+      <HowItWorks />
       <GiftSection />
-      <TrustStory />
+      <WhyKeniya />
       <Faq />
-      <PreorderCta />
+      <PreorderCta open={open} />
       <StickyBuyBar />
+      {offers.welcome && <WelcomeOffer offer={offers.welcome} />}
     </>
   );
 }

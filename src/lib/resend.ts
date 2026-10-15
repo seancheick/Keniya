@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { Resend } from "resend";
 import { env } from "@/lib/env";
 import { site } from "@/lib/site";
@@ -86,7 +87,7 @@ export async function sendOrderEmails(
     from: env.RESEND_FROM_EMAIL,
     to,
     replyTo: site.email,
-    subject: `Your ${props.box.name} is reserved`,
+    subject: props.club ? `Welcome to the Snack Club: your ${props.box.name}` : `Your ${props.box.name} is confirmed`,
     react: OrderConfirmEmail(props),
   });
   // Founder packing slip; reply goes straight to the buyer.
@@ -95,7 +96,7 @@ export async function sendOrderEmails(
     from: env.RESEND_FROM_EMAIL,
     to: site.email,
     replyTo: to,
-    subject: `New order: ${props.box.shortName}${props.gift ? " (gift)" : ""}${left}`,
+    subject: `New order: ${props.box.shortName}${props.gift ? " (gift)" : ""}${props.club ? " (Snack Club)" : ""}${left}`,
     react: OrderAlertEmail({ ...props, ...alert, customerEmail: to, sessionId }),
   });
   return { customer, founder };
@@ -109,5 +110,68 @@ export async function sendCartReminder(to: string, box: Box, sessionId: string) 
     replyTo: site.email,
     subject: `Take another look at the ${box.shortName} box`,
     react: CartReminderEmail({ box }),
+  });
+}
+
+/** A corporate & team gifts inquiry, sent to the Keniya inbox with Reply-To set to the buyer. */
+export async function sendCorporateInquiry(i: {
+  name: string;
+  email: string;
+  company: string;
+  quantity: number;
+  needBy?: string;
+  message?: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { error } = await getResend().emails.send({
+      from: env.RESEND_FROM_EMAIL,
+      to: site.email,
+      replyTo: i.email,
+      subject: `Team gifts: ${i.quantity} boxes for ${i.company}`,
+      text: [
+        `Name: ${i.name}`,
+        `Email: ${i.email}`,
+        `Company: ${i.company}`,
+        `Boxes: ${i.quantity}`,
+        `Needed by: ${i.needBy || "not given"}`,
+        "",
+        i.message || "(no message)",
+      ].join("\n"),
+    });
+    if (error) {
+      console.error("resend corporate inquiry failed", error);
+      return { ok: false, error: error.message };
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error("resend corporate inquiry threw", err);
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/** The first-box code email. One per address and code (Resend drops a repeat key for 24h). */
+export async function sendWelcomeOfferEmail(to: string, offer: { code: string; percentOff: number; priceLabel: string }) {
+  const { WelcomeOfferEmail } = await import("@/emails/WelcomeOfferEmail");
+  const key = createHash("sha256").update(`${to}:${offer.code}`).digest("hex");
+  return sendOnce("welcome offer", `welcome:${key}`, {
+    from: env.RESEND_FROM_EMAIL,
+    to,
+    replyTo: site.email,
+    subject: `Your code ${offer.code}: ${offer.percentOff}% off your first box`,
+    react: WelcomeOfferEmail(offer),
+  });
+}
+
+export type ClubEmailKind = "link" | "upcoming" | "renewed" | "held" | "cancelled";
+
+/** Snack Club lifecycle emails. `key` makes each one send once (webhook retries are safe). */
+export async function sendClubEmail(to: string, key: string, props: import("@/emails/ClubEmail").ClubEmailProps) {
+  const { ClubEmail, clubSubject } = await import("@/emails/ClubEmail");
+  return sendOnce(`club ${props.kind}`, `club-${props.kind}-${key}`, {
+    from: env.RESEND_FROM_EMAIL,
+    to,
+    replyTo: site.email,
+    subject: clubSubject(props),
+    react: ClubEmail(props),
   });
 }

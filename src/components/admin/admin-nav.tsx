@@ -12,6 +12,8 @@ export const ADMIN_TABS = [
   { href: "/admin/verify", label: "Verify" },
   { href: "/admin/boxes", label: "Boxes" },
   { href: "/admin/orders", label: "Orders" },
+  { href: "/admin/subscriptions", label: "Snack Club" },
+  { href: "/admin/promos", label: "Promo codes" },
   { href: "/admin/purchasing", label: "Purchasing" },
   { href: "/admin/customers", label: "Customers" },
   { href: "/admin/reports", label: "Reports" },

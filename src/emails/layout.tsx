@@ -15,20 +15,21 @@ import { site } from "@/lib/site";
 
 /** Brand palette (globals.css), inlined because email clients ignore stylesheets. */
 export const c = {
-  cream: "#FAF5EE",
-  creamDeep: "#F1E8DC",
-  card: "#FFFDF8",
-  line: "#E5DACB",
-  ink: "#33302B",
-  inkSoft: "#6B655C",
-  sage: "#5F7057",
-  terracotta: "#C2704E",
-  terracottaDeep: "#A65A3D",
-  blush: "#EBD8CD",
-  blushInk: "#8A4E33",
+  cream: "#FFF8EF",
+  creamDeep: "#FBEEDC",
+  card: "#FFFDF9",
+  line: "#EBDFCD",
+  ink: "#252525",
+  inkSoft: "#5B554D",
+  mintDeep: "#1E6B4B",
+  coral: "#FF796C",
+  coralDeep: "#B23A2C",
+  butter: "#FFE38A",
+  butterInk: "#5C4300",
 };
 
-const serif = "Georgia, 'Times New Roman', serif";
+// Heavy, tight sans for headings: the email-safe stand-in for the site's Bricolage display.
+const display = "'Helvetica Neue', Helvetica, Arial, sans-serif";
 const sans =
   "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
@@ -44,16 +45,17 @@ export const t = {
     fontWeight: 600,
     letterSpacing: "0.18em",
     textTransform: "uppercase" as const,
-    color: c.sage,
+    color: c.mintDeep,
     fontFamily: sans,
   },
   h1: {
     margin: "0 0 14px",
     fontSize: "30px",
-    lineHeight: 1.2,
-    fontWeight: 400,
+    lineHeight: 1.1,
+    fontWeight: 800,
+    letterSpacing: "-0.02em",
     color: c.ink,
-    fontFamily: serif,
+    fontFamily: display,
   },
   body: {
     margin: "0 0 16px",
@@ -85,7 +87,7 @@ export function Button({
         style={{
           display: "inline-block",
           padding: "15px 32px",
-          backgroundColor: c.terracottaDeep,
+          backgroundColor: c.coralDeep,
           color: "#FFFDF8",
           borderRadius: "9999px",
           fontSize: "16px",
@@ -140,7 +142,7 @@ export function CategoryList({
                 padding: "6px 0",
                 fontSize: "15px",
                 fontWeight: 700,
-                color: c.terracotta,
+                color: c.ink,
                 fontFamily: sans,
               }}
             >
@@ -214,11 +216,13 @@ export function EmailShell({
                 style={{
                   margin: 0,
                   fontSize: "26px",
+                  fontWeight: 800,
+                  letterSpacing: "-0.04em",
                   color: c.ink,
-                  fontFamily: serif,
+                  fontFamily: display,
                 }}
               >
-                Keniya<span style={{ color: c.terracotta }}>.</span>
+                Keniya<span style={{ color: c.coralDeep }}>.</span>
               </Text>
             </Link>
           </Section>
@@ -251,7 +255,7 @@ export function EmailShell({
               )}
               <Text style={t.small}>
                 Questions? Just reply, or write to{" "}
-                <Link href={`mailto:${site.email}`} style={{ color: c.sage }}>
+                <Link href={`mailto:${site.email}`} style={{ color: c.mintDeep }}>
                   {site.email}
                 </Link>
                 .

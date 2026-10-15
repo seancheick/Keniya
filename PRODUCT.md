@@ -32,8 +32,10 @@ customer condition / life stage → applicable Keniya screening rules → eligib
 
 ## Operating Context
 
-- Boxes: Pregnancy Comfort, Carb Conscious (internal slug `blood_sugar`), Heart Wellness. $47 each, 14 snack selections, free US shipping, one-time purchase (no subscription), refundable until it ships. Founding release: 50 of each; ships November 11, 2026.
-- Gifting: any box can be a gift (home "It's a gift" toggle, /gifts, or each box page); the buyer's message is printed on a note in the box; receipts go to the buyer.
+- Boxes: six (Pregnancy Comfort, Blood Sugar (`blood_sugar`), Heart Wellness, Gestational Diabetes, GLP-1 Companion, Postpartum & Nursing). $47 each, 14 snack selections, free US shipping, refundable until it ships. First boxes ship November 11, 2026; after that orders ship as packed. The site says "order now", not "preorder"; a box opens for orders only when its lineup is clinician-approved, priced at $47 and has run size > 0, otherwise it shows a "Notify me" list form.
+- Offers (Admin → Settings → Offers; all off by default, and the site shows only what is on): WELCOME20 first-box offer (20% off one one-time box or gift, one per email with no earlier order, applied as a Stripe coupon to a checkout locked to that email; claimed through the pop-up, which checks the email domain, adds the visitor to the list and emails the code); founding bonus (first N admitted orders, never renewals); Monthly Snack Club ($39/month, never gifts, no codes, skip 1–3 months / pause / cancel online at /club, a renewal for a box without an approved lineup is voided, not charged).
+- Box composition: 14 snacks; "little extras" (drink sticks, tea, a sample) are promised on a box only when its live recipe sets an extras range in Admin → Boxes, and the site says "+ 2–4 little extras" only when all six do. Until then drink sticks count toward the 14.
+- Gifting: any box can be a gift (home "It's a gift" toggle, /gifts, or each box page); the buyer's message is printed on a note in the box; receipts go to the buyer. "Send a hint" on /gifts shares a link that opens a box in gift mode. Corporate & team gifts (10+ boxes) are quote-based through /corporate-gifts; health boxes are chosen by each recipient, never assigned by condition.
 - Checkout (Stripe) collects optional "Allergies or foods to avoid" and "Sweet or salty?" answers, stored on the order (`avoid`, `craving`). Quiz answers prefill them.
 - One Packed for You card per box type (not personalized, not per snack): a welcome, what the box focuses on, 2–3 label tips, a QR code to the box page. Nutrient numbers come from each snack's sealed label.
 - Box contents rotate by season; the site shows categories and counts, never specific snacks.
@@ -51,7 +53,8 @@ customer condition / life stage → applicable Keniya screening rules → eligib
 ## Brand Commitments
 
 - Name: Keniya, from kɛnɛya, "health" in Dioula.
-- Current headline: "The snack box that did the label reading for you." (Sean's call to change.)
+- Current headline: "Better snacks. Less guesswork." (October 2026 revamp; Wrapped & Sealed visual world, see DESIGN.md.)
+- Footer: no FDA dietary-supplement disclaimer (Keniya sells conventional packaged food and makes no supplement claims); keep "not medical or nutritional advice" and the allergen reminder.
 - Consumer terms: "Heart Wellness" / "heart-conscious" (not "heart healthy" in copy); "Carb Conscious", chosen with diabetes in mind (no keto or "low carb" promise, no outcome claims); "Keniya Pregnancy Screening"; "reviewed by a pharmacist" (Laurie is PharmD, not a dietitian).
 - Voice: plain, warm, direct; short sentences; no medical claims.
 

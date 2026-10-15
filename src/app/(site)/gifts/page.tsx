@@ -7,6 +7,9 @@ import { BoxVisual } from "@/components/box-visual";
 import { BuyButton } from "@/components/buy-button";
 import { Faqs, OtherBoxes, promises } from "@/components/box-landing";
 import { JsonLd } from "@/components/json-ld";
+import { SendHint } from "@/components/send-hint";
+import { WelcomeOffer } from "@/components/welcome-offer";
+import { ExampleChip, Sticker, Tissue } from "@/components/wrap";
 import { giftImage } from "@/lib/gift-image";
 import { giftLanding, landingFor } from "@/lib/landing";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/schema";
@@ -73,10 +76,10 @@ const faqs = [
 export const revalidate = 3600;
 
 export default async function GiftPage() {
-  const { boxes } = await loadPublicCatalog();
+  const { boxes, offers } = await loadPublicCatalog();
   const url = `${site.url.replace(/\/$/, "")}${giftLanding.path}`;
   return (
-    <article className="mx-auto max-w-5xl px-5 py-10 lg:py-16">
+    <article className="mx-auto max-w-6xl px-5 py-10 lg:py-16">
       <JsonLd
         data={{
           "@context": "https://schema.org",
@@ -87,45 +90,58 @@ export default async function GiftPage() {
         <Link href="/" className="hover:text-ink">Home</Link> <span aria-hidden>›</span> Gifts
       </nav>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+      <div className="mt-6 grid gap-10 lg:grid-cols-[1.05fr_1fr] lg:items-center lg:gap-14">
         <div>
           <h1 className="font-display text-display text-ink">
-            A snack box gift that already read the labels.
+            Good snacks make great gifts<span className="text-coral-deep">.</span>
           </h1>
-          <p className="mt-5 text-lg leading-relaxed text-ink-soft">
-            For a pregnancy, someone managing diabetes, or someone eating for their heart.{" "}
-            {site.snackCount} screened snacks, packed by hand, with your note inside and free
-            shipping to their door.
+          <p className="mt-6 max-w-[48ch] text-lg leading-relaxed text-ink-soft">
+            For someone expecting, someone managing diabetes, someone eating for their heart, or
+            someone who deserves a little something. {site.snackCount} snacks picked for their box,
+            packed by hand, with your note inside and free shipping to their door.
           </p>
           <ul className="mt-6 space-y-1.5 text-sm text-ink">
             {promises.map((p) => (
               <li key={p} className="flex items-center gap-2">
-                <CheckIcon className="size-4 text-sage-deep" strokeWidth={2.5} aria-hidden />
+                <CheckIcon className="size-4 text-mint-deep" strokeWidth={2.5} aria-hidden />
                 {p}
               </li>
             ))}
           </ul>
         </div>
-        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-cream-deep">
-          <Image src={img.src} alt={img.alt} fill priority sizes="(max-width: 1024px) 100vw, 480px" className="object-cover" />
+        <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
+          <div className="relative px-3 py-4 sm:px-5 sm:py-6">
+            <Tissue colors={["var(--rose)", "var(--sky)", "var(--butter)"]} />
+            <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-cream-deep shadow-[0_24px_40px_-24px_rgb(37_37_37/0.55)]">
+              <Image src={img.src} alt={img.alt} fill priority sizes="(max-width: 1024px) 92vw, 540px" className="object-cover" />
+              <ExampleChip />
+            </div>
+          </div>
         </div>
       </div>
 
-      <section className="mt-14" aria-labelledby="choose">
-        <h2 id="choose" className="font-display text-3xl text-ink">Choose their box</h2>
-        <ul className="mt-6 grid gap-4 md:grid-cols-3">
+      <section className="mt-16 lg:mt-24" aria-labelledby="choose">
+        <h2 id="choose" className="font-display text-headline text-ink">Choose their box</h2>
+        <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {boxes.map((b) => (
-            <li key={b.slug} className="flex flex-col overflow-hidden rounded-3xl border border-border bg-cream-card">
-              <div className="relative aspect-[16/10] bg-cream-deep">
-                <BoxVisual box={b} sizes="(max-width: 768px) 100vw, 320px" />
+            <li
+              key={b.slug}
+              data-colorway={b.colorway}
+              className="paper flex flex-col rounded-[6px] bg-tissue p-3 shadow-[0_14px_24px_-20px_rgb(37_37_37/0.7)]"
+            >
+              <div className="relative aspect-[16/10] overflow-hidden rounded-[3px] bg-cream-deep">
+                <BoxVisual box={b} sizes="(max-width: 768px) 92vw, 360px" />
               </div>
-              <div className="flex flex-1 flex-col p-5">
-                <h3 className="font-display text-2xl text-ink">{b.name}</h3>
-                <p className="mt-1 text-sm text-ink-soft">{b.why}</p>
-                {b.caution && <p className="mt-1.5 text-xs font-semibold text-blush-ink">{b.caution}</p>}
+              <div className="flex flex-1 flex-col px-1.5 pb-1.5 pt-4">
+                <div className="flex items-start justify-between gap-2">
+                  <h3 className="font-display text-2xl font-extrabold leading-tight tracking-tight text-ink">{b.name.replace(/ Box$/, "")}</h3>
+                  <span className="font-display text-2xl font-extrabold leading-tight text-ink">${site.preorderPriceUSD}</span>
+                </div>
+                <p className="mt-1 text-sm text-tissue-ink">{b.tagline}</p>
+                {b.caution && <p className="mt-1.5 text-xs font-bold text-ink">{b.caution}</p>}
                 <Link
                   href={landingFor(b.slug).path}
-                  className="mt-3 text-sm font-medium text-sage-deep underline underline-offset-4 hover:text-ink"
+                  className="mt-3 self-start text-sm font-semibold text-ink underline underline-offset-4"
                 >
                   What goes in
                 </Link>
@@ -144,25 +160,53 @@ export default async function GiftPage() {
         </ul>
       </section>
 
-      <section className="mt-16" aria-labelledby="how">
-        <h2 id="how" className="font-display text-3xl text-ink">How gifting works</h2>
-        <ol className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="mt-16 lg:mt-24" aria-labelledby="how">
+        <h2 id="how" className="font-display text-headline text-ink">How gifting works</h2>
+        <ol className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((s, i) => (
-            <li key={s.t} className="rounded-2xl border border-border bg-cream-card p-5">
-              <span className="font-display text-3xl text-terracotta-deep">{i + 1}</span>
-              <strong className="mt-2 block text-ink">{s.t}</strong>
-              <span className="mt-1 block text-sm text-ink-soft">{s.b}</span>
+            <li key={s.t} className="flex gap-4 lg:flex-col">
+              <Sticker
+                tone="cream"
+                className="w-14 shrink-0"
+                style={{ backgroundColor: ["var(--rose)", "var(--butter)", "var(--sky)", "var(--mint)"][i], rotate: `${[-8, 6, -4, 7][i]}deg` }}
+              >
+                <span className="font-label text-2xl leading-none">{i + 1}</span>
+              </Sticker>
+              <span>
+                <strong className="block text-lg leading-snug text-ink">{s.t}</strong>
+                <span className="mt-1 block leading-relaxed text-ink-soft">{s.b}</span>
+              </span>
             </li>
           ))}
         </ol>
       </section>
 
-      <section className="mt-14" aria-labelledby="faq">
-        <h2 id="faq" className="font-display text-3xl text-ink">Gift questions</h2>
+      <section className="mt-16 grid gap-8 lg:mt-24 lg:grid-cols-2" aria-label="Hints and team gifts">
+        <SendHint id="hint" boxes={boxes.map(({ slug, name, shortName, colorway }) => ({ slug, name, shortName, colorway }))} />
+        <div className="paper flex flex-col justify-between rounded-[6px] bg-butter p-5 sm:p-6">
+          <div>
+            <p className="font-display text-2xl font-extrabold tracking-tight text-ink">Gifting for a team?</p>
+            <p className="mt-1.5 max-w-[44ch] text-ink">
+              Welcome packages, parental-leave gifts, milestones: send 10 or more boxes and let each
+              person choose the box that fits them.
+            </p>
+          </div>
+          <Link
+            href="/corporate-gifts"
+            className="mt-6 inline-flex h-12 items-center self-start rounded-full bg-ink px-6 text-sm font-semibold text-cream transition-colors hover:bg-ink/85"
+          >
+            Corporate &amp; team gifts
+          </Link>
+        </div>
+      </section>
+
+      <section className="mt-16 max-w-3xl lg:mt-24" aria-labelledby="faq">
+        <h2 id="faq" className="font-display text-headline text-ink">Gift questions</h2>
         <Faqs faqs={faqs} />
       </section>
 
       <OtherBoxes current="gifts" />
+      {offers.welcome && <WelcomeOffer offer={offers.welcome} />}
     </article>
   );
 }

@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-const m = vi.hoisted(() => ({ sale: vi.fn(), create: vi.fn(), price: vi.fn(), reserve: vi.fn(), update: vi.fn(), expired: vi.fn(), retrieve: vi.fn(), expire: vi.fn() }));
+const m = vi.hoisted(() => ({ sale: vi.fn(), create: vi.fn(), price: vi.fn(), reserve: vi.fn(), update: vi.fn(), expired: vi.fn(), retrieve: vi.fn(), expire: vi.fn(), prior: vi.fn(), couponGet: vi.fn(), couponCreate: vi.fn(), settings: { offers: { welcome: { enabled: true, code: "WELCOME20", percentOff: 20, limit: 100 }, subscription: { enabled: true, priceCents: 3900 } } } }));
 vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
-vi.mock("@/lib/commerce", () => ({ loadSaleSnapshot: m.sale }));
-vi.mock("@/lib/stripe", () => ({ isCheckoutConfigured: () => true, priceIdForBox: () => "price_1", getStripe: () => ({ prices: { retrieve: m.price }, checkout: { sessions: { create: m.create, retrieve: m.retrieve, expire: m.expire } } }) }));
-vi.mock("@/lib/supabase", () => ({ getSupabaseAdminStrict: () => ({ rpc: m.reserve, from: () => {
+vi.mock("@/lib/commerce", () => ({ loadCommerceState: async () => ({ sales: await m.sale(), settings: m.settings }) }));
+vi.mock("@/lib/stripe", () => ({ isCheckoutConfigured: () => true, priceIdForBox: () => "price_1", getStripe: () => ({ prices: { retrieve: m.price }, coupons: { retrieve: m.couponGet, create: m.couponCreate }, checkout: { sessions: { create: m.create, retrieve: m.retrieve, expire: m.expire } } }) }));
+vi.mock("@/lib/supabase", () => ({ getSupabaseAdminStrict: () => ({ rpc: m.reserve, from: (table: string) => {
+ if (table === "preorders") return { select: () => ({ ilike: () => ({ limit: m.prior }) }) };
  const q = { eq: () => q, lte: () => q, or: () => q, not: () => q, order: () => q, range: m.expired, limit: m.expired };
  return { update: m.update, select: () => q };
 } }) }));
@@ -19,6 +20,11 @@ beforeEach(() => {
  m.create.mockResolvedValue({ id: "cs_1", url: "https://checkout.stripe.com/example" });
  const write = { eq: () => write, then: (resolve: (value: unknown) => unknown) => Promise.resolve({ error: null }).then(resolve) };
  m.update.mockReturnValue(write);
+ m.prior.mockResolvedValue({ data: [], error: null });
+ m.couponGet.mockRejectedValue(Object.assign(new Error("No such coupon"), { code: "resource_missing" }));
+ m.couponCreate.mockResolvedValue({ id: "keniya-welcome20-20pct-100" });
+ m.settings.offers.welcome.enabled = true;
+ m.settings.offers.subscription.enabled = true;
 });
 describe("checkout safeguards", () => {
  it("expires a session created during an admission invalidation", async () => {
@@ -84,5 +90,73 @@ describe("checkout safeguards", () => {
   m.reserve.mockResolvedValue({ error: { message: "sold out" }, data: null });
   expect((await startCheckout(input)).ok).toBe(false);
   expect(m.create).not.toHaveBeenCalled();
+ });
+});
+describe("first-order offer (WELCOME20)", () => {
+ const welcome = { ...input, welcomeEmail: " New@Example.com " };
+ it("applies the coupon and locks checkout to the buyer's email", async () => {
+  expect((await startCheckout(welcome)).ok).toBe(true);
+  expect(m.couponCreate).toHaveBeenCalledWith(expect.objectContaining({ id: "keniya-welcome20-20pct-100", percent_off: 20, duration: "once", max_redemptions: 100 }), expect.anything());
+  const params = m.create.mock.calls[0][0];
+  expect(params).toMatchObject({ discounts: [{ coupon: "keniya-welcome20-20pct-100" }], customer_email: "new@example.com", metadata: expect.objectContaining({ offer: "WELCOME20" }) });
+  // Never both: a typed code can't stack on the welcome coupon.
+  expect(params.allow_promotion_codes).toBeUndefined();
+ });
+ it("refuses an email that already has an order, before any coupon or session", async () => {
+  m.prior.mockResolvedValue({ data: [{ id: "earlier" }], error: null });
+  const res = await startCheckout(welcome);
+  expect(res).toMatchObject({ ok: false, code: "offer_used" });
+  // Never says why (an earlier order), so checkout can't be used to look someone up.
+  expect(res.ok === false && res.message).not.toMatch(/already|order before|has a Keniya order/i);
+  expect(m.couponCreate).not.toHaveBeenCalled();
+  expect(m.create).not.toHaveBeenCalled();
+ });
+ it("refuses when the offer is switched off or its coupon is used up", async () => {
+  m.settings.offers.welcome.enabled = false;
+  expect(await startCheckout(welcome)).toMatchObject({ ok: false, code: "offer_ended" });
+  m.settings.offers.welcome.enabled = true;
+  m.couponGet.mockResolvedValue({ valid: false });
+  expect(await startCheckout(welcome)).toMatchObject({ ok: false, code: "offer_ended" });
+  expect(m.create).not.toHaveBeenCalled();
+ });
+ it("keeps typed promotion codes for ordinary checkouts", async () => {
+  expect((await startCheckout(input)).ok).toBe(true);
+  const params = m.create.mock.calls[0][0];
+  expect(params.allow_promotion_codes).toBe(true);
+  expect(params.discounts).toBeUndefined();
+  expect(m.prior).not.toHaveBeenCalled();
+ });
+});
+describe("Monthly Snack Club checkout", () => {
+ const monthly = { ...input, plan: "monthly" as const };
+ it("opens a subscription checkout at the club price with the box on the subscription", async () => {
+  expect((await startCheckout(monthly)).ok).toBe(true);
+  const params = m.create.mock.calls[0][0];
+  expect(params.mode).toBe("subscription");
+  expect(params.line_items[0].price_data).toMatchObject({ unit_amount: 3900, recurring: { interval: "month" } });
+  expect(params.subscription_data.metadata).toEqual({ box_slug: "heart", plan: "monthly" });
+  expect(params.custom_text.submit.message).toMatch(/every month .* until you cancel/);
+  // No codes on the club, and it ignores the one-time Stripe price.
+  expect(params.allow_promotion_codes).toBeUndefined();
+  expect(params.discounts).toBeUndefined();
+  expect(m.price).not.toHaveBeenCalled();
+ });
+ it("still takes a first-shipment capacity hold like any order", async () => {
+  await startCheckout(monthly);
+  expect(m.reserve).toHaveBeenCalledWith("reserve_checkout", expect.objectContaining({ p_slug: "heart" }));
+ });
+ it("refuses while the club is switched off", async () => {
+  m.settings.offers.subscription.enabled = false;
+  expect(await startCheckout(monthly)).toMatchObject({ ok: false, code: "no_subscription" });
+  expect(m.create).not.toHaveBeenCalled();
+ });
+ it("never makes a gift or a welcome-offer order recurring", async () => {
+  expect(await startCheckout({ ...monthly, gift: true })).toMatchObject({ ok: false, code: "gift_subscription" });
+  expect(await startCheckout({ ...monthly, welcomeEmail: "new@example.com" })).toMatchObject({ ok: false, code: "offer_subscription" });
+  expect(m.create).not.toHaveBeenCalled();
+ });
+ it("keeps one-time as the default plan", async () => {
+  await startCheckout(input);
+  expect(m.create.mock.calls[0][0].mode).toBe("payment");
  });
 });

@@ -8,7 +8,7 @@ import { Button, EmailShell, Panel, CategoryList, c, t } from "@/emails/layout";
 export function CartReminderEmail({ box }: { box: Box }) {
   return (
     <EmailShell
-      preview={`Take another look at the ${box.name}. Availability is checked when you preorder.`}
+      preview={`Take another look at the ${box.name}. Availability is checked when you order.`}
       image={box.image}
       imageAlt={box.imageAlt}
       footerNote="This is the only reminder we'll send about this checkout."
@@ -16,7 +16,7 @@ export function CartReminderEmail({ box }: { box: Box }) {
       <Text style={t.eyebrow}>Still thinking it over?</Text>
       <Heading style={t.h1}>Still interested in the {box.shortName} box?</Heading>
       <Text style={t.body}>
-        Your previous checkout has expired. You can visit the box page to start a new preorder
+        Your previous checkout has expired. You can visit the box page to start a new order
         while it is available. A box has not been reserved for you.
       </Text>
 

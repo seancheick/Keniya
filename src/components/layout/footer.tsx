@@ -3,84 +3,70 @@ import { boxes } from "@/lib/box";
 import { giftLanding, landingFor } from "@/lib/landing";
 import { site } from "@/lib/site";
 
+const linkClass = "text-cream/75 transition-colors hover:text-cream";
+
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-cream-deep/70">
-      <div className="mx-auto max-w-6xl px-6 py-14 pb-28 md:pb-14">
-        <p className="font-display text-headline max-w-[22ch] text-ink">
+    <footer className="bg-ink text-cream">
+      <div className="mx-auto max-w-6xl px-5 py-16 pb-28 md:pb-16">
+        <p className="max-w-[20ch] font-display text-headline text-cream">
           Someone thought this through for you.
         </p>
-        <div className="mt-10 flex flex-col justify-between gap-8 sm:flex-row sm:items-end">
+        <div className="mt-12 grid gap-10 sm:grid-cols-[1.2fr_1fr_1fr]">
           <div>
-            <p className="font-display text-xl text-ink">
-              Keniya<span className="text-terracotta">.</span>
+            <p className="font-display text-2xl font-extrabold tracking-[-0.04em]">
+              Keniya<span className="text-coral">.</span>
             </p>
-            <p className="mt-2 max-w-[44ch] text-sm text-ink-soft">
-              How we write <em>kɛnɛya</em> — &ldquo;health&rdquo; in Dioula. Curated
-              with{" "}
+            <p className="mt-3 max-w-[40ch] text-sm leading-relaxed text-cream/75">
+              How we write <em>kɛnɛya</em>, &ldquo;health&rdquo; in Dioula. Curated with{" "}
               <a
                 href={site.pharmaguide.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-sage-deep underline-offset-2 hover:underline"
+                className="font-semibold text-cream underline underline-offset-4"
               >
                 PharmaGuide
               </a>{" "}
               ingredient intelligence.
             </p>
           </div>
-          <nav
-            className="flex flex-wrap gap-x-7 gap-y-2 text-sm text-ink-soft"
-            aria-label="Footer"
-          >
-            {boxes.map((b) => (
-              <Link key={b.slug} className="transition-colors hover:text-ink" href={landingFor(b.slug).path}>
-                {b.shortName} box
-              </Link>
-            ))}
-            <Link className="transition-colors hover:text-ink" href={giftLanding.path}>
-              Gifts
-            </Link>
-            <a className="transition-colors hover:text-ink" href="/about">
-              Our story
-            </a>
-            <Link className="transition-colors hover:text-ink" href="/#how">
-              How we pick
-            </Link>
-            <a
-              className="transition-colors hover:text-ink"
-              href={site.pharmaguide.url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              PharmaGuide
-            </a>
-            <Link className="transition-colors hover:text-ink" href="/#faq">
-              FAQ
-            </Link>
-            <a className="transition-colors hover:text-ink" href="/privacy">
-              Privacy
-            </a>
-            <a className="transition-colors hover:text-ink" href="/terms">
-              Terms
-            </a>
-            <a className="transition-colors hover:text-ink" href={`mailto:${site.email}`}>
-              {site.email}
-            </a>
+          <nav aria-label="Boxes">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-cream/60">Boxes</p>
+            <ul className="mt-3 space-y-2 text-sm">
+              {boxes.map((b) => (
+                <li key={b.slug}>
+                  <Link className={linkClass} href={landingFor(b.slug).path}>
+                    {b.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+          <nav aria-label="Footer">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-cream/60">Keniya</p>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li><Link className={linkClass} href={giftLanding.path}>Gifts</Link></li>
+              <li><Link className={linkClass} href="/corporate-gifts">Corporate &amp; team gifts</Link></li>
+              <li><Link className={linkClass} href="/#how">How it works</Link></li>
+              <li><Link className={linkClass} href="/about">Our story</Link></li>
+              <li><Link className={linkClass} href="/#faq">FAQ</Link></li>
+              <li><a className={linkClass} href="/privacy">Privacy</a></li>
+              <li><a className={linkClass} href="/terms">Terms</a></li>
+              <li><a className={linkClass} href={`mailto:${site.email}`}>{site.email}</a></li>
+            </ul>
           </nav>
         </div>
-        <p className="mt-10 text-xs leading-relaxed text-ink-soft">
-          Keniya curates packaged snacks for comfort and enjoyment through pregnancy and
-          other life stages. These statements have not been evaluated by the Food and Drug
-          Administration. Our boxes are not intended to diagnose, treat, cure, or prevent
-          any disease or condition, and nothing here is medical or nutritional advice —
-          always follow the guidance of your healthcare provider about what&rsquo;s right
-          for you. Every item ships in its original sealed packaging; check manufacturer
-          labels for allergens.
+        {/* Conventional food, no supplement claims: no FDA supplement disclaimer. What stays is
+            the honest scope of what Keniya does, and the allergen reminder. */}
+        <p className="mt-12 max-w-[90ch] border-t border-cream/15 pt-6 text-xs leading-relaxed text-cream/70">
+          Keniya curates packaged snacks to each box&rsquo;s published standards. It isn&rsquo;t
+          medical or nutritional advice; follow your healthcare provider&rsquo;s guidance about
+          what&rsquo;s right for you. Every item ships in its original sealed packaging, so check
+          each label for allergens.
         </p>
-        <p className="mt-6 text-xs text-ink-soft">
-          © 2026 Keniya. All rights reserved. · Free shipping on founding preorders ·{" "}
-          <a href={site.url} className="hover:text-ink">
+        <p className="mt-4 text-xs text-cream/70">
+          © 2026 Keniya. All rights reserved. · Free US shipping ·{" "}
+          <a href={site.url} className="hover:text-cream">
             keniyahealth.com
           </a>
         </p>

@@ -63,6 +63,21 @@ export async function saveSettings(_prev: SettingsState, fd: FormData): Promise<
       minRetailCents: String(fd.get("value_min_retail") ?? "").trim() === "" ? null : cents(fd.get("value_min_retail")),
       maxSnackCostCents: String(fd.get("value_max_cost") ?? "").trim() === "" ? null : cents(fd.get("value_max_cost")),
     },
+    // Each offer shows on the site only while it's on here.
+    offers: {
+      welcome: {
+        enabled: fd.get("welcome_on") === "on",
+        code: String(fd.get("welcome_code") ?? "").trim().toUpperCase(),
+        percentOff: Math.round(num(fd.get("welcome_pct")) ?? 20),
+        limit: String(fd.get("welcome_limit") ?? "").trim() === "" ? null : Math.round(num(fd.get("welcome_limit")) ?? 0),
+      },
+      foundingBonus: {
+        enabled: fd.get("bonus_on") === "on",
+        limit: Math.max(0, Math.round(num(fd.get("bonus_limit")) ?? 0)),
+        description: String(fd.get("bonus_description") ?? "").trim().slice(0, 120),
+      },
+      subscription: { enabled: fd.get("sub_on") === "on", priceCents: cents(fd.get("sub_price")) },
+    },
   };
   if (!data.shipping.table.length) data.shipping.table = [{ fromOz: 0, cents: 0 }];
   const parsed = settingsSchema.safeParse(data);

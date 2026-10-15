@@ -5,12 +5,13 @@ import { Badge, Card, Disclosure, Empty, PageHeader, PillTabs, Table, type Tone 
 import { createShipmentForPreorder } from "@/actions/admin/orders";
 import { Button } from "@/components/ui/button";
 import { fmt$, shipmentProfit } from "@/lib/admin/costing";
-import { db, allRows } from "@/lib/admin/db";
+import { db, allRows, loadSettings } from "@/lib/admin/db";
+import { foundingBonusOrders } from "@/lib/admin/offers";
 import { BOX_LABEL, isBoxSlug } from "@/lib/admin/types";
 
 export const metadata: Metadata = { title: "Orders" };
 
-type Pre = { id: string; created_at: string; email: string; customer_name: string | null; amount_total: number; box_slug: string | null; avoid: string | null; craving: string | null; status: string; shipping: { name?: string } | null };
+type Pre = { id: string; created_at: string; email: string; customer_name: string | null; amount_total: number; box_slug: string | null; avoid: string | null; craving: string | null; status: string; shipping: { name?: string } | null; kind?: "one_time" | "subscription" | "renewal"; admission_verified?: boolean };
 type Ship = {
   id: string;
   code: string;
@@ -45,10 +46,19 @@ const box = (s: string | null) => (s && isBoxSlug(s) ? BOX_LABEL[s] : (s ?? "—
 export default async function OrdersPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const sp = await searchParams;
   const tab = TABS.some(([k]) => k === sp.tab) ? sp.tab! : "planned";
-  const [pres, ships] = await Promise.all([
-    allRows<Pre>((from, to) => db().from("preorders").select("id, created_at, email, customer_name, amount_total, box_slug, avoid, craving, status, shipping").order("created_at").order("id").range(from, to), "preorders"),
+  const [pres, ships, settings] = await Promise.all([
+    // "*" so the page keeps working on either side of the Snack Club migration (kind is new).
+    allRows<Pre>((from, to) => db().from("preorders").select("*").order("created_at").order("id").range(from, to), "preorders"),
     allRows<Ship>((from, to) => db().from("shipments").select("*").order("created_at", { ascending: false }).order("id").range(from, to), "shipments"),
+    loadSettings(),
   ]);
+  const bonus = foundingBonusOrders(pres, settings.offers.foundingBonus);
+  const tags = (p: Pre) => (
+    <>
+      {p.kind === "subscription" ? <Badge tone="good">Snack Club · first box</Badge> : p.kind === "renewal" ? <Badge tone="good">Snack Club renewal</Badge> : null}
+      {bonus.has(p.id) ? <Badge tone="warn" title={settings.offers.foundingBonus.description}>+ founding bonus</Badge> : null}
+    </>
+  );
   const planned = new Set(ships.map((s) => s.preorder_id).filter(Boolean));
   const todo = pres.filter((p) => p.status === "paid" && !planned.has(p.id));
   const count = (k: string) =>
@@ -84,6 +94,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
                   <Badge tone="info">{box(p.box_slug)}</Badge>
+                  {tags(p)}
                   {p.avoid ? <Badge tone="warn">avoid: {p.avoid}</Badge> : null}
                   <span className="text-muted-foreground">{new Date(p.created_at).toLocaleDateString()}</span>
                 </div>
@@ -117,7 +128,10 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
                       {p.shipping?.name ?? p.customer_name ?? "—"}
                       <div className="text-xs text-muted-foreground">{p.email}</div>
                     </td>
-                    <td>{box(p.box_slug)}</td>
+                    <td>
+                      {box(p.box_slug)}
+                      <div className="mt-1 flex flex-wrap gap-1">{tags(p)}</div>
+                    </td>
                     <td className="max-w-56 text-xs">
                       {p.avoid ? <Badge tone="warn">avoid: {p.avoid}</Badge> : null} {p.craving ?? ""}
                     </td>

@@ -11,6 +11,8 @@ export const publicBoxes = (rules: PublicRules): PublicBox[] =>
     why: fillStandards(b.why, rules),
     ...(b.caution && { caution: fillStandards(b.caution, rules) }),
     categories: publicComposition(b.slug, rules, b.composition),
+    // Promised only when the recipe sets a floor of at least one (the engine enforces it).
+    extras: rules[b.slug].extrasMin ? { min: rules[b.slug].extrasMin!, max: Math.max(rules[b.slug].extrasMin!, rules[b.slug].extrasMax ?? rules[b.slug].extrasMin!) } : null,
   }));
 
 export function publicLanding(slug: Box["slug"], rules: PublicRules): BoxLanding {

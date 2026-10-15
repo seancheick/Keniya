@@ -3,19 +3,24 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Wrapped & Sealed: warm cream paper, charcoal type, coral as the brand fill, butter for
+   price seals, and six tissue colorways (one per box). Coral and the tissue colors are
+   fills only; text sits on them in charcoal or the colorway's own ink. */
 :root {
-  --cream: #faf5ee;
-  --cream-deep: #f1e8dc;
-  --cream-card: #fffdf8;
-  --line: #e5dacb;
-  --ink: #33302b;
-  --ink-soft: #6b655c;
-  --sage: #97a68f;
-  --sage-deep: #5f7057;
-  --terracotta: #c2704e;
-  --terracotta-deep: #a65a3d;
-  --blush: #ebd8cd;
-  --blush-ink: #8a4e33;
+  --cream: #fff8ef;
+  --cream-deep: #fbeedc;
+  --cream-card: #fffdf9;
+  --line: #ebdfcd;
+  --ink: #252525;
+  --ink-soft: #5b554d;
+  --coral: #ff796c;
+  --coral-deep: #b23a2c; /* coral as text: 5.6:1 on cream */
+  --butter: #ffe38a;
+  --mint: #b7e5cc;
+  --mint-deep: #1e6b4b; /* checks and secondary links: 6.1:1 on cream */
+  --lilac: #c5b3ee;
+  --sky: #a9d4f5;
+  --rose: #f7b8cc;
 
   --background: var(--cream);
   --foreground: var(--ink);
@@ -23,21 +28,33 @@
   --card-foreground: var(--ink);
   --popover: var(--cream-card);
   --popover-foreground: var(--ink);
-  --primary: var(--terracotta-deep); /* deep shade: cream text passes WCAG AA (4.66:1) */
-  --primary-foreground: #fffdf8;
+  --primary: var(--ink); /* charcoal buttons, cream text: 14.5:1 */
+  --primary-foreground: var(--cream);
   --secondary: var(--cream-deep);
   --secondary-foreground: var(--ink);
   --muted: var(--cream-deep);
   --muted-foreground: var(--ink-soft);
-  --accent: var(--blush);
-  --accent-foreground: var(--blush-ink);
+  --accent: var(--butter);
+  --accent-foreground: var(--ink);
   --destructive: #b3392e;
   --destructive-foreground: #fdf1ee;
   --border: var(--line);
   --input: var(--line);
-  --ring: var(--terracotta);
+  --ring: var(--coral-deep);
   --radius: 0.75rem;
+
+  /* The active colorway; [data-colorway] below swaps it per box. */
+  --tissue: var(--coral);
+  --tissue-ink: #5a150d;
 }
+
+/* One tissue colorway per box (src/lib/box.ts `colorway`). Each ink passes AA on its fill. */
+[data-colorway="lilac"] { --tissue: var(--lilac); --tissue-ink: #3b2a6b; }
+[data-colorway="sky"] { --tissue: var(--sky); --tissue-ink: #123a5c; }
+[data-colorway="coral"] { --tissue: var(--coral); --tissue-ink: #5a150d; }
+[data-colorway="mint"] { --tissue: var(--mint); --tissue-ink: #14503a; }
+[data-colorway="butter"] { --tissue: var(--butter); --tissue-ink: #5c4300; }
+[data-colorway="rose"] { --tissue: var(--rose); --tissue-ink: #6b1e3e; }
 
 @theme inline {
   --color-background: var(--background);
@@ -65,15 +82,19 @@
   --color-cream-card: var(--cream-card);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
-  --color-sage: var(--sage);
-  --color-sage-deep: var(--sage-deep);
-  --color-terracotta: var(--terracotta);
-  --color-terracotta-deep: var(--terracotta-deep);
-  --color-blush: var(--blush);
-  --color-blush-ink: var(--blush-ink);
+  --color-coral: var(--coral);
+  --color-coral-deep: var(--coral-deep);
+  --color-butter: var(--butter);
+  --color-mint: var(--mint);
+  --color-mint-deep: var(--mint-deep);
+  --color-lilac: var(--lilac);
+  --color-sky: var(--sky);
+  --color-rose: var(--rose);
+  --color-tissue: var(--tissue);
+  --color-tissue-ink: var(--tissue-ink);
 
   --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-fraunces), Georgia, serif;
+  --font-display: var(--font-bricolage), var(--font-figtree), ui-sans-serif, sans-serif;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -83,55 +104,82 @@
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Bricolage at its heaviest, slightly condensed: the friendly, chunky voice of the box. */
 @utility text-display {
-  font-size: clamp(2.75rem, 1.9rem + 3.6vw, 5.25rem);
-  line-height: 1.04;
-  letter-spacing: -0.02em;
+  font-size: clamp(3rem, 1.6rem + 5.2vw, 5.5rem);
+  line-height: 0.94;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+  font-variation-settings: "wdth" 88, "opsz" 96;
 }
 
 @utility text-headline {
-  font-size: clamp(1.9rem, 1.45rem + 1.9vw, 3rem);
-  line-height: 1.12;
-  letter-spacing: -0.012em;
+  font-size: clamp(2.1rem, 1.5rem + 2.4vw, 3.5rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  font-variation-settings: "wdth" 90, "opsz" 72;
 }
 
-@utility eyebrow {
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: var(--sage-deep);
+/* Label voice for the Snack Facts panel and stickers: condensed, extra bold. */
+@utility font-label {
+  font-family: var(--font-bricolage), var(--font-figtree), sans-serif;
+  font-weight: 800;
+  font-variation-settings: "wdth" 75, "opsz" 24;
+}
+
+/* Tissue-paper grain: soft crinkle over a colored field (fine fractal noise, multiplied). */
+@utility paper {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.15 0 0 0 0 0.1 0 0 0 0.09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 @layer base {
   * {
     border-color: var(--border);
   }
+  html {
+    scrollbar-color: color-mix(in srgb, var(--ink) 35%, transparent) var(--cream-deep);
+  }
   body {
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
+    caret-color: var(--coral-deep);
   }
   ::selection {
-    background: var(--terracotta);
-    color: var(--primary-foreground);
+    background: var(--butter);
+    color: var(--ink);
   }
+  a {
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 0.08em;
+  }
+}
+
+/* Registered so the tissue fan (Tissue's --fan) can animate and transition smoothly. */
+@property --fan {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
+}
+
+@keyframes fan-out {
+  from {
+    --fan: 0;
+  }
+  to {
+    --fan: 1;
+  }
+}
+
+.welcome-tissue {
+  animation: fan-out 900ms var(--ease-soft) 150ms both;
 }
 
 html.fx [data-reveal],
-html.fx [data-reveal-item] {
+html.fx [data-scrub] {
   opacity: 0;
-}
-
-@keyframes marquee {
-  to {
-    transform: translateX(-50%);
-  }
-}
-
-.marquee-track {
-  animation: marquee 32s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

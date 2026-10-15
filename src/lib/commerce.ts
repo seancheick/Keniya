@@ -1,7 +1,7 @@
 import "server-only";
 import { loadAdminContext, type BoxSummary } from "@/lib/admin/summary";
 import { isClinicianApproved } from "@/lib/admin/rules";
-import { BOX_SLUGS, resolveBoxRules, resolveSettings, type BoxRules, type BoxSlug } from "@/lib/admin/types";
+import { BOX_SLUGS, resolveBoxRules, resolveSettings, type BoxRules, type BoxSlug, type Settings } from "@/lib/admin/types";
 import { getSupabaseAdminStrict } from "@/lib/supabase";
 import { site } from "@/lib/site";
 
@@ -10,7 +10,7 @@ export function saleEligible(box: BoxSummary): boolean {
     [...box.picks.map(p => p.snack), ...box.extras].every(isClinicianApproved));
 }
 export type SaleState = { available: boolean; clinicianApproved: boolean; priceCents: number; founding: number; remaining: number; expectedRules: unknown; expectedSettings: unknown; lineupId: string | null };
-export async function loadCommerceState(): Promise<{ rules: Record<BoxSlug, BoxRules>; sales: Record<BoxSlug, SaleState> }> {
+export async function loadCommerceState(): Promise<{ rules: Record<BoxSlug, BoxRules>; sales: Record<BoxSlug, SaleState>; settings: Settings }> {
   const db = getSupabaseAdminStrict();
   // Capture the exact stored rule version before evaluating it; admission compares it atomically.
   const { data: storedRules, error: rulesError } = await db.from("box_rules").select("box_slug, rules");
@@ -35,8 +35,5 @@ export async function loadCommerceState(): Promise<{ rules: Record<BoxSlug, BoxR
     const remaining = Math.max(0, founding - used);
     return [slug, { expectedSettings: storedSettings.data, expectedRules: storedRules.find(r => r.box_slug === slug)?.rules, lineupId: context.boxes[slug].lineup?.id ?? null, clinicianApproved: saleEligible(context.boxes[slug]), available: saleEligible(context.boxes[slug]) && remaining > 0 && priceCents === site.preorderPriceUSD * 100, priceCents, founding, remaining }];
   })) as Record<BoxSlug, SaleState>;
-  return { rules, sales };
-}
-export async function loadSaleSnapshot(): Promise<Record<BoxSlug, SaleState>> {
-  return (await loadCommerceState()).sales;
+  return { rules, sales, settings: context.settings };
 }

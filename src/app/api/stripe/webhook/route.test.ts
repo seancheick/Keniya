@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("server-only", () => ({}));
-const mock = vi.hoisted(() => ({ event: {} as unknown, rpc: vi.fn(), send: vi.fn(), update: vi.fn(), from: vi.fn(), charges: vi.fn(), disputes: vi.fn(), retrieve: vi.fn(), state: vi.fn(), reminder: vi.fn() }));
+const mock = vi.hoisted(() => ({ event: {} as unknown, rpc: vi.fn(), send: vi.fn(), update: vi.fn(), from: vi.fn(), charges: vi.fn(), disputes: vi.fn(), retrieve: vi.fn(), state: vi.fn(), reminder: vi.fn(), subRetrieve: vi.fn(), invRetrieve: vi.fn(), upsert: vi.fn() }));
 vi.mock("@/lib/env", () => ({ env: { STRIPE_WEBHOOK_SECRET: "whsec_test" } }));
-vi.mock("@/lib/stripe", () => ({ getStripe: () => ({ webhooks: { constructEvent: () => mock.event }, charges: { retrieve: mock.charges }, disputes: { list: mock.disputes }, checkout: { sessions: { retrieve: mock.retrieve } } }) }));
+vi.mock("@/lib/stripe", () => ({ getStripe: () => ({ webhooks: { constructEvent: () => mock.event }, charges: { retrieve: mock.charges }, disputes: { list: mock.disputes }, checkout: { sessions: { retrieve: mock.retrieve } }, subscriptions: { retrieve: mock.subRetrieve }, invoices: { retrieve: mock.invRetrieve } }) }));
 vi.mock("@/lib/supabase", () => ({ getSupabaseAdminStrict: () => ({ rpc: mock.rpc, from: mock.from }) }));
 vi.mock("@/lib/commerce", () => ({ loadCommerceState: mock.state }));
 vi.mock("@/lib/public-rules", () => ({ loadPublicRules: async () => ({}), publicBoxes: () => [{ slug: "heart" }] }));
-vi.mock("@/lib/resend", () => ({ sendOrderEmails: mock.send, sendCartReminder: mock.reminder }));
+vi.mock("@/lib/resend", () => ({ sendOrderEmails: mock.send, sendCartReminder: mock.reminder, sendClubEmail: vi.fn() }));
 vi.mock("@/lib/stripe-fee", () => ({ stripeFeeForSession: async () => null }));
 import { POST } from "./route";
 const request = () => new Request("https://example.com", { method: "POST", body: "event" });
@@ -88,5 +88,20 @@ describe("durable webhook", () => {
   mock.rpc.mockResolvedValue({ data: null, error: { message: "Order not persisted yet" } });
   expect((await POST(request())).status).toBe(500);
   expect(mock.rpc).toHaveBeenCalledWith("begin_financial_observation", { p_payment_intent: "pi_1" });
+ });
+});
+describe("Snack Club first order", () => {
+ it("records the first box as a subscription order and saves the subscription", async () => {
+  mock.event = { id: "evt_sub", type: "checkout.session.completed", data: { object: { id: "cs_sub", mode: "subscription", subscription: "sub_1", payment_status: "paid", payment_intent: null, metadata: { box_slug: "heart" }, customer_details: { email: "club@example.com", name: "Ada L" }, collected_information: { shipping_details: { name: "Ada", address: { line1: "1 Main" } } }, custom_fields: [], amount_total: 3900 } } };
+  mock.subRetrieve.mockResolvedValue({ id: "sub_1", customer: "cus_1", status: "active", pause_collection: null, cancel_at_period_end: false, metadata: { box_slug: "heart" }, latest_invoice: "in_0", items: { data: [{ current_period_end: 1_800_000_000, price: { unit_amount: 3900 } }] } });
+  mock.invRetrieve.mockResolvedValue({ payments: { data: [{ status: "paid", payment: { payment_intent: "pi_first" } }] } });
+  mock.upsert.mockResolvedValue({ error: null });
+  mock.from.mockImplementation((table: string) => table === "subscriptions"
+   ? { upsert: mock.upsert }
+   : { select: () => ({ eq: () => ({ eq: async () => ({ count: 1 }) }) }), update: mock.update });
+  expect((await POST(request())).status).toBe(200);
+  expect(mock.rpc).toHaveBeenCalledWith("save_paid_order", expect.objectContaining({ p_order: expect.objectContaining({ kind: "subscription", stripe_subscription_id: "sub_1", stripe_payment_intent_id: "pi_first", amount_total: 3900 }) }));
+  expect(mock.upsert).toHaveBeenCalledWith(expect.objectContaining({ stripe_subscription_id: "sub_1", email: "club@example.com", box_slug: "heart", price_cents: 3900, shipping: expect.objectContaining({ name: "Ada" }) }), { onConflict: "stripe_subscription_id" });
+  expect(mock.send).toHaveBeenCalledWith("club@example.com", expect.objectContaining({ club: { priceCents: 3900 } }), expect.anything(), "cs_sub");
  });
 });

@@ -33,6 +33,9 @@ export function BuyButton({
   variant = "default",
   showNote = true,
   prefill,
+  plan = "once",
+  welcomeEmail,
+  onOfferRejected,
 }: {
   box: Box;
   size?: "default" | "lg" | "sm";
@@ -44,6 +47,11 @@ export function BuyButton({
   showNote?: boolean;
   /** Quiz answers to prefill at checkout. */
   prefill?: Pick<CheckoutInput, "craving" | "avoid">;
+  /** One box, or the monthly Snack Club (only offered when it's switched on). */
+  plan?: "once" | "monthly";
+  /** A claimed first-box offer: the server re-checks it and locks checkout to this email. */
+  welcomeEmail?: string;
+  onOfferRejected?: () => void;
 }) {
   const requestKey = useRef<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -51,10 +59,10 @@ export function BuyButton({
   const [showEmail, setShowEmail] = useState(false);
 
   if (!box.sale?.available) return <div className={cn("w-full max-w-md", className)}>
-    <WaitlistForm boxInterest={box.slug} source="box_waitlist" cta="Join the waitlist" compact />
+    <WaitlistForm boxInterest={box.slug} source="box_waitlist" cta="Notify me" compact />
   </div>;
 
-  const cta = label ?? `Preorder — $${site.preorderPriceUSD}`;
+  const cta = label ?? `Order now, $${site.preorderPriceUSD}`;
 
   return (
     <div className={cn("w-full max-w-md", className)}>
@@ -68,12 +76,16 @@ export function BuyButton({
           setError(null);
           startTransition(async () => {
             try {
-              const res = await openCheckout({ boxSlug: box.slug, gift, ...prefill, requestKey: (requestKey.current ??= crypto.randomUUID()) });
+              const res = await openCheckout({ boxSlug: box.slug, gift, plan, welcomeEmail, ...prefill, requestKey: (requestKey.current ??= crypto.randomUUID()) });
               if (res.ok) {
                 window.location.href = res.url;
                 return;
               }
               if (res.code === "expired_session" || res.code === "stale_request") requestKey.current = null;
+              if (res.code === "offer_used" || res.code === "offer_ended") {
+                requestKey.current = null;
+                onOfferRejected?.();
+              }
               setError(res.message);
               if (res.needsEmail && showFallbackEmail) setShowEmail(true);
             } catch (err) {
@@ -88,12 +100,11 @@ export function BuyButton({
       </Button>
       {showNote && (
         <p className="mt-2 text-xs text-ink-soft">
-          One-time · free shipping · refundable before ship · only{" "}
-          {box.founding} founding {box.shortName} boxes
+          One-time · free shipping · refundable until it ships · first boxes ship {site.shipDate.replace(/, \d{4}$/, "")}
         </p>
       )}
       {error && (
-        <p className="mt-2 text-sm text-terracotta-deep" role="alert">
+        <p className="mt-2 text-sm text-coral-deep" role="alert">
           {error}
         </p>
       )}
@@ -102,7 +113,7 @@ export function BuyButton({
           <p className="mb-3 text-sm text-ink-soft">
             Join the list for the{" "}
             <strong className="text-ink">{box.shortName}</strong> box — we’ll email you
-            when preorders open.
+            when it opens for orders.
           </p>
           <WaitlistForm
             boxInterest={box.slug}

@@ -8,7 +8,7 @@ import { site } from "@/lib/site";
 
 describe("expired-checkout reminder", () => {
   it("links the canonical box page and explains admission must start again", () => {
-    const box = { ...boxes.find(b => b.slug === "heart")!, categories: [] };
+    const box = { ...boxes.find(b => b.slug === "heart")!, categories: [], extras: null };
     const html = renderToStaticMarkup(createElement(CartReminderEmail, { box }));
     expect(html).toContain(`${site.url.replace(/\/$/, "")}${landingFor(box.slug).path}`);
     expect(html).toContain("Your previous checkout has expired");

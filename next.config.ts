@@ -30,9 +30,13 @@ const nextConfig: NextConfig = {
   },
   // Renamed pages keep their old URLs alive (308). Paths are owned by src/lib/landing.ts.
   async redirects() {
-    return [...landings, giftLanding].flatMap((page) =>
-      (page.redirectFrom ?? []).map((source) => ({ source, destination: page.path, permanent: true })),
-    );
+    return [
+      ...[...landings, giftLanding].flatMap((page) =>
+        (page.redirectFrom ?? []).map((source) => ({ source, destination: page.path, permanent: true })),
+      ),
+      // The Blood Sugar photo was renamed (lid retouched, Oct 2026); emails already sent still use the old path.
+      { source: "/images/box-carb-conscious.jpg", destination: "/images/box-blood-sugar.jpg", permanent: true },
+    ];
   },
 };
 
