@@ -88,6 +88,13 @@ describe("Snack Club renewals", () => {
     });
     expect(m.mail).toHaveBeenCalledWith("club@example.com", "in_1", expect.objectContaining({ kind: "renewed" }));
   });
+  it("keeps quiet about a renewal held for review (no box promised)", async () => {
+    const f = fakes();
+    f.rawDb.rpc.mockResolvedValue({ data: false, error: null } as never);
+    await handleClubEvent(ev("invoice.paid", invoice({ status: "paid" })), f.stripe, f.db);
+    expect(f.rawDb.rpc).toHaveBeenCalledWith("save_renewal_order", expect.anything());
+    expect(m.mail).not.toHaveBeenCalled();
+  });
   it("throws (so Stripe retries) when the renewal can't be saved", async () => {
     const f = fakes();
     f.rawDb.rpc.mockResolvedValue({ data: null, error: { message: "offline" } } as never);

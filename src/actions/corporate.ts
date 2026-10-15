@@ -21,13 +21,16 @@ export type CorporateInput = z.input<typeof schema>;
 export async function requestCorporateGifts(input: CorporateInput): Promise<{ ok: boolean; message: string }> {
   const parsed = schema.safeParse(input);
   if (!parsed.success) {
-    const qty = parsed.error.issues.some((i) => i.path[0] === "quantity");
-    return {
-      ok: false,
-      message: qty
-        ? `Team orders start at ${site.corporateMinBoxes} boxes. For fewer, order on the site.`
-        : "Please add your name, work email and company.",
+    const field = String(parsed.error.issues[0].path[0]);
+    const messages: Record<string, string> = {
+      quantity: `Team orders start at ${site.corporateMinBoxes} boxes (up to 5,000). For fewer, order on the site.`,
+      name: "Please add your name (up to 120 characters).",
+      email: "Please add a valid work email.",
+      company: "Please add your company (up to 160 characters).",
+      needBy: "Keep \"Needed by\" to 60 characters, e.g. \"first week of December\".",
+      message: "Keep the note to 1,500 characters.",
     };
+    return { ok: false, message: messages[field] ?? "Please check the form and try again." };
   }
   const d = parsed.data;
   try {

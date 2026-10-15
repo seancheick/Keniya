@@ -12,7 +12,7 @@ export const faqs = [
   },
   {
     q: "Is this a subscription?",
-    a: "No. It's a one-time purchase with no renewal. Gifts are always one-time too.",
+    a: "Buying a box is a one-time purchase with no renewal, and gifts are always one-time. If you choose the optional Monthly Snack Club, it renews monthly and you can skip, pause or cancel online anytime.",
   },
   {
     q: "When does it ship?",

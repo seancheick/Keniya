@@ -23,6 +23,13 @@ describe("corporate gift inquiries", () => {
     expect(res.message).toMatch(/10 boxes/);
     expect(m.mail).not.toHaveBeenCalled();
   });
+  it("names the field that failed instead of a generic message", async () => {
+    const res = await requestCorporateGifts({ ...good, needBy: "x".repeat(61) });
+    expect(res.ok).toBe(false);
+    expect(res.message).toMatch(/Needed by/);
+    expect((await requestCorporateGifts({ ...good, email: "nope" })).message).toMatch(/work email/);
+    expect(m.mail).not.toHaveBeenCalled();
+  });
   it("never confirms a failed send", async () => {
     m.mail.mockResolvedValue({ ok: false, error: "down" });
     expect((await requestCorporateGifts(good)).ok).toBe(false);

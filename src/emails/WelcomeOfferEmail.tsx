@@ -1,6 +1,6 @@
 import { Heading, Text } from "@react-email/components";
 import { site } from "@/lib/site";
-import { Button, EmailShell, Panel, c, t } from "@/emails/layout";
+import { Button, EmailShell, Panel, c, siteUrl, t } from "@/emails/layout";
 
 /** The first-box code, sent right after the visitor claims it on the site. */
 export function WelcomeOfferEmail({ code, percentOff, priceLabel }: { code: string; percentOff: number; priceLabel: string }) {
@@ -25,7 +25,7 @@ export function WelcomeOfferEmail({ code, percentOff, priceLabel }: { code: stri
           site with the same email.
         </Text>
       </Panel>
-      <Button href="/#boxes">Find my box</Button>
+      <Button href={`${siteUrl}/#boxes`}>Find my box</Button>
     </EmailShell>
   );
 }

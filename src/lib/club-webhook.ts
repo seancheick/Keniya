@@ -45,7 +45,7 @@ export async function handleClubEvent(event: Stripe.Event, stripe: Stripe, db: S
       const { data: club, error: clubError } = await db.from("subscriptions").select("email, shipping, box_slug").eq("stripe_subscription_id", subId).maybeSingle();
       if (clubError) throw new Error(clubError.message);
       const email = club?.email ?? inv.customer_email ?? "";
-      const { error } = await db.rpc("save_renewal_order", {
+      const { data: admitted, error } = await db.rpc("save_renewal_order", {
         p_order: {
           stripe_event_id: event.id,
           stripe_invoice_id: inv.id,
@@ -61,6 +61,12 @@ export async function handleClubEvent(event: Stripe.Event, stripe: Stripe, db: S
       });
       if (error) throw new Error(`Renewal persistence failed: ${error.message}`);
       await syncSubscription(db, sub);
+      // A held renewal (no admitted first order, or a box mismatch) is durable but not cleared
+      // to pack, so don't promise a box; the admin reviews it.
+      if (admitted !== true) {
+        console.error("Renewal requires admission review", inv.id);
+        return true;
+      }
       if (email) await sendClubEmail(email, inv.id, { kind: "renewed", boxName: boxName(sub.metadata.box_slug), amountLabel: usd(inv.amount_paid) });
       return true;
     }
