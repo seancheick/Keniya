@@ -40,7 +40,10 @@ describe("product fit (workbook v4 formulas)", () => {
     expect(fitsBoxes({ ...base, pregnancy_checks: { ...base.pregnancy_checks, P7c: "FAIL" } }).pregnancy_comfort.fits).toBe(true);
     const blank = fitsBoxes({ ...base, pregnancy_checks: { ...base.pregnancy_checks, P8: "" } }).pregnancy_comfort;
     expect(blank.reasons).toEqual(["Not yet checked: P8"]);
-    expect(fitsBoxes({ ...base, caffeine_mg: null }).pregnancy_comfort.reasons).toContain("Caffeine value missing");
+    // Blank caffeine is inferred from the ingredients; only an unknowable value blocks.
+    expect(fitsBoxes({ ...base, caffeine_mg: null }).pregnancy_comfort.fits).toBe(true);
+    expect(fitsBoxes({ ...base, caffeine_mg: null, ingredients: "" }).pregnancy_comfort.reasons).toContain("Caffeine value missing");
+    expect(fitsBoxes({ ...base, caffeine_mg: null, ingredients: "almonds, black tea" }).pregnancy_comfort.reasons).toContain("Caffeine value missing");
   });
 
   it("rejected products fit nothing and show the reason", () => {

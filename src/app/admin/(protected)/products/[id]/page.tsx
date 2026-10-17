@@ -23,7 +23,9 @@ import {
   type VersionRow,
 } from "@/lib/admin/db";
 import { daysUntil } from "@/lib/admin/optimizer";
-import { eligibleBoxes, shipsUnderPolicy } from "@/lib/admin/rules";
+import { caffeineDisplay } from "@/lib/admin/caffeine";
+import { screenIngredients } from "@/lib/admin/ingredients";
+import { derivedPregnancyChecks, eligibleBoxes, shipsUnderPolicy } from "@/lib/admin/rules";
 import { BOX_LABEL, NUTRIENT_KEYS, PREGNANCY_CHECK_KEYS, ROLE_KEYS, ROLE_LABEL, type BoxSlug } from "@/lib/admin/types";
 
 import { requireAdmin } from "@/lib/admin/auth";
@@ -146,7 +148,11 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               {NUTRIENT_KEYS.map((k) => (
                 <div key={k}>
                   <dt className="text-xs text-muted-foreground">{NUTRIENT_LABEL[k]}</dt>
-                  <dd className={snack[k] === null ? "text-red-700" : "tabular-nums"}>{snack[k] ?? "missing"}</dd>
+                  {k === "caffeine_mg" ? (
+                    <dd className={caffeineDisplay(snack) === null ? "text-red-700" : "tabular-nums"}>{caffeineDisplay(snack) ?? "missing"}</dd>
+                  ) : (
+                    <dd className={snack[k] === null ? "text-red-700" : "tabular-nums"}>{snack[k] ?? "missing"}</dd>
+                  )}
                 </div>
               ))}
               <div>
@@ -159,10 +165,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 <dt className="text-xs text-muted-foreground">Pregnancy checks</dt>
                 <dd className="flex flex-wrap gap-1">
                   {PREGNANCY_CHECK_KEYS.map((k) => {
-                    const val = current?.pregnancy_checks?.[k];
+                    const stored = current?.pregnancy_checks?.[k];
+                    const auto = !stored && derivedPregnancyChecks(snack)[k as "P3"];
+                    const val = stored ?? (auto || undefined);
                     return (
                       <Badge key={k} tone={val === "PASS" ? "good" : val === "FAIL" ? "bad" : "muted"}>
                         {k} {val ?? "—"}
+                        {auto ? " (auto)" : ""}
                       </Badge>
                     );
                   })}
@@ -179,6 +188,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <div>
                 <dt className="text-xs text-muted-foreground">Ingredients</dt>
                 <dd className="whitespace-pre-wrap">{current?.ingredients ?? "—"}</dd>
+                {screenIngredients(current?.ingredients).map((f) => (
+                  <dd key={`${f.code}:${f.evidence}`} className={f.severity === "info" ? "text-xs text-muted-foreground" : "text-xs text-amber-800"}>
+                    {f.check ? `${f.check}: ` : ""}
+                    {f.label} ({f.evidence})
+                  </dd>
+                ))}
               </div>
             </dl>
             {versions.length > 1 && (

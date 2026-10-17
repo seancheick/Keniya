@@ -12,6 +12,8 @@ import {
   type Settings,
   type Snack,
 } from "./types";
+import { effectiveCaffeine } from "./caffeine";
+import { hasFinding, screenIngredients, syntheticDye } from "./ingredients";
 
 const num = (v: number | null | undefined): v is number => typeof v === "number" && Number.isFinite(v);
 
@@ -88,12 +90,35 @@ function base(p: RuleInput, rejectReason?: string | null): string[] {
   return reasons;
 }
 
+/**
+ * P3–P6 only ask whether the data is on the label: caffeine (P3: label value, or inferred as 0
+ * or a worst-case cocoa estimate), added sugar (P4), sodium (P5) and an allergen statement (P6).
+ * They PASS by themselves when it is there. P1, P2, P7a, P7b and P8 always need a person.
+ */
+export function derivedPregnancyChecks(p: RuleInput): Partial<Record<"P3" | "P4" | "P5" | "P6", "PASS">> {
+  const out: Partial<Record<"P3" | "P4" | "P5" | "P6", "PASS">> = {};
+  if (num(effectiveCaffeine(p))) out.P3 = "PASS";
+  if (num(p.added_sugar_g)) out.P4 = "PASS";
+  if (num(p.sodium_mg)) out.P5 = "PASS";
+  if (p.allergens?.trim()) out.P6 = "PASS";
+  return out;
+}
+
+/** Stored decisions with the data checks filled in where blank. A stored FAIL always wins. */
+export function effectivePregnancyChecks(p: RuleInput): Record<string, string | undefined> {
+  const stored = p.pregnancy_checks ?? {};
+  const out: Record<string, string | undefined> = { ...stored };
+  for (const [k, v] of Object.entries(derivedPregnancyChecks(p))) if (!(stored[k] ?? "").trim()) out[k] = v;
+  return out;
+}
+
 export function pregnancyFit(p: RuleInput, rejectReason?: string | null): BoxFit {
   const reasons = base(p, rejectReason);
-  if (!num(p.caffeine_mg)) reasons.push("Caffeine value missing");
-  const notPass = PREGNANCY_BLOCKING.filter((k) => (p.pregnancy_checks[k] ?? "").toUpperCase() !== "PASS");
+  if (!num(effectiveCaffeine(p))) reasons.push("Caffeine value missing");
+  const checks = effectivePregnancyChecks(p);
+  const notPass = PREGNANCY_BLOCKING.filter((k) => (checks[k] ?? "").toUpperCase() !== "PASS");
   if (notPass.length) {
-    const failed = notPass.filter((k) => (p.pregnancy_checks[k] ?? "").toUpperCase() === "FAIL");
+    const failed = notPass.filter((k) => (checks[k] ?? "").toUpperCase() === "FAIL");
     const blank = notPass.filter((k) => !failed.includes(k));
     if (failed.length) reasons.push(`Failed ${failed.join(", ")}`);
     if (blank.length) reasons.push(`Not yet checked: ${blank.join(", ")}`);
@@ -225,6 +250,9 @@ export function fitFor(slug: BoxSlug, p: RuleInput, rejectReason?: string | null
 export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, policy: Settings["policy"]): string[] {
   const out: string[] = [];
   if (p.status === "Retired") out.push("Retired");
+  // Keniya standard in every box (owner decision 2026-10-17): no synthetic dyes.
+  const dye = syntheticDye(p.ingredients);
+  if (dye) out.push(`Synthetic dye (${dye.evidence}): Keniya standard`);
   const ships = shipsUnderPolicy(p, policy);
   if (!ships.ok) out.push(ships.reason!);
   // Single-serve must be confirmed: blank P8 is "unknown", not a pass. (Pregnancy's own P1–P8 rule already covers it.)
@@ -239,11 +267,15 @@ export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, polic
   if (p.type === "Beverage") over(p.added_sugar_g, rules.beverageAddedSugarMax, "added sugar in beverage", "g");
   const diabetesDrink = p.type === "Beverage" && (slug === "blood_sugar" || slug === "gestational_diabetes");
   over(p.carbs_g, p.type === "Beverage" ? rules.beverageCarbsMax ?? rules.carbsMax : rules.carbsMax, "carbs", "g");
-  // A controlled treat gets its own added-sugar ceiling when the box sets one.
-  const treat = heartTreat(p) && rules.treatAddedSugarMax !== null;
+  // A treat gets its own added-sugar ceiling when the box sets one, using the same definition
+  // the box's treat count (treatMax) uses: carb-limited boxes count picks that qualify only as
+  // a portioned treat; Heart counts the judged controlled-treat role.
+  const treat =
+    rules.treatAddedSugarMax !== null &&
+    (rules.carbsMax !== null ? nutritionComplete(p) && ccTreatOnly(p) : heartTreat(p));
   if (!diabetesDrink) over(p.added_sugar_g, treat ? rules.treatAddedSugarMax : rules.addedSugarMax, treat ? "added sugar (treat)" : "added sugar", "g");
   over(p.sodium_mg, rules.sodiumMax, "sodium", "mg");
-  over(p.caffeine_mg, rules.caffeineMax, "caffeine", "mg");
+  over(effectiveCaffeine(p), rules.caffeineMax, "caffeine", "mg");
   if (rules.satFatMax !== null) {
     const nutFat = nutFatException(p) && rules.satFatNutMax !== null;
     const max = nutFat ? rules.satFatNutMax! : rules.satFatMax;
@@ -477,10 +509,17 @@ export function checkLineup(
   if (rules.beverageMax !== null)
     checks.push(check("beverage", "Beverage / tea", count((x) => x.type === "Beverage"), { max: rules.beverageMax }));
 
-  // Any box with a caffeine limit needs the number on every pick.
+  // Any box with a caffeine limit needs the number on every pick (label value, or inferred:
+  // 0 with no caffeine-bearing ingredient, a worst-case estimate for cocoa).
   if (rules.caffeineMax !== null) {
-    checks.push(check("caffeine", "Picks without caffeine disclosed", count((x) => !num(x.caffeine_mg)), { max: 0 }));
+    checks.push(check("caffeine", "Picks without caffeine disclosed", count((x) => !num(effectiveCaffeine(x))), { max: 0 }));
   }
+  if (rules.boxCaffeineMax !== null) {
+    const total = s.reduce((t, x) => t + (effectiveCaffeine(x) ?? 0), 0);
+    checks.push(check("boxcaffeine", "Total caffeine across the box (estimates count at their maximum)", Math.round(total), { max: rules.boxCaffeineMax }, "warn", " mg"));
+  }
+  if (rules.chocolateMax !== null)
+    checks.push(check("chocolate", "Chocolate / cocoa picks", count((x) => hasFinding(screenIngredients(x.ingredients), "cocoa")), { max: rules.chocolateMax }, "warn"));
 
   const ok = (x: Snack) => nutritionComplete(x);
   if (rules.proteinOrFiberMin !== null)

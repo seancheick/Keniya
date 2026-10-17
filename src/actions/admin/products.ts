@@ -15,25 +15,29 @@ import { packetInput } from "@/lib/admin/packet-data";
 import { clinicianReviewRows } from "@/lib/admin/clinical-packet";
 import { reviewTeamText } from "@/lib/admin/review-wording";
 import { STATUSES } from "@/lib/admin/types";
+import { withScreeningFails, type WatchlistRow } from "@/lib/admin/ingredients";
 
 export type FormState = { error?: string; ok?: boolean; id?: string };
 
 const refresh = () => revalidatePath("/admin", "layout");
 
-function parse(fd: FormData) {
+async function parse(fd: FormData) {
   const { product, version } = readProductForm(fd);
   const p = productSchema.safeParse(product);
   if (!p.success) return { error: p.error.issues[0].message } as const;
   const v = versionSchema.safeParse(version);
   if (!v.success) return { error: v.error.issues[0].message } as const;
-  return { product: p.data, version: v.data } as const;
+  // Ingredient flags pre-set blank P2/P7a/P7b to FAIL (never PASS: a person confirms those).
+  const wl = await db().from("watchlist").select("ingredient, category");
+  const pregnancy_checks = withScreeningFails(v.data.pregnancy_checks, v.data.ingredients, (wl.data ?? []) as WatchlistRow[]);
+  return { product: p.data, version: { ...v.data, pregnancy_checks } } as const;
 }
 
 const dupUpc = (msg: string) => /products_(upc|gtin14)_key|barcode_identities|duplicate key.*upc/i.test(msg);
 
 export async function createProduct(_prev: FormState, fd: FormData): Promise<FormState> {
   const admin = await requireAdmin();
-  const parsed = parse(fd);
+  const parsed = await parse(fd);
   if ("error" in parsed) return { error: parsed.error };
   const vendorId = await ensureVendor(String(fd.get("vendor") ?? ""), admin.name);
   // Receiving establishes packaging identity only after an explicit unit/outer-box answer.
@@ -62,7 +66,7 @@ export async function createProduct(_prev: FormState, fd: FormData): Promise<For
  */
 export async function updateProduct(id: string, _prev: FormState, fd: FormData): Promise<FormState> {
   const admin = await requireAdmin();
-  const parsed = parse(fd);
+  const parsed = await parse(fd);
   if ("error" in parsed) return { error: parsed.error };
   const previous = await db().from("products").select("updated_at").eq("id", id).single();
   if (previous.error) return { error: previous.error.message };

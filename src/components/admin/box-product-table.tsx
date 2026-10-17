@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, Minus, Plus, X } from "lucide-react";
 import { Badge, fieldClass } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
+import { caffeineDisplay } from "@/lib/admin/caffeine";
 import { fmt$ } from "@/lib/admin/costing";
 import { daysUntil } from "@/lib/admin/optimizer";
 import { eligibleFor, isClinicianApproved, type BoxFit } from "@/lib/admin/rules";
@@ -197,7 +198,7 @@ function Evidence({ s, fits, blocked, finding }: { s: Snack; fits: Record<BoxSlu
     ["Added sugar", s.added_sugar_g, "g"],
     ["Sodium", s.sodium_mg, "mg"],
     ["Sat fat", s.sat_fat_g, "g"],
-    ["Caffeine", s.caffeine_mg, "mg"],
+    ["Caffeine", caffeineDisplay(s), "mg"],
   ] as const;
   return (
     <div className="grid gap-3 text-sm md:grid-cols-2">

@@ -110,6 +110,8 @@ export type RuleInput = Nutrition & {
   roles: Partial<Record<RoleKey, boolean>>;
   /** Label ingredient list; the nut/seed saturated-fat exception checks it for added tropical oils. */
   ingredients?: string | null;
+  /** Label allergen statement; its presence satisfies the data check P6. */
+  allergens?: string | null;
 };
 
 /** A product as the builder, optimizer and dashboards see it. */
@@ -297,7 +299,7 @@ export const boxRulesSchema = z.object({
   beverageCarbsMax: z.number().min(0).nullable().default(null),
   beverageAddedSugarMax: z.number().min(0).nullable().default(null),
   addedSugarMax: z.number().min(0).nullable().default(null),
-  /** Added-sugar limit for controlled treats (CT role) instead of addedSugarMax. */
+  /** Added-sugar limit for treats instead of addedSugarMax (Heart: CT role; Blood Sugar/GDM: treat-only picks). */
   treatAddedSugarMax: z.number().min(0).nullable().default(null),
   sodiumMax: z.number().min(0).nullable().default(null),
   satFatMax: z.number().min(0).nullable().default(null),
@@ -305,6 +307,10 @@ export const boxRulesSchema = z.object({
   satFatNutMax: z.number().min(0).nullable().default(null),
   /** Caffeine per pack; unknown caffeine already fails Pregnancy. */
   caffeineMax: z.number().min(0).nullable().default(null),
+  /** Total caffeine across the whole box (inferred values count; warning, not a block). */
+  boxCaffeineMax: z.number().min(0).nullable().default(null),
+  /** Cocoa/chocolate picks per box (dark chocolate carries lead and cadmium; warning). */
+  chocolateMax: z.number().int().min(0).nullable().default(null),
   /**
    * Little extras (drink sticks, tea, a sample) packed on top of `total` and never counted in
    * it. null = extras optional and not promised; set both to promise "14 snacks + 2–4 extras".
@@ -334,6 +340,8 @@ const none = {
   satFatMax: null,
   satFatNutMax: null,
   caffeineMax: null,
+  boxCaffeineMax: null,
+  chocolateMax: null,
 };
 
 /** Starting rules (workbook v4 + v3.1 proposals). Editable on the Boxes tab. */
@@ -357,6 +365,11 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     // Not an ACOG number: ACOG sets a daily total, Keniya chooses 50 mg per pack so one snack
     // never spends a large share of the day. Chocolate (≤20 mg) passes.
     caffeineMax: 50,
+    // Founder-set 2026-10-17, pending clinician: the whole box ≤100 mg (half of ACOG's daily
+    // 200 mg, spread over 14 snacks), and at most 4 chocolate picks (Consumer Reports found
+    // lead/cadmium in dark chocolate; pregnancy is the most sensitive group).
+    boxCaffeineMax: 100,
+    chocolateMax: 4,
   },
   blood_sugar: {
     ...none,
@@ -376,6 +389,9 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     carbsMax: 15,
     beverageCarbsMax: 3,
     addedSugarMax: 3,
+    // Founder-set 2026-10-17, pending clinician: a treat (counted by treatMax) may carry up to
+    // 5 g added sugar; core picks stay at 3 g. Without it the treat allowance held nothing.
+    treatAddedSugarMax: 5,
   },
   heart: {
     ...none,
@@ -422,7 +438,10 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     carbsMax: 15,
     beverageCarbsMax: 3,
     addedSugarMax: 3,
+    treatAddedSugarMax: 5,
     caffeineMax: 50,
+    boxCaffeineMax: 100,
+    chocolateMax: 4,
   },
   // 2025 joint GLP-1 nutrition guidance (ASN/OMA/TOS/ACLM): adequate protein, nutrient-dense,
   // smaller portions, hydration, GI-tolerable foods; ginger and peppermint for nausea.
@@ -464,6 +483,8 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     beverageMax: 3,
     proteinOrFiberMin: 5,
     caffeineMax: 100,
+    boxCaffeineMax: 150,
+    chocolateMax: 4,
   },
 };
 

@@ -7,7 +7,10 @@ import { lookupBarcode } from "@/actions/admin/lookup";
 import { Field, FitReasons, fieldClass } from "@/components/admin/ui";
 import type { FormState } from "@/actions/admin/products";
 import { ruleInputFromForm } from "@/lib/admin/forms";
+import { resolveCaffeine } from "@/lib/admin/caffeine";
+import { screenIngredients, type Finding } from "@/lib/admin/ingredients";
 import { eligibleBoxes, shipsUnderPolicy } from "@/lib/admin/rules";
+import type { RuleInput } from "@/lib/admin/types";
 import {
   CATEGORIES,
   FORMS,
@@ -82,7 +85,16 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
   function fitsFromVersion() {
     if (!ver || !p) return null;
     const input = { ...ver, type: p.type, form: p.form, status, roles: ver.roles ?? {}, pregnancy_checks: ver.pregnancy_checks ?? {} };
-    return { fits: eligibleBoxes(input, rules, policy, p.reject_reason), ships: shipsUnderPolicy(input, policy) };
+    return previewOf(input, p.reject_reason);
+  }
+
+  function previewOf(input: RuleInput, rejectReason: string | null | undefined) {
+    return {
+      fits: eligibleBoxes(input, rules, policy, rejectReason),
+      ships: shipsUnderPolicy(input, policy),
+      caffeine: resolveCaffeine({ labelMg: input.caffeine_mg, ingredients: input.ingredients, unitOz: input.unit_wt_oz }),
+      findings: screenIngredients(input.ingredients) as Finding[],
+    };
   }
 
   const [looking, setLooking] = useState(false);
@@ -119,7 +131,7 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
   function update() {
     if (!ref.current) return;
     const input = ruleInputFromForm(new FormData(ref.current), status);
-    setPreview({ fits: eligibleBoxes(input, rules, policy, p?.reject_reason), ships: shipsUnderPolicy(input, policy) });
+    setPreview(previewOf(input, p?.reject_reason));
   }
 
   return (
@@ -202,7 +214,7 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
           </datalist>
         </Section>
 
-        <Section title="Nutrition (per serving / unit)" hint="Calories, protein, fiber, carbs, added sugar and sodium are required for any box. Caffeine is required for Pregnancy.">
+        <Section title="Nutrition (per serving / unit)" hint="Calories, protein, fiber, carbs, added sugar and sodium are required for any box. Caffeine: leave blank unless printed; it is filled from the ingredients (0 with no source, an upper-bound estimate for chocolate).">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {NUTRIENTS.map(([k, label, unit]) => (
               <Field key={k} label={`${label}${unit ? ` (${unit})` : ""}`}>
@@ -248,7 +260,7 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
           </div>
         </Section>
 
-        <Section title="Pregnancy checks" hint="Product checks P1–P8 must pass; expiry (P9) is checked per purchased lot. P7c is informational. P7a: check ingredients against the watchlist.">
+        <Section title="Pregnancy checks" hint="Product checks P1–P8 must pass; expiry (P9) is checked per purchased lot. P3–P6 fill themselves when the data is present; blank P2/P7a/P7b are set to FAIL on save when the ingredients match a flag. P7c is informational.">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {PREGNANCY_CHECK_KEYS.map((k) => (
               <Field key={k} label={k === "P7c" ? "P7c (info)" : k} hint={PREGNANCY_CHECK_LABEL[k]}>
@@ -293,6 +305,19 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
             <>
               <FitReasons fits={preview.fits} />
               {!preview.ships.ok && <p className="text-sm text-amber-700">Won&apos;t ship: {preview.ships.reason}</p>}
+              <p className="text-xs text-muted-foreground">
+                <b>Caffeine:</b> {preview.caffeine.mg === null ? "unknown" : preview.caffeine.source === "estimate_max" ? `≤${preview.caffeine.mg} mg` : `${preview.caffeine.mg} mg`} · {preview.caffeine.note}
+              </p>
+              {preview.findings.length > 0 && (
+                <ul className="space-y-1 text-xs">
+                  {preview.findings.map((f) => (
+                    <li key={`${f.code}:${f.evidence}`} className={f.severity === "info" ? "text-muted-foreground" : "text-amber-800"}>
+                      {f.check ? `${f.check}: ` : ""}
+                      {f.label} ({f.evidence})
+                    </li>
+                  ))}
+                </ul>
+              )}
             </>
           ) : (
             <p className="text-sm text-muted-foreground">Fill in nutrition to see which boxes this fits.</p>

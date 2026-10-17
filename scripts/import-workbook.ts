@@ -11,6 +11,8 @@
  * place. Settings and rules are only overwritten with --force; imported lineups remain drafts.
  * Business data never enters git: the workbook stays in /ops (gitignored).
  */
+import { resolveCaffeine } from "../src/lib/admin/caffeine";
+import { syntheticDye } from "../src/lib/admin/ingredients";
 import { expireInvalidCheckoutSessions } from "../src/lib/commerce-reconcile";
 import { existsSync, readFileSync } from "node:fs";
 import { createClient } from "@supabase/supabase-js";
@@ -67,6 +69,10 @@ async function main() {
   console.log(`Products: ${all.length}`);
   console.log(`  missing nutrition: ${all.filter((s) => !nutritionComplete(s)).length}`);
   console.log(`  no cost: ${all.filter((s) => s.unitCostCents === null).length}`);
+  // Caffeine is inferred at evaluation time (label wins); report how many still need a person.
+  const caf = all.map((s) => resolveCaffeine({ labelMg: s.caffeine_mg, ingredients: s.ingredients, unitOz: s.unit_wt_oz }).source);
+  console.log(`  caffeine: label ${caf.filter((c) => c === "label").length}, no source (0) ${caf.filter((c) => c === "none_present").length}, chocolate estimate ${caf.filter((c) => c === "estimate_max").length}, still unknown ${caf.filter((c) => c === null).length}`);
+  console.log(`  synthetic dye (rejected in every box): ${all.filter((s) => syntheticDye(s.ingredients)).length}`);
   console.log(`  status: ${["Approved", "Pre-approved", "Candidate", "Rejected"].map((st) => `${st} ${all.filter((s) => s.status === st).length}`).join(", ")}`);
   for (const b of BOX_SLUGS) console.log(`  fit ${BOX_LABEL[b]}: ${all.filter((s) => fitsBoxes(s)[b].fits).length}`);
   console.log(`  fit all three: ${all.filter((s) => BOX_SLUGS.every((b) => fitsBoxes(s)[b].fits)).length}`);
