@@ -102,3 +102,37 @@ describe("lineup checks", () => {
     expect(approved).toMatchObject({ pass: false, level: "warn" });
   });
 });
+
+describe("Heart saturated-fat cap", () => {
+  // Pocky Cookies & Cream, one pack (the label serving is 2 packs / 29 g).
+  const pockyPack = () =>
+    snack({
+      name: "Pocky Cookies & Cream (1 pack)", calories: 75, protein_g: 1, fiber_g: 1, carbs_g: 9.5,
+      added_sugar_g: 4.5, sodium_mg: 20, sat_fat_g: 3, caffeine_mg: null, unit_wt_oz: 0.51,
+      roles: { CT: true }, categories: ["Sweet"],
+    });
+
+  it("a palm-oil treat fails Heart even when tagged a controlled treat, but fits Carb Conscious per pack", () => {
+    const f = fitsBoxes(pockyPack());
+    expect(f.heart.fits).toBe(false);
+    expect(f.heart.reasons[0]).toMatch(/3 g saturated fat \(max 2 g/);
+    expect(f.blood_sugar.via).toEqual(["Portioned treat"]);
+  });
+
+  it("at the 2-pack label serving (9 g added sugar) it fails Carb Conscious", () => {
+    const two = { ...pockyPack(), calories: 150, protein_g: 2, fiber_g: 2, carbs_g: 19, added_sugar_g: 9, sodium_mg: 40, sat_fat_g: 6 };
+    expect(fitsBoxes(two).blood_sugar.fits).toBe(false);
+  });
+
+  it("nuts and seeds are exempt; low-sat-fat treats still qualify", () => {
+    expect(fitsBoxes(snack({ roles: { NS: true }, sat_fat_g: 2.5 })).heart.fits).toBe(true);
+    expect(fitsBoxes(snack({ roles: { CT: true }, sat_fat_g: 1.5, added_sugar_g: 6, fiber_g: 1 })).heart.via).toContain("Controlled treat");
+  });
+
+  it("unknown saturated fat doesn't block fit; the Heart lineup warns instead", () => {
+    const s = snack({ roles: { WG: true }, sat_fat_g: null });
+    expect(fitsBoxes(s).heart.fits).toBe(true);
+    const checks = checkLineup("heart", DEFAULT_BOX_RULES.heart, [{ snack: s, category: "Savory" }], settings, 6);
+    expect(checks.find((c) => c.key === "satfat")).toMatchObject({ level: "warn", pass: false, deficit: 1 });
+  });
+});

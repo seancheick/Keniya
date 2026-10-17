@@ -102,9 +102,25 @@ export function carbFit(p: RuleInput, rejectReason?: string | null): BoxFit {
   return { box: "blood_sugar", fits: false, via: [], reasons: [why] };
 }
 
+/**
+ * Heart: max saturated fat per unit (≈10% DV). Not in workbook v4; added after a palm-oil
+ * treat qualified as a "controlled treat". PENDING clinical reviewer confirmation.
+ * Nuts and seeds (UF/NS) are exempt: their saturated fat comes with mostly unsaturated fat.
+ */
+export const HEART_SAT_FAT_MAX_G = 2;
+
 export function heartFit(p: RuleInput, rejectReason?: string | null): BoxFit {
   const reasons = base(p, rejectReason);
   if (reasons.length) return { box: "heart", fits: false, via: [], reasons };
+  // Before the role pathways, so a treat tag can't bypass it. Unknown sat fat doesn't block
+  // (most imported products lack it); the Heart lineup check warns about those instead.
+  if (num(p.sat_fat_g) && p.sat_fat_g > HEART_SAT_FAT_MAX_G && !heartNutSeed(p))
+    return {
+      box: "heart",
+      fits: false,
+      via: [],
+      reasons: [`${p.sat_fat_g} g saturated fat (max ${HEART_SAT_FAT_MAX_G} g for Heart; nuts and seeds exempt)`],
+    };
   const via: string[] = [];
   if (p.roles.UF) via.push("Unsaturated fat");
   if (p.roles.NS) via.push("Nut / seed");
@@ -283,6 +299,8 @@ export function checkLineup(
   if (rules.highSodiumMax !== null)
     checks.push(check("sodium", "Higher-sodium picks (>300 mg)", count(highSodium), { max: rules.highSodiumMax }));
   if (rules.treatMax !== null) checks.push(check("treats", "Controlled treats", count(heartTreat), { max: rules.treatMax }));
+  if (slug === "heart")
+    checks.push(check("satfat", "Picks missing saturated fat (can't check the Heart cap)", count((x) => !num(x.sat_fat_g)), { max: 0 }, "warn"));
 
   checks.push(info("treenuts", "Picks containing tree nuts", `${count((x) => x.freeFrom.tree_nut_free === false)}`));
   checks.push(info("peanuts", "Picks containing peanuts", `${count((x) => x.freeFrom.peanut_free === false)}`));

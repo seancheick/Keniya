@@ -76,6 +76,8 @@ Steps:
 10. `ensureVendor` matches by `ilike` and is not race-proof beyond a retry.
 11. The session has no revocation except changing the password. The rate limiter is per-instance without Upstash.
 
+**New rule awaiting sign-off.** Heart now rejects products with more than 2 g saturated fat per unit; nuts and seeds (UF/NS) are exempt (`HEART_SAT_FAT_MAX_G` in `rules.ts`). Get the clinical reviewer to confirm the number. Saturated fat is missing on 61 of 97 imported products, and 5 of the 14 Heart lineup picks raise a warning until it's entered.
+
 **P2: features in the approved plan, not built**
 12. **Phase 6, customers and feedback:**
     - `customers`, `feedback` and `customer_prefs` tables (migration 0008);

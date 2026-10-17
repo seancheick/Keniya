@@ -42,6 +42,7 @@
   3. Optionally add the expiry date, lot code and a receipt photo.
   - An unknown barcode is looked up in USDA FoodData Central first, then Open Food Facts. The new product is prefilled and marked unverified, so check it against the label.
 - **Products**
+  - Heart has a saturated-fat cap: at most 2 g per unit, with nuts and seeds exempt. It's waiting on the reviewer's confirmation. Enter saturated fat for Heart products so the cap can be checked.
   - Fit badges per box, with the reason a snack doesn't fit.
   - Approve, reject (reason required) or retire.
   - Photos: front, nutrition facts, ingredients and barcode.
