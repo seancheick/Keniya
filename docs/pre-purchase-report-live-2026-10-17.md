@@ -4,7 +4,7 @@ Source: live catalog, 110 products, generated 2026-10-18.
 
 Preliminary eligibility means the software rules pass. It is **not** purchase readiness: bulk buying waits for clinical and sourcing approval (stage 2), and packing for the package check (stage 3) and a lot with at least 90 days left.
 
-**11 of 110 products have no ingredient text in this source**, so ingredient screening (dyes, watchlist, no-gos, caffeine sources, allergens) hasn't run on them. They're counted under "needs label or package evidence", never as eligible.
+**11 of 110 products have no ingredient text in this source**, so ingredient screening (dyes, watchlist, no-gos, caffeine sources, allergens) hasn't run on them. They're never counted as preliminarily eligible; a product already excluded by another rule stays under "excluded".
 
 | Stage | Products | Bulk buying? |
 |---|---:|---|

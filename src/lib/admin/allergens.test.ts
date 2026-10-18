@@ -20,6 +20,8 @@ describe("product allergens (FDA 9)", () => {
   it("refined soybean oil is FALCPA-exempt; soy lecithin is not", () => {
     expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, vegetable shortening (corn, canola and/or soybean oil), salt" }).issues).toEqual([]);
     expect(productAllergens({ allergens: "wheat, milk", ingredients: "wheat flour, cheddar cheese, vegetable oils (canola, sunflower and/or soybean), salt" }).issues).toEqual([]);
+    for (const oil of ["cold-pressed soybean oil", "expeller pressed soybean oil", "unrefined soy oil", "oils (cold-pressed canola, soybean)"])
+      expect(productAllergens({ allergens: "Contains wheat.", ingredients: `wheat flour, ${oil}` }).issues).toEqual(["Ingredients list soy but the Contains statement doesn't"]);
     expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, shortening (palm oil, soy lecithin)" }).issues)
       .toEqual(["Ingredients list soy but the Contains statement doesn't"]);
     expect(productAllergens({ allergens: "oats, may contain soy", ingredients: "oats, chocolate (sugar, soy lecithin), canola oil" }).issues)
