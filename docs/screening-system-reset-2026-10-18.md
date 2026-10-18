@@ -15,7 +15,7 @@
 | Missing data never passes | Already enforced: missing nutrition or ingredients, unknown caffeine and blank checks all block | Show these as HOLD, not FAIL |
 | Rules versioned and signed once | `box_rules` has `updated_at` / `updated_by` only, with no version or sign-off | **Add a rule version with its sign-off** (reviewer, credentials, date). Every result records the rule version used |
 | No per-product clinician approval | Packing needs `isClinicianApproved` (Laurie, per product). Purchases above `samplePurchaseMax` need a reason | **Change the gate:** a product is production-eligible when (a) the package has been verified in hand, (b) it PASSes, and (c) the rule version is signed |
-| P1, P2, P7a, P7b, P8 need a person | Pre-filled once, in bulk, on 54 products by a script | **Have the engine derive them** from ingredients and the label every time. Judgment cases (jerky, botanicals) → HOLD |
+| P1, P2, P7a, P7b, P8 need a person | Pre-filled once, in bulk, on 54 products by a script | **Have the engine derive them** from ingredients and the label every time. Judgment cases (botanicals) → HOLD; jerky FAILs the pregnancy family (Keniya policy) |
 | Snap a photo → yes/no | Barcode → USDA / Open Food Facts lookup (`lookup.ts`). The Verify flow checks the package. No photo reading | **Photo reading in the admin:** photograph the label, AI fills the fields, a person confirms, the engine screens. Unreadable fields stay empty → HOLD |
 | Grid of boxes with ✓ / ✗ and why | The product page lists eligibility | One grid on the product page and the product list |
 | Box builder uses only verified stock | Packing already requires lots, verification and eligibility | Remove the clinician step (see the gate above). Add nut and seed variety limits |
@@ -49,7 +49,7 @@
 
 - **Biena chickpeas in Heart:** the engine already refuses it (190 mg sodium > 140). It was placed in Blood Sugar only; the Heart swap was a manual suggestion. Once the gate is in place, a swap can't override a rule. This is the reviewer's own point.
 - **HIPPEAS 18 g vs 15 g:** settled by the package in hand at scan time. Nothing to debate in advance.
-- **Applesauce, ginger tea, cheese crackers, jerky:** no product debate. Each becomes a rulebook row (BLOCK / REVIEW / ALLOW, with a stated basis). Jerky stays REVIEW (HOLD) for pregnancy as Keniya policy, not as a claim that it's unsafe.
+- **Applesauce, ginger tea, cheese crackers, jerky:** no product debate. Each becomes a rulebook row (BLOCK / REVIEW / ALLOW, with a stated basis). Jerky and cured meat FAIL the pregnancy family as Keniya policy, not as a claim that every one is unsafe.
 - **Chocolate caffeine:** already shown as an "estimate", never "verified". An estimate above half the cap is a HOLD until the maker's value is in.
 - **GLP-1 tolerability:** `giTolerabilityFlags` exists. It stays information for the box builder, not a pass/fail.
 - **Lactation claims:** the public copy makes none (checked in `landing.ts`, `box.ts`). The wording to avoid was only in the clinician document.

@@ -94,7 +94,6 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
                 </th>
               ))}
               <th className={cn(WIDE, "p-2 font-medium")}>Package</th>
-              <th className={cn(WIDE, "p-2 font-medium")}>Package</th>
               <th className={cn(WIDE, "p-2 font-medium")}>Expires</th>
               <th className={cn(WIDE, "p-2")} />
             </tr>
@@ -104,7 +103,6 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
               const folded = !showAll && idx >= inBox.size + 12;
               const added = inBox.has(s.id);
               const d = daysUntil(s.earliestExpiry);
-              const approval = isReadyToPack(s) ? "Verified" : "Not verified";
               const action = added ? (
                 <Button size="xs" className="max-sm:h-11 max-sm:px-4" variant="outline" onClick={() => onRemove(s.id)}>
                   <X /> Remove
@@ -136,7 +134,6 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
                           </span>
                           {/* Phones: the wide columns collapse into one line under the name. */}
                           <span className="mt-1 flex flex-wrap items-center gap-1 text-xs sm:hidden">
-                            <Badge tone={approval === "Verified" ? "good" : "info"}>{approval}</Badge>
                             <Badge tone={s.packageVerified ? "good" : "muted"}>{s.packageVerified ? "Verified" : "Not verified"}</Badge>
                             <span className="text-muted-foreground">{s.onHand} in stock</span>
                             <span className="ml-auto" onClick={(e) => e.stopPropagation()}>
@@ -153,9 +150,6 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
                       </td>
                     ))}
                     <td className={cn(WIDE, "p-2")}>
-                      <Badge tone={approval === "Verified" ? "good" : "info"}>{approval}</Badge>
-                    </td>
-                    <td className={cn(WIDE, "p-2")}>
                       <Badge tone={s.packageVerified ? "good" : "muted"}>{s.packageVerified ? "Verified" : "Not yet"}</Badge>
                     </td>
                     <td className={cn(WIDE, "p-2 text-xs whitespace-nowrap")}>
@@ -167,7 +161,7 @@ export function BoxProductTable({ slug, snacks, inBox, full, rules, settings, co
                   </tr>
                   {open === s.id && !folded && (
                     <tr className="border-b bg-muted/30">
-                      <td colSpan={9} className="max-w-[calc(100vw-2rem)] p-3">
+                      <td colSpan={5 + BOX_SLUGS.length} className="max-w-[calc(100vw-2rem)] p-3">
                         <Evidence s={s} fits={fits} blocked={blocked} finding={findings[s.id]} />
                       </td>
                     </tr>

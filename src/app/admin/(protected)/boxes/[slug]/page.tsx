@@ -84,7 +84,7 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
         <Disclosure title="Box recipe" summary="saved default: ranges and hard limits">
           <RulesForm slug={slug} rules={ctx.rules[slug]} />
         </Disclosure>
-        <Disclosure title="Saved lineups" summary={`${versions.length} saved · v${b.lineup?.version ?? "—"} active`}>
+        <Disclosure title="Saved lineups" summary={`${versions.length} saved · ${live ? `v${live.version} active` : "none active"}`}>
           <p className="mb-3 text-sm text-muted-foreground">Each time you save a lineup it is kept here. The active one is what new orders get; activate an older one to go back to it.</p>
           {versions.length === 0 ? (
             <p className="text-sm text-muted-foreground">None saved yet.</p>

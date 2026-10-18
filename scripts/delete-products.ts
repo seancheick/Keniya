@@ -5,8 +5,9 @@
  *   pnpm products:delete P012,P024 --apply    # delete
  *
  * A product with purchase lots or shipments is never deleted (retire it instead), and neither is
- * one in an active lineup. Its slots in draft or archived lineups (proposals that never shipped;
- * shipment history blocks deletion) are removed first. The database function delete_product_permanently enforces the same guards.
+ * one in an active lineup. Its slots in draft or archived lineups (proposals that never shipped)
+ * go with it: delete_product_with_draft_slots does both in one transaction, so a refusal leaves
+ * the lineups untouched. Exits nonzero when any deletion fails.
  */
 import { db } from "../src/lib/admin/db";
 
@@ -19,6 +20,7 @@ async function main() {
   const missing = codes.filter((c) => !products.data.some((p) => p.code === c));
   if (missing.length) console.log(`Not found: ${missing.join(", ")}`);
   let deleted = 0;
+  let failed = 0;
   for (const p of products.data) {
     const [lots, items] = await Promise.all([
       db().from("purchase_lots").select("id", { count: "exact", head: true }).eq("product_id", p.id),
@@ -39,18 +41,17 @@ async function main() {
       console.log(`WOULD DELETE ${label}${lineups.length ? ` (and its ${lineups.length} draft/archived lineup slot(s))` : ""}`);
       continue;
     }
-    if (lineups.length) {
-      const rm = await db().from("lineup_items").delete().in("id", lineups.map((i) => i.id));
-      if (rm.error) throw new Error(`${label}: ${rm.error.message}`);
-    }
-    const res = await db().rpc("delete_product_permanently", { p_id: p.id });
-    if (res.error) console.log(`FAILED ${label}: ${res.error.message}`);
-    else {
+    const res = await db().rpc("delete_product_with_draft_slots", { p_id: p.id });
+    if (res.error) {
+      failed += 1;
+      console.log(`FAILED ${label}: ${res.error.message}`);
+    } else {
       deleted += 1;
       console.log(`DELETED ${label}`);
     }
   }
-  console.log(apply ? `${deleted} deleted.` : "Dry run: nothing changed. Add --apply to delete.");
+  console.log(apply ? `${deleted} deleted${failed ? `, ${failed} failed` : ""}.` : "Dry run: nothing changed. Add --apply to delete.");
+  if (failed) process.exitCode = 1;
 }
 
 main().catch((e) => {

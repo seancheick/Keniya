@@ -12,6 +12,7 @@ import {
   type Settings,
   type Snack,
 } from "./types";
+import { productAllergens } from "./allergens";
 import { effectiveCaffeine, resolveCaffeine } from "./caffeine";
 import { netCarbs } from "./carbs";
 import { hasFinding, ingredientsHash, screenIngredients, syntheticDye, unresolved, type Finding } from "./ingredients";
@@ -121,7 +122,7 @@ export type ScreenResult = "PASS" | "FAIL" | "HOLD";
 // unrecognized (OTHER) holds too. Every other code is a confirmed violation of a rule.
 const HOLD_CODES = new Set<ReasonCode>([
   "NUTRITION_MISSING", "INGREDIENTS_MISSING", "SAT_FAT_MISSING", "CAFFEINE_UNKNOWN", "CAFFEINE_ESTIMATE_HOLD",
-  "PREGNANCY_CHECK_BLANK", "SINGLE_SERVE_UNCONFIRMED", "CLINICIAN_DECISION", "OTHER",
+  "PREGNANCY_CHECK_BLANK", "SINGLE_SERVE_UNCONFIRMED", "CLINICIAN_DECISION", "WEIGHT_MISSING", "OTHER",
 ]);
 /** A confirmed violation fails even when other data is missing; otherwise missing data holds. */
 export const screenResult = (codes: ReasonCode[]): ScreenResult =>
@@ -131,7 +132,7 @@ export type ReasonCode =
   | "REJECTED" | "RETIRED" | "NUTRITION_MISSING" | "INGREDIENTS_MISSING" | "SHIPPING_POLICY" | "MULTI_SERVE" | "SINGLE_SERVE_UNCONFIRMED"
   | "DYE" | "SAFETY_FINDING" | "CLINICIAN_DECISION" | "PREGNANCY_CHECK_FAILED" | "PREGNANCY_CHECK_BLANK"
   | "CAFFEINE_UNKNOWN" | "CAFFEINE_OVER" | "CAFFEINE_ESTIMATE_HOLD" | "CARBS_OVER" | "ADDED_SUGAR_OVER"
-  | "SODIUM_OVER" | "SAT_FAT_OVER" | "SAT_FAT_MISSING" | "PHO" | "NO_PATHWAY" | "OTHER";
+  | "SODIUM_OVER" | "SAT_FAT_OVER" | "SAT_FAT_MISSING" | "PHO" | "NO_PATHWAY" | "WEIGHT_MISSING" | "OTHER";
 
 // Ordered: the first match names the reason. Every reason text produced in this file matches one.
 const REASON_CODES: [RegExp, ReasonCode][] = [
@@ -155,7 +156,8 @@ const REASON_CODES: [RegExp, ReasonCode][] = [
   [/ mg sodium \(max/, "SODIUM_OVER"],
   [/^Saturated fat not recorded/, "SAT_FAT_MISSING"],
   [/saturated fat \(max/, "SAT_FAT_OVER"],
-  [/doesn't ship|No unit weight|item limit/, "SHIPPING_POLICY"],
+  [/^No unit weight$/, "WEIGHT_MISSING"],
+  [/doesn't ship|item limit/, "SHIPPING_POLICY"],
   [/needs |qualifies only|No heart role|Treat with/, "NO_PATHWAY"],
 ];
 export const reasonCode = (r: string): ReasonCode => REASON_CODES.find(([re]) => re.test(r))?.[1] ?? "OTHER";
@@ -189,7 +191,8 @@ export function derivedPregnancyChecks(p: RuleInput): Partial<Record<DerivedChec
   if (num(effectiveCaffeine(p))) out.P3 = "PASS";
   if (num(p.added_sugar_g)) out.P4 = "PASS";
   if (num(p.sodium_mg)) out.P5 = "PASS";
-  if (p.allergens?.trim()) out.P6 = "PASS";
+  // A statement that disagrees with the ingredients (e.g. "None" with milk listed) is not proof.
+  if (p.allergens?.trim() && productAllergens(p).verifiable) out.P6 = "PASS";
   return out;
 }
 

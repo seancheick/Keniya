@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { fmt$, landedCost } from "@/lib/admin/costing";
 import { canBuild, daysUntil, optimize } from "@/lib/admin/optimizer";
 import { estimatePostage, type PostageSample } from "@/lib/admin/postage";
-import { checkLineup, eligibleFor, extrasCheck, isReady, isReadyToPack, lineupStage, packedWeightOz, type Pick } from "@/lib/admin/rules";
+import { checkLineup, eligibleFor, extrasCheck, isReady, isReadyToPack, lineupStage, packedWeightOz, type Check, type Pick } from "@/lib/admin/rules";
 import { BOX_LABEL, OBJECTIVES, OBJECTIVE_LABEL, type BoxRules, type BoxSlug, type Objective, type Settings, type Snack } from "@/lib/admin/types";
 import { avoidConflict } from "@/lib/admin/avoid";
 import { cn } from "@/lib/utils";
@@ -77,10 +77,19 @@ export function BoxBuilder({ slug, rules, settings, snacks, extras: savedExtras,
   }, [snacks, avoidText]);
 
   const extraOz = extras.reduce((n, s) => n + (s.unit_wt_oz ?? 0), 0);
+  // Everything "Save & activate" requires, so the Snack Facts card shows ✓ only when it's allowed:
+  // the recipe checks, each extra passing this box (as loadAdminContext checks it) and nothing
+  // the leave-out list rules out.
   const checks = useMemo(() => {
     const range = extrasCheck(rules, extras.length);
-    return [...checkLineup(slug, buildRules, picks, settings, packagingOz + extraOz), ...(range ? [range] : [])];
-  }, [slug, rules, buildRules, picks, settings, packagingOz, extraOz, extras.length]);
+    const extraChecks: Check[] = extras.map((e) => {
+      const f = eligibleFor(slug, e, rules, settings.policy, e.rejectReason);
+      return { key: `extra:${e.id}`, label: `Extra: ${e.name}`, value: f.fits ? "Eligible" : f.reasons.join("; "), level: "block", pass: f.fits, deficit: f.fits ? 0 : 1 };
+    });
+    const clashes = [...picks.map((p) => p.snack), ...extras].filter((s) => conflict.has(s.id)).length;
+    const avoid: Check[] = conflict.size ? [{ key: "avoid", label: "Picks the leave-out list rules out", value: `${clashes} (need ≤ 0)`, level: "block", pass: clashes === 0, deficit: clashes }] : [];
+    return [...checkLineup(slug, buildRules, picks, settings, packagingOz + extraOz), ...(range ? [range] : []), ...extraChecks, ...avoid];
+  }, [slug, rules, buildRules, picks, extras, conflict, settings, packagingOz, extraOz]);
   const extraCandidates = useMemo(() => {
     const taken = new Set([...picks.map((p) => p.snack.id), ...extras.map((e) => e.id)]);
     return snacks.filter((s) => !taken.has(s.id) && !conflict.has(s.id) && eligibleFor(slug, s, rules, settings.policy, s.rejectReason).fits);

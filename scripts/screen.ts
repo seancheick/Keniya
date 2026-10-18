@@ -41,7 +41,8 @@ const Label = z.object({
   type: z.enum(PRODUCT_TYPES).default("Substantial"),
   form: z.enum(FORMS).default("Solid"),
   unit_wt_oz: n,
-  servings_per_pack: n,
+  // 1 = single-serve; an unreadable count stays null (P8 unchecked), never 0.
+  servings_per_pack: z.number().positive().nullable().default(null),
   calories: n, protein_g: n, fiber_g: n, carbs_g: n, added_sugar_g: n, sodium_mg: n, sat_fat_g: n,
   caffeine_mg: n, sugar_alcohols_g: n,
   ingredients: z.string().nullable().default(null),

@@ -32,13 +32,14 @@ export default async function PurchasingPage({ searchParams }: { searchParams: P
       pricesBy.set(p.id, [{ vendorId: p.default_vendor_id, vendorName: vendorName.get(p.default_vendor_id ?? "") ?? "Estimate", unitCostCents: Number(p.quote_cost_cents ?? p.estimate_cost_cents), packQty: null, seenAt: (p.price_checked_on ?? p.updated_at).slice(0, 10), source: p.quote_cost_cents !== null ? "quote" : "estimate" }]);
   }
   const plan = planPurchases({
-    lineups: Object.fromEntries(BOX_SLUGS.map((b) => [b, [...ctx.boxes[b].picks.map((p) => p.snack.id), ...ctx.boxes[b].extras.map((e) => e.id)]])),
+    // A lineup that no longer passes its rules buys nothing until it's fixed.
+    lineups: Object.fromEntries(BOX_SLUGS.map((b) => [b, ctx.boxes[b].ready ? [...ctx.boxes[b].picks.map((p) => p.snack.id), ...ctx.boxes[b].extras.map((e) => e.id)] : []])),
     runSize,
     products: ctx.catalog.snacks.map((s) => ({ id: s.id, code: s.code, name: s.name, onHand: s.onHand, prices: pricesBy.get(s.id) ?? [] })),
     bufferPct: ctx.settings.purchaseBufferPct,
   });
-  // Every pick in an active lineup passes its box rules, so it can be bought; the package is
-  // verified in hand when it arrives, before anything is packed.
+  // Every pick in a passing active lineup can be bought; the package is verified in hand when
+  // it arrives, before anything is packed.
   const toBuy = plan.rows.filter((r) => r.toBuy > 0);
   const spendCents = toBuy.reduce((s, r) => s + (r.estSpendCents ?? 0), 0);
   const listed = plan.rows;

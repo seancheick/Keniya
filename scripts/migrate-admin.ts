@@ -88,6 +88,7 @@ const MIGRATIONS: { file: string; applied: string }[] = [
     applied:
       "select position('Verified lineup required' in pg_get_functiondef('public.reserve_checkout(uuid,text,integer,text,text,uuid,jsonb,integer,jsonb)'::regprocedure)) > 0 and position('Product must be in use' in pg_get_functiondef('public.clinical_shipment_gate()'::regprocedure)) > 0 and position('complete label data and verified' in pg_get_functiondef('public.pack_shipment(uuid,text,integer,integer,numeric,integer)'::regprocedure)) > 0 and position('array[''P8'']' in pg_get_functiondef('public.product_diligence_complete(uuid)'::regprocedure)) > 0 as ok",
   },
+  { file: "supabase/migrations/20261019040000_delete_product_with_draft_slots.sql", applied: "select to_regprocedure('public.delete_product_with_draft_slots(uuid)') is not null as ok" },
 ];
 
 const TABLES = [

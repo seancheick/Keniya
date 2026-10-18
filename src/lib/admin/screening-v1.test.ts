@@ -69,3 +69,22 @@ describe("variety", () => {
     expect(checkLineup("heart", { ...rules.heart, categories: [] }, nuts(3), DEFAULT_SETTINGS, 6).find((c) => c.key === "nutseed")!.pass).toBe(false);
   });
 });
+
+describe("missing or contradictory label data holds, never passes", () => {
+  it("no pack weight is HOLD (not a shipping FAIL); an oversize pack still fails", () => {
+    const r = screen("heart", { unit_wt_oz: null });
+    expect(r.result).toBe("HOLD");
+    expect(r.codes).toContain("WEIGHT_MISSING");
+    expect(screen("heart", { unit_wt_oz: 40 }).result).toBe("FAIL");
+  });
+  it("missing calories hold every box", () => {
+    for (const slug of ["blood_sugar", "heart", "glp1"] as const) expect(screen(slug, { calories: null }).result).toBe("HOLD");
+  });
+  it("an allergen statement that contradicts the ingredients doesn't satisfy P6", () => {
+    const p = { ingredients: "Wheat flour, milk, salt", allergens: "None declared on package", pregnancy_checks: { P8: "PASS" } };
+    const r = screen("pregnancy_comfort", p);
+    expect(r.result).toBe("HOLD");
+    expect(r.reasons).toContain("Not yet checked: P6");
+    expect(screen("pregnancy_comfort", { ...p, allergens: "Contains wheat, milk" }).result).toBe("PASS");
+  });
+});
