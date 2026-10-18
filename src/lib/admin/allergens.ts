@@ -38,6 +38,8 @@ const WORDS: Record<Allergen, RegExp> = {
 // "milks" and "nut butters" don't create false inconsistencies.
 const INGREDIENT_WORDS: Record<Allergen, RegExp> = {
   ...WORDS,
+  // Highly refined soybean oil is exempt from allergen labeling (FDA); soy lecithin is not.
+  soy: /\b(soy(?!(bean)? oil)|soya|soybeans?(?! oil)|edamame|tofu)\b/i,
   milk: /\b((whole |skim |nonfat |dry )?milk(?<!(oat|almond|coconut|soy|rice|cashew|hemp) milk)|whey|casein(ates?)?|butter(?!nut|milk)(?<!(peanut|almond|cashew|nut|seed|cocoa|shea|sunflower|sunflower seed) butter)|cream(?<!ice cream)|cheese|yogurt|lactose|ghee)\b/i,
 };
 
@@ -62,9 +64,14 @@ export function productAllergens(p: { allergens?: string | null; ingredients?: s
   const ingredients = (p.ingredients ?? "").trim();
   const issues: string[] = [];
   if (!statement) issues.push("No allergen statement on file: allergens can't be verified");
-  const sentences = statement.split(/(?<=[.;])\s+|\n/);
-  const cross = sentences.filter((x) => CROSS_CONTACT.test(x)).join(" ");
-  const direct = sentences.filter((x) => !CROSS_CONTACT.test(x)).join(" ");
+  // Statements are often one line ("almonds, peanuts, soy, may contain sesame"): within each
+  // sentence, everything before the first cross-contact phrase is "contains", the rest is not.
+  const parts = statement.split(/(?<=[.;])\s+|\n/).map((x) => {
+    const m = x.match(CROSS_CONTACT);
+    return m?.index === undefined ? { direct: x, cross: "" } : { direct: x.slice(0, m.index), cross: x.slice(m.index) };
+  });
+  const cross = parts.map((x) => x.cross).join(" ");
+  const direct = parts.map((x) => x.direct).join(" ");
   const contains = ALLERGENS.filter((a) => has(direct, a));
   const mayContain = ALLERGENS.filter((a) => has(cross, a) && !contains.includes(a));
   const saysNone = /^(contains:?\s*)?(none|no (major )?allergens)\b/i.test(direct.trim());

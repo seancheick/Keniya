@@ -18,6 +18,14 @@ describe("product allergens (FDA 9)", () => {
     expect(r.issues[0]).toMatch(/milk/);
     expect(productAllergens({ allergens: "Contains: none.", ingredients: "oats, sesame seeds" }).issues[0]).toMatch(/says none/);
   });
+  it("one-line statements split Contains from 'may contain' mid-sentence", () => {
+    expect(productAllergens({ allergens: "almonds, peanuts, soy, may contain sesame/other tree nuts", ingredients: "almonds, peanuts, honey, soy lecithin" }))
+      .toMatchObject({ contains: ["tree_nuts", "peanuts", "soy"], mayContain: ["sesame"], verifiable: true });
+  });
+  it("refined soybean oil isn't a soy ingredient; soy lecithin is", () => {
+    expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, soybean oil, salt" }).issues).toEqual([]);
+    expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, soy lecithin" }).issues[0]).toMatch(/soy/);
+  });
   it("no statement can't be verified", () => {
     expect(productAllergens({ allergens: null, ingredients: "oats" }).verifiable).toBe(false);
   });
