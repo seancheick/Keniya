@@ -32,11 +32,11 @@ describe("PASS / FAIL / HOLD", () => {
 });
 
 describe("pregnancy-family policies", () => {
-  it("sodium ≤360 mg per pack in Pregnancy and Postpartum, inherited by GDM", () => {
+  it("sodium ≤230 mg per pack in Pregnancy and Postpartum, inherited by GDM", () => {
     for (const slug of ["pregnancy_comfort", "postpartum", "gestational_diabetes"] as const) {
-      expect(rules[slug].sodiumMax).toBe(360);
-      expect(screen(slug, { protein_g: 6, carbs_g: 12, sodium_mg: 360 }).result).toBe("PASS");
-      expect(screen(slug, { protein_g: 6, carbs_g: 12, sodium_mg: 390 }).result).toBe("FAIL");
+      expect(rules[slug].sodiumMax).toBe(230);
+      expect(screen(slug, { protein_g: 6, carbs_g: 12, sodium_mg: 230 }).result).toBe("PASS");
+      expect(screen(slug, { protein_g: 6, carbs_g: 12, sodium_mg: 240 }).result).toBe("FAIL");
     }
   });
   it("cured or dried meat is out of the pregnancy family (Keniya policy), not out of Heart", () => {

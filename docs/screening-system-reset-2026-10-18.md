@@ -58,7 +58,7 @@
 ## Decisions (owner, October 18)
 
 1. **Approval model:** a product is eligible when its package is verified in hand and it passes the rules. There is no per-product approval. Laurie's earlier validations are the sign-off for v1.0, and nothing more goes to her for routine products.
-2. **Pregnancy and Postpartum sodium:** at most 360 mg per pack, as Keniya policy. FDA's 2024 "healthy" claim allows 230 mg for an individual food. Migration `20261019020000` is written but **not applied** until this is confirmed.
+2. **Pregnancy and Postpartum sodium:** at most 230 mg per pack, the sodium limit of FDA's 2024 "healthy" claim for an individual food (Keniya policy). GDM inherits it. Migration `20261019020000` applied October 18.
 3. **Photo reading:** done in Claude Code with no API key. The `keniya-scan` skill transcribes the label, `pnpm screen` answers per box, and nothing is written.
 4. **Samples that fit no box:** delete them permanently. The owner runs `pnpm products:delete <codes> --apply`; it is a dry run without `--apply`.
 5. **Defaults kept without a new review:**
