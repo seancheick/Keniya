@@ -140,6 +140,9 @@ export function SettingsForm({ settings: s }: { settings: Settings }) {
           <Field label="Purchase buffer %">
             <input name="buffer_pct" defaultValue={(s.purchaseBufferPct * 100).toFixed(0)} inputMode="decimal" className={fieldClass} />
           </Field>
+          <Field label="Sample units before approval" hint="Buying more of a product the PharmaGuide Team hasn't approved needs a reason.">
+            <input name="sample_purchase_max" defaultValue={s.samplePurchaseMax} inputMode="numeric" className={fieldClass} />
+          </Field>
         </div>
       </Section>
 

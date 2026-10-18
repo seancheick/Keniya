@@ -172,6 +172,11 @@ export const settingsSchema = z.object({
   fees: z.object({ pct: z.number().min(0).max(0.2), fixedCents: cents }),
   wastePct: z.number().min(0).max(0.5),
   purchaseBufferPct: z.number().min(0).max(1),
+  /**
+   * Pre-purchase gate: buying more than this many units of a product that isn't clinician-approved
+   * needs a written reason (samples to verify the package are fine; bulk inventory waits).
+   */
+  samplePurchaseMax: z.number().int().min(0).default(6),
   policy: z.object({
     allowedForms: z.array(z.enum(FORMS)),
     maxItemOz: z.number().positive(),
@@ -235,6 +240,7 @@ export const DEFAULT_SETTINGS: Settings = {
   fees: { pct: 0.029, fixedCents: 30 },
   wastePct: 0,
   purchaseBufferPct: 0.05,
+  samplePurchaseMax: 6,
   policy: {
     allowedForms: ["Solid", "Powder", "Tea", "Spread", "Puree"],
     maxItemOz: 3.5,

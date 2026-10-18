@@ -23,9 +23,10 @@ The owner made these calls on Oct 17 2026 to stop scanned snacks from stalling o
    - Evidence:
      - ACOG Committee Opinion 462: under 200 mg caffeine a day in pregnancy.
      - USDA FoodData Central (SR Legacy 170273): dark chocolate (70–85% cacao) has about 80 mg per 100 g; unsweetened cocoa powder about 230 mg per 100 g.
-   - The estimate assumes the whole pack is dark chocolate (or cocoa powder when that is listed), so it can only overstate. A 15 g chocolate bar comes out at 12 mg or less, against the 50 mg per-pack cap.
+   - The estimate counts the whole pack as dark chocolate (or cocoa powder when that is listed). It is a **screening estimate**, not a guaranteed maximum, because cacao content varies. The app never shows it as a label value.
+   - If an estimate uses more than half of the per-pack limit, the product is held until the manufacturer's value is entered. A 15 g chocolate bar estimates at 12 mg and passes. A 14.5 g cocoa-powder pack (Pocky) estimates at 34 mg and is held.
    - Proposed answers:
-     - accept the upper-bound method;
+     - accept the screening estimate with the half-limit hold;
      - box total ≤100 mg (Pregnancy/GDM), half the daily limit spread over 14 snacks, and ≤150 mg (Postpartum);
      - at most 4 chocolate picks per box, because Consumer Reports (2022–23) found lead and cadmium in many dark chocolates.
 2. **P1 for nuts and seeds.**
@@ -55,10 +56,68 @@ The owner made these calls on Oct 17 2026 to stop scanned snacks from stalling o
    - Cases: lion's mane, ashwagandha, ginseng, probiotics, added vitamin A (retinol/retinyl).
    - Today these are flagged for review. Should they be blanket-excluded instead?
    - Proposed: exclude ashwagandha, ginseng and added preformed vitamin A; review probiotics case by case.
-9. **Total vs net carbs.**
-   - Public copy promises "total carbs, never net carbs", so a fiber/allulose bar like Magic Spoon (high total carbs, low net) doesn't qualify for Blood Sugar.
-   - Keep total carbs, or allow net carbs for named fibers/allulose?
-   - Proposed: keep total carbs.
+9. **Total vs net carbs** (owner decision 2026-10-18).
+   - Evidence: the ADA recommends counting total carbohydrate and does not treat net carbs as a standardized clinical measure. UCSF's Diabetes Teaching Center teaches subtracting fiber in some contexts.
+   - What the app does:
+     - net carbs (total − fiber, never subtracting sugar alcohols or allulose) is calculated and shown in the admin only;
+     - eligibility stays on total carbs (Blood Sugar and GDM 15 g, GLP-1 20 g), and public copy is unchanged.
+   - An internal **high-fiber review** list holds products that fail only the total-carb limit but meet a proposed dual limit:
+     - Blood Sugar: ≤15 g net and ≤25 g total;
+     - GLP-1: ≤20 g net and ≤25 g total;
+     - GDM: no exception.
+
+     The 25 g total ceiling is an internal review boundary, not a clinical threshold. The current list is in `docs/pre-purchase-report-2026-10-18.md`.
+   - Question: adopt a dual limit for Blood Sugar and/or GLP-1, or keep total carbs only?
+10. **GDM review by a diabetes-in-pregnancy specialist.** The GDM rules should be reviewed by a registered dietitian experienced in diabetes in pregnancy, ideally a CDCES or someone on a maternal-fetal medicine team, alongside Laurie's ingredient-safety review.
+    - The 15 g snack limit is a conservative product-selection rule. It is not an ADA limit or a meal plan. The ADA 2026 Standards set a floor of at least 175 g carbohydrate a day in pregnancy, with nutrition individualized.
+    - In the software, GDM now always inherits the strictest live limits of Blood Sugar and Pregnancy.
+11. **Heart saturated-fat allowance.** The 4 g allowance now applies only when:
+    - a nut or seed is the first ingredient;
+    - there is no other added saturated-fat source (chocolate, cocoa butter, dairy fat, coconut, palm, shortening);
+    - the nut/seed role is set.
+
+    Otherwise the limit is 2 g. Partially hydrogenated oil is rejected in Heart, and potassium chloride is flagged. These are Keniya screening thresholds, not AHA Heart-Check certification. Confirm.
+12. **GLP-1 tolerability.** These are flagged for review, not excluded:
+    - fiber ≥8 g, or fiber ≥5 g with added fiber (inulin, chicory root and similar);
+    - any sugar alcohol;
+    - saturated fat ≥4 g.
+
+    The basis is the 2025 multisociety GLP-1 nutrition advisory: high-fat or high-fiber foods can aggravate GI symptoms at the start of treatment or when the dose goes up. Should any of these be a hard limit?
+13. **Allergens.**
+    - Product allergens come from the label's Contains statement, cross-contact text and ingredients, for the FDA nine (sesame included).
+    - Customer exclusions are hard constraints: a Contains match or a cross-contact warning conflicts, and a label we can't verify (no statement, or one that disagrees with the ingredients) blocks.
+    - Planner substitutions need an admin's confirmation before packing.
+    - Keniya does not promise an allergen-free product or facility. Confirm that the strict cross-contact rule is right.
+
+## Pre-purchase approval stages (owner decision 2026-10-18)
+
+| Stage | Meaning | Bulk buying? |
+|---|---|---|
+| Preliminary screening | The software rules pass | No: samples only (up to the "sample units" setting, 6 by default; more needs a written reason) |
+| Clinical and sourcing approval | Rules reviewed; PharmaGuide Team approved; sourcing checks done | Yes |
+| Package and lot verification | The physical package matches the record and passes receiving | Ready toward packing |
+
+Sourcing checks before bulk buying:
+- the exact brand, flavor, size and barcode;
+- the full Nutrition Facts per sealed unit;
+- the ingredients;
+- the Contains and cross-contact statements;
+- the shelf life and storage;
+- an FDA recall search;
+- at least one alternate for each essential category.
+
+The Purchasing page leaves unapproved products out of the totals, and Log purchase asks for a reason above the sample quantity.
+
+## Safety findings and stale decisions (fixed 2026-10-18)
+
+The ingredients are re-screened every time eligibility runs, including the database watchlist. A matched no-go, watchlist or brand finding fails its check even when an older PASS is stored. An unresolved safety review item (a botanical, cured meat, or a caffeine source with no label value) holds the pregnancy family.
+
+Only a recorded decision clears a finding:
+- **Safety findings:** Laurie, signed in as the clinician, from the Review page.
+- **Brand preferences** such as sugar alcohols: an admin.
+- **Dyes:** never.
+
+Each decision is tied to the formula version and to the exact ingredient text, so any reformulation or edit voids it.
 
 ## Owner to-dos
 

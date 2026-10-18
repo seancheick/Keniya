@@ -1,5 +1,27 @@
 # Handoff: Keniya Admin (`/admin`)
 
+**Status, Oct 18 2026: pre-purchase hardening (same branch, PR seancheick/Keniya#5, unmerged).** Owner review before any inventory purchase. Decisions and clinician questions: `docs/screening-decisions-2026-10-17.md`. Catalog impact: `pnpm catalog:report [workbook]` → `docs/pre-purchase-report-2026-10-18.md`.
+- **Current safety findings beat stale decisions:**
+  - eligibility re-screens the ingredients (plus the `watchlist` table) every time;
+  - a stored PASS can't outlive a new watchlist or no-go ingredient;
+  - clearing a finding needs a `screening_resolutions` row: clinician for safety, admin for brand, never for dyes;
+  - a row is bound to the version and an ingredients hash.
+- **Net carbs** (`carbs.ts`): total − fiber, shown in the admin. Invalid or missing values stay null with an issue code. Eligibility is still on total carbs. There is an internal `highFiberReview` list (Blood Sugar ≤15 net / ≤25 total, GLP-1 ≤20 / ≤25, GDM none). `eligibleFor` returns reason codes.
+- **Heart:**
+  - the 4 g sat-fat allowance needs a nut or seed first and no other added saturated fat;
+  - partially hydrogenated oil is rejected;
+  - potassium chloride is flagged.
+- **Other boxes:**
+  - **GDM:** `inheritParentRules` applies the strictest of GDM, Blood Sugar and Pregnancy wherever live rules load.
+  - **Caffeine:** "screening estimate" wording. An estimate above half the per-pack cap is held for the manufacturer value.
+  - **GLP-1:** GI-tolerability review flags.
+  - **Blood Sugar and GDM pages:** "not for treating a low".
+- **Shipment needs** (migration `20261018020000`):
+  - `also_meet` (for example Postpartum + Blood Sugar) and `avoid_allergens` (FDA nine; Contains or cross-contact conflicts; an unverifiable label blocks) are enforced at planning, every manual swap and packing.
+  - Planner swaps are proposals until an admin confirms them.
+  - These checks run in the app (TypeScript), like the existing avoid answer. `pack_shipment` in SQL doesn't re-check them.
+- **Purchase gate:** above `samplePurchaseMax` (6 by default), buying a product that isn't clinician-approved needs a reason. The purchase plan leaves unapproved products out of its totals.
+
 **Status, Oct 17 2026: screening autofill (branch `claude/screening-autofill`).** Too many scanned snacks sat on hold for data a person had to retype. Owner decisions, pending clinician confirmation (questions in `docs/screening-decisions-2026-10-17.md`):
 - **Caffeine is inferred when the label is blank** (`src/lib/admin/caffeine.ts`): no caffeine-bearing ingredient → 0; cocoa/chocolate → worst-case upper bound from pack weight (USDA: 0.8 mg/g dark chocolate, 2.3 mg/g cocoa powder); coffee, tea leaf, matcha or guarana still need the label value. Nothing inferred is stored; screens show "0 (no source)" or "≤12 (est.)". The DB predicate `product_diligence_complete` mirrors the caffeine-source pattern (migration `20261017010000_screening_autofill.sql`).
 - **P3–P6 fill themselves** from the data (caffeine known, added sugar, sodium, allergen statement): `derivedPregnancyChecks` / `effectivePregnancyChecks` in `rules.ts`. A stored FAIL still wins. P1, P2, P7a, P7b and P8 stay human decisions.

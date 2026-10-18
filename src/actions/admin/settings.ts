@@ -52,6 +52,7 @@ export async function saveSettings(_prev: SettingsState, fd: FormData): Promise<
     fees: { pct: pct(fd.get("fee_pct")), fixedCents: cents(fd.get("fee_fixed")) },
     wastePct: pct(fd.get("waste_pct")),
     purchaseBufferPct: pct(fd.get("buffer_pct")),
+    samplePurchaseMax: Math.max(0, Math.round(num(fd.get("sample_purchase_max")) ?? 6)),
     policy: {
       allowedForms: fd.getAll("forms").map(String).filter((f): f is (typeof FORMS)[number] => (FORMS as readonly string[]).includes(f)),
       maxItemOz: num(fd.get("max_item_oz")) ?? 3.5,
