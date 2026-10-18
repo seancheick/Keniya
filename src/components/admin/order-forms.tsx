@@ -4,19 +4,22 @@ import { useActionState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
+  confirmSubstitutions,
   createAllShipments,
   createManualShipment,
   importPirateShip,
   packShipment,
   saveLabel,
   setShipmentStatus,
+  setShipmentNeeds,
   setShipmentPackage,
   unpackShipment,
   type OrderState,
 } from "@/actions/admin/orders";
 import { Button } from "@/components/ui/button";
 import { Field, fieldClass } from "@/components/admin/ui";
-import { BOX_LABEL, BOX_SLUGS } from "@/lib/admin/types";
+import { ALLERGEN_LABEL, ALLERGENS } from "@/lib/admin/allergens";
+import { BOX_LABEL, BOX_SLUGS, type BoxSlug } from "@/lib/admin/types";
 
 function useResult(state: OrderState, after?: (s: OrderState) => void) {
   const seen = useRef(state);
@@ -101,6 +104,7 @@ export function ManualShipmentForm() {
       <Field label="Allergies / foods to avoid" className="sm:col-span-2">
         <input name="avoid" placeholder="e.g. peanuts, dairy, sesame" className={fieldClass} />
       </Field>
+      <NeedsFields className="sm:col-span-2" />
       <Field label="Notes" className="sm:col-span-2">
         <input name="notes" className={fieldClass} />
       </Field>
@@ -241,4 +245,63 @@ export function ShipmentPackageForm({ id, initialId, packages }: { id: string; i
     </Field>
     <Button variant="outline" disabled={pending || !packages.length}>{pending ? "Saving…" : "Save package"}</Button>
   </form>;
+}
+
+/**
+ * Structured needs: allergen exclusions (contains or cross-contact conflicts; a label that can't
+ * be verified blocks) and other boxes' screening every item must also pass.
+ */
+function NeedsFields({ box, alsoMeet = [], allergens = [], className }: { box?: BoxSlug; alsoMeet?: string[]; allergens?: string[]; className?: string }) {
+  return (
+    <div className={`space-y-2 text-sm ${className ?? ""}`}>
+      <fieldset>
+        <legend className="text-xs text-muted-foreground">Allergen exclusions (FDA nine; cross-contact counts)</legend>
+        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+          {ALLERGENS.map((a) => (
+            <label key={a} className="flex items-center gap-1">
+              <input type="checkbox" name="avoid_allergens" value={a} defaultChecked={allergens.includes(a)} /> {ALLERGEN_LABEL[a]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend className="text-xs text-muted-foreground">Every item must also pass (e.g. Postpartum for a mother managing diabetes: Blood Sugar)</legend>
+        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+          {BOX_SLUGS.filter((b) => b !== box).map((b) => (
+            <label key={b} className="flex items-center gap-1">
+              <input type="checkbox" name="also_meet" value={b} defaultChecked={alsoMeet.includes(b)} /> {BOX_LABEL[b]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <p className="text-xs text-muted-foreground">Nutritional screening only, never a statement that the box suits a person&apos;s medical needs.</p>
+    </div>
+  );
+}
+
+export function ShipmentNeedsForm({ id, box, alsoMeet, allergens }: { id: string; box: BoxSlug; alsoMeet: string[]; allergens: string[] }) {
+  const [state, action, pending] = useActionState(setShipmentNeeds, {});
+  useResult(state);
+  return (
+    <form action={action} className="space-y-2 print:hidden">
+      <input type="hidden" name="id" value={id} />
+      <NeedsFields box={box} alsoMeet={alsoMeet} allergens={allergens} />
+      <Button variant="outline" disabled={pending}>{pending ? "Saving…" : "Save needs"}</Button>
+    </form>
+  );
+}
+
+export function ConfirmSubstitutionsForm({ id, review }: { id: string; review: { reason: string; removed: string[]; added: string[] } }) {
+  const [state, action, pending] = useActionState(confirmSubstitutions, {});
+  useResult(state);
+  return (
+    <form action={action} className="space-y-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 print:hidden">
+      <input type="hidden" name="id" value={id} />
+      <p className="font-medium">Proposed substitutions ({review.reason})</p>
+      <p>Out: {review.removed.join(", ")}</p>
+      <p>In: {review.added.join(", ")}</p>
+      <p className="text-xs">Check each new item&apos;s label against the customer&apos;s needs. Packing stays blocked until confirmed.</p>
+      <Button size="sm" disabled={pending}>Confirm substitutions</Button>
+    </form>
+  );
 }

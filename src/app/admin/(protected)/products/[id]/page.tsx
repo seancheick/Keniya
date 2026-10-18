@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteProductPhoto } from "@/actions/admin/products";
-import { PhotoUpload, PriceSightingForm, StatusControls } from "@/components/admin/product-widgets";
+import { FindingResolver, PhotoUpload, PriceSightingForm, StatusControls } from "@/components/admin/product-widgets";
 import { Badge, Card, FitBadges, FitReasons, PageHeader, StatusBadge, Table, TextLink, expiryTone } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { fmt$ } from "@/lib/admin/costing";
@@ -15,6 +15,7 @@ import {
   loadVendors,
   must,
   signedUrls,
+  loadScreening,
   toSnack,
   type LotRow,
   type ProductRow,
@@ -23,8 +24,12 @@ import {
   type VersionRow,
 } from "@/lib/admin/db";
 import { daysUntil } from "@/lib/admin/optimizer";
-import { eligibleBoxes, shipsUnderPolicy } from "@/lib/admin/rules";
-import { BOX_LABEL, NUTRIENT_KEYS, PREGNANCY_CHECK_KEYS, ROLE_KEYS, ROLE_LABEL, type BoxSlug } from "@/lib/admin/types";
+import { netCarbs, netCarbsLabel } from "@/lib/admin/carbs";
+import { ALLERGEN_LABEL, productAllergens } from "@/lib/admin/allergens";
+import { caffeineDisplay } from "@/lib/admin/caffeine";
+import { ingredientsHash } from "@/lib/admin/ingredients";
+import { derivedPregnancyChecks, eligibleBoxes, highFiberReview, shipsUnderPolicy } from "@/lib/admin/rules";
+import { BOX_LABEL, BOX_SLUGS, NUTRIENT_KEYS, PREGNANCY_CHECK_KEYS, ROLE_KEYS, ROLE_LABEL, type BoxSlug } from "@/lib/admin/types";
 
 import { requireAdmin } from "@/lib/admin/auth";
 
@@ -73,6 +78,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const shippedUnits = (must(shippedRes, "shipped") as { qty: number }[]).reduce((s, r) => s + r.qty, 0);
   const current = versions.find((v) => v.is_current);
   const snack = toSnack(p, current, lots, prices[0]?.unit_cost_cents ?? null, packs);
+  const screening = await loadScreening(current?.id, current?.ingredients);
+  snack.findings = screening.findings;
+  snack.resolutions = screening.resolutions;
   const fits = eligibleBoxes(snack, rules, settings.policy, p.reject_reason);
   const ships = shipsUnderPolicy(snack, settings.policy);
   const urls = await signedUrls(photos.map((x) => x.path));
@@ -117,6 +125,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         <div className="space-y-4 lg:col-span-2">
           <Card title="Box fit" action={<FitBadges fits={fits} compact />}>
             <FitReasons fits={fits} />
+            {BOX_SLUGS.filter((b) => highFiberReview(b, snack, rules[b], settings.policy, p.reject_reason)).map((b) => (
+              <p key={b} className="mt-2 text-sm text-sky-900">
+                <Badge tone="muted">High-fiber review · internal</Badge> {BOX_LABEL[b]}: over the total-carb limit, but {netCarbsLabel(snack)} and within the proposed
+                dual limit ({rules[b].netCarbsReviewMax} g net, {rules[b].carbsReviewCeiling} g total). Not eligible; listed for the rule review only.
+              </p>
+            ))}
             {!ships.ok && <p className="mt-2 text-sm text-amber-700">Doesn&apos;t ship under your policy: {ships.reason}</p>}
             {p.status === "Rejected" && <p className="mt-2 text-sm text-red-700">Rejected: {p.reject_reason}</p>}
             <div className="mt-4 border-t pt-3">
@@ -146,9 +160,19 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               {NUTRIENT_KEYS.map((k) => (
                 <div key={k}>
                   <dt className="text-xs text-muted-foreground">{NUTRIENT_LABEL[k]}</dt>
-                  <dd className={snack[k] === null ? "text-red-700" : "tabular-nums"}>{snack[k] ?? "missing"}</dd>
+                  {k === "caffeine_mg" ? (
+                    <dd className={caffeineDisplay(snack) === null ? "text-red-700" : "tabular-nums"}>{caffeineDisplay(snack) ?? "missing"}</dd>
+                  ) : (
+                    <dd className={snack[k] === null ? "text-red-700" : "tabular-nums"}>{snack[k] ?? "missing"}</dd>
+                  )}
                 </div>
               ))}
+              <div>
+                <dt className="text-xs text-muted-foreground">Net carbs (total − fiber)</dt>
+                <dd className={netCarbs(snack).net === null ? "text-amber-800" : "tabular-nums"} title={netCarbs(snack).note}>
+                  {netCarbsLabel(snack)}
+                </dd>
+              </div>
               <div>
                 <dt className="text-xs text-muted-foreground">Unit weight</dt>
                 <dd>{snack.unit_wt_oz ?? "—"} oz</dd>
@@ -159,10 +183,13 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 <dt className="text-xs text-muted-foreground">Pregnancy checks</dt>
                 <dd className="flex flex-wrap gap-1">
                   {PREGNANCY_CHECK_KEYS.map((k) => {
-                    const val = current?.pregnancy_checks?.[k];
+                    const stored = current?.pregnancy_checks?.[k];
+                    const auto = !stored && derivedPregnancyChecks(snack)[k as "P3"];
+                    const val = stored ?? (auto || undefined);
                     return (
                       <Badge key={k} tone={val === "PASS" ? "good" : val === "FAIL" ? "bad" : "muted"}>
                         {k} {val ?? "—"}
+                        {auto ? " (auto)" : ""}
                       </Badge>
                     );
                   })}
@@ -179,6 +206,31 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <div>
                 <dt className="text-xs text-muted-foreground">Ingredients</dt>
                 <dd className="whitespace-pre-wrap">{current?.ingredients ?? "—"}</dd>
+                {(() => {
+                  const a = productAllergens({ allergens: current?.allergens, ingredients: current?.ingredients });
+                  return (
+                    <dd className="text-xs">
+                      <span className="text-muted-foreground">Allergens (FDA nine): </span>
+                      {a.contains.length ? `contains ${a.contains.map((x) => ALLERGEN_LABEL[x]).join(", ")}` : "none listed"}
+                      {a.mayContain.length ? ` · cross-contact: ${a.mayContain.map((x) => ALLERGEN_LABEL[x]).join(", ")}` : ""}
+                      {a.issues.map((i) => <span key={i} className="block text-amber-800">{i}</span>)}
+                    </dd>
+                  );
+                })()}
+                {screening.findings.map((f) => {
+                  const r = screening.resolutions.find((x) => x.finding_key === f.key && x.ingredients_hash === ingredientsHash(current?.ingredients));
+                  return (
+                    <dd key={f.key} className={f.severity === "info" ? "text-xs text-muted-foreground" : "space-y-1 text-xs text-amber-800"}>
+                      <span>
+                        {f.check ? `${f.check}: ` : ""}
+                        {f.label} ({f.evidence}){f.kind === "brand" ? " · brand standard" : ""}
+                        {r ? ` · ${r.decision === "accept" ? "accepted" : "confirmed fail"} by ${r.resolved_by}: ${r.reason}` : ""}
+                      </span>
+                      {!r && f.kind === "brand" && f.code !== "synthetic_dye" && <FindingResolver id={p.id} findingKey={f.key} label="Record a brand exception" />}
+                      {!r && f.kind === "safety" && f.severity !== "info" && <span className="block text-muted-foreground">PharmaGuide Team decides this on the Review page.</span>}
+                    </dd>
+                  );
+                })}
               </div>
             </dl>
             {versions.length > 1 && (

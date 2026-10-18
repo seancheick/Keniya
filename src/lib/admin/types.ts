@@ -1,3 +1,4 @@
+import type { Finding, Resolution } from "./ingredients";
 // Shared admin domain types and defaults. Pure (no server imports) so rules, costing and
 // the optimizer run the same in server components, client forms and tests.
 import { z } from "zod";
@@ -110,6 +111,12 @@ export type RuleInput = Nutrition & {
   roles: Partial<Record<RoleKey, boolean>>;
   /** Label ingredient list; the nut/seed saturated-fat exception checks it for added tropical oils. */
   ingredients?: string | null;
+  /** Label allergen statement; its presence satisfies the data check P6. */
+  allergens?: string | null;
+  /** Ingredient findings incl. the database watchlist (computed at load); built-in rules when absent. */
+  findings?: Finding[];
+  /** Recorded decisions on findings for this version (clinician for safety, admin for brand). */
+  resolutions?: Resolution[];
 };
 
 /** A product as the builder, optimizer and dashboards see it. */
@@ -165,6 +172,11 @@ export const settingsSchema = z.object({
   fees: z.object({ pct: z.number().min(0).max(0.2), fixedCents: cents }),
   wastePct: z.number().min(0).max(0.5),
   purchaseBufferPct: z.number().min(0).max(1),
+  /**
+   * Pre-purchase gate: buying more than this many units of a product that isn't clinician-approved
+   * needs a written reason (samples to verify the package are fine; bulk inventory waits).
+   */
+  samplePurchaseMax: z.number().int().min(0).default(6),
   policy: z.object({
     allowedForms: z.array(z.enum(FORMS)),
     maxItemOz: z.number().positive(),
@@ -228,6 +240,7 @@ export const DEFAULT_SETTINGS: Settings = {
   fees: { pct: 0.029, fixedCents: 30 },
   wastePct: 0,
   purchaseBufferPct: 0.05,
+  samplePurchaseMax: 6,
   policy: {
     allowedForms: ["Solid", "Powder", "Tea", "Spread", "Puree"],
     maxItemOz: 3.5,
@@ -297,7 +310,7 @@ export const boxRulesSchema = z.object({
   beverageCarbsMax: z.number().min(0).nullable().default(null),
   beverageAddedSugarMax: z.number().min(0).nullable().default(null),
   addedSugarMax: z.number().min(0).nullable().default(null),
-  /** Added-sugar limit for controlled treats (CT role) instead of addedSugarMax. */
+  /** Added-sugar limit for treats instead of addedSugarMax (Heart: CT role; Blood Sugar/GDM: treat-only picks). */
   treatAddedSugarMax: z.number().min(0).nullable().default(null),
   sodiumMax: z.number().min(0).nullable().default(null),
   satFatMax: z.number().min(0).nullable().default(null),
@@ -305,6 +318,16 @@ export const boxRulesSchema = z.object({
   satFatNutMax: z.number().min(0).nullable().default(null),
   /** Caffeine per pack; unknown caffeine already fails Pregnancy. */
   caffeineMax: z.number().min(0).nullable().default(null),
+  /** Total caffeine across the whole box (inferred values count; warning, not a block). */
+  boxCaffeineMax: z.number().min(0).nullable().default(null),
+  /** Cocoa/chocolate picks per box (dark chocolate carries lead and cadmium; warning). */
+  chocolateMax: z.number().int().min(0).nullable().default(null),
+  /**
+   * Internal high-fiber review only, never eligibility: a pick failing nothing but the total-carb
+   * limit is listed for review when net carbs (total − fiber) ≤ this and total ≤ carbsReviewCeiling.
+   */
+  netCarbsReviewMax: z.number().min(0).nullable().default(null),
+  carbsReviewCeiling: z.number().min(0).nullable().default(null),
   /**
    * Little extras (drink sticks, tea, a sample) packed on top of `total` and never counted in
    * it. null = extras optional and not promised; set both to promise "14 snacks + 2–4 extras".
@@ -330,10 +353,14 @@ const none = {
   beverageAddedSugarMax: null,
   addedSugarMax: null,
   treatAddedSugarMax: null,
+  netCarbsReviewMax: null,
+  carbsReviewCeiling: null,
   sodiumMax: null,
   satFatMax: null,
   satFatNutMax: null,
   caffeineMax: null,
+  boxCaffeineMax: null,
+  chocolateMax: null,
 };
 
 /** Starting rules (workbook v4 + v3.1 proposals). Editable on the Boxes tab. */
@@ -357,6 +384,11 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     // Not an ACOG number: ACOG sets a daily total, Keniya chooses 50 mg per pack so one snack
     // never spends a large share of the day. Chocolate (≤20 mg) passes.
     caffeineMax: 50,
+    // Founder-set 2026-10-17, pending clinician: the whole box ≤100 mg (half of ACOG's daily
+    // 200 mg, spread over 14 snacks), and at most 4 chocolate picks (Consumer Reports found
+    // lead/cadmium in dark chocolate; pregnancy is the most sensitive group).
+    boxCaffeineMax: 100,
+    chocolateMax: 4,
   },
   blood_sugar: {
     ...none,
@@ -376,6 +408,13 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     carbsMax: 15,
     beverageCarbsMax: 3,
     addedSugarMax: 3,
+    // Founder-set 2026-10-17, pending clinician: a treat (counted by treatMax) may carry up to
+    // 5 g added sugar; core picks stay at 3 g. Without it the treat allowance held nothing.
+    treatAddedSugarMax: 5,
+    // Owner 2026-10-18: proposed dual limit for a future policy, review list only (ADA counts
+    // total carbs; net carbs is not a standardized clinical measure).
+    netCarbsReviewMax: 15,
+    carbsReviewCeiling: 25,
   },
   heart: {
     ...none,
@@ -422,7 +461,10 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     carbsMax: 15,
     beverageCarbsMax: 3,
     addedSugarMax: 3,
+    treatAddedSugarMax: 5,
     caffeineMax: 50,
+    boxCaffeineMax: 100,
+    chocolateMax: 4,
   },
   // 2025 joint GLP-1 nutrition guidance (ASN/OMA/TOS/ACLM): adequate protein, nutrient-dense,
   // smaller portions, hydration, GI-tolerable foods; ginger and peppermint for nausea.
@@ -442,6 +484,9 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     wholeFoodMin: 2,
     treatMax: 2,
     carbsMax: 20,
+    // Review list only (see Blood Sugar). GDM has no exception: GDM nutrition therapy counts total carbs.
+    netCarbsReviewMax: 20,
+    carbsReviewCeiling: 25,
     beverageAddedSugarMax: 0,
     addedSugarMax: 5,
   },
@@ -464,6 +509,8 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     beverageMax: 3,
     proteinOrFiberMin: 5,
     caffeineMax: 100,
+    boxCaffeineMax: 150,
+    chocolateMax: 4,
   },
 };
 
@@ -473,6 +520,39 @@ export function resolveBoxRules(slug: BoxSlug, stored: unknown): BoxRules {
   const parsed = boxRulesSchema.safeParse({ ...DEFAULT_BOX_RULES[slug], ...(stored as object) });
   if (!parsed.success) throw new Error(`Invalid live rules for ${slug}`);
   return parsed.data;
+}
+
+/** Per-pick and per-box ceilings a child box inherits from its parents (the stricter value wins). */
+const INHERITED_CAPS = [
+  "carbsMax", "beverageCarbsMax", "beverageAddedSugarMax", "addedSugarMax", "treatAddedSugarMax", "treatMax",
+  "sodiumMax", "satFatMax", "satFatNutMax", "caffeineMax", "boxCaffeineMax", "chocolateMax",
+] as const satisfies readonly (keyof BoxRules)[];
+
+/** Exception allowances: null means "no exception" (the stricter base limit applies). */
+const NULL_IS_STRICT = new Set<keyof BoxRules>(["treatAddedSugarMax", "satFatNutMax"]);
+
+/**
+ * Gestational Diabetes must never be looser than the standards it combines: for every ceiling,
+ * the effective GDM value is the strictest of its own, Blood Sugar's and Pregnancy Comfort's
+ * live values. For ordinary ceilings null means "no limit", so it never loosens one. For the
+ * exception allowances (treat added sugar, nut/seed saturated fat) null means "no exception":
+ * if GDM or Blood Sugar has none, GDM has none. Applied wherever live rules are loaded, so an
+ * edit to either parent flows through and a GDM edit can't undercut them.
+ */
+export function inheritParentRules(rules: Record<BoxSlug, BoxRules>): Record<BoxSlug, BoxRules> {
+  const gdm = { ...rules.gestational_diabetes };
+  for (const k of INHERITED_CAPS) {
+    const strictNull = NULL_IS_STRICT.has(k);
+    // Pregnancy has no treat or nut exceptions of its own; it only adds ordinary ceilings.
+    const raw = strictNull ? [rules.gestational_diabetes[k], rules.blood_sugar[k]] : [rules.gestational_diabetes[k], rules.blood_sugar[k], rules.pregnancy_comfort[k]];
+    if (strictNull && raw.some((v) => v === null)) {
+      (gdm as Record<string, unknown>)[k] = null;
+      continue;
+    }
+    const vals = raw.filter((v): v is number => typeof v === "number");
+    (gdm as Record<string, unknown>)[k] = vals.length ? Math.min(...vals) : null;
+  }
+  return { ...rules, gestational_diabetes: gdm };
 }
 
 export const OBJECTIVES = ["balanced", "margin", "expiring", "overstock", "favorites"] as const;

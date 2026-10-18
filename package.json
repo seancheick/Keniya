@@ -11,6 +11,7 @@
     "import:workbook": "NODE_OPTIONS=--conditions=react-server tsx scripts/import-workbook.ts",
     "db:migrate": "tsx scripts/migrate-admin.ts",
     "db:test": "python3 scripts/db-integration.py",
+    "catalog:report": "NODE_OPTIONS=--conditions=react-server tsx scripts/catalog-report.ts",
     "box:feasibility": "NODE_OPTIONS=--conditions=react-server tsx scripts/box-feasibility.ts",
     "smoke:prod": "tsx scripts/smoke-prod.ts",
     "barcode:backfill": "NODE_OPTIONS=--conditions=react-server tsx scripts/barcode-backfill.ts",

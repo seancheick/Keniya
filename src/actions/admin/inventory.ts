@@ -1,9 +1,10 @@
 "use server";
 
+import { isClinicianApproved } from "@/lib/admin/rules";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
-import { db, PHOTO_BUCKET } from "@/lib/admin/db";
+import { db, loadSettings, PHOTO_BUCKET } from "@/lib/admin/db";
 import { dollarsToCents } from "@/lib/admin/forms";
 import { isIsoDate } from "@/lib/admin/verify";
 import { cleanBarcode, gtin14, printedForm, validCheckDigit } from "@/lib/admin/barcode";
@@ -27,6 +28,7 @@ const purchaseSchema = z.object({
   expires_on: z.union([z.literal(""), z.string().refine(isIsoDate, "Enter a valid date")]).optional(),
   lot_code: z.string().max(60).optional(),
   note: z.string().max(500).optional(),
+  bulk_reason: z.string().trim().max(300).optional(),
 });
 
 /** One purchase = one lot. The DB trigger writes the receive ledger row and the price seen. */
@@ -46,6 +48,19 @@ export async function logPurchase(_prev: PurchaseState, fd: FormData): Promise<P
   if (d.expires_on && d.expires_on < d.purchased_at) return { error: "Expiry cannot be before the purchase date" };
   const version = await db().from("product_versions").select("id").eq("product_id", d.product_id).eq("is_current", true).maybeSingle();
   if (!version.data) return { error: "That product has no current formula version." };
+  // Pre-purchase gate: samples are fine; bulk inventory waits for clinical and sourcing approval.
+  const [product, settings] = await Promise.all([
+    db().from("products").select("status, clinical_decision, approval_role, reviewed_by, diligence_status, prescreened_by, prescreened_at").eq("id", d.product_id).single(),
+    loadSettings(),
+  ]);
+  if (product.error) return { error: product.error.message };
+  const approved = isClinicianApproved({
+    status: product.data.status, clinicianApprovedBy: product.data.reviewed_by, clinicalDecision: product.data.clinical_decision, approvalRole: product.data.approval_role,
+    diligenceComplete: product.data.diligence_status === "complete" && Boolean(product.data.prescreened_by && product.data.prescreened_at),
+  });
+  if (!approved && d.qty > settings.samplePurchaseMax && !d.bulk_reason)
+    return { error: `Not purchase-ready: this product isn't PharmaGuide Team approved yet. Buy up to ${settings.samplePurchaseMax} sample units, or give the reason for buying more.` };
+  const bulkNote = !approved && d.qty > settings.samplePurchaseMax ? `Bought before clinical approval (${d.qty} units): ${d.bulk_reason}` : null;
   const vendorId = await ensureVendor(d.vendor, admin.name);
 
   const lot = await db()
@@ -60,7 +75,7 @@ export async function logPurchase(_prev: PurchaseState, fd: FormData): Promise<P
       total_paid_cents: total,
       expires_on: d.expires_on || null,
       lot_code: d.lot_code || null,
-      note: [fd.get("box_note"), d.note].filter((x) => typeof x === "string" && x.trim()).join(" · ") || null,
+      note: [bulkNote, fd.get("box_note"), d.note].filter((x) => typeof x === "string" && x.trim()).join(" · ") || null,
       created_by: admin.name,
     })
     .select("id, unit_cost_cents")

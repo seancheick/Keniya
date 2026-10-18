@@ -1,5 +1,35 @@
 # Handoff: Keniya Admin (`/admin`)
 
+**Status, Oct 18 2026: pre-purchase hardening (same branch, PR seancheick/Keniya#5, unmerged).** Owner review before any inventory purchase. Decisions and clinician questions: `docs/screening-decisions-2026-10-17.md`. Catalog impact: `pnpm catalog:report [workbook]` → `docs/pre-purchase-report-2026-10-18.md`.
+- **Current safety findings beat stale decisions:**
+  - eligibility re-screens the ingredients (plus the `watchlist` table) every time;
+  - a stored PASS can't outlive a new watchlist or no-go ingredient;
+  - clearing a finding needs a `screening_resolutions` row: clinician for safety, admin for brand, never for dyes;
+  - a row is bound to the version and an ingredients hash.
+- **Net carbs** (`carbs.ts`): total − fiber, shown in the admin. Invalid or missing values stay null with an issue code. Eligibility is still on total carbs. There is an internal `highFiberReview` list (Blood Sugar ≤15 net / ≤25 total, GLP-1 ≤20 / ≤25, GDM none). `eligibleFor` returns reason codes.
+- **Heart:**
+  - the 4 g sat-fat allowance needs a nut or seed first and no other added saturated fat;
+  - partially hydrogenated oil is rejected;
+  - potassium chloride is flagged.
+- **Other boxes:**
+  - **GDM:** `inheritParentRules` applies the strictest of GDM, Blood Sugar and Pregnancy wherever live rules load.
+  - **Caffeine:** "screening estimate" wording. An estimate above half the per-pack cap is held for the manufacturer value.
+  - **GLP-1:** GI-tolerability review flags.
+  - **Blood Sugar and GDM pages:** "not for treating a low".
+- **Shipment needs** (migration `20261018020000`):
+  - `also_meet` (for example Postpartum + Blood Sugar) and `avoid_allergens` (FDA nine; Contains or cross-contact conflicts; an unverifiable label blocks) are enforced at planning, every manual swap and packing.
+  - Planner swaps are proposals until an admin confirms them.
+  - These checks run in the app (TypeScript), like the existing avoid answer. `pack_shipment` in SQL doesn't re-check them.
+- **Purchase gate:** above `samplePurchaseMax` (6 by default), buying a product that isn't clinician-approved needs a reason. The purchase plan leaves unapproved products out of its totals.
+
+**Status, Oct 17 2026: screening autofill (branch `claude/screening-autofill`).** Too many scanned snacks sat on hold for data a person had to retype. Owner decisions, pending clinician confirmation (questions in `docs/screening-decisions-2026-10-17.md`):
+- **Caffeine is inferred when the label is blank** (`src/lib/admin/caffeine.ts`): no caffeine-bearing ingredient → 0; cocoa/chocolate → worst-case upper bound from pack weight (USDA: 0.8 mg/g dark chocolate, 2.3 mg/g cocoa powder); coffee, tea leaf, matcha or guarana still need the label value. Nothing inferred is stored; screens show "0 (no source)" or "≤12 (est.)". The DB predicate `product_diligence_complete` mirrors the caffeine-source pattern (migration `20261017010000_screening_autofill.sql`).
+- **P3–P6 fill themselves** from the data (caffeine known, added sugar, sodium, allergen statement): `derivedPregnancyChecks` / `effectivePregnancyChecks` in `rules.ts`. A stored FAIL still wins. P1, P2, P7a, P7b and P8 stay human decisions.
+- **Ingredient screen** (`src/lib/admin/ingredients.ts`): synthetic dyes are rejected in every box (Keniya standard); listeria/mercury/raw/alcohol hits and pregnancy-watchlist ingredients (built-in list + the `watchlist` table) fail P2/P7a (sugar alcohols P7b) at evaluation time (superseded Oct 18: nothing is written on save; see the status above). Never auto-PASS. Jerky/cured meat, concentrated botanicals and caffeine sources are review flags shown on the form and product page.
+- **Blood Sugar / GDM treats** may have up to 5 g added sugar (`treatAddedSugarMax: 5`, still capped by `treatMax`); core picks stay ≤15 g carbs / ≤3 g added sugar. The migration updates stored `box_rules` rows that had no treat allowance, which returns any active Blood Sugar / GDM lineup to draft for a re-check.
+- **New lineup warnings** for the pregnancy family: total box caffeine (estimates count at their maximum; 100 mg Pregnancy/GDM, 150 mg Postpartum) and at most 4 chocolate picks (lead/cadmium in dark chocolate).
+- Store scanning: `docs/scan-checklist.md`.
+
 **Status, Oct 7 2026: barcode guard fixed in the database, inclusive wording.**
 - **The cross-table barcode trigger never fired** (team review, reproduced live: a pack with P005's own UPC was accepted). `barcode_one_meaning()` read `NEW.gtin14`, a stored generated column that PostgreSQL computes only after BEFORE triggers (NULL there). Migration `20261007010000_barcode_trigger_fix.sql` normalizes from the raw `upc` / `gtin` instead. **DB regression test** `supabase/tests/barcode_one_meaning.sql`, run with `pnpm db:test` (Management API; one DO block that always raises `BARCODE_TESTS_PASSED`, so nothing persists): product X then pack X rejected; padded GTIN-14 form rejected; pack Y then product Y (insert, EAN-13 form, update) rejected; distinct codes succeed. It failed before the fix and passes after; no test rows left behind.
 - **Inclusive wording:** the engine's limits are ≤, so public copy says "at or below" / "140 mg sodium or less", never "under" (a test forbids `under {{…}}`).
@@ -38,7 +68,7 @@
 
 **Status, Oct 6 2026, evening: six boxes, published standards, Blood Sugar rename (branch `boxes-v2` → main).**
 - **Decision (owner, with the clinician):** no customers and no stock yet, so everything changed at once. Six founding boxes: Pregnancy Comfort, **Blood Sugar** (was Carb Conscious; same slug `blood_sugar`, `/blood-sugar-snack-box`, old URL redirects), Heart Wellness (now names high blood pressure and cholesterol), **Gestational Diabetes** (= Pregnancy screening ∩ Blood Sugar standard), **GLP-1 Companion**, **Postpartum & Nursing**. Menopause and kidney stay as requests. Founding runs 50 / 50 / 50 / 20 / 20 / 20 (`DEFAULT_SETTINGS.runSize`; the public `box.founding` reads the same default).
-- **Standards are Keniya curation thresholds with sources** (comments in `types.ts`); the clinician reviews lineups, not arithmetic. Laurie chose the lower sodium number. Per pack: Blood Sugar ≤20 g total carbs, ≤5 g added sugar (ADA 15–20 g snack pattern; total carbs, never net). Heart ≤**140 mg sodium** (FDA "low sodium" / AHA snack line; was 230), sat fat ≤2 g or ≤4 g only when the nut/seed role is set **and** the label has no palm, palm-kernel, coconut or partially hydrogenated oil (`hasAddedTropicalOil`), added sugar ≤5 g core / ≤8 g on a controlled treat (`treatAddedSugarMax`). Pregnancy `caffeineMax` 50 mg (ACOG <200 mg/day; not an ACOG cutoff). Postpartum caffeineMax 100 mg. Blood Sugar `treatMax` 3 counts treat-only picks. The old 300 mg "higher-sodium picks" check is gone. (Superseded the same evening: the site now reads the live rules, see the status above.)
+- **Standards are Keniya curation thresholds with sources** (comments in `types.ts`); the clinician reviews lineups, not arithmetic. Laurie chose the lower sodium number. Per pack: Blood Sugar ≤20 g total carbs, ≤5 g added sugar (ADA 15–20 g snack pattern; total carbs, never net) — *superseded: now ≤15 g carbs / ≤3 g added sugar on core picks, with treat-only picks up to 5 g added sugar (Oct 17 2026, see the top status)*. Heart ≤**140 mg sodium** (FDA "low sodium" / AHA snack line; was 230), sat fat ≤2 g or ≤4 g only when the nut/seed role is set **and** the label has no palm, palm-kernel, coconut or partially hydrogenated oil (`hasAddedTropicalOil`), added sugar ≤5 g core / ≤8 g on a controlled treat (`treatAddedSugarMax`). Pregnancy `caffeineMax` 50 mg (ACOG <200 mg/day; not an ACOG cutoff). Postpartum caffeineMax 100 mg. Blood Sugar `treatMax` 3 counts treat-only picks. The old 300 mg "higher-sodium picks" check is gone. (Superseded the same evening: the site now reads the live rules, see the status above.)
 - **Catalog after the change (live data, 78 live products):** eligible Pregnancy 40, Blood Sugar 34, Heart **29** (was 40: 5 nut products with added palm/coconut oil, 3 over 5 g sugar, 2–3 between 140 and 230 mg sodium), Gestational Diabetes 24, GLP-1 34, Postpartum 40. 40 products pass more than one box.
 - **Lineups:** Pregnancy v2 and Blood Sugar v3 still READY · PROVISIONAL. **Heart v3 is FIX: 4 picks are no longer eligible** (rebuild with "Build box"). The three new boxes have **no lineup yet** (build, then clinician approval, then package checks).
 - **Not done / needs the owner:** photography for the three new boxes (they render a tinted name panel, `BoxVisual`); optional Stripe prices `STRIPE_PRICE_{GESTATIONAL_DIABETES,GLP1,POSTPARTUM}_BOX` (checkout falls back to an ad-hoc $47 line item, so the boxes sell without them); the sold-out check per box is still missing (HANDOFF §3). The GLP-1 and Postpartum rule numbers (protein/fiber minimums, 150 cal small-treat line, 100 mg caffeine) are founder-set from the 2025 ASN/OMA/TOS/ACLM GLP-1 guidance and ACOG/CDC nursing caffeine guidance; the clinician reviews the first lineups.
@@ -84,7 +114,7 @@
 **Status, Oct 5 2026: pack-floor Verify screen.**
 - `/admin/verify` (nav tab "Verify"): `src/app/admin/(protected)/verify/page.tsx`, `src/components/admin/verify-flow.tsx`, action `src/actions/admin/verify.ts`, pure checks `src/lib/admin/verify.ts` (+ tests).
 - Scan with a handheld scanner (keyboard input, auto-focused), the camera (`BarcodeScanner`) or by typing. Then confirm the nutrition, ingredients/allergens and single-serve format, and enter an expiry ≥ `MIN_DAYS_TO_EXPIRY` (90).
-- Success sets `products.upc` (if empty), `verified_at/by`, P8/P9 PASS, and adds an audit line under the pre-screen line in notes. Refused when: the barcode differs from the one on file, the barcode belongs to another product, the label doesn't match, or the date is too short. "Not single-serve" records P8 FAIL.
+- Success sets `products.upc` (if empty), `verified_at/by`, P8 PASS (P9 is now per lot, see Oct 6 late night (2)), and adds an audit line under the pre-screen line in notes. Refused when: the barcode differs from the one on file, the barcode belongs to another product, the label doesn't match, or the date is too short. "Not single-serve" records P8 FAIL.
 - Tested: rejection paths in the browser against live data (nothing written), unit tests for every rule. **Not yet run:** a successful verification (it would mark a real product verified). The owner's first real check is that test.
 - Not built yet: photo capture inside the flow (use the product page's photo upload), lot creation from the verified package (use Log purchase).
 

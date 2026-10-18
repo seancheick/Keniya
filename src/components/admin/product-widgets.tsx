@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { logPriceSighting, setProductStatus, uploadProductPhoto, type FormState } from "@/actions/admin/products";
+import { logPriceSighting, resolveFinding, setProductStatus, uploadProductPhoto, type FormState } from "@/actions/admin/products";
 import { Field, fieldClass } from "@/components/admin/ui";
 import { compressImage } from "@/components/admin/compress-image";
 import type { Status } from "@/lib/admin/types";
@@ -127,6 +127,24 @@ export function PriceSightingForm({ productId, vendors }: { productId: string; v
           <option key={n} value={n} />
         ))}
       </datalist>
+    </form>
+  );
+}
+
+/** Decide one current ingredient finding: accept (with evidence) or confirm it as a fail. */
+export function FindingResolver({ id, findingKey, label }: { id: string; findingKey: string; label: string }) {
+  const [state, action, pending] = useActionState(resolveFinding, {});
+  useToast(state, "Decision recorded");
+  return (
+    <form action={action} className="space-y-2 rounded-md border p-2 text-sm">
+      <p className="font-medium">{label}</p>
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="key" value={findingKey} />
+      <textarea name="reason" required rows={2} placeholder="Reason and evidence (e.g. food-level ginger, 0.2 g per pack; manufacturer letter 10/2026)" className={`${fieldClass} h-auto`} />
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" name="decision" value="accept" disabled={pending}>Accept for these ingredients</Button>
+        <Button size="sm" variant="outline" name="decision" value="confirm_fail" disabled={pending}>Confirm as a fail</Button>
+      </div>
     </form>
   );
 }

@@ -45,7 +45,7 @@ customer condition / life stage → applicable Keniya screening rules → eligib
 ## Capabilities and Constraints
 
 - Counting rule: 14 distinct selections; a multipack (chews, two tea bags) counts as one; small complimentary extras never count.
-- Not supported yet: combining rule sets. Gestational diabetes (pregnancy + carb-conscious rules together) is waitlist-only until that intersection exists and is reviewed. Postpartum, GLP-1 and menopause are waitlist-only.
+- Six boxes are built: Pregnancy Comfort, Blood Sugar, Heart Wellness, Gestational Diabetes (Pregnancy screening plus the Blood Sugar standard), GLP-1 Companion and Postpartum & Nursing. Menopause and kidney stay as requests.
 - Allergies: sealed original packaging, full labels; not an allergen-free facility; cannot rule out manufacturer cross-contact.
 - Stack: Next.js on Vercel, Stripe Checkout + webhook, Supabase, Resend.
 - Undecided: moving from 14 to more selections (waiting on real COGS); blood-sugar numeric thresholds (awaiting clinical confirmation).

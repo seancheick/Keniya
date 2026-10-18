@@ -86,10 +86,10 @@ export const landings: BoxLanding[] = [
     redirectFrom: ["/balanced-blood-sugar-snack-box", "/carb-conscious-snack-box"],
     title: "Blood Sugar Snack Box: At or below {{blood_sugar.carbsMax}} g Carbs Per Pack",
     description:
-      "14 snacks for type 1, type 2 and prediabetes, every snack pack at or below {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar: protein-forward, fiber-forward, nuts and seeds, portioned treats. $47, free shipping.",
+      "14 snacks for type 1, type 2 and prediabetes, every snack pack at or below {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar (up to {{blood_sugar.treatAddedSugarMax}} g on a few portioned treats): protein-forward, fiber-forward, nuts and seeds, portioned treats. $47, free shipping.",
     h1: "Snacks for blood sugar, with the carb count already checked.",
     intro:
-      "Built by a founder with a lifetime of label-reading for type 1 diabetes. Every snack pack stays at or below {{blood_sugar.carbsMax}} g total carbohydrate and {{blood_sugar.addedSugarMax}} g added sugar, then has to earn its place through protein, fiber, whole-food fats or a small, portioned treat.",
+      "Built by a founder with a lifetime of label-reading for type 1 diabetes. Every snack pack stays at or below {{blood_sugar.carbsMax}} g total carbohydrate and {{blood_sugar.addedSugarMax}} g added sugar (up to {{blood_sugar.treatAddedSugarMax}} g on at most {{blood_sugar.treatMax}} portioned treats), then has to earn its place through protein, fiber, whole-food fats or a small, portioned treat.",
     forWho: [
       "People with type 1 or type 2 diabetes or prediabetes",
       "Anyone keeping carbs and added sugar in check",
@@ -98,7 +98,7 @@ export const landings: BoxLanding[] = [
     screening: [
       { title: "Very-low-carb hydration picks", body: "Hydration picks: {{blood_sugar.beverageCarbsMax}} g total carbs or less per stick. 0 g added sugar options are preferred when available." },
       {
-        title: "At or below {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar, every snack pack",
+        title: "At or below {{blood_sugar.carbsMax}} g total carbs, every snack pack; {{blood_sugar.addedSugarMax}} g added sugar on core picks",
         body: "Total carbohydrate, never \"net carbs\". A snack over either number can't go in, whatever else it has going for it.",
       },
       {
@@ -125,7 +125,7 @@ export const landings: BoxLanding[] = [
       },
       {
         q: "Is it sugar-free?",
-        a: "No. Regular snacks have at most {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar per pack. Hydration picks: {{blood_sugar.beverageCarbsMax}} g total carbs or less per stick. 0 g added sugar options are preferred when available; a small amount of sugar does not automatically exclude a stick.",
+        a: "No. Regular snacks have at most {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar per pack; up to {{blood_sugar.treatMax}} portioned treats may have up to {{blood_sugar.treatAddedSugarMax}} g, still within the carb limit. Hydration picks: {{blood_sugar.beverageCarbsMax}} g total carbs or less per stick. 0 g added sugar options are preferred when available; a small amount of sugar does not automatically exclude a stick.",
       },
       {
         q: "Is there a box for gestational diabetes?",
@@ -134,6 +134,10 @@ export const landings: BoxLanding[] = [
       {
         q: "Are there artificial sweeteners?",
         a: "Some may. Every snack ships sealed in its original packaging, so the full ingredient list is right on it.",
+      },
+      {
+        q: "Can I use these snacks to treat a low blood sugar?",
+        a: "No. These are everyday snacks, and their protein, fiber and fat slow how fast the carbs act. To treat a low, use fast-acting glucose, like glucose tablets or juice, the way your care team has told you.",
       },
     ],
   },
@@ -197,10 +201,10 @@ export const landings: BoxLanding[] = [
     path: "/gestational-diabetes-snack-box",
     title: "Gestational Diabetes Snack Box: Pregnancy-Screened, At or below {{gestational_diabetes.carbsMax}} g Carbs",
     description:
-      "14 snacks that pass both Keniya Pregnancy Screening and the Blood Sugar standard: at or below {{gestational_diabetes.carbsMax}} g carbs and {{gestational_diabetes.addedSugarMax}} g added sugar per pack, fully cooked, caffeine limited. $47, free shipping.",
+      "14 snacks that pass both Keniya Pregnancy Screening and the Blood Sugar standard: at or below {{gestational_diabetes.carbsMax}} g carbs and {{gestational_diabetes.addedSugarMax}} g added sugar per pack (up to {{gestational_diabetes.treatAddedSugarMax}} g on a few portioned treats), fully cooked, caffeine limited. $47, free shipping.",
     h1: "Snacks that pass the pregnancy checks and the carb count.",
     intro:
-      "Gestational diabetes means two sets of rules at once. Every snack here has to pass Keniya Pregnancy Screening and stay at or below {{gestational_diabetes.carbsMax}} g total carbohydrate and {{gestational_diabetes.addedSugarMax}} g added sugar per pack, then earn its place through protein, fiber or whole-food fats.",
+      "Gestational diabetes means two sets of rules at once. Every snack here has to pass Keniya Pregnancy Screening and stay at or below {{gestational_diabetes.carbsMax}} g total carbohydrate and {{gestational_diabetes.addedSugarMax}} g added sugar per pack (up to {{gestational_diabetes.treatAddedSugarMax}} g on at most {{gestational_diabetes.treatMax}} portioned treats), then earn its place through protein, fiber or whole-food fats.",
     forWho: [
       "Anyone pregnant with gestational diabetes",
       "Anyone pregnant who is keeping carbs in check on their care team's advice",
@@ -214,7 +218,7 @@ export const landings: BoxLanding[] = [
       },
       {
         title: "Then the Blood Sugar standard",
-        body: "At or below {{gestational_diabetes.carbsMax}} g total carbohydrate and {{gestational_diabetes.addedSugarMax}} g added sugar per pack. Total carbs, never \"net carbs\".",
+        body: "At or below {{gestational_diabetes.carbsMax}} g total carbohydrate and {{gestational_diabetes.addedSugarMax}} g added sugar per pack; up to {{gestational_diabetes.treatMax}} portioned treats may have up to {{gestational_diabetes.treatAddedSugarMax}} g. Total carbs, never \"net carbs\".",
       },
       {
         title: "Both, or it doesn't go in",
@@ -237,6 +241,10 @@ export const landings: BoxLanding[] = [
       {
         q: "Will these keep my glucose in range?",
         a: "We can't promise that, and we don't. Everyone responds differently. We list the numbers on every label so you can decide what fits.",
+      },
+      {
+        q: "Can I use these snacks to treat a low blood sugar?",
+        a: "No. These are everyday snacks, not a treatment for a low. Use fast-acting glucose, like glucose tablets or juice, the way your care team has told you.",
       },
     ],
   },

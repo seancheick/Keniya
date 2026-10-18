@@ -426,7 +426,11 @@ export function LogPurchase({
                 <dd>{selected.usedIn.join(", ") || "—"}</dd>
               </div>
             </dl>
-            {selected.status !== "Approved" && <Badge tone="info" className="mt-2">{selected.status}: not yet approved</Badge>}
+            {selected.status !== "Approved" && (
+              <Badge tone="warn" className="mt-2 max-w-full whitespace-normal text-left">
+                {selected.status}: not purchase-ready. Buy sample units only (to verify the package); more needs a reason.
+              </Badge>
+            )}
           </div>
 
           <form
@@ -508,6 +512,9 @@ export function LogPurchase({
                 </Field>
                 <Field label="Note">
                   <input name="note" className={fieldClass} />
+                </Field>
+                <Field label="Reason for buying more than samples before approval" hint="Only needed for a product the PharmaGuide Team hasn't approved yet.">
+                  <input name="bulk_reason" className={fieldClass} placeholder="e.g. vendor minimum order of 12" />
                 </Field>
               </div>
             </details>

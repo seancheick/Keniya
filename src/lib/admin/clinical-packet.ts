@@ -4,8 +4,9 @@ import { reviewTeamRow } from "./review-wording";
 // passed (or the exception it used), the source and verification date, plus each lineup's own
 // validation result. The full catalog workbook (clinical-xlsx.ts) stays an internal audit tool.
 import ExcelJS from "exceljs";
+import { caffeineDisplay } from "./caffeine";
 import { reviewRecommendation, reviewWorkRemaining, splitNotes, type ClinicalExtra } from "./clinical";
-import { eligibleFor, isClinicianApproved, isReady, lineupStage, nutFatException, type Check, type Pick } from "./rules";
+import { derivedPregnancyChecks, eligibleFor, isClinicianApproved, isReady, lineupStage, nutFatException, type Check, type Pick } from "./rules";
 import { BOX_LABEL, BOX_SLUGS, PREGNANCY_CHECK_KEYS, ROLE_KEYS, ROLE_LABEL, type BoxRules, type BoxSlug, type Settings, type Snack } from "./types";
 
 export type PacketBox = {
@@ -76,6 +77,7 @@ export function packetProductRows(input: PacketInput): Record<string, unknown>[]
   for (const { snack: s, boxes } of [...uses.values()].sort((a, b) => a.snack.code.localeCompare(b.snack.code))) {
     const x = input.extra(s.id);
     const notes = splitNotes(x?.notes);
+    const derived = derivedPregnancyChecks({ ...s, ingredients: x?.ingredients ?? s.ingredients });
     const row: Record<string, unknown> = {
       Code: s.code,
       Product: s.name,
@@ -124,9 +126,9 @@ export function packetProductRows(input: PacketInput): Record<string, unknown>[]
       "Added sugar (g)": s.added_sugar_g,
       "Sodium (mg)": s.sodium_mg,
       "Saturated fat (g)": s.sat_fat_g,
-      "Caffeine (mg)": s.caffeine_mg,
+      "Caffeine (mg)": caffeineDisplay({ ...s, ingredients: x?.ingredients ?? s.ingredients }),
       "Sugar alcohols (g)": s.sugar_alcohols_g,
-      "Pregnancy checks": PREGNANCY_CHECK_KEYS.map((k) => `${k}=${s.pregnancy_checks[k] ?? "—"}`).join(" "),
+      "Pregnancy checks": PREGNANCY_CHECK_KEYS.map((k) => `${k}=${s.pregnancy_checks[k] ?? (derived[k as keyof typeof derived] ? "PASS (auto)" : "—")}`).join(" "),
       Roles: ROLE_KEYS.filter((k) => s.roles[k]).map((k) => ROLE_LABEL[k]).join("; ") || null,
       Ingredients: x?.ingredients,
       Allergens: s.allergens,

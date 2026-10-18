@@ -1,7 +1,7 @@
 import "server-only";
 import { loadAdminContext, type BoxSummary } from "@/lib/admin/summary";
 import { isClinicianApproved } from "@/lib/admin/rules";
-import { BOX_SLUGS, resolveBoxRules, resolveSettings, type BoxRules, type BoxSlug, type Settings } from "@/lib/admin/types";
+import { BOX_SLUGS, inheritParentRules, resolveBoxRules, resolveSettings, type BoxRules, type BoxSlug, type Settings } from "@/lib/admin/types";
 import { getSupabaseAdminStrict } from "@/lib/supabase";
 import { site } from "@/lib/site";
 
@@ -19,11 +19,11 @@ export async function loadCommerceState(): Promise<{ rules: Record<BoxSlug, BoxR
   if (settingsError || !storedSettings || BOX_SLUGS.some(slug =>
     !Number.isSafeInteger(storedSettings.data?.prices?.[slug]) || storedSettings.data.prices[slug] < 0 ||
     !Number.isSafeInteger(storedSettings.data?.runSize?.[slug]) || storedSettings.data.runSize[slug] < 0)) throw new Error(settingsError?.message ?? "Sale settings must explicitly configure every box price and capacity");
-  const rules = Object.fromEntries(BOX_SLUGS.map(slug => {
+  const rules = inheritParentRules(Object.fromEntries(BOX_SLUGS.map(slug => {
     const row = storedRules.find(r => r.box_slug === slug);
     if (!row?.rules || typeof row.rules !== "object") throw new Error(`Missing live rules for ${slug}`);
     return [slug, resolveBoxRules(slug, row.rules)];
-  })) as Record<BoxSlug, BoxRules>;
+  })) as Record<BoxSlug, BoxRules>);
   const context = await loadAdminContext({ rules, settings: resolveSettings(storedSettings.data) });
   const { data, error } = await db.rpc("commerce_capacity");
   if (error) throw new Error(error.message);

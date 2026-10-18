@@ -1,4 +1,5 @@
 import "server-only";
+import { screenIngredients, type Resolution, type WatchlistRow } from "./ingredients";
 import { getSupabaseAdminStrict } from "@/lib/supabase";
 import { validCheckDigit } from "./barcode";
 import { lotHold } from "./stock";
@@ -6,6 +7,7 @@ import { effectiveUnitCost } from "./costing";
 import type { PostageSample } from "./postage";
 import {
   BOX_SLUGS,
+  inheritParentRules,
   resolveBoxRules,
   resolveSettings,
   type BoxRules,
@@ -199,7 +201,7 @@ export async function loadBoxRules(): Promise<Record<BoxSlug, BoxRules>> {
     if (!row || !row.rules || typeof row.rules !== "object") throw new Error(`Missing live rules for ${slug}`);
     out[slug] = resolveBoxRules(slug, row.rules);
   }
-  return out;
+  return inheritParentRules(out);
 }
 
 export async function loadVendors(): Promise<VendorRow[]> {
@@ -230,6 +232,19 @@ export const packagingOz = (settings: Settings, pkg: PackageProfile | null) =>
 export function identityCode(p: Pick<ProductRow, "id" | "upc" | "barcode_status">, packs: PurchasePackRow[]): string | null {
   return p.barcode_status === "verified" && p.upc && validCheckDigit(p.upc) ? p.upc : packs.find((x) => x.product_id === p.id && x.barcode_status === "verified" && validCheckDigit(x.gtin))?.gtin ?? null;
 }
+
+/** A recorded decision on one ingredient finding (`screening_resolutions`). */
+export type ResolutionRow = Resolution & {
+  id: string;
+  product_id: string;
+  product_version_id: string;
+  finding_kind: "safety" | "brand";
+  reason: string;
+  evidence: string | null;
+  resolved_by: string;
+  resolved_role: "admin" | "clinician";
+  resolved_at: string;
+};
 
 export function toSnack(
   p: ProductRow,
@@ -302,6 +317,10 @@ export async function loadCatalog(): Promise<Catalog> {
     allRows<VendorPriceRow>((from, to) => db().from("vendor_prices").select("*").order("seen_at", { ascending: false }).order("created_at", { ascending: false }).order("id").range(from, to), "prices"),
     allRows<PurchasePackRow>((from, to) => db().from("purchase_packs").select("*").order("id").range(from, to), "purchase packs"),
   ]);
+  const [watchlist, resolutionRows] = await Promise.all([
+    allRows<WatchlistRow>((from, to) => db().from("watchlist").select("ingredient, category").order("ingredient").range(from, to), "watchlist"),
+    allRows<ResolutionRow>((from, to) => db().from("screening_resolutions").select("*").order("id").range(from, to), "screening resolutions"),
+  ]);
   const V = new Map(versionRows.map((v) => [v.product_id, v]));
   const L = lotRows.map((l) => ({ ...l, unit_cost_cents: Number(l.unit_cost_cents) }));
   const PR = priceRows.map((p) => ({ ...p, unit_cost_cents: Number(p.unit_cost_cents) }));
@@ -309,7 +328,13 @@ export async function loadCatalog(): Promise<Catalog> {
   for (const l of L) lotsBy.set(l.product_id, [...(lotsBy.get(l.product_id) ?? []), l]);
   const latestSeen = new Map<string, number>();
   for (const p of PR) if (!latestSeen.has(p.product_id)) latestSeen.set(p.product_id, p.unit_cost_cents);
-  const snacks = P.map((p) => toSnack(p, V.get(p.id), lotsBy.get(p.id) ?? [], latestSeen.get(p.id) ?? null, packs));
+  const snacks = P.map((p) => {
+    const v = V.get(p.id);
+    const s = toSnack(p, v, lotsBy.get(p.id) ?? [], latestSeen.get(p.id) ?? null, packs);
+    s.findings = screenIngredients(s.ingredients, watchlist);
+    s.resolutions = resolutionRows.filter((r) => r.product_version_id === v?.id);
+    return s;
+  });
   return { products: P, versions: V, lots: L, prices: PR, packs, snacks, byId: new Map(snacks.map((s) => [s.id, s])) };
 }
 
@@ -351,3 +376,12 @@ export async function signedUrls(paths: string[]): Promise<Map<string, string>> 
 }
 
 export const PHOTO_BUCKET = "keniya-admin";
+
+/** Findings (with the database watchlist) and recorded decisions for one product version. */
+export async function loadScreening(versionId: string | null | undefined, ingredients: string | null | undefined) {
+  const [wl, res] = await Promise.all([
+    db().from("watchlist").select("ingredient, category"),
+    versionId ? db().from("screening_resolutions").select("*").eq("product_version_id", versionId) : Promise.resolve({ data: [] as ResolutionRow[], error: null }),
+  ]);
+  return { findings: screenIngredients(ingredients, must(wl, "watchlist") as WatchlistRow[]), resolutions: must(res, "screening resolutions") as ResolutionRow[] };
+}

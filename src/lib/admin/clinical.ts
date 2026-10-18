@@ -1,7 +1,10 @@
 import { reviewTeamRow, reviewTeamText } from "./review-wording";
 // Clinician review sheet: one row per product with the label data and every rule decision,
 // so a reviewer can audit box fit without the admin. No costs or vendors (not theirs to audit).
-import { fitFor, isClinicianApproved, type BoxFit } from "./rules";
+import { productAllergens } from "./allergens";
+import { netCarbs } from "./carbs";
+import { caffeineDisplay, effectiveCaffeine } from "./caffeine";
+import { effectivePregnancyChecks, fitFor, isClinicianApproved, type BoxFit } from "./rules";
 import {
   BOX_LABEL,
   BOX_SLUGS,
@@ -71,10 +74,16 @@ export function reviewWorkRemaining(s: Snack, x: ClinicalExtra | undefined): str
     !x?.ingredients?.trim() && "ingredients",
     !s.allergens?.trim() && "allergen statement",
     !(typeof s.unit_wt_oz === "number" && s.unit_wt_oz > 0) && "pack weight",
-    ...(["calories", "protein_g", "fiber_g", "carbs_g", "added_sugar_g", "sodium_mg", "sat_fat_g", "caffeine_mg"] as const)
+    netCarbs(s).issue === "INVALID_NUTRITION" && "consistent carb/fiber values (fiber exceeds total carbs)",
+    ...productAllergens({ allergens: s.allergens, ingredients: x?.ingredients ?? s.ingredients }).issues.filter((i) => !i.startsWith("No allergen statement")).map((i) => `allergen label check: ${i}`),
+    ...(["calories", "protein_g", "fiber_g", "carbs_g", "added_sugar_g", "sodium_mg", "sat_fat_g"] as const)
       .filter((k) => typeof s[k] !== "number" || s[k]! < 0).map((k) => k.replaceAll("_", " ")),
+    // Caffeine counts when the label gives it or it can be inferred from the ingredients.
+    effectiveCaffeine({ ...s, ingredients: x?.ingredients ?? s.ingredients }) === null && "caffeine mg",
+    // P3–P6 restate data already on the product, so they fill themselves when it's there.
     ...(["P1", "P2", "P3", "P4", "P5", "P6", "P7a", "P7b", "P8"] as const)
-      .filter((k) => !["PASS", "FAIL"].includes(String(s.pregnancy_checks[k] ?? "").toUpperCase())).map((k) => `${k} screening decision`),
+      .filter((k) => !["PASS", "FAIL"].includes(String(effectivePregnancyChecks({ ...s, ingredients: x?.ingredients ?? s.ingredients })[k] ?? "").toUpperCase()))
+      .map((k) => `${k} screening decision`),
     String(s.pregnancy_checks.P8).toUpperCase() !== "PASS" && "manufacturer single-pack evidence",
     !s.diligenceComplete && "internal diligence sign-off",
   ].filter(Boolean);
@@ -126,9 +135,10 @@ export function clinicalReviewRows(
       "Protein (g)": s.protein_g,
       "Fiber (g)": s.fiber_g,
       "Total carbs (g)": s.carbs_g,
+      "Net carbs (g, total − fiber)": netCarbs(s).net ?? netCarbs(s).issue,
       "Added sugar (g)": s.added_sugar_g,
       "Sodium (mg)": s.sodium_mg,
-      "Caffeine (mg)": s.caffeine_mg,
+      "Caffeine (mg)": caffeineDisplay({ ...s, ingredients: x?.ingredients ?? s.ingredients }),
       "Saturated fat (g)": s.sat_fat_g,
       "Sugar alcohols (g)": s.sugar_alcohols_g,
     });

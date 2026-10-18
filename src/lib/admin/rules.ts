@@ -12,6 +12,9 @@ import {
   type Settings,
   type Snack,
 } from "./types";
+import { effectiveCaffeine, resolveCaffeine } from "./caffeine";
+import { netCarbs } from "./carbs";
+import { hasFinding, ingredientsHash, screenIngredients, syntheticDye, unresolved, type Finding } from "./ingredients";
 
 const num = (v: number | null | undefined): v is number => typeof v === "number" && Number.isFinite(v);
 
@@ -68,8 +71,37 @@ export const heartTreat = (p: RuleInput) => p.roles.CT === true;
 /** Added fats AHA sets apart from liquid plant oils; they void the nut/seed saturated-fat exception. */
 const TROPICAL_OIL = /\b(palm|palm[- ]kernel|coconut)\s+oil\b|partially\s+hydrogenated/i;
 export const hasAddedTropicalOil = (p: RuleInput) => TROPICAL_OIL.test(p.ingredients ?? "");
-/** The ≤4 g sat-fat allowance is for fat intrinsic to nuts/seeds (AHA Heart-Check), not added oils. */
-export const nutFatException = (p: RuleInput) => p.roles.NS === true && Boolean(p.ingredients?.trim()) && !hasAddedTropicalOil(p);
+/** Any other added saturated-fat source: chocolate, cocoa butter, dairy fat, coconut, palm, shortening, lard. */
+const ADDED_SAT_FAT =
+  /\b(chocolate|cocoa butter|cacao butter|milk fat|butter(?!milk)(?<!(?:peanut|almond|cashew|nut|seed|sunflower|sunflower seed|pumpkin seed|sesame|hazelnut|pecan|walnut|pistachio|macadamia|cocoa|cacao) butter)|butteroil|cream|whole milk powder|milk powder|cheese|ghee|coconut|palm|shortening|lard|tallow|hydrogenated)\b/i;
+const NUT_OR_SEED =
+  /^(organic\s+|dry[- ]roasted\s+|roasted\s+|raw\s+|blanched\s+|sprouted\s+)*(almonds?|cashews?|pecans?|walnuts?|pistachios?|hazelnuts?|macadamias?|brazil nuts?|peanuts?|mixed nuts|pumpkin seeds?|pepitas|sunflower seeds?|sesame seeds?|chia seeds?|flax ?seeds?|hemp seeds?|nuts?|seeds?)\b/i;
+/** First ingredient, before any parenthetical or comma. */
+const firstIngredient = (ingredients: string | null | undefined) => (ingredients ?? "").replace(/^\s*ingredients:\s*/i, "").split(/[,(]/)[0].trim();
+/** Evidence the saturated fat comes from the nuts/seeds themselves (owner amendment 2026-10-18). */
+export const intrinsicNutFat = (p: RuleInput) => NUT_OR_SEED.test(firstIngredient(p.ingredients)) && !ADDED_SAT_FAT.test(p.ingredients ?? "");
+/**
+ * The ≤4 g sat-fat allowance is only for fat intrinsic to nuts/seeds: the nut/seed role, a nut or
+ * seed as the first ingredient, and no other added saturated-fat source. Otherwise the ordinary
+ * limit applies. Keniya's screening threshold, not AHA Heart-Check certification.
+ */
+export const nutFatException = (p: RuleInput) => p.roles.NS === true && Boolean(p.ingredients?.trim()) && !hasAddedTropicalOil(p) && intrinsicNutFat(p);
+
+const PHO = /\bpartially[- ]hydrogenated\b/i;
+/**
+ * GLP-1 tolerability review (2025 multisociety GLP-1 nutrition advisory: high-fat or high-fiber
+ * foods can aggravate GI symptoms at start or dose escalation). Review flags, never a ban.
+ */
+const CONCENTRATED_FIBER = /\b(inulin|chicory root|isomalto-?oligosaccharides?|imo|polydextrose|soluble corn fiber|tapioca fib(er|re)|resistant dextrin|oat fib(er|re))\b/i;
+export function giTolerabilityFlags(p: RuleInput): string[] {
+  const out: string[] = [];
+  if (num(p.fiber_g) && p.fiber_g >= 8) out.push(`${p.fiber_g} g fiber`);
+  else if (num(p.fiber_g) && p.fiber_g >= 5 && CONCENTRATED_FIBER.test(p.ingredients ?? "")) out.push(`${p.fiber_g} g fiber incl. added fiber (${(p.ingredients ?? "").match(CONCENTRATED_FIBER)![0]})`);
+  const sa = hasFinding(screenIngredients(p.ingredients), "sugar_alcohol");
+  if (sa || (num(p.sugar_alcohols_g) && p.sugar_alcohols_g > 0)) out.push("sugar alcohol");
+  if (num(p.sat_fat_g) && p.sat_fat_g >= 4) out.push(`${p.sat_fat_g} g saturated fat`);
+  return out;
+}
 
 export type BoxFit = {
   box: BoxSlug;
@@ -78,7 +110,41 @@ export type BoxFit = {
   via: string[];
   /** Why it doesn't fit (empty when it fits). */
   reasons: string[];
+  /** One structured code per reason (set by eligibleFor), for reports and review lists. */
+  codes?: ReasonCode[];
 };
+
+export type ReasonCode =
+  | "REJECTED" | "RETIRED" | "NUTRITION_MISSING" | "SHIPPING_POLICY" | "MULTI_SERVE" | "SINGLE_SERVE_UNCONFIRMED"
+  | "DYE" | "SAFETY_FINDING" | "CLINICIAN_DECISION" | "PREGNANCY_CHECK_FAILED" | "PREGNANCY_CHECK_BLANK"
+  | "CAFFEINE_UNKNOWN" | "CAFFEINE_OVER" | "CAFFEINE_ESTIMATE_HOLD" | "CARBS_OVER" | "ADDED_SUGAR_OVER"
+  | "SODIUM_OVER" | "SAT_FAT_OVER" | "SAT_FAT_MISSING" | "PHO" | "NO_PATHWAY" | "OTHER";
+
+// Ordered: the first match names the reason. Every reason text produced in this file matches one.
+const REASON_CODES: [RegExp, ReasonCode][] = [
+  [/^Rejected/, "REJECTED"],
+  [/^Retired$/, "RETIRED"],
+  [/^Missing nutrition|not recorded$/, "NUTRITION_MISSING"],
+  [/^Synthetic dye/, "DYE"],
+  [/^Partially hydrogenated/, "PHO"],
+  [/^Current ingredients:/, "SAFETY_FINDING"],
+  [/^Needs clinician decision/, "CLINICIAN_DECISION"],
+  [/^Failed P/, "PREGNANCY_CHECK_FAILED"],
+  [/^Not yet checked: P/, "PREGNANCY_CHECK_BLANK"],
+  [/^Caffeine value missing/, "CAFFEINE_UNKNOWN"],
+  [/^Estimated caffeine/, "CAFFEINE_ESTIMATE_HOLD"],
+  [/ mg caffeine \(max/, "CAFFEINE_OVER"],
+  [/^Multi-serve pack/, "MULTI_SERVE"],
+  [/^Single-serve not yet confirmed/, "SINGLE_SERVE_UNCONFIRMED"],
+  [/ g carbs \(max|g total carbs \(max/, "CARBS_OVER"],
+  [/added sugar.*\(max/, "ADDED_SUGAR_OVER"],
+  [/ mg sodium \(max/, "SODIUM_OVER"],
+  [/^Saturated fat not recorded/, "SAT_FAT_MISSING"],
+  [/saturated fat \(max/, "SAT_FAT_OVER"],
+  [/doesn't ship|No unit weight|item limit/, "SHIPPING_POLICY"],
+  [/needs |qualifies only|No heart role|Treat with/, "NO_PATHWAY"],
+];
+export const reasonCode = (r: string): ReasonCode => REASON_CODES.find(([re]) => re.test(r))?.[1] ?? "OTHER";
 
 function base(p: RuleInput, rejectReason?: string | null): string[] {
   const reasons: string[] = [];
@@ -88,12 +154,73 @@ function base(p: RuleInput, rejectReason?: string | null): string[] {
   return reasons;
 }
 
+/**
+ * P3–P6 only ask whether the data is on the label: caffeine (P3: label value, or inferred as 0
+ * or a cocoa screening estimate), added sugar (P4), sodium (P5) and an allergen statement (P6).
+ * They PASS by themselves when it is there. P1, P2, P7a, P7b and P8 always need a person.
+ */
+export function derivedPregnancyChecks(p: RuleInput): Partial<Record<"P3" | "P4" | "P5" | "P6", "PASS">> {
+  const out: Partial<Record<"P3" | "P4" | "P5" | "P6", "PASS">> = {};
+  if (num(effectiveCaffeine(p))) out.P3 = "PASS";
+  if (num(p.added_sugar_g)) out.P4 = "PASS";
+  if (num(p.sodium_mg)) out.P5 = "PASS";
+  if (p.allergens?.trim()) out.P6 = "PASS";
+  return out;
+}
+
+/** A decision (accept or confirm_fail) is recorded for this finding on the current ingredient text. */
+export const isDecided = (p: RuleInput, f: Finding) => {
+  const hash = ingredientsHash(p.ingredients);
+  return (p.resolutions ?? []).some((r) => r.finding_key === f.key && r.ingredients_hash === hash);
+};
+
+/** Current ingredient findings (database watchlist included when loaded) without a valid resolution. */
+export function openFindings(p: RuleInput): Finding[] {
+  return unresolved(p.findings ?? screenIngredients(p.ingredients), p.ingredients, p.resolutions);
+}
+
+/**
+ * Pregnancy-family safety holds from the current ingredients: a matched no-go/watchlist/brand
+ * finding fails its check, and an unresolved review finding (botanical, cured meat, a caffeine
+ * source without a label value) waits for a clinician. Evaluated every time, so an older PASS
+ * can never outlive a new ingredient.
+ */
+export function pregnancyFindingReasons(p: RuleInput): string[] {
+  const stored = p.pregnancy_checks ?? {};
+  const out: string[] = [];
+  for (const f of openFindings(p)) {
+    if (f.severity === "pregnancy_fail" && f.check) {
+      const stale = (stored[f.check] ?? "").toUpperCase() === "PASS" ? `; the stored ${f.check} PASS is out of date, reassess` : "";
+      out.push(`Current ingredients: ${f.evidence} (${f.check}${stale})`);
+    } else if (f.severity === "review" && f.kind === "safety" && isDecided(p, f)) {
+      out.push(`Current ingredients: ${f.evidence} (confirmed fail by the PharmaGuide Team)`);
+    } else if (f.severity === "review" && f.kind === "safety" && !(f.code === "caffeine_source" && num(p.caffeine_mg))) {
+      out.push(`Needs clinician decision: ${f.label} (${f.evidence})`);
+    }
+  }
+  return out;
+}
+
+/**
+ * Stored decisions with the data checks filled in where blank. A stored FAIL always wins, and a
+ * current ingredient finding turns its check into FAIL whatever was stored.
+ */
+export function effectivePregnancyChecks(p: RuleInput): Record<string, string | undefined> {
+  const stored = p.pregnancy_checks ?? {};
+  const out: Record<string, string | undefined> = { ...stored };
+  for (const [k, v] of Object.entries(derivedPregnancyChecks(p))) if (!(stored[k] ?? "").trim()) out[k] = v;
+  for (const f of openFindings(p)) if (f.severity === "pregnancy_fail" && f.check) out[f.check] = "FAIL";
+  return out;
+}
+
 export function pregnancyFit(p: RuleInput, rejectReason?: string | null): BoxFit {
   const reasons = base(p, rejectReason);
-  if (!num(p.caffeine_mg)) reasons.push("Caffeine value missing");
-  const notPass = PREGNANCY_BLOCKING.filter((k) => (p.pregnancy_checks[k] ?? "").toUpperCase() !== "PASS");
+  if (!num(effectiveCaffeine(p))) reasons.push("Caffeine value missing");
+  reasons.push(...pregnancyFindingReasons(p));
+  const checks = effectivePregnancyChecks(p);
+  const notPass = PREGNANCY_BLOCKING.filter((k) => (checks[k] ?? "").toUpperCase() !== "PASS");
   if (notPass.length) {
-    const failed = notPass.filter((k) => (p.pregnancy_checks[k] ?? "").toUpperCase() === "FAIL");
+    const failed = notPass.filter((k) => (checks[k] ?? "").toUpperCase() === "FAIL");
     const blank = notPass.filter((k) => !failed.includes(k));
     if (failed.length) reasons.push(`Failed ${failed.join(", ")}`);
     if (blank.length) reasons.push(`Not yet checked: ${blank.join(", ")}`);
@@ -225,6 +352,9 @@ export function fitFor(slug: BoxSlug, p: RuleInput, rejectReason?: string | null
 export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, policy: Settings["policy"]): string[] {
   const out: string[] = [];
   if (p.status === "Retired") out.push("Retired");
+  // Keniya standard in every box (owner decision 2026-10-17): no synthetic dyes.
+  const dye = syntheticDye(p.ingredients);
+  if (dye) out.push(`Synthetic dye (${dye.evidence}): Keniya standard`);
   const ships = shipsUnderPolicy(p, policy);
   if (!ships.ok) out.push(ships.reason!);
   // Single-serve must be confirmed: blank P8 is "unknown", not a pass. (Pregnancy's own P1–P8 rule already covers it.)
@@ -239,18 +369,30 @@ export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, polic
   if (p.type === "Beverage") over(p.added_sugar_g, rules.beverageAddedSugarMax, "added sugar in beverage", "g");
   const diabetesDrink = p.type === "Beverage" && (slug === "blood_sugar" || slug === "gestational_diabetes");
   over(p.carbs_g, p.type === "Beverage" ? rules.beverageCarbsMax ?? rules.carbsMax : rules.carbsMax, "carbs", "g");
-  // A controlled treat gets its own added-sugar ceiling when the box sets one.
-  const treat = heartTreat(p) && rules.treatAddedSugarMax !== null;
+  // A treat gets its own added-sugar ceiling when the box sets one, using the same definition
+  // the box's treat count (treatMax) uses: carb-limited boxes count picks that qualify only as
+  // a portioned treat; Heart counts the judged controlled-treat role.
+  const treat =
+    rules.treatAddedSugarMax !== null &&
+    (rules.carbsMax !== null ? nutritionComplete(p) && ccTreatOnly(p) : heartTreat(p));
   if (!diabetesDrink) over(p.added_sugar_g, treat ? rules.treatAddedSugarMax : rules.addedSugarMax, treat ? "added sugar (treat)" : "added sugar", "g");
   over(p.sodium_mg, rules.sodiumMax, "sodium", "mg");
-  over(p.caffeine_mg, rules.caffeineMax, "caffeine", "mg");
+  over(effectiveCaffeine(p), rules.caffeineMax, "caffeine", "mg");
+  // An estimate is a screening value, not a measurement: one that uses more than half the
+  // per-pack limit is clinically material uncertainty, so it waits for the manufacturer's value.
+  const caf = resolveCaffeine({ labelMg: p.caffeine_mg, ingredients: p.ingredients, unitOz: p.unit_wt_oz });
+  if (rules.caffeineMax !== null && caf.source === "estimate_max" && caf.mg! > rules.caffeineMax / 2 && caf.mg! <= rules.caffeineMax)
+    out.push(`Estimated caffeine ${caf.mg} mg is over half the ${rules.caffeineMax} mg limit: get the manufacturer's caffeine value`);
+  if (slug === "heart" && PHO.test(p.ingredients ?? "")) out.push("Partially hydrogenated oil (trans fat): not in the Heart box");
   if (rules.satFatMax !== null) {
     const nutFat = nutFatException(p) && rules.satFatNutMax !== null;
     const max = nutFat ? rules.satFatNutMax! : rules.satFatMax;
     if (!num(p.sat_fat_g)) out.push("Saturated fat not recorded");
     else if (p.sat_fat_g > max)
       out.push(
-        `${p.sat_fat_g} g saturated fat (max ${max} g${nutFat ? " for nuts/seeds" : p.roles.NS && hasAddedTropicalOil(p) ? "; added tropical oil voids the nut/seed allowance" : ""})`,
+        `${p.sat_fat_g} g saturated fat (max ${max} g${
+          nutFat ? " for nuts/seeds" : p.roles.NS && hasAddedTropicalOil(p) ? "; added tropical oil voids the nut/seed allowance" : p.roles.NS ? "; nut/seed allowance needs a nut or seed first and no other added saturated fat" : ""
+        })`,
       );
   }
   return out;
@@ -260,7 +402,41 @@ export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, polic
 export function eligibleFor(slug: BoxSlug, p: RuleInput, rules: BoxRules, policy: Settings["policy"], rejectReason?: string | null): BoxFit {
   const q = fitFor(slug, p, rejectReason, rules);
   const gates = gateFailures(slug, p, rules, policy);
-  return { box: slug, fits: q.fits && gates.length === 0, via: q.via, reasons: [...q.reasons, ...gates] };
+  const reasons = [...q.reasons, ...gates];
+  return { box: slug, fits: q.fits && gates.length === 0, via: q.via, reasons, codes: reasons.map(reasonCode) };
+}
+
+/**
+ * Internal high-fiber review list (owner decision 2026-10-18): fails nothing but the box's
+ * total-carb limit, with net carbs (total − fiber) and total carbs inside the proposed dual
+ * limit. Never makes a product eligible; GDM has no review limit.
+ */
+export function highFiberReview(slug: BoxSlug, p: RuleInput, rules: BoxRules, policy: Settings["policy"], rejectReason?: string | null): boolean {
+  if (rules.netCarbsReviewMax === null || rules.carbsReviewCeiling === null || p.type === "Beverage") return false;
+  const e = eligibleFor(slug, p, rules, policy, rejectReason);
+  if (e.fits || !e.codes?.length || !e.codes.every((c) => c === "CARBS_OVER")) return false;
+  const n = netCarbs(p);
+  return n.net !== null && n.net <= rules.netCarbsReviewMax && num(p.carbs_g) && p.carbs_g <= rules.carbsReviewCeiling;
+}
+
+/** Another box's screening a pick must also pass (e.g. Postpartum for a mother managing diabetes). */
+export type AlsoMeet = { slug: BoxSlug; rules: BoxRules };
+
+/**
+ * Every listed box's screening at once: fits only when each one does. Reasons are prefixed with
+ * the box they come from. Nutritional compatibility only, never a statement of medical suitability.
+ */
+export function eligibleForAll(boxes: AlsoMeet[], p: RuleInput, policy: Settings["policy"], rejectReason?: string | null): BoxFit & { boxes: BoxSlug[] } {
+  const results = boxes.map((b) => eligibleFor(b.slug, p, b.rules, policy, rejectReason));
+  const reasons = results.flatMap((r) => r.reasons.map((x) => `${BOX_LABEL[r.box]}: ${x}`));
+  return {
+    box: boxes[0]?.slug ?? "pregnancy_comfort",
+    boxes: boxes.map((b) => b.slug),
+    fits: results.every((r) => r.fits),
+    via: results.every((r) => r.fits) ? results.flatMap((r) => r.via) : [],
+    reasons,
+    codes: results.flatMap((r) => r.codes ?? []),
+  };
 }
 
 export function eligibleBoxes(
@@ -477,9 +653,20 @@ export function checkLineup(
   if (rules.beverageMax !== null)
     checks.push(check("beverage", "Beverage / tea", count((x) => x.type === "Beverage"), { max: rules.beverageMax }));
 
-  // Any box with a caffeine limit needs the number on every pick.
+  // Any box with a caffeine limit needs the number on every pick (label value, or inferred:
+  // 0 with no caffeine-bearing ingredient, a screening estimate for cocoa).
   if (rules.caffeineMax !== null) {
-    checks.push(check("caffeine", "Picks without caffeine disclosed", count((x) => !num(x.caffeine_mg)), { max: 0 }));
+    checks.push(check("caffeine", "Picks without caffeine disclosed", count((x) => !num(effectiveCaffeine(x))), { max: 0 }));
+  }
+  if (rules.boxCaffeineMax !== null) {
+    const total = s.reduce((t, x) => t + (effectiveCaffeine(x) ?? 0), 0);
+    checks.push(check("boxcaffeine", "Total caffeine across the box (screening estimates included)", Math.round(total), { max: rules.boxCaffeineMax }, "warn", " mg"));
+  }
+  if (rules.chocolateMax !== null)
+    checks.push(check("chocolate", "Chocolate / cocoa picks", count((x) => hasFinding(screenIngredients(x.ingredients), "cocoa")), { max: rules.chocolateMax }, "warn"));
+  if (slug === "glp1") {
+    const flagged = s.filter((x) => giTolerabilityFlags(x).length);
+    checks.push(info("gi", "GI-tolerability review (high or added fiber, sugar alcohol, ≥4 g sat fat)", flagged.length ? `${flagged.length}: ${flagged.map((x) => x.name).join(", ")}` : "none"));
   }
 
   const ok = (x: Snack) => nutritionComplete(x);
@@ -542,7 +729,13 @@ export function checkLineup(
 
   checks.push(info("treenuts", "Picks containing tree nuts", `${count((x) => x.freeFrom.tree_nut_free === false)}`));
   checks.push(info("peanuts", "Picks containing peanuts", `${count((x) => x.freeFrom.peanut_free === false)}`));
-  if (carbBox) checks.push(info("carbs", "Total carbs across the box", `${s.reduce((t, x) => t + (x.carbs_g ?? 0), 0)} g`));
+  if (carbBox) {
+    checks.push(info("carbs", "Total carbs across the box", `${s.reduce((t, x) => t + (x.carbs_g ?? 0), 0)} g`));
+    // The 14 snacks are not eaten together: an inventory summary, never a daily-intake figure.
+    const nets = s.map((x) => netCarbs(x).net);
+    checks.push(info("netcarbs", "Net carbs across the box (total − fiber; inventory summary, not daily intake)",
+      nets.every((n) => n !== null) ? `${Math.round(nets.reduce((t, n) => t! + n!, 0)! * 10) / 10} g` : `${nets.filter((n) => n === null).length} pick(s) without a valid fiber value`));
+  }
 
   return checks;
 }

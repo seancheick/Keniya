@@ -15,17 +15,21 @@ import { packetInput } from "@/lib/admin/packet-data";
 import { clinicianReviewRows } from "@/lib/admin/clinical-packet";
 import { reviewTeamText } from "@/lib/admin/review-wording";
 import { STATUSES } from "@/lib/admin/types";
+import { ingredientsHash, screenIngredients, type WatchlistRow } from "@/lib/admin/ingredients";
 
 export type FormState = { error?: string; ok?: boolean; id?: string };
 
 const refresh = () => revalidatePath("/admin", "layout");
 
-function parse(fd: FormData) {
+async function parse(fd: FormData) {
   const { product, version } = readProductForm(fd);
   const p = productSchema.safeParse(product);
   if (!p.success) return { error: p.error.issues[0].message } as const;
   const v = versionSchema.safeParse(version);
   if (!v.success) return { error: v.error.issues[0].message } as const;
+  // Ingredient findings are not written into pregnancy_checks: eligibility applies them every
+  // time (rules.ts effectivePregnancyChecks), so a later clinician decision takes effect and a
+  // stored PASS can never outlive a new ingredient.
   return { product: p.data, version: v.data } as const;
 }
 
@@ -33,7 +37,7 @@ const dupUpc = (msg: string) => /products_(upc|gtin14)_key|barcode_identities|du
 
 export async function createProduct(_prev: FormState, fd: FormData): Promise<FormState> {
   const admin = await requireAdmin();
-  const parsed = parse(fd);
+  const parsed = await parse(fd);
   if ("error" in parsed) return { error: parsed.error };
   const vendorId = await ensureVendor(String(fd.get("vendor") ?? ""), admin.name);
   // Receiving establishes packaging identity only after an explicit unit/outer-box answer.
@@ -62,7 +66,7 @@ export async function createProduct(_prev: FormState, fd: FormData): Promise<For
  */
 export async function updateProduct(id: string, _prev: FormState, fd: FormData): Promise<FormState> {
   const admin = await requireAdmin();
-  const parsed = parse(fd);
+  const parsed = await parse(fd);
   if ("error" in parsed) return { error: parsed.error };
   const previous = await db().from("products").select("updated_at").eq("id", id).single();
   if (previous.error) return { error: previous.error.message };
@@ -195,6 +199,39 @@ export async function deleteProduct(_prev: FormState, fd: FormData): Promise<For
     const acknowledged = await client.from("product_deletion_files").delete().eq("product_id", id.data);
     if (acknowledged.error) return { error: "Product and photos deleted. Retry to clear the cleanup receipt." };
   }
+  refresh();
+  return { ok: true };
+}
+
+const resolveSchema = z.object({
+  id: z.string().uuid(),
+  key: z.string().min(3).max(300),
+  decision: z.enum(["accept", "confirm_fail"]),
+  reason: z.string().trim().min(5, "Give the reason and evidence for this decision").max(1000),
+});
+
+/**
+ * Record a decision on one current ingredient finding. Safety findings need the clinician
+ * session; brand preferences can be decided by an admin; dyes have no exception. The decision is
+ * bound to the current version and its ingredient text.
+ */
+export async function resolveFinding(_prev: FormState, fd: FormData): Promise<FormState> {
+  const admin = await requireAdmin();
+  const parsed = resolveSchema.safeParse(Object.fromEntries(fd));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const { id, key, decision, reason } = parsed.data;
+  const v = await db().from("product_versions").select("id, ingredients").eq("product_id", id).eq("is_current", true).single();
+  if (v.error) return { error: v.error.message };
+  const wl = await db().from("watchlist").select("ingredient, category");
+  const finding = screenIngredients(v.data.ingredients, (wl.data ?? []) as WatchlistRow[]).find((f) => f.key === key);
+  if (!finding) return { error: "That finding no longer matches the current ingredients." };
+  if (finding.kind === "safety" && admin.role !== "clinician") return { error: "Sign in with the PharmaGuide Team review account to decide a safety finding." };
+  const res = await db().rpc("resolve_screening_finding", {
+    p_version_id: v.data.id, p_key: key, p_kind: finding.kind, p_hash: ingredientsHash(v.data.ingredients), p_decision: decision,
+    p_reason: reason, p_evidence: finding.evidence, p_actor: admin.name, p_role: admin.role,
+  });
+  if (res.error) return { error: reviewTeamText(res.error.message) };
+  await expireInvalidCheckoutSessions(BOX_SLUGS);
   refresh();
   return { ok: true };
 }
