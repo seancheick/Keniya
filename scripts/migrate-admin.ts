@@ -77,15 +77,19 @@ const MIGRATIONS: { file: string; applied: string }[] = [
   { file: "supabase/migrations/20261006203303_permanent_product_deletion.sql", applied: "select to_regprocedure('public.delete_product_permanently(uuid)') is not null as ok" },
   { file: "supabase/migrations/20261015010000_snack_club.sql", applied: "select to_regprocedure('public.save_renewal_order(jsonb)') is not null and to_regclass('public.subscriptions') is not null as ok" },
   { file: "supabase/migrations/20261015223113_renewal_preferences.sql", applied: "select position('first_order.avoid' in pg_get_functiondef('public.save_renewal_order(jsonb)'::regprocedure)) > 0 as ok" },
+  { file: "supabase/migrations/20261017010000_screening_autofill.sql", applied: "select position('yerba' in lower(pg_get_functiondef('public.product_diligence_complete(uuid)'::regprocedure))) > 0 as ok" },
+  { file: "supabase/migrations/20261018010000_screening_resolutions.sql", applied: "select to_regclass('public.screening_resolutions') is not null and to_regprocedure('public.resolve_screening_finding(uuid,text,text,text,text,text,text,text,text)') is not null as ok" },
+  { file: "supabase/migrations/20261018020000_shipment_needs.sql", applied: "select exists (select 1 from information_schema.columns where table_schema='public' and table_name='shipments' and column_name='also_meet') and exists (select 1 from information_schema.columns where table_schema='public' and table_name='preorders' and column_name='avoid_allergens') as ok" },
+  { file: "supabase/migrations/20261018030000_pack_needs_guard.sql", applied: "select to_regprocedure('public.pack_shipment_needs_checked(jsonb,uuid,uuid[],jsonb,uuid,text,integer,integer,numeric,integer)') is not null as ok" },
 ];
 
 const TABLES = [
   "product_deletion_files", "vendors", "products", "product_versions", "product_photos", "vendor_prices", "purchase_lots", "stock_movements",
   "barcode_identities", "purchase_packs", "checkout_reservations", "public_attempt_windows",
-  "box_rules", "box_lineups", "lineup_items", "package_profiles", "shipments", "shipment_items", "expenses", "admin_settings", "watchlist", "subscriptions",
+  "box_rules", "box_lineups", "lineup_items", "package_profiles", "shipments", "shipment_items", "expenses", "admin_settings", "watchlist", "subscriptions", "screening_resolutions",
 ];
 
-const RPCS = ['delete_product_permanently','pack_shipment','unpack_shipment','adjust_lot','pack_shipment_checked','activate_box_lineup','save_box_lineup','save_package_profile','set_lot_expiry','set_product_review','product_diligence_complete','commerce_capacity','reserve_checkout','save_paid_order','save_product','verify_product_package','invalidate_package_check','allow_public_attempt','begin_financial_observation','finish_financial_observation','bind_checkout_session','save_renewal_order'];
+const RPCS = ['delete_product_permanently','pack_shipment','unpack_shipment','adjust_lot','pack_shipment_checked','activate_box_lineup','save_box_lineup','save_package_profile','set_lot_expiry','set_product_review','product_diligence_complete','commerce_capacity','reserve_checkout','save_paid_order','save_product','verify_product_package','invalidate_package_check','allow_public_attempt','begin_financial_observation','finish_financial_observation','bind_checkout_session','save_renewal_order','resolve_screening_finding','pack_shipment_needs_checked'];
 
 /** Explicit setup only: missing boxes start at zero capacity, never an implicit sale default. */
 async function initializeCatalog(write: boolean): Promise<boolean> {
