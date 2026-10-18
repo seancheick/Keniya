@@ -38,12 +38,16 @@ const WORDS: Record<Allergen, RegExp> = {
 // "milks" and "nut butters" don't create false inconsistencies.
 const INGREDIENT_WORDS: Record<Allergen, RegExp> = {
   ...WORDS,
-  // Highly refined soybean oil is exempt from allergen labeling (FDA); soy lecithin is not.
-  soy: /\b(soy(?!(bean)? oil)|soya|soybeans?(?! oil)|edamame|tofu)\b/i,
+  // Highly refined soybean oil is exempt from allergen labeling (FDA), so a plain "soybean oil"
+  // doesn't need "soy" in Contains. Oil the label calls unrefined/pressed is not exempt, nor is
+  // soy lecithin.
+  soy: /\b(soy(?!(bean)? oil)|soya|soybeans?(?! oil)|edamame|tofu|(unrefined|cold[- ]pressed|expeller[- ]pressed|virgin) soy(bean)? oil)\b/i,
   milk: /\b((whole |skim |nonfat |dry )?milk(?<!(oat|almond|coconut|soy|rice|cashew|hemp) milk)|whey|casein(ates?)?|butter(?!nut|milk)(?<!(peanut|almond|cashew|nut|seed|cocoa|shea|sunflower|sunflower seed) butter)|cream(?<!ice cream)|cheese|yogurt|lactose|ghee)\b/i,
 };
 
 const CROSS_CONTACT = /(may contain|may also contain|made (in|on) (a )?(facility|shared equipment|equipment)|processed (in|on) (a )?(facility|shared equipment|equipment)|produced (in|on)|shared (equipment|facility|lines?)|traces? of)/i;
+
+const SOY_OIL = /\bsoy(bean)? oil\b/i;
 
 const has = (text: string, a: Allergen, words = WORDS) => words[a].test(text);
 
@@ -103,6 +107,8 @@ export function allergenConflict(p: { allergens?: string | null; ingredients?: s
   if (!a.verifiable) return `allergens can't be verified (${a.issues.join("; ")})`;
   const hit = excluded.filter((x) => a.contains.includes(x));
   if (hit.length) return `contains ${hit.map((x) => ALLERGEN_LABEL[x].toLowerCase()).join(", ")}`;
+  // Label-exempt refined soybean oil still never goes to a customer excluding soy.
+  if (excluded.includes("soy") && SOY_OIL.test(p.ingredients ?? "")) return "lists soybean oil (label-exempt when highly refined, still excluded for soy)";
   const cross = excluded.filter((x) => a.mayContain.includes(x));
   if (cross.length) return `cross-contact warning for ${cross.map((x) => ALLERGEN_LABEL[x].toLowerCase()).join(", ")}`;
   return null;

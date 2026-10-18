@@ -25,6 +25,13 @@ describe("product allergens (FDA 9)", () => {
   it("refined soybean oil isn't a soy ingredient; soy lecithin is", () => {
     expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, soybean oil, salt" }).issues).toEqual([]);
     expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, soy lecithin" }).issues[0]).toMatch(/soy/);
+    expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, expeller-pressed soybean oil" }).issues[0]).toMatch(/soy/);
+    expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, unrefined soy oil" }).issues[0]).toMatch(/soy/);
+  });
+  it("any soybean oil conflicts for a customer excluding soy", () => {
+    const p = { allergens: "Contains wheat.", ingredients: "wheat flour, soybean oil, salt" };
+    expect(allergenConflict(p, ["soy"])).toMatch(/soybean oil/);
+    expect(allergenConflict(p, ["peanuts"])).toBeNull();
   });
   it("no statement can't be verified", () => {
     expect(productAllergens({ allergens: null, ingredients: "oats" }).verifiable).toBe(false);
