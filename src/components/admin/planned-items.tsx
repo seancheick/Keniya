@@ -7,9 +7,10 @@ import { setPlannedItems } from "@/actions/admin/orders";
 import { Button } from "@/components/ui/button";
 import { PackButtons } from "./order-forms";
 import { fieldClass } from "./ui";
+import { swapSuggestion } from "@/lib/admin/order-steps";
 import type { LotPull } from "@/lib/admin/stock";
 
-type Opt = { id: string; label: string; ok: boolean; reason: string | null; pulls: LotPull[]; short: number };
+type Opt = { id: string; label: string; ok: boolean; reason: string | null; pulls: LotPull[]; short: number; categories: string[] };
 
 export function PlannedItems({ shipmentId, items, options, blockers, expectedLots, expectedPackage, slotPulls }: { shipmentId: string; items: string[]; options: Opt[]; blockers: string[]; expectedLots: string; expectedPackage: string | null; slotPulls: LotPull[][] }) {
   const [ids, setIds] = useState(items);
@@ -24,7 +25,7 @@ export function PlannedItems({ shipmentId, items, options, blockers, expectedLot
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">Pull the lots below, check each sealed pack, then mark the box packed. Stock is deducted when you finish; this preview does not reserve it.</p>
-      {blockers.length > 0 && <div role="status" className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900"><p className="font-semibold">Before you pack</p><ul className="mt-1 list-disc space-y-1 pl-5">{blockers.map((b) => <li key={b}>{b}</li>)}</ul></div>}
+      {blockers.length > 0 && <div role="status" className="rounded-lg bg-red-50 p-3 text-sm text-red-950"><p className="font-semibold">Fix before packing ({blockers.length})</p><ul className="mt-1 space-y-1">{blockers.map((b) => <li key={b} className="flex gap-2"><span aria-hidden className="font-bold text-red-700">✕</span><span>{b}</span></li>)}</ul></div>}
       <label className="block space-y-1 print:hidden">
         <span className="text-sm">Find a replacement by name, brand or code</span>
         <input value={query} onChange={(e) => setQuery(e.target.value)} className={`${fieldClass} h-11`} placeholder="Search replacements" />
@@ -32,6 +33,8 @@ export function PlannedItems({ shipmentId, items, options, blockers, expectedLot
       <ol className="divide-y">
         {ids.map((id, i) => {
           const selected = options.find((o) => o.id === id);
+          const flagged = !selected || !selected.ok || selected.short > 0;
+          const swap = flagged ? swapSuggestion(selected, options, ids) : null;
           const visible = options.filter((o) => o.id === id || o.label.toLowerCase().includes(query.trim().toLowerCase()));
           return <li key={i} className="space-y-2 py-3">
             <div className="flex items-start gap-3">
@@ -45,7 +48,13 @@ export function PlannedItems({ shipmentId, items, options, blockers, expectedLot
                   {visible.map((o) => <option key={o.id} value={o.id} disabled={(!o.ok || ids.includes(o.id)) && o.id !== id}>{o.ok ? "" : "Needs attention · "}{o.label}</option>)}
                 </select>
                 <p className={`text-sm font-medium sm:hidden print:block ${swapping === i ? "hidden" : ""}`}>{selected?.label ?? "Unknown product"}</p>
-                {selected?.reason && <p className="mt-1 text-sm text-amber-900">{selected.reason}</p>}
+                {selected?.reason && <p className="mt-1 text-sm text-red-800"><span aria-hidden className="font-bold">✕ </span>{selected.reason}</p>}
+                {swap && (
+                  <Button type="button" size="sm" className="mt-2 h-auto min-h-11 max-w-full whitespace-normal py-2 text-left sm:min-h-9 print:hidden" disabled={pending} onClick={() => { setIds((xs) => xs.map((x, j) => (j === i ? swap.id : x))); setChecked([]); }}>
+                    Swap for {swap.label}
+                  </Button>
+                )}
+                {flagged && !swap && selected && <p className="mt-1 text-xs text-muted-foreground print:hidden">No ready swap of the same kind in stock: pick one from the list or log a purchase.</p>}
                 {(id === items[i] ? slotPulls[i] : selected?.pulls)?.map((lot) => <p key={lot.lotId} className="mt-1 text-sm"><b>Pull {lot.qty}</b> · lot {lot.label} · expires {lot.expiresOn}</p>)}
                 {selected && selected.short > 0 && <p className="text-sm text-red-800">Short {selected.short} packable unit(s). <Link className="underline" href={`/admin/inventory/log?product=${id}`}>Log a purchase</Link></p>}
                 <div className="mt-1 flex flex-wrap items-center gap-x-4 print:hidden">

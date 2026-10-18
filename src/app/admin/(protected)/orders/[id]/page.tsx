@@ -2,16 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ConfirmSubstitutionsForm, DeliveryForm, LabelForm, PackButtons, ShipmentNeedsForm, ShipmentPackageForm } from "@/components/admin/order-forms";
+import { BoxFacts } from "@/components/admin/box-facts";
+import { OrderSteps } from "@/components/admin/order-steps";
 import { PlannedItems } from "@/components/admin/planned-items";
 import { PrintButton } from "@/components/admin/print-button";
 import { Badge, Card, PageHeader, Table, type Tone } from "@/components/admin/ui";
 import { fmt$, fmtPct, shipmentProfit } from "@/lib/admin/costing";
 import { db, identityCode, loadBoxRules, loadCatalog, loadSettings, loadPackageProfiles, must } from "@/lib/admin/db";
 import { avoidConflict } from "@/lib/admin/avoid";
-import { itemAllergenConflict, packingProblems, shipmentNeeds } from "@/lib/admin/packing";
+import { nextStep } from "@/lib/admin/order-steps";
+import { itemAllergenConflict, packingProblems, recipePicks, shipmentNeeds } from "@/lib/admin/packing";
 import { ALLERGEN_LABEL, isAllergen } from "@/lib/admin/allergens";
 import { stockPickList, stockSnapshot, type LotPull } from "@/lib/admin/stock";
-import { eligibleFor, packBlockers } from "@/lib/admin/rules";
+import { checkLineup, eligibleFor, packBlockers } from "@/lib/admin/rules";
 import { BOX_LABEL, isBoxSlug, type BoxSlug } from "@/lib/admin/types";
 
 export const metadata: Metadata = { title: "Shipment" };
@@ -60,8 +63,18 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
     const also = (needs?.alsoMeet ?? []).filter((b) => !eligibleFor(b.slug, x, b.rules, settings.policy, x.rejectReason).fits).map((b) => `fails ${BOX_LABEL[b.slug]} screening`);
     const why = [conflict, allergen, ...also, ...(slug ? packBlockers(slug, [item], rules[slug], settings.policy) : [])].filter(Boolean).join("; ");
     const pull = stockPickList([x.id], catalog.lots, catalog.versions)[0];
-    return { id: x.id, label: `${x.code} ${x.name}${x.brand ? ` · ${x.brand}` : ""} · ${x.onHand} packable`, ok: Boolean(fit?.fits && !why), reason: why || null, pulls: pull.pulls, short: pull.short };
+    return { id: x.id, label: `${x.code} ${x.name}${x.brand ? ` · ${x.brand}` : ""} · ${x.onHand} packable`, ok: Boolean(fit?.fits && !why), reason: why || null, pulls: pull.pulls, short: pull.short, categories: x.categories };
   }).sort((a, b) => Number(b.ok && b.short === 0) - Number(a.ok && a.short === 0) || a.label.localeCompare(b.label));
+  const next = nextStep({ status: s.status, flags: blockers.length, swapsToConfirm: Boolean(needs?.unconfirmedSubstitutions), issue: s.issue });
+  // The order's own box as its Snack Facts label (planned items; extras ride at the end).
+  const extraCount = must(extrasRes, "extras").length;
+  const mainIds = (s.planned_items as string[]).slice(0, Math.max(0, s.planned_items.length - extraCount));
+  const mainSnacks = mainIds.flatMap((pid) => catalog.byId.get(pid) ?? []);
+  const extraSnacks = (s.planned_items as string[]).slice(mainIds.length).flatMap((pid) => catalog.byId.get(pid) ?? []);
+  const facts = slug && s.status === "planned" ? (() => {
+    const picks = recipePicks(mainSnacks, rules[slug]) ?? mainSnacks.map((snack) => ({ snack, category: null }));
+    return { picks, checks: checkLineup(slug, rules[slug], picks, settings, packagingOz + extraSnacks.reduce((t, x) => t + (x.unit_wt_oz ?? 0), 0)) };
+  })() : null;
 
   return (
     <>
@@ -81,6 +94,7 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
           </>
         }
       />
+      <OrderSteps next={next} />
       {s.notes && <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{s.notes}</p>}
       {s.status === "planned" && s.substitution_review && !s.substitution_confirmed_by && <div className="mb-4"><ConfirmSubstitutionsForm id={id} review={s.substitution_review} /></div>}
       {s.substitution_confirmed_by && <p className="mb-4 text-xs text-muted-foreground">Substitutions confirmed by {s.substitution_confirmed_by}{s.substitution_confirmed_at ? ` on ${new Date(s.substitution_confirmed_at).toLocaleString()}` : ""}</p>}
@@ -144,6 +158,7 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
           )}
         </div>
         <div className="space-y-4">
+          {facts && slug && <BoxFacts slug={slug} rules={rules[slug]} policy={settings.policy} picks={facts.picks} extras={extraSnacks} checks={facts.checks} lineupNote={s.code} />}
           {s.status === "planned" && slug && <Card title="Customer needs"><ShipmentNeedsForm key={`${(s.also_meet ?? []).join()}:${(s.avoid_allergens ?? []).join()}`} id={id} box={slug} alsoMeet={s.also_meet ?? []} allergens={s.avoid_allergens ?? []} /></Card>}
           {s.status !== "planned" && ((s.also_meet ?? []).length > 0 || (s.avoid_allergens ?? []).length > 0) && (
             <Card title="Customer needs">
