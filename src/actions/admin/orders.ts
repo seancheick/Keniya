@@ -5,15 +5,16 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { avoidConflict } from "@/lib/admin/avoid";
 import { db, must, allRows, identityCode } from "@/lib/admin/db";
-import { isClinicianApproved } from "@/lib/admin/rules";
+import { eligibleFor, isClinicianApproved } from "@/lib/admin/rules";
 import { optimize } from "@/lib/admin/optimizer";
 import { matchLabel, readLabelCsv } from "@/lib/admin/pirateship";
 import { estimatePostage } from "@/lib/admin/postage";
 import { stripeFeeForSession } from "@/lib/stripe-fee";
-import { packingProblems } from "@/lib/admin/packing";
+import { packingProblems, shipmentNeeds, type ShipmentNeedsRow } from "@/lib/admin/packing";
+import { allergenConflict, isAllergen, parseAvoid, type Allergen } from "@/lib/admin/allergens";
 import { stockPickList, stockSnapshot } from "@/lib/admin/stock";
 import { loadAdminContext } from "@/lib/admin/summary";
-import { BOX_SLUGS, type BoxSlug } from "@/lib/admin/types";
+import { BOX_LABEL, BOX_SLUGS, isBoxSlug, type BoxSlug } from "@/lib/admin/types";
 
 export type OrderState = { error?: string; ok?: boolean; message?: string; id?: string };
 
@@ -27,29 +28,40 @@ type Preorder = {
   shipping: { name?: string; address?: Record<string, string | null> } | null;
   box_slug: string | null;
   avoid: string | null;
+  avoid_allergens: string[] | null;
   stripe_fee_cents: number | null;
   stripe_session_id: string;
   status: string;
 };
 
+/** What a shipment must respect beyond its box: the avoid answer, allergen exclusions, other boxes' screening. */
+type Needs = { avoid: string | null; avoidAllergens: Allergen[]; alsoMeet: BoxSlug[] };
+
 /**
- * The products to pack for a box: the active lineup, with anything that conflicts with the
- * customer's avoid answer swapped by the optimizer (same rules, those products excluded).
+ * The products to pack for a box: the active lineup. Anything conflicting with the shipment's
+ * needs is swapped by the optimizer (same rules, conflicts excluded, other boxes' screening
+ * applied), and the swap is a proposal: packing stays blocked until an admin confirms it.
  */
-async function planItems(slug: BoxSlug, avoid: string | null) {
+async function planItems(slug: BoxSlug, needs: Needs) {
   const ctx = await loadAdminContext();
   const box = ctx.boxes[slug];
   if (!box.lineup || !box.picks.length) return { error: `No active ${slug} lineup. Build one on the Boxes tab first.` } as const;
   if (!box.ready) return { error: `The active ${slug} lineup fails current rules. Update it before planning orders.` } as const;
   if ([...box.picks.map((p) => p.snack), ...box.extras].some((s) => !isClinicianApproved(s))) return { error: "The active lineup needs PharmaGuide Team approval before planning orders." } as const;
+  const also = needs.alsoMeet.filter((b) => b !== slug).map((b) => ({ slug: b, rules: ctx.rules[b] }));
   const conflicts = ctx.catalog.snacks
-    .map((s) => ({ s, why: avoidConflict({ ...s, ingredients: ctx.catalog.versions.get(s.id)?.ingredients }, avoid) }))
+    .map((s) => {
+      const ingredients = ctx.catalog.versions.get(s.id)?.ingredients;
+      const fails = also.filter((b) => !eligibleFor(b.slug, s, b.rules, ctx.settings.policy, s.rejectReason).fits).map((b) => `fails ${BOX_LABEL[b.slug]} screening`);
+      return { s, why: avoidConflict({ ...s, ingredients }, needs.avoid) ?? allergenConflict({ allergens: s.allergens, ingredients }, needs.avoidAllergens) ?? (fails[0] || null) };
+    })
     .filter((x) => x.why);
   const hit = box.picks.filter((p) => conflicts.some((c) => c.s.id === p.snack.id));
   const extraHit = box.extras.filter((e) => conflicts.some((c) => c.s.id === e.id));
-  if (extraHit.length) return { error: `Avoid “${avoid}” conflicts with extras: ${extraHit.map((e) => e.name).join(", ")}. Update the box extras first.` } as const;
+  const what = [needs.avoid && `avoid “${needs.avoid}”`, needs.avoidAllergens.length && `allergens ${needs.avoidAllergens.join(", ")}`, also.length && `also ${also.map((b) => BOX_LABEL[b.slug]).join(", ")}`].filter(Boolean).join("; ");
+  if (extraHit.length) return { error: `${what} conflicts with extras: ${extraHit.map((e) => e.name).join(", ")}. Update the box extras first.` } as const;
   let picks = box.picks;
-  let note: string | null = null;
+  let review: { reason: string; removed: string[]; added: string[] } | null = null;
   if (hit.length) {
     const r = optimize({
       slug,
@@ -59,15 +71,23 @@ async function planItems(slug: BoxSlug, avoid: string | null) {
       objective: "balanced",
       packagingOz: ctx.packOz,
       excludeIds: conflicts.map((c) => c.s.id),
+      alsoMeet: also,
     });
     if (r.picks.length === box.picks.length && r.deficit === 0) {
       picks = r.picks;
-      note = `Avoid “${avoid}”: swapped ${hit.map((h) => h.snack.name).join(", ")}`;
+      const before = new Set(box.picks.map((p) => p.snack.id));
+      const after = new Set(r.picks.map((p) => p.snack.id));
+      review = {
+        reason: what,
+        removed: box.picks.filter((p) => !after.has(p.snack.id)).map((p) => `${p.snack.name} (${conflicts.find((c) => c.s.id === p.snack.id)?.why ?? "rebalanced"})`),
+        added: r.picks.filter((p) => !before.has(p.snack.id)).map((p) => p.snack.name),
+      };
     } else {
-      return { error: `Avoid “${avoid}” conflicts with ${hit.map((h) => h.snack.name).join(", ")}; no approved compliant lineup found.` } as const;
+      return { error: `${what}: conflicts with ${hit.map((h) => h.snack.name).join(", ")}; no approved compliant lineup found. Nothing was substituted.` } as const;
     }
   }
-  return { ctx, lineupId: box.lineup.id, items: [...picks.map((p) => p.snack.id), ...box.extras.map((e) => e.id)], note } as const;
+  const note = review ? `Proposed substitutions for ${review.reason}: ${review.removed.join(", ")} → ${review.added.join(", ")} (confirm before packing)` : null;
+  return { ctx, lineupId: box.lineup.id, items: [...picks.map((p) => p.snack.id), ...box.extras.map((e) => e.id)], note, review } as const;
 }
 
 export async function createShipmentForPreorder(fd: FormData): Promise<void> {
@@ -77,7 +97,8 @@ export async function createShipmentForPreorder(fd: FormData): Promise<void> {
   if (pre.status !== "paid") throw new Error("Only paid preorders can be planned");
   const slug = BOX_SLUGS.find((s) => s === pre.box_slug);
   if (!slug) throw new Error("Preorder has no known box");
-  const plan = await planItems(slug, pre.avoid);
+  const avoidAllergens = [...new Set([...(pre.avoid_allergens ?? []), ...parseAvoid(pre.avoid)])].filter(isAllergen);
+  const plan = await planItems(slug, { avoid: pre.avoid, avoidAllergens, alsoMeet: [] });
   if ("error" in plan) throw new Error(plan.error);
   let fee = pre.stripe_fee_cents;
   if (fee === null) {
@@ -103,6 +124,8 @@ export async function createShipmentForPreorder(fd: FormData): Promise<void> {
     carrier: plan.ctx.settings.shipping.defaultCarrier,
     service: plan.ctx.settings.shipping.defaultService,
     notes: plan.note,
+    avoid_allergens: avoidAllergens,
+    substitution_review: plan.review,
     created_by: admin.name,
   });
   if (res.error && !/shipments_one_per_preorder/.test(res.error.message)) throw new Error(res.error.message);
@@ -144,6 +167,7 @@ const manualSchema = z.object({
   notes: z.string().max(500).optional(),
   avoid: z.string().trim().max(500).optional(),
 });
+const needsList = <T extends string>(fd: FormData, key: string, ok: (v: string) => v is T) => fd.getAll(key).map(String).filter(ok);
 
 /** Gifts, samples, influencer boxes, replacements: $0 revenue, same packing and costs. */
 export async function createManualShipment(_prev: OrderState, fd: FormData): Promise<OrderState> {
@@ -151,7 +175,9 @@ export async function createManualShipment(_prev: OrderState, fd: FormData): Pro
   const parsed = manualSchema.safeParse(Object.fromEntries(fd));
   if (!parsed.success) return { error: parsed.error.issues[0].message };
   const d = parsed.data;
-  const plan = await planItems(d.box_slug, d.avoid || null);
+  const avoidAllergens = [...new Set([...needsList(fd, "avoid_allergens", isAllergen), ...parseAvoid(d.avoid)])];
+  const alsoMeet = needsList(fd, "also_meet", isBoxSlug).filter((b) => b !== d.box_slug);
+  const plan = await planItems(d.box_slug, { avoid: d.avoid || null, avoidAllergens, alsoMeet });
   if ("error" in plan) return { error: plan.error };
   const res = await db()
     .from("shipments")
@@ -170,6 +196,9 @@ export async function createManualShipment(_prev: OrderState, fd: FormData): Pro
       service: plan.ctx.settings.shipping.defaultService,
       notes: [plan.note, d.notes].filter(Boolean).join(" · ") || null,
       avoid: d.avoid || null,
+      avoid_allergens: avoidAllergens,
+      also_meet: alsoMeet,
+      substitution_review: plan.review,
       created_by: admin.name,
     })
     .select("id")
@@ -212,7 +241,7 @@ export async function setPlannedItems(shipmentId: string, productIds: string[]):
 }
 
 async function preparePack(id: string, replacement?: string[], requireStock = true) {
-  const ship = must(await db().from("shipments").select("box_slug, planned_items, package_profile_id, zone, status, preorder_id, lineup_id, avoid").eq("id", id).single(), "shipment") as { box_slug: BoxSlug; planned_items: string[]; package_profile_id: string | null; zone: number | null; status: string; preorder_id: string | null; lineup_id: string | null; avoid: string | null };
+  const ship = must(await db().from("shipments").select("box_slug, planned_items, package_profile_id, zone, status, preorder_id, lineup_id, avoid, avoid_allergens, also_meet, substitution_review, substitution_confirmed_by").eq("id", id).single(), "shipment") as ShipmentNeedsRow & { box_slug: BoxSlug; planned_items: string[]; package_profile_id: string | null; zone: number | null; status: string; preorder_id: string | null; lineup_id: string | null; avoid: string | null };
   const ctx = await loadAdminContext();
   const [pre, extra] = await Promise.all([
     ship.preorder_id ? db().from("preorders").select("avoid, status").eq("id", ship.preorder_id).single() : Promise.resolve({ data: null, error: null }),
@@ -234,7 +263,7 @@ async function preparePack(id: string, replacement?: string[], requireStock = tr
     ingredients: ctx.catalog.versions.get(snack.id)?.ingredients,
   }]));
   if (!slug) problems.push("Unknown box");
-  else problems.push(...packingProblems({ slug, ids, products, rules: ctx.rules[slug], settings: ctx.settings, packagingOz: packOz, extraCount, avoid: preorder?.avoid ?? ship.avoid ?? null }));
+  else problems.push(...packingProblems({ slug, ids, products, rules: ctx.rules[slug], settings: ctx.settings, packagingOz: packOz, extraCount, avoid: preorder?.avoid ?? ship.avoid ?? null, ...shipmentNeeds(ship, slug, ctx.rules) }));
   const stock = stockPickList(ids, ctx.catalog.lots, ctx.catalog.versions);
   if (requireStock) for (const row of stock) if (row.short) problems.push(`${ctx.catalog.byId.get(row.productId)?.name ?? row.productId}: short ${row.short} packable unit(s)`);
   return { ship, ctx, pkg, ids, packOz, problems, stock };
@@ -376,4 +405,37 @@ export async function importPirateShip(_prev: OrderState, fd: FormData): Promise
   }
   refresh();
   return { ok: true, message: `${updated} label(s) recorded${unmatched ? `, ${unmatched} row(s) skipped (check KEN- reference, packed status, cost and tracking)` : ""}` };
+}
+
+/** Confirm the substitutions the planner proposed (packing is blocked until someone does). */
+export async function confirmSubstitutions(_prev: OrderState, fd: FormData): Promise<OrderState> {
+  const admin = await requireAdmin();
+  const id = z.uuid().safeParse(fd.get("id"));
+  if (!id.success) return { error: "Invalid shipment" };
+  const res = await db().from("shipments").update({ substitution_confirmed_by: admin.name, substitution_confirmed_at: new Date().toISOString() })
+    .eq("id", id.data).eq("status", "planned").not("substitution_review", "is", null).select("id").maybeSingle();
+  if (res.error) return { error: res.error.message };
+  if (!res.data) return { error: "Nothing to confirm on this shipment" };
+  refresh();
+  return { ok: true, message: "Substitutions confirmed" };
+}
+
+/**
+ * Record what a planned shipment must also respect: other boxes' screening (e.g. Postpartum +
+ * Blood Sugar for a mother managing diabetes) and structured allergen exclusions. Every item is
+ * re-checked at each substitution and at packing; nothing is swapped automatically here.
+ */
+export async function setShipmentNeeds(_prev: OrderState, fd: FormData): Promise<OrderState> {
+  await requireAdmin();
+  const id = z.uuid().safeParse(fd.get("id"));
+  if (!id.success) return { error: "Invalid shipment" };
+  const ship = must(await db().from("shipments").select("box_slug, status").eq("id", id.data).maybeSingle(), "shipment") as { box_slug: string; status: string } | null;
+  if (!ship || ship.status !== "planned") return { error: "Only a planned shipment's needs can change" };
+  const also_meet = needsList(fd, "also_meet", isBoxSlug).filter((b) => b !== ship.box_slug);
+  const avoid_allergens = needsList(fd, "avoid_allergens", isAllergen);
+  const res = await db().from("shipments").update({ also_meet, avoid_allergens }).eq("id", id.data).eq("status", "planned").select("id").maybeSingle();
+  if (res.error) return { error: res.error.message };
+  if (!res.data) return { error: "This shipment changed. Refresh first." };
+  refresh();
+  return { ok: true, message: "Saved. Check the pick list: anything that no longer qualifies is listed as a blocker." };
 }

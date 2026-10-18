@@ -1,6 +1,7 @@
 import { reviewTeamRow, reviewTeamText } from "./review-wording";
 // Clinician review sheet: one row per product with the label data and every rule decision,
 // so a reviewer can audit box fit without the admin. No costs or vendors (not theirs to audit).
+import { productAllergens } from "./allergens";
 import { netCarbs } from "./carbs";
 import { caffeineDisplay, effectiveCaffeine } from "./caffeine";
 import { effectivePregnancyChecks, fitFor, isClinicianApproved, type BoxFit } from "./rules";
@@ -74,6 +75,7 @@ export function reviewWorkRemaining(s: Snack, x: ClinicalExtra | undefined): str
     !s.allergens?.trim() && "allergen statement",
     !(typeof s.unit_wt_oz === "number" && s.unit_wt_oz > 0) && "pack weight",
     netCarbs(s).issue === "INVALID_NUTRITION" && "consistent carb/fiber values (fiber exceeds total carbs)",
+    ...productAllergens({ allergens: s.allergens, ingredients: x?.ingredients ?? s.ingredients }).issues.filter((i) => !i.startsWith("No allergen statement")).map((i) => `allergen label check: ${i}`),
     ...(["calories", "protein_g", "fiber_g", "carbs_g", "added_sugar_g", "sodium_mg", "sat_fat_g"] as const)
       .filter((k) => typeof s[k] !== "number" || s[k]! < 0).map((k) => k.replaceAll("_", " ")),
     // Caffeine counts when the label gives it or it can be inferred from the ingredients.

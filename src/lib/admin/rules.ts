@@ -411,6 +411,26 @@ export function highFiberReview(slug: BoxSlug, p: RuleInput, rules: BoxRules, po
   return n.net !== null && n.net <= rules.netCarbsReviewMax && num(p.carbs_g) && p.carbs_g <= rules.carbsReviewCeiling;
 }
 
+/** Another box's screening a pick must also pass (e.g. Postpartum for a mother managing diabetes). */
+export type AlsoMeet = { slug: BoxSlug; rules: BoxRules };
+
+/**
+ * Every listed box's screening at once: fits only when each one does. Reasons are prefixed with
+ * the box they come from. Nutritional compatibility only, never a statement of medical suitability.
+ */
+export function eligibleForAll(boxes: AlsoMeet[], p: RuleInput, policy: Settings["policy"], rejectReason?: string | null): BoxFit & { boxes: BoxSlug[] } {
+  const results = boxes.map((b) => eligibleFor(b.slug, p, b.rules, policy, rejectReason));
+  const reasons = results.flatMap((r) => r.reasons.map((x) => `${BOX_LABEL[r.box]}: ${x}`));
+  return {
+    box: boxes[0]?.slug ?? "pregnancy_comfort",
+    boxes: boxes.map((b) => b.slug),
+    fits: results.every((r) => r.fits),
+    via: results.every((r) => r.fits) ? results.flatMap((r) => r.via) : [],
+    reasons,
+    codes: results.flatMap((r) => r.codes ?? []),
+  };
+}
+
 export function eligibleBoxes(
   p: RuleInput,
   rules: Record<BoxSlug, BoxRules>,

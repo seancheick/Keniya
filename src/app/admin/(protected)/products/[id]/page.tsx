@@ -25,6 +25,7 @@ import {
 } from "@/lib/admin/db";
 import { daysUntil } from "@/lib/admin/optimizer";
 import { netCarbs, netCarbsLabel } from "@/lib/admin/carbs";
+import { ALLERGEN_LABEL, productAllergens } from "@/lib/admin/allergens";
 import { caffeineDisplay } from "@/lib/admin/caffeine";
 import { ingredientsHash } from "@/lib/admin/ingredients";
 import { derivedPregnancyChecks, eligibleBoxes, highFiberReview, shipsUnderPolicy } from "@/lib/admin/rules";
@@ -205,6 +206,17 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <div>
                 <dt className="text-xs text-muted-foreground">Ingredients</dt>
                 <dd className="whitespace-pre-wrap">{current?.ingredients ?? "—"}</dd>
+                {(() => {
+                  const a = productAllergens({ allergens: current?.allergens, ingredients: current?.ingredients });
+                  return (
+                    <dd className="text-xs">
+                      <span className="text-muted-foreground">Allergens (FDA nine): </span>
+                      {a.contains.length ? `contains ${a.contains.map((x) => ALLERGEN_LABEL[x]).join(", ")}` : "none listed"}
+                      {a.mayContain.length ? ` · cross-contact: ${a.mayContain.map((x) => ALLERGEN_LABEL[x]).join(", ")}` : ""}
+                      {a.issues.map((i) => <span key={i} className="block text-amber-800">{i}</span>)}
+                    </dd>
+                  );
+                })()}
                 {screening.findings.map((f) => {
                   const r = screening.resolutions.find((x) => x.finding_key === f.key && x.ingredients_hash === ingredientsHash(current?.ingredients));
                   return (

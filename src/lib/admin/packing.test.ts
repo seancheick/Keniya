@@ -32,3 +32,24 @@ describe("packing gates", () => {
     expect(packingProblems({ ...input, products, ids: ["a", "b", "e"], extraCount: 1, settings: limited }).join()).toMatch(/weight/i);
   });
 });
+
+describe("shipment needs are enforced at every manual substitution and at packing", () => {
+  it("combined Postpartum + Blood Sugar: a 20 g-carb substitute is refused", () => {
+    const high = snack({ id: "h", categories: ["Sweet"], carbs_g: 20 });
+    const products = new Map(input.products); products.set("h", product(high));
+    const alsoMeet = [{ slug: "blood_sugar" as const, rules: resolveBoxRules("blood_sugar", undefined) }];
+    expect(packingProblems({ ...input, slug: "blood_sugar", products, ids: ["a", "h"], alsoMeet }).join()).toMatch(/fails Blood Sugar screening.*20 g carbs/);
+    expect(packingProblems({ ...input, products, ids: ["a", "b"], alsoMeet })).toEqual([]);
+  });
+  it("structured allergen exclusions: cross-contact conflicts, unverifiable labels block", () => {
+    const products = new Map(input.products);
+    products.set("a", product({ ...a, allergens: "Contains almonds. Made in a facility with sesame." }));
+    products.set("b", product({ ...b, allergens: null }));
+    const out = packingProblems({ ...input, products, avoidAllergens: ["sesame"] }).join(" | ");
+    expect(out).toMatch(/cross-contact warning for sesame/);
+    expect(out).toMatch(/can't be verified/);
+  });
+  it("proposed substitutions block packing until confirmed", () => {
+    expect(packingProblems({ ...input, unconfirmedSubstitutions: true })).toContain("Confirm the proposed substitutions before packing");
+  });
+});

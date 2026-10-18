@@ -7,7 +7,7 @@
 //   3. greedy: fill up to the total within category maximums
 //   4. repair: single swaps that most reduce the total check deficit
 //   5. improve: single swaps that raise the score without breaking anything
-import { checkLineup, eligibleFor, type Check, type Pick } from "./rules";
+import { checkLineup, eligibleFor, type AlsoMeet, type Check, type Pick } from "./rules";
 import type { BoxRules, BoxSlug, Objective, Settings, Snack } from "./types";
 
 export type OptimizeInput = {
@@ -25,6 +25,8 @@ export type OptimizeInput = {
   requireStock?: boolean;
   /** Fixed "today" for expiry math (tests). */
   today?: Date;
+  /** Other boxes' screening every candidate must also pass (a shipment's combined needs). */
+  alsoMeet?: AlsoMeet[];
 };
 
 export type OptimizeResult = {
@@ -90,6 +92,7 @@ export function optimize(input: OptimizeInput): OptimizeResult {
       s.status !== "Retired" &&
       (input.requireStock === false || s.onHand > 0) &&
       eligibleFor(slug, s, rules, settings.policy).fits &&
+      (input.alsoMeet ?? []).every((b) => eligibleFor(b.slug, s, b.rules, settings.policy).fits) &&
       (catNames.length === 0 || s.categories.some((c) => catNames.includes(c))),
   );
   const score = scorer(input.objective, pool, input.runSize ?? 1, today, slug);

@@ -19,7 +19,8 @@ import { site } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
 const NO_ALLERGIES = "None of these";
-const ALLERGY_OPTIONS = ["Tree nuts", "Peanuts", "Gluten", "Dairy"];
+// The FDA's nine major allergens (gluten listed for people avoiding it beyond wheat).
+const ALLERGY_OPTIONS = ["Tree nuts", "Peanuts", "Dairy", "Egg", "Wheat", "Gluten", "Soy", "Sesame", "Fish", "Shellfish"];
 const SOMETHING_ELSE = "other";
 const cravingLabel = (value: string | null) => cravings.find((c) => c.value === value)?.label;
 

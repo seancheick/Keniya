@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { settings, snack } from "./__fixtures__/snacks";
 import { canBuild, optimize } from "./optimizer";
-import { isReady } from "./rules";
+import { eligibleFor, isReady } from "./rules";
 import { DEFAULT_BOX_RULES, OBJECTIVES, type Snack } from "./types";
 
 const today = new Date("2026-10-01T00:00:00Z");
@@ -60,5 +60,13 @@ describe("optimizer", () => {
     const a = snack({ onHand: 40 });
     const b = snack({ onHand: 25, name: "Whisps" });
     expect(canBuild([{ snack: a, category: null }, { snack: b, category: null }])).toMatchObject({ n: 25, limiting: b });
+  });
+});
+
+describe("optimizer with combined needs", () => {
+  it("alsoMeet keeps every candidate inside the other box's screening", () => {
+    const lib = library();
+    const r = optimize({ slug: "heart", rules: DEFAULT_BOX_RULES.heart, settings, snacks: lib, objective: "balanced", packagingOz: 6, today, alsoMeet: [{ slug: "glp1", rules: DEFAULT_BOX_RULES.glp1 }] });
+    for (const p of r.picks) expect(eligibleFor("glp1", p.snack, DEFAULT_BOX_RULES.glp1, settings.policy).fits).toBe(true);
   });
 });

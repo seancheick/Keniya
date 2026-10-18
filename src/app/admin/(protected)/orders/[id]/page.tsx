@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { DeliveryForm, LabelForm, PackButtons, ShipmentPackageForm } from "@/components/admin/order-forms";
+import { ConfirmSubstitutionsForm, DeliveryForm, LabelForm, PackButtons, ShipmentNeedsForm, ShipmentPackageForm } from "@/components/admin/order-forms";
 import { PlannedItems } from "@/components/admin/planned-items";
 import { PrintButton } from "@/components/admin/print-button";
 import { Badge, Card, PageHeader, Table, type Tone } from "@/components/admin/ui";
 import { fmt$, fmtPct, shipmentProfit } from "@/lib/admin/costing";
 import { db, identityCode, loadBoxRules, loadCatalog, loadSettings, loadPackageProfiles, must } from "@/lib/admin/db";
 import { avoidConflict } from "@/lib/admin/avoid";
-import { packingProblems } from "@/lib/admin/packing";
+import { itemAllergenConflict, packingProblems, shipmentNeeds } from "@/lib/admin/packing";
+import { ALLERGEN_LABEL, isAllergen } from "@/lib/admin/allergens";
 import { stockPickList, stockSnapshot, type LotPull } from "@/lib/admin/stock";
 import { eligibleFor, packBlockers } from "@/lib/admin/rules";
 import { BOX_LABEL, isBoxSlug, type BoxSlug } from "@/lib/admin/types";
@@ -46,7 +47,8 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
   const stock = stockPickList(s.planned_items, catalog.lots, catalog.versions);
   const unitPulls = new Map(stock.map((p) => [p.productId, p.pulls.flatMap((pull) => Array.from({ length: pull.qty }, () => ({ ...pull, qty: 1 }))) ]));
   const slotPulls: LotPull[][] = (s.planned_items as string[]).map((pid) => { const unit = unitPulls.get(pid)?.shift(); return unit ? [unit] : []; });
-  const blockers = slug ? packingProblems({ slug, ids: s.planned_items, products: packingProducts, rules: rules[slug], settings, packagingOz, extraCount: must(extrasRes, "extras").length, avoid: pre?.avoid ?? s.avoid ?? null }) : ["Unknown box"];
+  const needs = slug ? shipmentNeeds(s, slug, rules) : null;
+  const blockers = slug ? packingProblems({ slug, ids: s.planned_items, products: packingProducts, rules: rules[slug], settings, packagingOz, extraCount: must(extrasRes, "extras").length, avoid: pre?.avoid ?? s.avoid ?? null, ...needs! }) : ["Unknown box"];
   if (pre && pre.status !== "paid") blockers.push("Order is no longer paid — check its payment before packing");
   if (!pkg) blockers.push("No active package profile selected. Configure a default package in Settings.");
   for (const row of stock) if (row.short) blockers.push(`${name(row.productId)}: short ${row.short} packable unit(s)`);
@@ -54,7 +56,9 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
     const item = packingProducts.get(x.id)!;
     const fit = slug ? eligibleFor(slug, x, rules[slug], settings.policy, x.rejectReason) : null;
     const conflict = avoidConflict({ ...x, ingredients: item.ingredients }, pre?.avoid ?? s.avoid);
-    const why = [conflict, ...(slug ? packBlockers(slug, [item], rules[slug], settings.policy) : [])].filter(Boolean).join("; ");
+    const allergen = needs ? itemAllergenConflict(item, needs.avoidAllergens) : null;
+    const also = (needs?.alsoMeet ?? []).filter((b) => !eligibleFor(b.slug, x, b.rules, settings.policy, x.rejectReason).fits).map((b) => `fails ${BOX_LABEL[b.slug]} screening`);
+    const why = [conflict, allergen, ...also, ...(slug ? packBlockers(slug, [item], rules[slug], settings.policy) : [])].filter(Boolean).join("; ");
     const pull = stockPickList([x.id], catalog.lots, catalog.versions)[0];
     return { id: x.id, label: `${x.code} ${x.name}${x.brand ? ` · ${x.brand}` : ""} · ${x.onHand} packable`, ok: Boolean(fit?.fits && !why), reason: why || null, pulls: pull.pulls, short: pull.short };
   }).sort((a, b) => Number(b.ok && b.short === 0) - Number(a.ok && a.short === 0) || a.label.localeCompare(b.label));
@@ -78,6 +82,8 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
         }
       />
       {s.notes && <p className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{s.notes}</p>}
+      {s.status === "planned" && s.substitution_review && !s.substitution_confirmed_by && <div className="mb-4"><ConfirmSubstitutionsForm id={id} review={s.substitution_review} /></div>}
+      {s.substitution_confirmed_by && <p className="mb-4 text-xs text-muted-foreground">Substitutions confirmed by {s.substitution_confirmed_by}{s.substitution_confirmed_at ? ` on ${new Date(s.substitution_confirmed_at).toLocaleString()}` : ""}</p>}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           <Card title={s.status === "planned" ? `Planned items (${s.planned_items.length})` : "Pick list: what was packed"}>
@@ -138,6 +144,13 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
           )}
         </div>
         <div className="space-y-4">
+          {s.status === "planned" && slug && <Card title="Customer needs"><ShipmentNeedsForm key={`${(s.also_meet ?? []).join()}:${(s.avoid_allergens ?? []).join()}`} id={id} box={slug} alsoMeet={s.also_meet ?? []} allergens={s.avoid_allergens ?? []} /></Card>}
+          {s.status !== "planned" && ((s.also_meet ?? []).length > 0 || (s.avoid_allergens ?? []).length > 0) && (
+            <Card title="Customer needs">
+              <p className="text-sm">{((s.avoid_allergens ?? []) as string[]).filter(isAllergen).map((a) => ALLERGEN_LABEL[a]).join(", ") || "No allergen exclusions"}</p>
+              <p className="text-sm">{(s.also_meet ?? []).length ? `Also met: ${(s.also_meet as string[]).filter(isBoxSlug).map((b) => BOX_LABEL[b]).join(", ")}` : ""}</p>
+            </Card>
+          )}
           {s.status === "planned" && <Card title="Package"><ShipmentPackageForm key={s.package_profile_id} id={id} initialId={s.package_profile_id} packages={packages.filter((p) => p.active)} /><Link className="mt-2 inline-block text-xs underline" href="/admin/settings">Manage package sizes</Link></Card>}
           <Card title="Ship to">
             <p className="font-medium">{s.recipient_name ?? "—"}</p>
