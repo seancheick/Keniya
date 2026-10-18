@@ -1,6 +1,7 @@
 import { reviewTeamRow, reviewTeamText } from "./review-wording";
 // Clinician review sheet: one row per product with the label data and every rule decision,
 // so a reviewer can audit box fit without the admin. No costs or vendors (not theirs to audit).
+import { netCarbs } from "./carbs";
 import { caffeineDisplay, effectiveCaffeine } from "./caffeine";
 import { effectivePregnancyChecks, fitFor, isClinicianApproved, type BoxFit } from "./rules";
 import {
@@ -72,6 +73,7 @@ export function reviewWorkRemaining(s: Snack, x: ClinicalExtra | undefined): str
     !x?.ingredients?.trim() && "ingredients",
     !s.allergens?.trim() && "allergen statement",
     !(typeof s.unit_wt_oz === "number" && s.unit_wt_oz > 0) && "pack weight",
+    netCarbs(s).issue === "INVALID_NUTRITION" && "consistent carb/fiber values (fiber exceeds total carbs)",
     ...(["calories", "protein_g", "fiber_g", "carbs_g", "added_sugar_g", "sodium_mg", "sat_fat_g"] as const)
       .filter((k) => typeof s[k] !== "number" || s[k]! < 0).map((k) => k.replaceAll("_", " ")),
     // Caffeine counts when the label gives it or it can be inferred from the ingredients.
@@ -131,6 +133,7 @@ export function clinicalReviewRows(
       "Protein (g)": s.protein_g,
       "Fiber (g)": s.fiber_g,
       "Total carbs (g)": s.carbs_g,
+      "Net carbs (g, total − fiber)": netCarbs(s).net ?? netCarbs(s).issue,
       "Added sugar (g)": s.added_sugar_g,
       "Sodium (mg)": s.sodium_mg,
       "Caffeine (mg)": caffeineDisplay({ ...s, ingredients: x?.ingredients ?? s.ingredients }),

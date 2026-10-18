@@ -8,6 +8,7 @@ import { Field, FitReasons, fieldClass } from "@/components/admin/ui";
 import type { FormState } from "@/actions/admin/products";
 import { ruleInputFromForm } from "@/lib/admin/forms";
 import { resolveCaffeine } from "@/lib/admin/caffeine";
+import { netCarbs } from "@/lib/admin/carbs";
 import { screenIngredients, type Finding } from "@/lib/admin/ingredients";
 import { eligibleBoxes, shipsUnderPolicy } from "@/lib/admin/rules";
 import type { RuleInput } from "@/lib/admin/types";
@@ -94,6 +95,7 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
       ships: shipsUnderPolicy(input, policy),
       caffeine: resolveCaffeine({ labelMg: input.caffeine_mg, ingredients: input.ingredients, unitOz: input.unit_wt_oz }),
       findings: screenIngredients(input.ingredients) as Finding[],
+      net: netCarbs(input),
     };
   }
 
@@ -305,6 +307,9 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
             <>
               <FitReasons fits={preview.fits} />
               {!preview.ships.ok && <p className="text-sm text-amber-700">Won&apos;t ship: {preview.ships.reason}</p>}
+              <p className="text-xs text-muted-foreground">
+                <b>Net carbs:</b> {preview.net.net === null ? "unknown" : `${preview.net.net} g`} · {preview.net.note} (total carbs is what the boxes judge)
+              </p>
               <p className="text-xs text-muted-foreground">
                 <b>Caffeine:</b> {preview.caffeine.mg === null ? "unknown" : preview.caffeine.source === "estimate_max" ? `≤${preview.caffeine.mg} mg` : `${preview.caffeine.mg} mg`} · {preview.caffeine.note}
               </p>

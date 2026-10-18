@@ -24,10 +24,11 @@ import {
   type VersionRow,
 } from "@/lib/admin/db";
 import { daysUntil } from "@/lib/admin/optimizer";
+import { netCarbs, netCarbsLabel } from "@/lib/admin/carbs";
 import { caffeineDisplay } from "@/lib/admin/caffeine";
 import { ingredientsHash } from "@/lib/admin/ingredients";
-import { derivedPregnancyChecks, eligibleBoxes, shipsUnderPolicy } from "@/lib/admin/rules";
-import { BOX_LABEL, NUTRIENT_KEYS, PREGNANCY_CHECK_KEYS, ROLE_KEYS, ROLE_LABEL, type BoxSlug } from "@/lib/admin/types";
+import { derivedPregnancyChecks, eligibleBoxes, highFiberReview, shipsUnderPolicy } from "@/lib/admin/rules";
+import { BOX_LABEL, BOX_SLUGS, NUTRIENT_KEYS, PREGNANCY_CHECK_KEYS, ROLE_KEYS, ROLE_LABEL, type BoxSlug } from "@/lib/admin/types";
 
 import { requireAdmin } from "@/lib/admin/auth";
 
@@ -123,6 +124,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
         <div className="space-y-4 lg:col-span-2">
           <Card title="Box fit" action={<FitBadges fits={fits} compact />}>
             <FitReasons fits={fits} />
+            {BOX_SLUGS.filter((b) => highFiberReview(b, snack, rules[b], settings.policy, p.reject_reason)).map((b) => (
+              <p key={b} className="mt-2 text-sm text-sky-900">
+                <Badge tone="muted">High-fiber review · internal</Badge> {BOX_LABEL[b]}: over the total-carb limit, but {netCarbsLabel(snack)} and within the proposed
+                dual limit ({rules[b].netCarbsReviewMax} g net, {rules[b].carbsReviewCeiling} g total). Not eligible; listed for the rule review only.
+              </p>
+            ))}
             {!ships.ok && <p className="mt-2 text-sm text-amber-700">Doesn&apos;t ship under your policy: {ships.reason}</p>}
             {p.status === "Rejected" && <p className="mt-2 text-sm text-red-700">Rejected: {p.reject_reason}</p>}
             <div className="mt-4 border-t pt-3">
@@ -159,6 +166,12 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                   )}
                 </div>
               ))}
+              <div>
+                <dt className="text-xs text-muted-foreground">Net carbs (total − fiber)</dt>
+                <dd className={netCarbs(snack).net === null ? "text-amber-800" : "tabular-nums"} title={netCarbs(snack).note}>
+                  {netCarbsLabel(snack)}
+                </dd>
+              </div>
               <div>
                 <dt className="text-xs text-muted-foreground">Unit weight</dt>
                 <dd>{snack.unit_wt_oz ?? "—"} oz</dd>

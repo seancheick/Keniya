@@ -13,6 +13,7 @@ import {
   type Snack,
 } from "./types";
 import { effectiveCaffeine } from "./caffeine";
+import { netCarbs } from "./carbs";
 import { hasFinding, screenIngredients, syntheticDye, unresolved, type Finding } from "./ingredients";
 
 const num = (v: number | null | undefined): v is number => typeof v === "number" && Number.isFinite(v);
@@ -80,7 +81,41 @@ export type BoxFit = {
   via: string[];
   /** Why it doesn't fit (empty when it fits). */
   reasons: string[];
+  /** One structured code per reason (set by eligibleFor), for reports and review lists. */
+  codes?: ReasonCode[];
 };
+
+export type ReasonCode =
+  | "REJECTED" | "RETIRED" | "NUTRITION_MISSING" | "SHIPPING_POLICY" | "MULTI_SERVE" | "SINGLE_SERVE_UNCONFIRMED"
+  | "DYE" | "SAFETY_FINDING" | "CLINICIAN_DECISION" | "PREGNANCY_CHECK_FAILED" | "PREGNANCY_CHECK_BLANK"
+  | "CAFFEINE_UNKNOWN" | "CAFFEINE_OVER" | "CAFFEINE_ESTIMATE_HOLD" | "CARBS_OVER" | "ADDED_SUGAR_OVER"
+  | "SODIUM_OVER" | "SAT_FAT_OVER" | "SAT_FAT_MISSING" | "PHO" | "NO_PATHWAY" | "OTHER";
+
+// Ordered: the first match names the reason. Every reason text produced in this file matches one.
+const REASON_CODES: [RegExp, ReasonCode][] = [
+  [/^Rejected/, "REJECTED"],
+  [/^Retired$/, "RETIRED"],
+  [/^Missing nutrition|not recorded$/, "NUTRITION_MISSING"],
+  [/^Synthetic dye/, "DYE"],
+  [/^Partially hydrogenated/, "PHO"],
+  [/^Current ingredients:/, "SAFETY_FINDING"],
+  [/^Needs clinician decision/, "CLINICIAN_DECISION"],
+  [/^Failed P/, "PREGNANCY_CHECK_FAILED"],
+  [/^Not yet checked: P/, "PREGNANCY_CHECK_BLANK"],
+  [/^Caffeine value missing/, "CAFFEINE_UNKNOWN"],
+  [/^Estimated caffeine/, "CAFFEINE_ESTIMATE_HOLD"],
+  [/ mg caffeine \(max/, "CAFFEINE_OVER"],
+  [/^Multi-serve pack/, "MULTI_SERVE"],
+  [/^Single-serve not yet confirmed/, "SINGLE_SERVE_UNCONFIRMED"],
+  [/ g carbs \(max|g total carbs \(max/, "CARBS_OVER"],
+  [/added sugar.*\(max/, "ADDED_SUGAR_OVER"],
+  [/ mg sodium \(max/, "SODIUM_OVER"],
+  [/^Saturated fat not recorded/, "SAT_FAT_MISSING"],
+  [/saturated fat \(max/, "SAT_FAT_OVER"],
+  [/doesn't ship|No unit weight|item limit/, "SHIPPING_POLICY"],
+  [/needs |qualifies only|No heart role|Treat with/, "NO_PATHWAY"],
+];
+export const reasonCode = (r: string): ReasonCode => REASON_CODES.find(([re]) => re.test(r))?.[1] ?? "OTHER";
 
 function base(p: RuleInput, rejectReason?: string | null): string[] {
   const reasons: string[] = [];
@@ -322,7 +357,21 @@ export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, polic
 export function eligibleFor(slug: BoxSlug, p: RuleInput, rules: BoxRules, policy: Settings["policy"], rejectReason?: string | null): BoxFit {
   const q = fitFor(slug, p, rejectReason, rules);
   const gates = gateFailures(slug, p, rules, policy);
-  return { box: slug, fits: q.fits && gates.length === 0, via: q.via, reasons: [...q.reasons, ...gates] };
+  const reasons = [...q.reasons, ...gates];
+  return { box: slug, fits: q.fits && gates.length === 0, via: q.via, reasons, codes: reasons.map(reasonCode) };
+}
+
+/**
+ * Internal high-fiber review list (owner decision 2026-10-18): fails nothing but the box's
+ * total-carb limit, with net carbs (total − fiber) and total carbs inside the proposed dual
+ * limit. Never makes a product eligible; GDM has no review limit.
+ */
+export function highFiberReview(slug: BoxSlug, p: RuleInput, rules: BoxRules, policy: Settings["policy"], rejectReason?: string | null): boolean {
+  if (rules.netCarbsReviewMax === null || rules.carbsReviewCeiling === null || p.type === "Beverage") return false;
+  const e = eligibleFor(slug, p, rules, policy, rejectReason);
+  if (e.fits || !e.codes?.length || !e.codes.every((c) => c === "CARBS_OVER")) return false;
+  const n = netCarbs(p);
+  return n.net !== null && n.net <= rules.netCarbsReviewMax && num(p.carbs_g) && p.carbs_g <= rules.carbsReviewCeiling;
 }
 
 export function eligibleBoxes(
@@ -611,7 +660,13 @@ export function checkLineup(
 
   checks.push(info("treenuts", "Picks containing tree nuts", `${count((x) => x.freeFrom.tree_nut_free === false)}`));
   checks.push(info("peanuts", "Picks containing peanuts", `${count((x) => x.freeFrom.peanut_free === false)}`));
-  if (carbBox) checks.push(info("carbs", "Total carbs across the box", `${s.reduce((t, x) => t + (x.carbs_g ?? 0), 0)} g`));
+  if (carbBox) {
+    checks.push(info("carbs", "Total carbs across the box", `${s.reduce((t, x) => t + (x.carbs_g ?? 0), 0)} g`));
+    // The 14 snacks are not eaten together: an inventory summary, never a daily-intake figure.
+    const nets = s.map((x) => netCarbs(x).net);
+    checks.push(info("netcarbs", "Net carbs across the box (total − fiber; inventory summary, not daily intake)",
+      nets.every((n) => n !== null) ? `${Math.round(nets.reduce((t, n) => t! + n!, 0)! * 10) / 10} g` : `${nets.filter((n) => n === null).length} pick(s) without a valid fiber value`));
+  }
 
   return checks;
 }

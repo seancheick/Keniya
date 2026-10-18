@@ -6,6 +6,7 @@ import { Check, Minus, Plus, X } from "lucide-react";
 import { Badge, fieldClass } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { caffeineDisplay } from "@/lib/admin/caffeine";
+import { netCarbs } from "@/lib/admin/carbs";
 import { fmt$ } from "@/lib/admin/costing";
 import { daysUntil } from "@/lib/admin/optimizer";
 import { eligibleFor, isClinicianApproved, type BoxFit } from "@/lib/admin/rules";
@@ -195,6 +196,7 @@ function Evidence({ s, fits, blocked, finding }: { s: Snack; fits: Record<BoxSlu
     ["Protein", s.protein_g, "g"],
     ["Fiber", s.fiber_g, "g"],
     ["Carbs", s.carbs_g, "g"],
+    ["Net", netCarbs(s).net, "g"],
     ["Added sugar", s.added_sugar_g, "g"],
     ["Sodium", s.sodium_mg, "mg"],
     ["Sat fat", s.sat_fat_g, "g"],

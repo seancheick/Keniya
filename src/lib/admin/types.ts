@@ -317,6 +317,12 @@ export const boxRulesSchema = z.object({
   /** Cocoa/chocolate picks per box (dark chocolate carries lead and cadmium; warning). */
   chocolateMax: z.number().int().min(0).nullable().default(null),
   /**
+   * Internal high-fiber review only, never eligibility: a pick failing nothing but the total-carb
+   * limit is listed for review when net carbs (total − fiber) ≤ this and total ≤ carbsReviewCeiling.
+   */
+  netCarbsReviewMax: z.number().min(0).nullable().default(null),
+  carbsReviewCeiling: z.number().min(0).nullable().default(null),
+  /**
    * Little extras (drink sticks, tea, a sample) packed on top of `total` and never counted in
    * it. null = extras optional and not promised; set both to promise "14 snacks + 2–4 extras".
    */
@@ -341,6 +347,8 @@ const none = {
   beverageAddedSugarMax: null,
   addedSugarMax: null,
   treatAddedSugarMax: null,
+  netCarbsReviewMax: null,
+  carbsReviewCeiling: null,
   sodiumMax: null,
   satFatMax: null,
   satFatNutMax: null,
@@ -397,6 +405,10 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     // Founder-set 2026-10-17, pending clinician: a treat (counted by treatMax) may carry up to
     // 5 g added sugar; core picks stay at 3 g. Without it the treat allowance held nothing.
     treatAddedSugarMax: 5,
+    // Owner 2026-10-18: proposed dual limit for a future policy, review list only (ADA counts
+    // total carbs; net carbs is not a standardized clinical measure).
+    netCarbsReviewMax: 15,
+    carbsReviewCeiling: 25,
   },
   heart: {
     ...none,
@@ -466,6 +478,9 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     wholeFoodMin: 2,
     treatMax: 2,
     carbsMax: 20,
+    // Review list only (see Blood Sugar). GDM has no exception: GDM nutrition therapy counts total carbs.
+    netCarbsReviewMax: 20,
+    carbsReviewCeiling: 25,
     beverageAddedSugarMax: 0,
     addedSugarMax: 5,
   },
