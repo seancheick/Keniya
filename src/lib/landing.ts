@@ -60,7 +60,7 @@ export const landings: BoxLanding[] = [
     faqs: [
       {
         q: "Is every snack safe during pregnancy?",
-        a: "Every snack has to pass Keniya Pregnancy Screening, and the lineup gets a clinical review. That isn't personal medical advice, so if your doctor has told you to avoid something specific, check each label or ask us before you order.",
+        a: "Every snack has to pass Keniya Pregnancy Screening, criteria a pharmacist reviewed. That isn't personal medical advice, so if your doctor has told you to avoid something specific, check each label or ask us before you order.",
       },
       {
         q: "Does anything have caffeine?",

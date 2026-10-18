@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/admin/ui";
 import { VerifyFlow, type VerifyItem } from "@/components/admin/verify-flow";
 import { db, must, signedUrls } from "@/lib/admin/db";
-import { eligibleFor, isClinicianApproved } from "@/lib/admin/rules";
+import { eligibleFor } from "@/lib/admin/rules";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_LABEL, BOX_SLUGS } from "@/lib/admin/types";
 import { MIN_DAYS_TO_EXPIRY, minExpiryDate } from "@/lib/admin/verify";
@@ -37,7 +37,6 @@ export default async function VerifyPage() {
         name: s.name,
         brand: s.brand,
         status: s.status,
-        clinicianApproved: isClinicianApproved(s),
         upc: p.upc,
         packs: catalog.packs.filter((x) => x.product_id === s.id).map((x) => ({ gtin: x.gtin, units: x.units_per_pack })),
         verifiedAt: v?.verified_at ?? null,
@@ -74,7 +73,7 @@ export default async function VerifyPage() {
     <>
       <PageHeader
         title="Verify packages"
-        description={`With the package in your hand: scan its barcode, compare the label, confirm it's one sealed serving and check the date (at least ${MIN_DAYS_TO_EXPIRY} days left). Verified + PharmaGuide Team-approved = ready to pack.`}
+        description={`With the package in your hand: scan its barcode, compare the label, confirm it's one sealed serving and check the date (at least ${MIN_DAYS_TO_EXPIRY} days left). Verified + passes the box = ready to pack.`}
       />
       <VerifyFlow items={items} minDays={MIN_DAYS_TO_EXPIRY} minDate={minExpiryDate()} />
     </>

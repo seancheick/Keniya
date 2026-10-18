@@ -1,10 +1,11 @@
 "use server";
 
-import { isClinicianApproved } from "@/lib/admin/rules";
+import { eligibleFor } from "@/lib/admin/rules";
+import { BOX_SLUGS } from "@/lib/admin/types";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
-import { db, loadSettings, PHOTO_BUCKET } from "@/lib/admin/db";
+import { db, loadBoxRules, loadCatalog, loadSettings, PHOTO_BUCKET } from "@/lib/admin/db";
 import { dollarsToCents } from "@/lib/admin/forms";
 import { isIsoDate } from "@/lib/admin/verify";
 import { cleanBarcode, gtin14, printedForm, validCheckDigit } from "@/lib/admin/barcode";
@@ -48,19 +49,14 @@ export async function logPurchase(_prev: PurchaseState, fd: FormData): Promise<P
   if (d.expires_on && d.expires_on < d.purchased_at) return { error: "Expiry cannot be before the purchase date" };
   const version = await db().from("product_versions").select("id").eq("product_id", d.product_id).eq("is_current", true).maybeSingle();
   if (!version.data) return { error: "That product has no current formula version." };
-  // Pre-purchase gate: samples are fine; bulk inventory waits for clinical and sourcing approval.
-  const [product, settings] = await Promise.all([
-    db().from("products").select("status, clinical_decision, approval_role, reviewed_by, diligence_status, prescreened_by, prescreened_at").eq("id", d.product_id).single(),
-    loadSettings(),
-  ]);
-  if (product.error) return { error: product.error.message };
-  const approved = isClinicianApproved({
-    status: product.data.status, clinicianApprovedBy: product.data.reviewed_by, clinicalDecision: product.data.clinical_decision, approvalRole: product.data.approval_role,
-    diligenceComplete: product.data.diligence_status === "complete" && Boolean(product.data.prescreened_by && product.data.prescreened_at),
-  });
-  if (!approved && d.qty > settings.samplePurchaseMax && !d.bulk_reason)
-    return { error: `Not purchase-ready: this product isn't PharmaGuide Team approved yet. Buy up to ${settings.samplePurchaseMax} sample units, or give the reason for buying more.` };
-  const bulkNote = !approved && d.qty > settings.samplePurchaseMax ? `Bought before clinical approval (${d.qty} units): ${d.bulk_reason}` : null;
+  // Pre-purchase gate: a few samples are always fine; more of a product that passes no box
+  // (missing data, or it fails every box's rules) needs a reason.
+  const [catalog, rules, settings] = await Promise.all([loadCatalog(), loadBoxRules(), loadSettings()]);
+  const snack = catalog.byId.get(d.product_id);
+  const passes = Boolean(snack && BOX_SLUGS.some((b) => eligibleFor(b, snack, rules[b], settings.policy, snack.rejectReason).fits));
+  if (!passes && d.qty > settings.samplePurchaseMax && !d.bulk_reason)
+    return { error: `This product doesn't pass any box yet. Buy up to ${settings.samplePurchaseMax} sample units, or give the reason for buying more.` };
+  const bulkNote = !passes && d.qty > settings.samplePurchaseMax ? `Bought while passing no box (${d.qty} units): ${d.bulk_reason}` : null;
   const vendorId = await ensureVendor(d.vendor, admin.name);
 
   const lot = await db()

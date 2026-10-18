@@ -15,7 +15,7 @@ import { Badge, Field, FitReasons, fieldClass } from "@/components/admin/ui";
 import { fmt$ } from "@/lib/admin/costing";
 import { eligibleBoxes, type BoxFit } from "@/lib/admin/rules";
 import { ruleInputFromForm } from "@/lib/admin/forms";
-import { CATEGORIES, FORMS, PRODUCT_TYPES, type BoxRules, type BoxSlug, type Settings } from "@/lib/admin/types";
+import { BOX_SLUGS, CATEGORIES, FORMS, PRODUCT_TYPES, type BoxRules, type BoxSlug, type Settings } from "@/lib/admin/types";
 
 export type PurchaseProduct = {
   id: string;
@@ -426,9 +426,9 @@ export function LogPurchase({
                 <dd>{selected.usedIn.join(", ") || "—"}</dd>
               </div>
             </dl>
-            {selected.status !== "Approved" && (
+            {!BOX_SLUGS.some((b) => selected.fits[b].fits) && (
               <Badge tone="warn" className="mt-2 max-w-full whitespace-normal text-left">
-                {selected.status}: not purchase-ready. Buy sample units only (to verify the package); more needs a reason.
+                Passes no box yet. Buy sample units only (to check the package); more needs a reason.
               </Badge>
             )}
           </div>
@@ -513,7 +513,7 @@ export function LogPurchase({
                 <Field label="Note">
                   <input name="note" className={fieldClass} />
                 </Field>
-                <Field label="Reason for buying more than samples before approval" hint="Only needed for a product the PharmaGuide Team hasn't approved yet.">
+                <Field label="Reason for buying more than samples" hint="Only needed for a product that passes no box yet.">
                   <input name="bulk_reason" className={fieldClass} placeholder="e.g. vendor minimum order of 12" />
                 </Field>
               </div>

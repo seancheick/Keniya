@@ -38,7 +38,7 @@ describe('Blood Sugar and GDM separated snack and hydration gates',()=>{
   }
   it('GDM still requires every Pregnancy screen and nutrition evidence',()=>{
     const p=snack({type:'Beverage',form:'Powder',carbs_g:3,added_sugar_g:1});
-    expect(eligibleFor('gestational_diabetes',{...p,pregnancy_checks:{...p.pregnancy_checks,P7a:''}},DEFAULT_BOX_RULES.gestational_diabetes,settings.policy).fits).toBe(false);
+    expect(eligibleFor('gestational_diabetes',{...p,pregnancy_checks:{...p.pregnancy_checks,P8:''}},DEFAULT_BOX_RULES.gestational_diabetes,settings.policy).fits).toBe(false);
     expect(eligibleFor('blood_sugar',{...p,carbs_g:null},DEFAULT_BOX_RULES.blood_sugar,settings.policy).fits).toBe(false);
     for(const slug of ['heart','glp1'] as const)expect(eligibleFor(slug,p,DEFAULT_BOX_RULES[slug],settings.policy).fits).toBe(false);
   });

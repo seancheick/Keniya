@@ -12,7 +12,7 @@ import { POST } from "./route";
 const request = () => new Request("https://example.com", { method: "POST", body: "event" });
 beforeEach(() => {
  vi.clearAllMocks();
- mock.state.mockResolvedValue({ rules: {}, sales: { heart: { founding: 42, priceCents: 4700, remaining: 41, available: true, clinicianApproved: true } } });
+ mock.state.mockResolvedValue({ rules: {}, sales: { heart: { founding: 42, priceCents: 4700, remaining: 41, available: true, saleReady: true } } });
  mock.event = { id: "evt_1", type: "checkout.session.completed", data: { object: { id: "cs_1", payment_status: "paid", payment_intent: "pi_1", metadata: { box_slug: "heart" }, customer_details: { email: "buyer@example.com" }, custom_fields: [], amount_total: 4700 } } };
  mock.rpc.mockImplementation(async (name: string) => ({ data: name === "begin_financial_observation" ? 1 : true, error: null }));
  mock.from.mockReturnValue({ select: () => ({ eq: () => ({ eq: async () => ({ count: 1 }), limit: async () => ({ data: [{ id: "order" }], error: null }) }) }), update: mock.update });

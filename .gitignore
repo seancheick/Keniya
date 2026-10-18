@@ -42,7 +42,8 @@ yarn-error.log*
 next-env.d.ts
 
 # impeccable design skill (local tooling, 14MB binary)
-.claude/skills/
+.claude/skills/*
+!.claude/skills/keniya-scan/
 .claude/agents/
 .impeccable/
 

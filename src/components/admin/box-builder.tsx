@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { saveLineup } from "@/actions/admin/boxes";
+import { BoxFacts } from "@/components/admin/box-facts";
 import { BoxProductTable } from "@/components/admin/box-product-table";
 import { CostCard } from "@/components/admin/cost-card";
 import { Badge, fieldClass } from "@/components/admin/ui";
@@ -11,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { fmt$, landedCost } from "@/lib/admin/costing";
 import { canBuild, daysUntil, optimize } from "@/lib/admin/optimizer";
 import { estimatePostage, type PostageSample } from "@/lib/admin/postage";
-import { checkLineup, eligibleFor, extrasCheck, isReady, isReadyToPack, lineupStage, packedWeightOz, type Pick } from "@/lib/admin/rules";
+import { checkLineup, eligibleFor, extrasCheck, isReady, isReadyToPack, lineupStage, packedWeightOz, type Check, type Pick } from "@/lib/admin/rules";
 import { BOX_LABEL, OBJECTIVES, OBJECTIVE_LABEL, type BoxRules, type BoxSlug, type Objective, type Settings, type Snack } from "@/lib/admin/types";
 import { avoidConflict } from "@/lib/admin/avoid";
 import { cn } from "@/lib/utils";
@@ -34,9 +35,11 @@ type Props = {
   photos: Record<string, string>;
   /** Pre-screen finding by product id. */
   findings: Record<string, string>;
+  /** e.g. "Live v3" or "Draft v8". */
+  lineupNote?: string;
 };
 
-export function BoxBuilder({ slug, rules, settings, snacks, extras: savedExtras, initial, packagingOz, mailer, history, allRules, photos, findings }: Props) {
+export function BoxBuilder({ slug, rules, settings, snacks, extras: savedExtras, initial, packagingOz, mailer, history, allRules, photos, findings, lineupNote }: Props) {
   const router = useRouter();
   const byId = useMemo(() => new Map(snacks.map((s) => [s.id, s])), [snacks]);
   const [picks, setPicks] = useState<Pick[]>(() =>
@@ -74,10 +77,19 @@ export function BoxBuilder({ slug, rules, settings, snacks, extras: savedExtras,
   }, [snacks, avoidText]);
 
   const extraOz = extras.reduce((n, s) => n + (s.unit_wt_oz ?? 0), 0);
+  // Everything "Save & activate" requires, so the Snack Facts card shows ✓ only when it's allowed:
+  // the recipe checks, each extra passing this box (as loadAdminContext checks it) and nothing
+  // the leave-out list rules out.
   const checks = useMemo(() => {
     const range = extrasCheck(rules, extras.length);
-    return [...checkLineup(slug, buildRules, picks, settings, packagingOz + extraOz), ...(range ? [range] : [])];
-  }, [slug, rules, buildRules, picks, settings, packagingOz, extraOz, extras.length]);
+    const extraChecks: Check[] = extras.map((e) => {
+      const f = eligibleFor(slug, e, rules, settings.policy, e.rejectReason);
+      return { key: `extra:${e.id}`, label: `Extra: ${e.name}`, value: f.fits ? "Eligible" : f.reasons.join("; "), level: "block", pass: f.fits, deficit: f.fits ? 0 : 1 };
+    });
+    const clashes = [...picks.map((p) => p.snack), ...extras].filter((s) => conflict.has(s.id)).length;
+    const avoid: Check[] = conflict.size ? [{ key: "avoid", label: "Picks the leave-out list rules out", value: `${clashes} (need ≤ 0)`, level: "block", pass: clashes === 0, deficit: clashes }] : [];
+    return [...checkLineup(slug, buildRules, picks, settings, packagingOz + extraOz), ...(range ? [range] : []), ...extraChecks, ...avoid];
+  }, [slug, rules, buildRules, picks, extras, conflict, settings, packagingOz, extraOz]);
   const extraCandidates = useMemo(() => {
     const taken = new Set([...picks.map((p) => p.snack.id), ...extras.map((e) => e.id)]);
     return snacks.filter((s) => !taken.has(s.id) && !conflict.has(s.id) && eligibleFor(slug, s, rules, settings.policy, s.rejectReason).fits);
@@ -97,6 +109,17 @@ export function BoxBuilder({ slug, rules, settings, snacks, extras: savedExtras,
   const ready = picks.length > 0 && isReady(checks) && !picks.some((p) => conflict.has(p.snack.id)) && extras.every((s) => eligibleFor(slug, s, rules, settings.policy, s.rejectReason).fits && !conflict.has(s.id));
   const stage = lineupStage([...picks, ...extras.map((snack) => ({ snack }))], ready);
   const cats = mix.map((c) => c.name);
+
+  // A one-tap fix for a flagged pick: the best eligible snack of the same kind not already in the
+  // box (verified packages first, then the most stock, then the cheapest).
+  function suggestionFor(p: Pick): Snack | null {
+    const taken = new Set([...picks.map((x) => x.snack.id), ...extras.map((e) => e.id)]);
+    return (
+      snacks
+        .filter((s) => !taken.has(s.id) && !conflict.has(s.id) && (!p.category || s.categories.includes(p.category)) && eligibleFor(slug, s, buildRules, settings.policy, s.rejectReason).fits)
+        .sort((a, b) => Number(isReadyToPack(b)) - Number(isReadyToPack(a)) || b.onHand - a.onHand || (a.unitCostCents ?? Infinity) - (b.unitCostCents ?? Infinity))[0] ?? null
+    );
+  }
 
   function startCustom() {
     // Start from what's in the box now, so the total is already right.
@@ -151,8 +174,6 @@ export function BoxBuilder({ slug, rules, settings, snacks, extras: savedExtras,
   const failing = checks.filter((c) => !c.pass && c.level !== "info");
   // Phones: the secondary controls and the passing checks start folded away.
   const [showOptions, setShowOptions] = useState(false);
-  const [showAllChecks, setShowAllChecks] = useState(false);
-  const passing = checks.filter((c) => c.pass || c.level === "info");
 
   return (
     <div className="space-y-4 max-sm:pb-24">
@@ -185,7 +206,7 @@ export function BoxBuilder({ slug, rules, settings, snacks, extras: savedExtras,
                   <input type="checkbox" className="size-5" checked={requireStock} onChange={(e) => setRequireStock(e.target.checked)} /> Only snacks in stock
                 </label>
                 <label className="flex min-h-11 items-center gap-2 text-sm">
-                  <input type="checkbox" className="size-5" checked={requireReady} onChange={(e) => setRequireReady(e.target.checked)} /> Only approved &amp; package-verified
+                  <input type="checkbox" className="size-5" checked={requireReady} onChange={(e) => setRequireReady(e.target.checked)} /> Only package-verified
                 </label>
               </div>
 
@@ -277,6 +298,8 @@ export function BoxBuilder({ slug, rules, settings, snacks, extras: savedExtras,
               {picks.map((p, i) => {
                 const fit = eligibleFor(slug, p.snack, buildRules, settings.policy, p.snack.rejectReason);
                 const d = daysUntil(p.snack.earliestExpiry);
+                const flagged = !fit.fits || conflict.has(p.snack.id);
+                const swap = flagged ? suggestionFor(p) : null;
                 return (
                   <li key={`${p.snack.id}-${i}`} className="grid grid-cols-[1fr_auto] items-start gap-x-2 gap-y-1 p-3 sm:grid-cols-[110px_1fr_auto] sm:items-center sm:gap-2">
                     <select
@@ -297,13 +320,27 @@ export function BoxBuilder({ slug, rules, settings, snacks, extras: savedExtras,
                         <span>· {p.snack.unit_wt_oz ?? "?"} oz</span>
                         <span className="sm:hidden">· {fmt$(p.snack.unitCostCents)}</span>
                         {conflict.has(p.snack.id) && <Badge tone="bad">{conflict.get(p.snack.id)}</Badge>}
-                        {!fit.fits && <Badge tone="bad" title={fit.reasons.join("; ")}>{`not eligible: ${fit.reasons[0] ?? ""}`}</Badge>}
-                        {p.snack.status !== "Approved" && <Badge tone="info">{p.snack.status}</Badge>}
+                        {!fit.fits && <Badge tone={fit.result === "HOLD" ? "warn" : "bad"} title={fit.reasons.join("; ")}>{`${fit.result === "HOLD" ? "on hold" : "✕"}: ${fit.reasons[0] ?? ""}`}</Badge>}
+                        {!isReadyToPack(p.snack) && <Badge tone="info">package not verified</Badge>}
                         {p.snack.onHand < runSize && <Badge tone={p.snack.onHand === 0 ? "bad" : "warn"}>{p.snack.onHand} on hand</Badge>}
                         {d !== null && d < settings.expiryTiersDays[2] && <Badge tone="orange">expires in {d} d</Badge>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 max-sm:order-2 sm:justify-end">
+                      {swap && (
+                        <Button
+                          size="xs"
+                          className="max-sm:h-11"
+                          title={`Replace with ${swap.name}`}
+                          onClick={() => {
+                            setPicks((ps) => ps.map((x, j) => (j === i ? { snack: swap, category: x.category } : x)));
+                            setSource("manual");
+                          }}
+                        >
+                          Swap for {swap.name.length > 22 ? `${swap.name.slice(0, 21)}…` : swap.name}
+                        </Button>
+                      )}
+                      {flagged && !swap && <span className="text-xs text-red-700">No eligible swap: remove it</span>}
                       <span className="text-sm tabular-nums max-sm:hidden">{fmt$(p.snack.unitCostCents)}</span>
                       <Button size="icon-xs" className="max-sm:size-11" variant="ghost" aria-label={`Remove ${p.snack.name}`} onClick={() => { setPicks((ps) => ps.filter((_, j) => j !== i)); setSource("manual"); }}>
                         ✕
@@ -363,30 +400,10 @@ export function BoxBuilder({ slug, rules, settings, snacks, extras: savedExtras,
             </div>
           </div>
 
-          <div className="rounded-xl border bg-card p-4">
-            <p className="mb-2 font-semibold">Does this box follow the recipe?</p>
-            {failing.length === 0 && <p className="mb-2 text-sm text-emerald-700">Every rule passes.</p>}
-            <ul className="grid gap-1 text-sm sm:grid-cols-2">
-              {[...failing, ...passing].map((c) => (
-                <li key={c.key} className={cn("flex items-start gap-2", !showAllChecks && c.pass && "max-sm:hidden")}>
-                  <span className={cn("w-4 shrink-0", c.level === "info" ? "text-muted-foreground" : c.pass ? "text-emerald-700" : c.level === "warn" ? "text-amber-700" : "text-red-700")}>
-                    {c.level === "info" ? "ℹ" : c.pass ? "✓" : c.level === "warn" ? "!" : "✕"}
-                  </span>
-                  <span>
-                    {c.label}: <span className="text-muted-foreground">{c.value}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-            {passing.length > 0 && (
-              <Button type="button" variant="ghost" className="mt-1 h-11 w-full sm:hidden" onClick={() => setShowAllChecks((v) => !v)}>
-                {showAllChecks ? "Hide passing checks" : `Show ${passing.length} passing checks`}
-              </Button>
-            )}
-          </div>
         </div>
 
         <aside className="space-y-4 xl:sticky xl:top-28 xl:self-start">
+          <BoxFacts slug={slug} rules={buildRules} policy={settings.policy} picks={picks} extras={extras} checks={checks} lineupNote={lineupNote} />
           <div className="rounded-xl border bg-card p-4">
             <div className="mb-4 grid grid-cols-2 gap-3">
               <div>

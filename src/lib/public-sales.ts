@@ -60,7 +60,7 @@ export const loadPublicCatalog = cache(async () => {
     const { rules, sales, settings } = await loadCommerceState();
     const boxes: PublicBox[] = publicBoxes(rules).map((box) => {
       const sale = sales[box.slug];
-      return { ...box, founding: sale.founding, sale: { available: sale.available, clinicianApproved: sale.clinicianApproved, priceCents: sale.priceCents, remaining: sale.remaining,
+      return { ...box, founding: sale.founding, sale: { available: sale.available, saleReady: sale.saleReady, priceCents: sale.priceCents, remaining: sale.remaining,
         // Sold out means a real first shipment filled up; a run size of 0 is just not open yet.
         state: sale.available ? "preorder" : sale.founding > 0 && sale.remaining <= 0 ? "sold_out" : "waitlist",
       } };
@@ -75,7 +75,7 @@ export const loadPublicCatalog = cache(async () => {
     console.error("Public sales unavailable", error);
     const rules = await loadBoxRules();
     const boxes: PublicBox[] = publicBoxes(rules).map((box) => ({ ...box, founding: 0, sale: {
-      available: false, clinicianApproved: false, priceCents: 0, remaining: 0, state: "waitlist",
+      available: false, saleReady: false, priceCents: 0, remaining: 0, state: "waitlist",
     } }));
     return { rules, boxes, offers: NO_OFFERS };
   }

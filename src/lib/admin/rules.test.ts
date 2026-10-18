@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { gingerChews, popcorn, settings, snack } from "./__fixtures__/snacks";
 import { optimize } from "./optimizer";
-import { blockingFailures, checkLineup, eligibleFor, fitsBoxes, isReady, isClinicianApproved, lineupStage, packBlockers, productKind, shipsUnderPolicy, type Pick } from "./rules";
+import { blockingFailures, checkLineup, eligibleFor, fitsBoxes, isReady, isClinicianApproved, isReadyToPack, lineupStage, packBlockers, productKind, shipsUnderPolicy, type Pick } from "./rules";
 import { BOX_SLUGS, DEFAULT_BOX_RULES, resolveBoxRules, type Snack } from "./types";
 
 describe("product fit (workbook v4 formulas)", () => {
@@ -61,9 +61,9 @@ describe("product fit (workbook v4 formulas)", () => {
   it("gestational diabetes needs both the pregnancy checks and a carb pathway", () => {
     const ok = snack({ protein_g: 6, carbs_g: 12 });
     expect(fitsBoxes(ok).gestational_diabetes.via).toEqual(expect.arrayContaining(["All pregnancy checks pass", "Protein-forward"]));
-    const unchecked = fitsBoxes({ ...ok, pregnancy_checks: { ...ok.pregnancy_checks, P2: "" } }).gestational_diabetes;
+    const unchecked = fitsBoxes({ ...ok, pregnancy_checks: { ...ok.pregnancy_checks, P8: "" } }).gestational_diabetes;
     expect(unchecked.fits).toBe(false);
-    expect(unchecked.reasons).toContain("Not yet checked: P2");
+    expect(unchecked.reasons).toContain("Not yet checked: P8");
     expect(fitsBoxes(gingerChews()).gestational_diabetes.fits).toBe(false); // pregnancy-safe, no carb pathway
   });
 
@@ -152,10 +152,11 @@ describe("box recipes are satisfiable on paper", () => {
     for (const slug of BOX_SLUGS) {
       const r = DEFAULT_BOX_RULES[slug];
       const pool: Snack[] = r.categories.flatMap((c) =>
-        Array.from({ length: c.max }, () =>
+        Array.from({ length: c.max }, (_, j) =>
           c.name === "Hydration"
             ? snack({ type: "Beverage", form: "Powder", calories: 0, protein_g: 0, fiber_g: 0, carbs_g: 0, added_sugar_g: 0, sodium_mg: 50, sat_fat_g: 0, unit_wt_oz: 0.2, categories: ["Hydration"] })
-            : snack({ roles: { NS: true, WG: true, MF: true, WHOLE_FOOD: true }, protein_g: 6, fiber_g: 3, carbs_g: 10, added_sugar_g: 1, sodium_mg: 90, sat_fat_g: 1, categories: [c.name] }),
+            // Half nut/seed, half not: a box needs some nuts (Heart ≥4) but at most 5 of them.
+            : snack({ roles: { NS: j % 2 === 0, WG: true, MF: true, WHOLE_FOOD: true }, protein_g: 6, fiber_g: 3, carbs_g: 10, added_sugar_g: 1, sodium_mg: 90, sat_fat_g: 1, categories: [c.name] }),
         ),
       );
       const res = optimize({ slug, rules: r, settings, snacks: pool, objective: "balanced", packagingOz: 6, requireStock: false });
@@ -165,26 +166,26 @@ describe("box recipes are satisfiable on paper", () => {
 });
 
 describe("pack gate", () => {
-  it("blocks packing until every pick is eligible, approved, has a UPC and a verified package", () => {
-    const ok = snack({ status: "Approved" });
-    const pre = snack({ status: "Pre-approved" });
+  it("blocks packing until every pick passes the box, has a UPC and a verified package (no per-product approval)", () => {
+    const candidate = snack({ status: "Candidate", clinicianApprovedBy: null, clinicalDecision: "pending", approvalRole: null });
     const r = DEFAULT_BOX_RULES.blood_sugar;
-    expect(packBlockers("blood_sugar", [{ snack: ok, upc: "012", verifiedAt: "2026-10-05" }], r, settings.policy)).toEqual([]);
-    const out = packBlockers("blood_sugar", [{ snack: pre, upc: null, verifiedAt: null }], r, settings.policy);
-    expect(out[0]).toMatch(/Pre-approved, not PharmaGuide Team-approved, no UPC, package not verified/);
+    expect(packBlockers("blood_sugar", [{ snack: candidate, upc: "012", verifiedAt: "2026-10-05" }], r, settings.policy)).toEqual([]);
+    const out = packBlockers("blood_sugar", [{ snack: candidate, upc: null, verifiedAt: null }], r, settings.policy);
+    expect(out[0]).toMatch(/: no UPC, package not verified$/);
+    expect(packBlockers("blood_sugar", [{ snack: { ...candidate, sodium_mg: null }, upc: "012", verifiedAt: "2026-10-05" }], r, settings.policy)[0]).toMatch(/not eligible/);
   });
 });
 
 describe("approval ladder", () => {
-  it("legacy approvals and unverified packages block packing; Candidates block a lineup", () => {
+  it("a Candidate that passes the box can be in a lineup; an unverified package only warns", () => {
     const r = DEFAULT_BOX_RULES.blood_sugar;
-    const legacy = snack({ status: "Approved", clinicianApprovedBy: null });
-    expect(packBlockers("blood_sugar", [{ snack: legacy, upc: "1", verifiedAt: "2026-10-05" }], r, settings.policy)[0]).toMatch(/legacy approval/);
-    const picks = Array.from({ length: 14 }, () => ({ snack: snack({ categories: ["Savory"] }), category: "Savory" }));
-    picks[0] = { snack: { ...picks[0].snack, status: "Candidate" }, category: "Savory" };
+    const picks = Array.from({ length: 14 }, () => ({ snack: snack({ categories: ["Savory"], roles: { WHOLE_FOOD: true } }), category: "Savory" }));
+    picks[0] = { snack: { ...picks[0].snack, status: "Candidate", clinicianApprovedBy: null, packageVerified: false }, category: "Savory" };
     const checks = checkLineup("blood_sugar", { ...r, categories: [] }, picks, settings, 6);
-    expect(checks.find((c) => c.key === "candidate")!.pass).toBe(false);
-    expect(isReady(checks)).toBe(false);
+    expect(checks.find((c) => c.key === "candidate")).toBeUndefined();
+    expect(checks.find((c) => c.key === "approved")).toBeUndefined();
+    expect(checks.find((c) => c.key === "verified")).toMatchObject({ pass: false, level: "warn" });
+    expect(isReady(checks)).toBe(true);
   });
   it("a missing purchase cost never blocks a lineup (it's the shopping list), only warns", () => {
     const picks = Array.from({ length: 14 }, () => ({ snack: snack({ categories: ["Savory"], roles: { WHOLE_FOOD: true }, unitCostCents: null }), category: "Savory" }));
@@ -192,14 +193,13 @@ describe("approval ladder", () => {
     expect(checks.find((c) => c.key === "costed")).toMatchObject({ pass: false, level: "warn" });
     expect(isReady(checks)).toBe(true);
   });
-  it("lineup stage: provisional → PharmaGuide Team approved → cleared to pack", () => {
-    const pre = { snack: snack({ status: "Pre-approved", clinicianApprovedBy: null, packageVerified: false }) };
-    const approved = { snack: snack({ clinicianApprovedBy: "Laurie Pham", packageVerified: false }) };
-    const verified = { snack: snack({ clinicianApprovedBy: "Laurie Pham", packageVerified: true }) };
-    expect(lineupStage([pre, approved], true).label).toBe("READY · PROVISIONAL");
-    expect(lineupStage([approved, verified], true).label).toBe("READY · PharmaGuide Team APPROVED");
+  it("lineup stage: ready → cleared to pack once every package is verified", () => {
+    const unverified = { snack: snack({ status: "Candidate", clinicianApprovedBy: null, packageVerified: false }) };
+    const verified = { snack: snack({ status: "Candidate", clinicianApprovedBy: null, packageVerified: true }) };
+    expect(lineupStage([unverified, verified], true)).toMatchObject({ label: "READY", detail: expect.stringMatching(/^1 need a package check/) });
     expect(lineupStage([verified], true).label).toBe("CLEARED TO PACK");
     expect(lineupStage([verified], false).label).toBe("FIX");
+    expect(isReadyToPack({ status: "Retired", packageVerified: true })).toBe(false);
   });
 });
 
@@ -245,22 +245,11 @@ describe("lineup checks", () => {
     expect(ok.pass).toBe(true);
   });
 
-  it("a pre-approved pick still counts as not approved by PharmaGuide Team", () => {
-    const picks = heartLineup();
-    picks[0] = { ...picks[0], snack: { ...picks[0].snack, status: "Pre-approved" } };
-    const checks = checkLineup("heart", heartRules, picks, settings, 6);
-    expect(checks.find((c) => c.key === "approved")!.value).toBe("1 (need ≤ 0)");
-    expect(isReady(checks)).toBe(true); // a warning, not a blocker
-  });
-
-  it("duplicates and unapproved picks", () => {
+  it("duplicates block a lineup", () => {
     const picks = heartLineup();
     picks[1] = picks[0];
-    picks[2] = { ...picks[2], snack: { ...picks[2].snack, status: "Candidate" } };
     const checks = checkLineup("heart", heartRules, picks, settings, 6);
     expect(checks.find((c) => c.key === "unique")!.pass).toBe(false);
-    const approved = checks.find((c) => c.key === "approved")!;
-    expect(approved).toMatchObject({ pass: false, level: "warn" });
   });
 });
 

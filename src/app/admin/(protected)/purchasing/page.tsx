@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { isClinicianApproved } from "@/lib/admin/rules";
 import Link from "next/link";
 import { Card, Empty, PageHeader, Stat, Table, fieldClass } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
@@ -33,21 +32,17 @@ export default async function PurchasingPage({ searchParams }: { searchParams: P
       pricesBy.set(p.id, [{ vendorId: p.default_vendor_id, vendorName: vendorName.get(p.default_vendor_id ?? "") ?? "Estimate", unitCostCents: Number(p.quote_cost_cents ?? p.estimate_cost_cents), packQty: null, seenAt: (p.price_checked_on ?? p.updated_at).slice(0, 10), source: p.quote_cost_cents !== null ? "quote" : "estimate" }]);
   }
   const plan = planPurchases({
-    lineups: Object.fromEntries(BOX_SLUGS.map((b) => [b, [...ctx.boxes[b].picks.map((p) => p.snack.id), ...ctx.boxes[b].extras.map((e) => e.id)]])),
+    // A lineup that no longer passes its rules buys nothing until it's fixed.
+    lineups: Object.fromEntries(BOX_SLUGS.map((b) => [b, ctx.boxes[b].ready ? [...ctx.boxes[b].picks.map((p) => p.snack.id), ...ctx.boxes[b].extras.map((e) => e.id)] : []])),
     runSize,
     products: ctx.catalog.snacks.map((s) => ({ id: s.id, code: s.code, name: s.name, onHand: s.onHand, prices: pricesBy.get(s.id) ?? [] })),
     bufferPct: ctx.settings.purchaseBufferPct,
   });
-  // Pre-purchase gate: only clinician-approved products are purchase-ready; the rest are listed
-  // separately and left out of the totals (buy samples to verify the package, not inventory).
-  const ready = (id: string) => {
-    const s = ctx.catalog.byId.get(id);
-    return Boolean(s && isClinicianApproved(s));
-  };
-  const toBuy = plan.rows.filter((r) => r.toBuy > 0 && ready(r.product.id));
-  const notReady = plan.rows.filter((r) => r.toBuy > 0 && !ready(r.product.id));
+  // Every pick in a passing active lineup can be bought; the package is verified in hand when
+  // it arrives, before anything is packed.
+  const toBuy = plan.rows.filter((r) => r.toBuy > 0);
   const spendCents = toBuy.reduce((s, r) => s + (r.estSpendCents ?? 0), 0);
-  const listed = plan.rows.filter((r) => r.toBuy === 0 || ready(r.product.id));
+  const listed = plan.rows;
   const byVendor = [...toBuy.reduce((m, r) => {
     if (!r.vendor) return m;
     const v = m.get(r.vendor.vendorName) ?? { vendor: r.vendor.vendorName, spendCents: 0, lines: 0 };
@@ -84,20 +79,6 @@ export default async function PurchasingPage({ searchParams }: { searchParams: P
           </p>
         )}
       </Card>
-      {notReady.length > 0 && (
-        <Card title={`Not purchase-ready (${notReady.length})`} className="mb-4">
-          <p className="mb-2 text-sm text-muted-foreground">
-            In an active lineup but not yet PharmaGuide Team approved. Left out of the totals above: buy up to {ctx.settings.samplePurchaseMax} sample units to check the package, not inventory.
-          </p>
-          <ul className="space-y-1 text-sm">
-            {notReady.map((r) => (
-              <li key={r.product.id}>
-                <Link href={`/admin/products/${r.product.id}`} className="hover:underline">{r.product.name}</Link> · {r.orderQty} needed · {ctx.catalog.byId.get(r.product.id)?.status}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
       {plan.rows.length === 0 ? (
         <Empty>Activate a lineup on the Boxes tab to plan purchases.</Empty>
       ) : (

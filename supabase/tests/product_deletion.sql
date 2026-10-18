@@ -21,6 +21,30 @@ begin
  begin
   update shipments set planned_items=array[p] where id=ship; raise exception 'expected missing reference';
  exception when others then assert sqlerrm='Shipment contains a deleted or unknown product'; end;
+ -- Draft/archived slots go with the product in one transaction; a refusal keeps them.
+ declare dl uuid; al uuid; sp uuid;
+ begin
+  insert into products(name) values('Sample with draft slots') returning id into sp;
+  insert into box_lineups(box_slug,version,status) values('heart',901,'draft') returning id into dl;
+  insert into lineup_items(lineup_id,position,product_id) values(dl,1,sp);
+  perform delete_product_with_draft_slots(sp);
+  assert not exists(select 1 from products where id=sp), 'sample deleted';
+  assert not exists(select 1 from lineup_items where lineup_id=dl), 'draft slot removed';
+  insert into products(name) values('Sample in a shipment') returning id into sp;
+  insert into lineup_items(lineup_id,position,product_id) values(dl,2,sp);
+  insert into shipments(box_slug,planned_items) values('heart',array[sp]);
+  begin
+   perform delete_product_with_draft_slots(sp); raise exception 'expected shipment protection';
+  exception when others then assert sqlerrm like 'This product is linked%'; end;
+  assert exists(select 1 from lineup_items where lineup_id=dl and product_id=sp), 'refusal keeps the draft slot';
+  insert into box_lineups(box_slug,version,status) values('blood_sugar',902,'active') returning id into al;
+  insert into products(name) values('Sample in a live lineup') returning id into sp;
+  insert into lineup_items(lineup_id,position,product_id) values(al,1,sp);
+  begin
+   perform delete_product_with_draft_slots(sp); raise exception 'expected active-lineup protection';
+  exception when others then assert sqlerrm like 'This product is in an active lineup%'; end;
+ end;
+ assert not has_function_privilege('anon','delete_product_with_draft_slots(uuid)','execute');
  assert not has_function_privilege('anon','delete_product_permanently(uuid)','execute');
  assert not has_function_privilege('authenticated','delete_product_permanently(uuid)','execute');
 end $$;

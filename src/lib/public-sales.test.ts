@@ -12,19 +12,19 @@ beforeEach(() => vi.clearAllMocks());
 describe("public sale claims", () => {
   it("uses live founding limits and clinician state", async () => {
     m.sale.mockResolvedValue({ rules: DEFAULT_BOX_RULES, sales: Object.fromEntries(BOX_SLUGS.map(slug => [slug, {
-      available: true, clinicianApproved: true, founding: 12, remaining: 3, priceCents: 4700,
+      available: true, saleReady: true, founding: 12, remaining: 3, priceCents: 4700,
     }])), settings: DEFAULT_SETTINGS });
     const { boxes, offers } = await loadPublicCatalog();
     // Every offer ships switched off.
     expect(offers).toEqual({ welcome: null, subscription: null, foundingBonus: null });
-    expect(boxes.every(b => b.founding === 12 && b.sale?.clinicianApproved && b.sale?.state === "preorder")).toBe(true);
+    expect(boxes.every(b => b.founding === 12 && b.sale?.saleReady && b.sale?.state === "preorder")).toBe(true);
     expect(productJsonLd(boxes[0]).offers.availability).toBe("https://schema.org/PreOrder");
     expect(boxes[0].sale).not.toHaveProperty("expectedSettings");
     expect(boxes[0].sale).not.toHaveProperty("expectedRules");
   });
   it("never lets a broken offer read take the boxes down", async () => {
     m.sale.mockResolvedValue({ rules: DEFAULT_BOX_RULES, sales: Object.fromEntries(BOX_SLUGS.map(slug => [slug, {
-      available: true, clinicianApproved: true, founding: 12, remaining: 3, priceCents: 4700,
+      available: true, saleReady: true, founding: 12, remaining: 3, priceCents: 4700,
     }])), settings: undefined });
     const { boxes, offers } = await loadPublicCatalog();
     expect(boxes.every(b => b.sale?.available)).toBe(true);
@@ -33,7 +33,7 @@ describe("public sale claims", () => {
   it("keeps sales unavailable after failed reads without claiming review", async () => {
     m.sale.mockRejectedValue(new Error("offline"));
     const { boxes } = await loadPublicCatalog();
-    expect(boxes.every(b => b.founding === 0 && !b.sale?.available && !b.sale?.clinicianApproved && b.sale?.state === "waitlist")).toBe(true);
+    expect(boxes.every(b => b.founding === 0 && !b.sale?.available && !b.sale?.saleReady && b.sale?.state === "waitlist")).toBe(true);
     expect(productJsonLd(boxes[0]).offers.availability).toBe("https://schema.org/OutOfStock");
   });
 });

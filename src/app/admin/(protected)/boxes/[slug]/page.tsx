@@ -19,7 +19,8 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
   const { slug } = await params;
   if (!isBoxSlug(slug)) notFound();
   const [ctx, history, versionsRes, photosRes] = await Promise.all([
-    loadAdminContext(),
+    // The newest working lineup: a draft when it's newer than the live one.
+    loadAdminContext(undefined, true),
     loadPostageHistory(),
     db().from("box_lineups").select("*").eq("box_slug", slug).order("version", { ascending: false }).limit(20),
     db().from("product_photos").select("product_id, path, created_at").eq("kind", "front").order("created_at", { ascending: false }),
@@ -36,6 +37,7 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
   }).filter(([, f]) => f));
   const versions = must(versionsRes, "versions") as LineupRow[];
   const b = ctx.boxes[slug];
+  const live = versions.find((v) => v.status === "active") ?? null;
 
   return (
     <>
@@ -43,9 +45,10 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
         title={`${BOX_LABEL[slug]} box`}
         description={
           <>
-            1. Press <b>Build box</b> to pick {ctx.rules[slug].total} snacks. 2. Swap any you don&apos;t want. 3. <b>Save &amp; activate</b>: new orders get that lineup.
+            1. Press <b>Build box</b> to pick {ctx.rules[slug].total} snacks. 2. Anything marked ✕: press <b>Swap</b>. 3. When the Snack Facts card is all ✓, <b>Save &amp; activate</b>: new orders get that lineup.
             <span className="block text-xs">
-              {b.lineup ? `Orders now get lineup v${b.lineup.version}, saved by ${b.lineup.created_by ?? "—"}.` : "No lineup is active yet."}
+              {live ? `Orders now get lineup v${live.version}.` : "No lineup is live yet, so orders can't be planned."}
+              {b.lineup && b.lineup.status !== "active" ? ` You're editing draft v${b.lineup.version}, saved by ${b.lineup.created_by ?? "—"}.` : ""}
             </span>
           </>
         }
@@ -75,12 +78,13 @@ export default async function BoxPage({ params }: { params: Promise<{ slug: stri
         allRules={ctx.rules}
         photos={photos}
         findings={findings}
+        lineupNote={b.lineup ? `${b.lineup.status === "active" ? "Live" : "Draft"} v${b.lineup.version}` : "new"}
       />
       <div className="mt-6 grid items-start gap-4 lg:grid-cols-2">
         <Disclosure title="Box recipe" summary="saved default: ranges and hard limits">
           <RulesForm slug={slug} rules={ctx.rules[slug]} />
         </Disclosure>
-        <Disclosure title="Saved lineups" summary={`${versions.length} saved · v${b.lineup?.version ?? "—"} active`}>
+        <Disclosure title="Saved lineups" summary={`${versions.length} saved · ${live ? `v${live.version} active` : "none active"}`}>
           <p className="mb-3 text-sm text-muted-foreground">Each time you save a lineup it is kept here. The active one is what new orders get; activate an older one to go back to it.</p>
           {versions.length === 0 ? (
             <p className="text-sm text-muted-foreground">None saved yet.</p>

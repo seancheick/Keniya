@@ -8,7 +8,7 @@ export const faqs = [
   },
   {
     q: "How do you choose the snacks?",
-    a: "Every box has its own written standards, shown on its page. We read each label against them, and a snack has to pass before it can go in. Laurie Pham, PharmD, reviews each box's criteria and every season's lineup. The snacks change; the standards don't.",
+    a: "Every box has its own written standards, shown on its page. We read each label against them, and a snack has to pass before it can go in. Laurie Pham, PharmD, reviewed each box's criteria, and every pack's label is checked in hand before it ships. The snacks change; the standards don't.",
   },
   {
     q: "Is this a subscription?",

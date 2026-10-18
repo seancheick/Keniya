@@ -24,9 +24,11 @@ describe("packing gates", () => {
     const extra = snack({ id: "e", name: "Peanut extra" }); products.set("e", product(extra));
     expect(packingProblems({ ...input, products, ids: ["a", "b", "e"], extraCount: 1, avoid: "peanuts" }).join()).toMatch(/Peanut extra/);
   });
-  it("checks approval and total weight including extras", () => {
-    const products = new Map(input.products); products.set("a", product({ ...a, clinicianApprovedBy: null }));
-    expect(packingProblems({ ...input, products }).join()).toMatch(/re-attestation/);
+  it("checks eligibility and total weight including extras (no per-product approval)", () => {
+    const products = new Map(input.products); products.set("a", product({ ...a, clinicianApprovedBy: null, status: "Candidate" }));
+    expect(packingProblems({ ...input, products })).toEqual([]);
+    products.set("a", product({ ...a, sodium_mg: null }));
+    expect(packingProblems({ ...input, products }).join()).toMatch(/not eligible/);
     const extra = snack({ id: "e", unit_wt_oz: 7 }); products.set("a", product(a)); products.set("e", product(extra));
     const limited = { ...settings, policy: { ...settings.policy, maxBoxOz: 5 } };
     expect(packingProblems({ ...input, products, ids: ["a", "b", "e"], extraCount: 1, settings: limited }).join()).toMatch(/weight/i);

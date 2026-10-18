@@ -1,0 +1,90 @@
+import { describe, expect, it } from "vitest";
+import { snack } from "./__fixtures__/snacks";
+import { eligibleFor, screenResult } from "./rules";
+import { DEFAULT_BOX_RULES, DEFAULT_SETTINGS, inheritParentRules, type BoxSlug } from "./types";
+
+// Keniya Screening Standard v1.0 (owner 2026-10-18): every box answers PASS, FAIL or HOLD.
+const policy = DEFAULT_SETTINGS.policy;
+const rules = inheritParentRules(DEFAULT_BOX_RULES);
+const screen = (slug: BoxSlug, over: Parameters<typeof snack>[0]) => eligibleFor(slug, snack(over), rules[slug], policy);
+
+describe("PASS / FAIL / HOLD", () => {
+  it("a broken rule is FAIL, missing data is HOLD, a broken rule beats missing data", () => {
+    expect(screenResult([])).toBe("PASS");
+    expect(screenResult(["NUTRITION_MISSING", "PREGNANCY_CHECK_BLANK"])).toBe("HOLD");
+    expect(screenResult(["SODIUM_OVER"])).toBe("FAIL");
+    expect(screenResult(["NUTRITION_MISSING", "SODIUM_OVER"])).toBe("FAIL");
+    expect(screenResult(["OTHER"])).toBe("HOLD");
+  });
+  it("eligibleFor carries the result", () => {
+    expect(screen("heart", {}).result).toBe("PASS");
+    expect(screen("heart", { sodium_mg: null }).result).toBe("HOLD");
+    expect(screen("heart", { ingredients: null }).result).toBe("HOLD");
+    expect(screen("blood_sugar", { pregnancy_checks: {} }).result).toBe("HOLD"); // P8 single-serve unknown
+  });
+  it("a hard limit can't be outweighed by good nutrition (190 mg sodium roasted chickpeas in Heart)", () => {
+    const chickpeas = { protein_g: 6, fiber_g: 6, carbs_g: 15, sodium_mg: 190, sat_fat_g: 0.5, ingredients: "Chickpeas, sunflower oil, sea salt" };
+    const heart = screen("heart", chickpeas);
+    expect(heart.result).toBe("FAIL");
+    expect(heart.reasons).toContain("190 mg sodium (max 140 mg)");
+    expect(screen("blood_sugar", chickpeas).result).toBe("PASS");
+  });
+});
+
+describe("pregnancy-family policies", () => {
+  it("sodium ≤230 mg per pack in Pregnancy and Postpartum, inherited by GDM", () => {
+    for (const slug of ["pregnancy_comfort", "postpartum", "gestational_diabetes"] as const) {
+      expect(rules[slug].sodiumMax).toBe(230);
+      expect(screen(slug, { protein_g: 6, carbs_g: 12, sodium_mg: 230 }).result).toBe("PASS");
+      expect(screen(slug, { protein_g: 6, carbs_g: 12, sodium_mg: 240 }).result).toBe("FAIL");
+    }
+  });
+  it("cured or dried meat is out of the pregnancy family (Keniya policy), not out of Heart", () => {
+    const jerky = { protein_g: 9, carbs_g: 3, sodium_mg: 130, sat_fat_g: 1, ingredients: "Beef, water, salt, spices", name: "Beef jerky" };
+    const p = screen("pregnancy_comfort", { ...jerky, ingredients: "Beef jerky (beef, salt, spices)" });
+    expect(p.result).toBe("FAIL");
+    expect(p.reasons.join(" ")).toMatch(/Cured or dried meat|jerky/i);
+    expect(screen("heart", { ...jerky, roles: { UF: false, NS: false, WG: false, MF: false, CT: false, WHOLE_FOOD: true } }).result).not.toBe("FAIL");
+  });
+  it("a caffeine estimate over the limit holds for the maker's value; a label value over it fails", () => {
+    // 85 g dark chocolate bar, no caffeine printed: worst-case estimate 68 mg > 50 mg.
+    const bar = { unit_wt_oz: 3, caffeine_mg: null, ingredients: "Dark chocolate (cocoa mass, sugar, cocoa butter), almonds" };
+    const est = screen("pregnancy_comfort", bar);
+    expect(est.result).toBe("HOLD");
+    expect(est.codes).toContain("CAFFEINE_ESTIMATE_HOLD");
+    expect(screen("pregnancy_comfort", { ...bar, caffeine_mg: 60 }).result).toBe("FAIL");
+  });
+});
+
+describe("variety", () => {
+  it("at most 5 nut / seed picks in any box; Heart still needs at least 4", async () => {
+    const { checkLineup } = await import("./rules");
+    const nuts = (n: number) => Array.from({ length: 14 }, (_, i) => ({ snack: snack({ categories: ["Savory"], roles: i < n ? { NS: true } : { WHOLE_FOOD: true } }), category: "Savory" }));
+    for (const slug of ["blood_sugar", "heart", "gestational_diabetes"] as const) {
+      expect(rules[slug].nutSeedMax).toBe(5);
+      const r = { ...rules[slug], categories: [] };
+      expect(checkLineup(slug, r, nuts(6), DEFAULT_SETTINGS, 6).find((c) => c.key === "nutseed")).toMatchObject({ pass: false, level: "block" });
+      expect(checkLineup(slug, r, nuts(5), DEFAULT_SETTINGS, 6).find((c) => c.key === "nutseed")!.pass).toBe(true);
+    }
+    expect(checkLineup("heart", { ...rules.heart, categories: [] }, nuts(3), DEFAULT_SETTINGS, 6).find((c) => c.key === "nutseed")!.pass).toBe(false);
+  });
+});
+
+describe("missing or contradictory label data holds, never passes", () => {
+  it("no pack weight is HOLD (not a shipping FAIL); an oversize pack still fails", () => {
+    const r = screen("heart", { unit_wt_oz: null });
+    expect(r.result).toBe("HOLD");
+    expect(r.codes).toContain("WEIGHT_MISSING");
+    expect(screen("heart", { unit_wt_oz: 40 }).result).toBe("FAIL");
+  });
+  it("missing calories hold every box", () => {
+    for (const slug of ["blood_sugar", "heart", "glp1"] as const) expect(screen(slug, { calories: null }).result).toBe("HOLD");
+  });
+  it("an allergen statement that contradicts the ingredients doesn't satisfy P6", () => {
+    const p = { ingredients: "Wheat flour, milk, salt", allergens: "None declared on package", pregnancy_checks: { P8: "PASS" } };
+    const r = screen("pregnancy_comfort", p);
+    expect(r.result).toBe("HOLD");
+    expect(r.reasons).toContain("Not yet checked: P6");
+    expect(screen("pregnancy_comfort", { ...p, allergens: "Contains wheat, milk" }).result).toBe("PASS");
+  });
+});

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { requireAdmin } from "@/lib/admin/auth";
 import { avoidConflict } from "@/lib/admin/avoid";
 import { db, must, allRows, identityCode } from "@/lib/admin/db";
-import { eligibleFor, isClinicianApproved } from "@/lib/admin/rules";
+import { eligibleFor, isReadyToPack } from "@/lib/admin/rules";
 import { optimize } from "@/lib/admin/optimizer";
 import { matchLabel, readLabelCsv } from "@/lib/admin/pirateship";
 import { estimatePostage } from "@/lib/admin/postage";
@@ -47,7 +47,7 @@ async function planItems(slug: BoxSlug, needs: Needs) {
   const box = ctx.boxes[slug];
   if (!box.lineup || !box.picks.length) return { error: `No active ${slug} lineup. Build one on the Boxes tab first.` } as const;
   if (!box.ready) return { error: `The active ${slug} lineup fails current rules. Update it before planning orders.` } as const;
-  if ([...box.picks.map((p) => p.snack), ...box.extras].some((s) => !isClinicianApproved(s))) return { error: "The active lineup needs PharmaGuide Team approval before planning orders." } as const;
+  if ([...box.picks.map((p) => p.snack), ...box.extras].some((s) => !isReadyToPack(s))) return { error: "Every product in the active lineup needs its package verified before planning orders." } as const;
   const also = needs.alsoMeet.filter((b) => b !== slug).map((b) => ({ slug: b, rules: ctx.rules[b] }));
   const conflicts = ctx.catalog.snacks
     .map((s) => {
@@ -67,7 +67,7 @@ async function planItems(slug: BoxSlug, needs: Needs) {
       slug,
       rules: ctx.rules[slug],
       settings: ctx.settings,
-      snacks: ctx.catalog.snacks.filter(isClinicianApproved),
+      snacks: ctx.catalog.snacks.filter(isReadyToPack),
       objective: "balanced",
       // Fixed extras ship in the same box, so they count toward the weight limit.
       packagingOz: ctx.packOz + box.extras.reduce((t, e) => t + (e.unit_wt_oz ?? 0), 0),

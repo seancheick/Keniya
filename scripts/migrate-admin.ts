@@ -82,6 +82,13 @@ const MIGRATIONS: { file: string; applied: string }[] = [
   { file: "supabase/migrations/20261018020000_shipment_needs.sql", applied: "select exists (select 1 from information_schema.columns where table_schema='public' and table_name='shipments' and column_name='also_meet') and exists (select 1 from information_schema.columns where table_schema='public' and table_name='preorders' and column_name='avoid_allergens') as ok" },
   { file: "supabase/migrations/20261018030000_pack_needs_guard.sql", applied: "select to_regprocedure('public.pack_shipment_needs_checked(jsonb,uuid,uuid[],jsonb,uuid,text,integer,integer,numeric,integer)') is not null as ok" },
   { file: "supabase/migrations/20261019010000_blood_sugar_protein_fiber.sql", applied: "select coalesce((select (rules->>'proteinOrFiberMin')::int <> 5 from public.box_rules where box_slug='blood_sugar'), true) as ok" },
+  { file: "supabase/migrations/20261019020000_pregnancy_sodium.sql", applied: "select not exists (select 1 from public.box_rules where box_slug in ('pregnancy_comfort','postpartum') and (rules->'sodiumMax' is null or rules->'sodiumMax' = 'null'::jsonb)) as ok" },
+  {
+    file: "supabase/migrations/20261019030000_rules_not_approvals.sql",
+    applied:
+      "select position('Verified lineup required' in pg_get_functiondef('public.reserve_checkout(uuid,text,integer,text,text,uuid,jsonb,integer,jsonb)'::regprocedure)) > 0 and position('Product must be in use' in pg_get_functiondef('public.clinical_shipment_gate()'::regprocedure)) > 0 and position('complete label data and verified' in pg_get_functiondef('public.pack_shipment(uuid,text,integer,integer,numeric,integer)'::regprocedure)) > 0 and position('array[''P8'']' in pg_get_functiondef('public.product_diligence_complete(uuid)'::regprocedure)) > 0 as ok",
+  },
+  { file: "supabase/migrations/20261019040000_delete_product_with_draft_slots.sql", applied: "select to_regprocedure('public.delete_product_with_draft_slots(uuid)') is not null as ok" },
 ];
 
 const TABLES = [

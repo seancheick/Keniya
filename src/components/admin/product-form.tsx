@@ -262,7 +262,7 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
           </div>
         </Section>
 
-        <Section title="Pregnancy checks" hint="Product checks P1–P8 must pass; expiry (P9) is checked per purchased lot. P3–P6 fill themselves when the data is present; a current ingredient flag fails P2/P7a/P7b automatically until the PharmaGuide Team decides it on the Review page. P7c is informational.">
+        <Section title="Pregnancy checks" hint="Product checks P1–P8 must pass; expiry (P9) is checked per purchased lot. P1, P2, P7a and P7b come from the ingredient list and P3–P6 from the label data, so leave them blank; a matching ingredient fails its check. Only P8 (one pack = one serving) is yours to set. P7c is informational.">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
             {PREGNANCY_CHECK_KEYS.map((k) => (
               <Field key={k} label={k === "P7c" ? "P7c (info)" : k} hint={PREGNANCY_CHECK_LABEL[k]}>

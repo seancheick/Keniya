@@ -3,7 +3,7 @@ import type { CategoryCopy } from "@/lib/standards";
 
 export type Box = {
   /** Request-time sales and approval state; absent means checkout is unavailable. */
-  sale?: { available: boolean; clinicianApproved: boolean; priceCents: number; remaining: number; state: "preorder" | "sold_out" | "waitlist" };
+  sale?: { available: boolean; saleReady: boolean; priceCents: number; remaining: number; state: "preorder" | "sold_out" | "waitlist" };
   slug: BoxSlug;
   name: string;
   shortName: string;

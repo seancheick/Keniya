@@ -300,6 +300,8 @@ export const boxRulesSchema = z.object({
   wholeFoodMin: z.number().int().min(0).nullable(),
   /** Heart: nut / seed / unsaturated-fat picks. */
   nutSeedMin: z.number().int().min(0).nullable(),
+  /** Nut / seed / unsaturated-fat picks at most (variety; owner 2026-10-18: 5 of 14). */
+  nutSeedMax: z.number().int().min(0).nullable().default(null),
   /** Heart: fiber-forward (≥3 g) picks. */
   fiberMin: z.number().int().min(0).nullable(),
   /** Treats: controlled treats (Heart: CT role; Blood Sugar: picks that qualify only as a portioned treat). */
@@ -348,6 +350,8 @@ const none = {
   proteinOrFiberMin: null,
   wholeFoodMin: null,
   nutSeedMin: null,
+  // Variety (owner 2026-10-18, Screening Standard v1.0): no more than 5 nut/seed picks in 14.
+  nutSeedMax: 5,
   fiberMin: null,
   treatMax: null,
   carbsMax: null,
@@ -387,6 +391,9 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     // Not an ACOG number: ACOG sets a daily total, Keniya chooses 50 mg per pack so one snack
     // never spends a large share of the day. Chocolate (≤20 mg) passes.
     caffeineMax: 50,
+    // Owner 2026-10-18 (Screening Standard v1.0): ≤230 mg sodium per pack, the sodium limit of
+    // FDA's 2024 "healthy" claim for an individual food (10% of the Daily Value). Keniya policy.
+    sodiumMax: 230,
     // Founder-set 2026-10-17, pending clinician: the whole box ≤100 mg (half of ACOG's daily
     // 200 mg, spread over 14 snacks), and at most 4 chocolate picks (Consumer Reports found
     // lead/cadmium in dark chocolate; pregnancy is the most sensitive group).
@@ -513,6 +520,8 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     beverageMax: 3,
     proteinOrFiberMin: 5,
     caffeineMax: 100,
+    // Same per-pack sodium policy as Pregnancy (owner 2026-10-18).
+    sodiumMax: 230,
     boxCaffeineMax: 150,
     chocolateMax: 4,
   },
@@ -529,7 +538,7 @@ export function resolveBoxRules(slug: BoxSlug, stored: unknown): BoxRules {
 /** Per-pick and per-box ceilings a child box inherits from its parents (the stricter value wins). */
 const INHERITED_CAPS = [
   "carbsMax", "beverageCarbsMax", "beverageAddedSugarMax", "addedSugarMax", "treatAddedSugarMax", "treatMax",
-  "sodiumMax", "satFatMax", "satFatNutMax", "caffeineMax", "boxCaffeineMax", "chocolateMax", "kindMax",
+  "sodiumMax", "satFatMax", "satFatNutMax", "caffeineMax", "boxCaffeineMax", "chocolateMax", "kindMax", "nutSeedMax",
 ] as const satisfies readonly (keyof BoxRules)[];
 
 /** Exception allowances: null means "no exception" (the stricter base limit applies). */

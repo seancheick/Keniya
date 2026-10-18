@@ -14,7 +14,7 @@ const input = { boxSlug: "heart", requestKey: "a80954e5-4826-4f26-8216-5357f8d79
 beforeEach(() => {
  vi.clearAllMocks();
  m.expired.mockResolvedValue({ data: [], error: null });
- m.sale.mockResolvedValue({ heart: { available: true, clinicianApproved: true, founding: 50, priceCents: 4700 } });
+ m.sale.mockResolvedValue({ heart: { available: true, saleReady: true, founding: 50, priceCents: 4700 } });
  m.price.mockResolvedValue({ active: true, type: "one_time", currency: "usd", unit_amount: 4700 });
  m.reserve.mockImplementation(async (name: string) => ["allow_public_attempt", "bind_checkout_session"].includes(name) ? { data: true, error: null } : { data: { expires_at: "2026-10-06T20:00:00Z" }, error: null });
  m.create.mockResolvedValue({ id: "cs_1", url: "https://checkout.stripe.com/example" });
@@ -46,7 +46,7 @@ describe("checkout safeguards", () => {
   expect(m.create).not.toHaveBeenCalled();
  });
  it("rejects unavailable sale before creating session", async () => {
-  m.sale.mockResolvedValue({ heart: { available: false, clinicianApproved: false } });
+  m.sale.mockResolvedValue({ heart: { available: false, saleReady: false } });
   expect((await startCheckout(input)).ok).toBe(false);
   expect(m.create).not.toHaveBeenCalled();
  });
@@ -67,7 +67,7 @@ describe("checkout safeguards", () => {
   expect(m.create).not.toHaveBeenCalled();
  });
  it("recovers its own last-slot hold even when public capacity is sold out", async () => {
-  m.sale.mockResolvedValue({ heart: { available: false, clinicianApproved: true, founding: 1, remaining: 0, priceCents: 4700 } });
+  m.sale.mockResolvedValue({ heart: { available: false, saleReady: true, founding: 1, remaining: 0, priceCents: 4700 } });
   m.reserve.mockImplementation(async (name: string) => ["allow_public_attempt", "bind_checkout_session"].includes(name) ? { data: true } : { data: { session_id: "cs_original", session_url: "https://checkout.stripe.com/original" }, error: null });
   m.retrieve.mockResolvedValue({ status: "open", url: "https://checkout.stripe.com/original" });
   expect(await startCheckout(input)).toEqual({ ok: true, url: "https://checkout.stripe.com/original" });
