@@ -1,6 +1,6 @@
 # Handoff: Keniya Admin (`/admin`)
 
-**Status, Oct 18 2026: pre-purchase hardening (same branch, PR seancheick/Keniya#5, unmerged).** Owner review before any inventory purchase. Decisions and clinician questions: `docs/screening-decisions-2026-10-17.md`. Catalog impact: `pnpm catalog:report [workbook]` → `docs/pre-purchase-report-2026-10-18.md`.
+**Status, Oct 18 2026: pre-purchase hardening (PR seancheick/Keniya#5, merged). Follow-up: clinician review round 1 in PR seancheick/Keniya#7, merged; see `docs/handoff-2026-10-18.md`.** Owner review before any inventory purchase. Decisions and clinician questions: `docs/screening-decisions-2026-10-17.md`. Catalog impact: `pnpm catalog:report [workbook]` → `docs/pre-purchase-report-2026-10-18.md`.
 - **Current safety findings beat stale decisions:**
   - eligibility re-screens the ingredients (plus the `watchlist` table) every time;
   - a stored PASS can't outlive a new watchlist or no-go ingredient;
