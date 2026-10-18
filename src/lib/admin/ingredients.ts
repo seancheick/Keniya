@@ -174,7 +174,8 @@ const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /**
  * Screen an ingredient list. `watchlist` adds the database rows: "contraindicated"/"avoid"
- * become P7a fails, "monitor" becomes a review flag (caffeine is handled separately).
+ * become P7a fails, "monitor" becomes information shown to the reviewer (caffeine is handled
+ * separately).
  */
 // Eligibility screens the same label text many times per optimizer run; results are pure, so
 // cache them (bounded) by text + watchlist. Cached arrays and findings are frozen.
@@ -212,8 +213,10 @@ function screen(hay: string, watchlist: WatchlistRow[]): Finding[] {
     if (!name || name === "caffeine") continue;
     const m = hay.match(new RegExp(`\\b${escape(name)}\\b`, "i"));
     if (!m) continue;
+    // "monitor" means watch the amount (e.g. vitamin C/E added as antioxidants), not hold the
+    // product: it's shown as information. "avoid"/"contraindicated" rows fail P7a.
     const monitor = (w.category ?? "").toLowerCase() === "monitor";
-    add(finding("watchlist", monitor ? "review" : "pregnancy_fail", "P7a", `Pregnancy watchlist: ${w.ingredient}${w.category ? ` (${w.category})` : ""}`, m[0]));
+    add(finding("watchlist", monitor ? "info" : "pregnancy_fail", "P7a", `Pregnancy watchlist: ${w.ingredient}${w.category ? ` (${w.category})` : ""}`, m[0]));
   }
   return out;
 }

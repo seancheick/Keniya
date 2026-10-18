@@ -19,7 +19,7 @@ import { BOX_LABEL, BOX_SLUGS, DEFAULT_SETTINGS, inheritParentRules, type BoxRul
 import { readWorkbook, type WbProduct } from "./workbook";
 
 const EXCLUDE: ReasonCode[] = ["REJECTED", "RETIRED", "DYE", "PHO", "CARBS_OVER", "ADDED_SUGAR_OVER", "SODIUM_OVER", "SAT_FAT_OVER", "CAFFEINE_OVER", "MULTI_SERVE", "PREGNANCY_CHECK_FAILED", "NO_PATHWAY", "SHIPPING_POLICY", "OTHER"];
-const EVIDENCE: ReasonCode[] = ["NUTRITION_MISSING", "SAT_FAT_MISSING", "SINGLE_SERVE_UNCONFIRMED", "PREGNANCY_CHECK_BLANK", "CAFFEINE_UNKNOWN", "CAFFEINE_ESTIMATE_HOLD"];
+const EVIDENCE: ReasonCode[] = ["NUTRITION_MISSING", "INGREDIENTS_MISSING", "SAT_FAT_MISSING", "SINGLE_SERVE_UNCONFIRMED", "PREGNANCY_CHECK_BLANK", "CAFFEINE_UNKNOWN", "CAFFEINE_ESTIMATE_HOLD"];
 const CLINICAL: ReasonCode[] = ["SAFETY_FINDING", "CLINICIAN_DECISION"];
 
 type Bucket = "eligible" | "clinical" | "evidence" | "high_fiber" | "excluded";
@@ -64,10 +64,8 @@ function classify(slug: BoxSlug, s: Snack, rules: BoxRules, settings: Settings):
   const extra: string[] = [];
   const n = netCarbs(s);
   if (n.issue === "INVALID_NUTRITION") extra.push(n.note);
-  // Without ingredient text the dye, watchlist, no-go, caffeine-source and allergen screens
-  // can't run, so the product can't count as preliminarily eligible.
-  if (!s.ingredients?.trim()) extra.push("Ingredients not on file: ingredient screening not done");
-  else extra.push(...productAllergens(s).issues);
+  // Missing ingredient text already fails eligibility (rules.ts base()); allergens need it too.
+  if (s.ingredients?.trim()) extra.push(...productAllergens(s).issues);
   if (e.fits && !extra.length) return { bucket: "eligible", codes, reasons: [] };
   if (highFiberReview(slug, s, rules, settings.policy, s.rejectReason)) return { bucket: "high_fiber", codes, reasons: [...e.reasons, ...extra] };
   if (codes.some((c) => EXCLUDE.includes(c))) return { bucket: "excluded", codes, reasons: e.reasons };

@@ -1,0 +1,21 @@
+[
+  {
+    "code": "P008",
+    "version_id": "e65c65a5-6a59-4d92-8145-923beb350993",
+    "before": {
+      "protein_g": null
+    }
+  },
+  {
+    "code": "P107",
+    "version_id": "21be5c8d-88ce-4423-86a3-df36b1db90c9",
+    "before": {
+      "calories": null,
+      "protein_g": null,
+      "fiber_g": null,
+      "carbs_g": null,
+      "sodium_mg": null,
+      "sat_fat_g": null
+    }
+  }
+]

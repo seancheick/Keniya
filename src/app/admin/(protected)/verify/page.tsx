@@ -1,3 +1,4 @@
+import { labelRoundingIssues } from "@/lib/admin/label-rounding";
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/admin/ui";
 import { VerifyFlow, type VerifyItem } from "@/components/admin/verify-flow";
@@ -53,6 +54,7 @@ export default async function VerifyPage() {
           "Sodium (mg)": s.sodium_mg,
           "Saturated fat (g)": s.sat_fat_g,
         },
+        derived: labelRoundingIssues(s),
         ingredients: v?.ingredients ?? null,
         allergens: s.allergens,
         frontPhoto: photoOf(s.id, "front"),

@@ -13,6 +13,8 @@ const SIZE: [key: keyof BoxRules, label: string, hint: string][] = [
   ["substantialMin", "Full-size snacks: at least", "Regular snacks, not minis or drinks"],
   ["miniMax", "Mini snacks: at most", "Small or sample-size items"],
   ["beverageMax", "Drinks: at most", "Drink mixes and tea"],
+  ["kindMax", "Same snack type: at most", "Variety: e.g. no more than 2 applesauce pouches or 2 teas per box"],
+  ["chocolateMax", "Chocolate snacks: at most", "Cocoa/chocolate picks per box (warning)"],
 ];
 const HEALTH: [key: keyof BoxRules, label: string, hint: string][] = [
   ["proteinOrFiberMin", "Protein or fiber snacks: at least", "5 g+ protein with ≤25 g carbs, or 3 g+ fiber with ≤5 g added sugar plus 3 g+ protein or nut/seed fat"],
@@ -36,6 +38,9 @@ const GATES: [key: keyof BoxRules, label: string, hint: string][] = [
   ["satFatMax", "Saturated fat: at most (g)", "Per pack; blank sat fat counts as not eligible when set"],
   ["satFatNutMax", "Saturated fat from nuts/seeds: at most (g)", "Nut/seed picks only, and not when the label lists added palm, palm-kernel, coconut or partially hydrogenated oil"],
   ["caffeineMax", "Caffeine: at most (mg)", "Per pack; a Keniya threshold, not a medical cutoff"],
+  ["boxCaffeineMax", "Caffeine per box: at most (mg)", "Whole box, estimates included (warning)"],
+  ["netCarbsReviewMax", "High-fiber review: net carbs at most (g)", "Internal review list only, never eligibility"],
+  ["carbsReviewCeiling", "High-fiber review: total carbs at most (g)", "Internal review boundary, not a clinical threshold"],
 ];
 
 export function RulesForm({ slug, rules }: { slug: BoxSlug; rules: BoxRules }) {

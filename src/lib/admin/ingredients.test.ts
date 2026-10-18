@@ -48,14 +48,14 @@ describe("ingredient screening (real labels)", () => {
     expect(codes("chocolate, rum, sugar")).toContain("alcohol");
     expect(codes("organic black tea, ginger")).toEqual(["caffeine_source"]);
   });
-  it("database watchlist rows add P7a fails; 'monitor' rows are review", () => {
+  it("database watchlist rows add P7a fails; 'monitor' rows are information", () => {
     const f = screenIngredients("oats, bitter orange peel, sage", [
       { ingredient: "bitter orange", category: "avoid" },
       { ingredient: "sage", category: "monitor" },
     ]);
     expect(f.map((x) => [x.evidence.toLowerCase(), x.severity])).toEqual([
       ["bitter orange", "pregnancy_fail"],
-      ["sage", "review"],
+      ["sage", "info"],
     ]);
   });
 });

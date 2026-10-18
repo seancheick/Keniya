@@ -27,6 +27,7 @@ import { daysUntil } from "@/lib/admin/optimizer";
 import { netCarbs, netCarbsLabel } from "@/lib/admin/carbs";
 import { ALLERGEN_LABEL, productAllergens } from "@/lib/admin/allergens";
 import { caffeineDisplay } from "@/lib/admin/caffeine";
+import { derivedNutritionNote, labelRoundingIssues } from "@/lib/admin/label-rounding";
 import { ingredientsHash } from "@/lib/admin/ingredients";
 import { derivedPregnancyChecks, eligibleBoxes, highFiberReview, shipsUnderPolicy } from "@/lib/admin/rules";
 import { BOX_LABEL, BOX_SLUGS, NUTRIENT_KEYS, PREGNANCY_CHECK_KEYS, ROLE_KEYS, ROLE_LABEL, type BoxSlug } from "@/lib/admin/types";
@@ -178,6 +179,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
                 <dd>{snack.unit_wt_oz ?? "—"} oz</dd>
               </div>
             </dl>
+            {labelRoundingIssues(snack).length > 0 && <p className="mt-2 text-sm text-amber-800">{derivedNutritionNote(labelRoundingIssues(snack))}</p>}
             <dl className="mt-4 space-y-2 text-sm">
               <div>
                 <dt className="text-xs text-muted-foreground">Pregnancy checks</dt>

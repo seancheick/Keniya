@@ -45,6 +45,8 @@ const CROSS_CONTACT = /(may contain|may also contain|made (in|on) (a )?(facility
 
 const has = (text: string, a: Allergen, words = WORDS) => words[a].test(text);
 
+const SOY_OIL = /\bsoy(bean)?\s+oils?\b|\b(oils?|shortening)\s*\([^)]*\bsoy(bean)?\b[^)]*\)/i;
+
 // FALCPA exempts highly refined oils, so labels don't declare soy for "soybean oil" or
 // "vegetable oils (canola and/or soybean)". When the list names any unrefined, virgin, cold- or
 // expeller-pressed oil the exemption isn't assumed (strict), and lecithin, flour, protein etc.
@@ -109,6 +111,8 @@ export function allergenConflict(p: { allergens?: string | null; ingredients?: s
   if (!a.verifiable) return `allergens can't be verified (${a.issues.join("; ")})`;
   const hit = excluded.filter((x) => a.contains.includes(x));
   if (hit.length) return `contains ${hit.map((x) => ALLERGEN_LABEL[x].toLowerCase()).join(", ")}`;
+  // Label-exempt refined soybean oil still never goes to a customer excluding soy.
+  if (excluded.includes("soy") && SOY_OIL.test(p.ingredients ?? "")) return "lists soybean oil (label-exempt when highly refined, still excluded for soy)";
   const cross = excluded.filter((x) => a.mayContain.includes(x));
   if (cross.length) return `cross-contact warning for ${cross.map((x) => ALLERGEN_LABEL[x].toLowerCase()).join(", ")}`;
   return null;

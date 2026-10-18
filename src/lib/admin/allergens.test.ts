@@ -36,6 +36,22 @@ describe("product allergens (FDA 9)", () => {
     expect(r.issues[0]).toMatch(/milk/);
     expect(productAllergens({ allergens: "Contains: none.", ingredients: "oats, sesame seeds" }).issues[0]).toMatch(/says none/);
   });
+  it("one-line statements split Contains from 'may contain' mid-sentence", () => {
+    expect(productAllergens({ allergens: "almonds, peanuts, soy, may contain sesame/other tree nuts", ingredients: "almonds, peanuts, honey, soy lecithin" }))
+      .toMatchObject({ contains: ["tree_nuts", "peanuts", "soy"], mayContain: ["sesame"], verifiable: true });
+  });
+  it("refined soybean oil isn't a soy ingredient; soy lecithin is", () => {
+    expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, soybean oil, salt" }).issues).toEqual([]);
+    expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, soy lecithin" }).issues[0]).toMatch(/soy/);
+    expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, expeller-pressed soybean oil" }).issues[0]).toMatch(/soy/);
+    expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, unrefined soy oil" }).issues[0]).toMatch(/soy/);
+  });
+  it("any soybean oil conflicts for a customer excluding soy", () => {
+    const p = { allergens: "Contains wheat.", ingredients: "wheat flour, soybean oil, salt" };
+    expect(allergenConflict(p, ["soy"])).toMatch(/soybean oil/);
+    expect(allergenConflict(p, ["peanuts"])).toBeNull();
+    expect(allergenConflict({ allergens: "Contains wheat.", ingredients: "wheat flour, vegetable oils (canola and/or soybean), salt" }, ["soy"])).toMatch(/soybean oil/);
+  });
   it("no statement can't be verified", () => {
     expect(productAllergens({ allergens: null, ingredients: "oats" }).verifiable).toBe(false);
   });

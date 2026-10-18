@@ -322,6 +322,8 @@ export const boxRulesSchema = z.object({
   boxCaffeineMax: z.number().min(0).nullable().default(null),
   /** Cocoa/chocolate picks per box (dark chocolate carries lead and cadmium; warning). */
   chocolateMax: z.number().int().min(0).nullable().default(null),
+  /** Picks of one snack type per box (fruit pouch, tea, crackers…); a hard variety rule. */
+  kindMax: z.number().int().min(1).nullable().default(null),
   /**
    * Internal high-fiber review only, never eligibility: a pick failing nothing but the total-carb
    * limit is listed for review when net carbs (total − fiber) ≤ this and total ≤ carbsReviewCeiling.
@@ -361,6 +363,7 @@ const none = {
   caffeineMax: null,
   boxCaffeineMax: null,
   chocolateMax: null,
+  kindMax: 2,
 };
 
 /** Starting rules (workbook v4 + v3.1 proposals). Editable on the Boxes tab. */
@@ -400,7 +403,8 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
       { name: "Hydration", min: 0, max: 1 },
       { name: "Comfort", min: 0, max: 2 },
     ],
-    proteinOrFiberMin: 5,
+    // Clinician review 2026-10-18: the box must read protein/fiber-forward (was 5).
+    proteinOrFiberMin: 8,
     wholeFoodMin: 2,
     // Picks that qualify only as a portioned treat (no protein/fiber/whole-food anchor).
     treatMax: 3,
@@ -525,7 +529,7 @@ export function resolveBoxRules(slug: BoxSlug, stored: unknown): BoxRules {
 /** Per-pick and per-box ceilings a child box inherits from its parents (the stricter value wins). */
 const INHERITED_CAPS = [
   "carbsMax", "beverageCarbsMax", "beverageAddedSugarMax", "addedSugarMax", "treatAddedSugarMax", "treatMax",
-  "sodiumMax", "satFatMax", "satFatNutMax", "caffeineMax", "boxCaffeineMax", "chocolateMax",
+  "sodiumMax", "satFatMax", "satFatNutMax", "caffeineMax", "boxCaffeineMax", "chocolateMax", "kindMax",
 ] as const satisfies readonly (keyof BoxRules)[];
 
 /** Exception allowances: null means "no exception" (the stricter base limit applies). */

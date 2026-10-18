@@ -9,6 +9,7 @@ import { verifyPackage, type VerifyState } from "@/actions/admin/verify";
 import { BarcodeScanner, sameBarcode } from "@/components/admin/barcode-scanner";
 import { Badge, fieldClass } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
+import { derivedNutritionNote } from "@/lib/admin/label-rounding";
 import { cn } from "@/lib/utils";
 
 export type VerifyItem = {
@@ -27,6 +28,8 @@ export type VerifyItem = {
   eligible: string[];
   unitOz: number | null;
   nutrition: Record<string, number | null>;
+  /** Values that can't be printed label values (FDA rounding): calculated, must be replaced. */
+  derived: string[];
   ingredients: string | null;
   allergens: string | null;
   frontPhoto: string | null;
@@ -293,6 +296,11 @@ function VerifyPanel({
               </div>
             ))}
           </dl>
+          {item.derived.length > 0 && (
+            <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-sm text-amber-900">
+              {derivedNutritionNote(item.derived)} Open the product to update it before verifying.
+            </p>
+          )}
           {/* eslint-disable-next-line @next/next/no-img-element -- signed private URL, not optimizable */}
           {item.nutritionPhoto && <img src={item.nutritionPhoto} alt="Nutrition panel on file" className="mt-2 max-h-56 rounded-lg border" />}
         </div>
