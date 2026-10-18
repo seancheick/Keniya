@@ -36,6 +36,10 @@ export type FindingCode =
 export type Finding = {
   code: FindingCode;
   severity: FindingSeverity;
+  /** "brand" = a Keniya standard or preference (dyes, sugar alcohols), never described as unsafe. */
+  kind: "safety" | "brand";
+  /** Stable identity for a clinician resolution: `${code}:${evidence, lowercased}`. */
+  key: string;
   /** Pregnancy check the finding speaks to, when it maps to one. */
   check?: "P2" | "P3" | "P7a" | "P7b" | "P7c";
   label: string;
@@ -141,6 +145,12 @@ const RULES: Rule[] = [
   },
 ];
 
+const BRAND_CODES: FindingCode[] = ["synthetic_dye", "sugar_alcohol"];
+
+function finding(code: FindingCode, severity: FindingSeverity, check: Finding["check"], label: string, evidence: string): Finding {
+  return { code, severity, check, label, evidence, kind: BRAND_CODES.includes(code) ? "brand" : "safety", key: `${code}:${evidence.toLowerCase()}` };
+}
+
 /** Pregnancy watchlist rows from the database (`public.watchlist`). */
 export type WatchlistRow = { ingredient: string; category: string | null };
 
@@ -164,7 +174,7 @@ export function screenIngredients(text: string | null | undefined, watchlist: Wa
   };
   for (const r of RULES) {
     const m = hay.match(r.re);
-    if (m) add({ code: r.code, severity: r.severity, check: r.check, label: r.label, evidence: m[0].trim() });
+    if (m) add(finding(r.code, r.severity, r.check, r.label, m[0].trim()));
   }
   for (const w of watchlist) {
     const name = w.ingredient.trim().toLowerCase();
@@ -172,13 +182,7 @@ export function screenIngredients(text: string | null | undefined, watchlist: Wa
     const m = hay.match(new RegExp(`\\b${escape(name)}\\b`, "i"));
     if (!m) continue;
     const monitor = (w.category ?? "").toLowerCase() === "monitor";
-    add({
-      code: "watchlist",
-      severity: monitor ? "review" : "pregnancy_fail",
-      check: "P7a",
-      label: `Pregnancy watchlist: ${w.ingredient}${w.category ? ` (${w.category})` : ""}`,
-      evidence: m[0],
-    });
+    add(finding("watchlist", monitor ? "review" : "pregnancy_fail", "P7a", `Pregnancy watchlist: ${w.ingredient}${w.category ? ` (${w.category})` : ""}`, m[0]));
   }
   return out;
 }
@@ -203,14 +207,41 @@ export function suggestedFails(findings: Finding[]): Partial<Record<"P2" | "P7a"
   return out;
 }
 
-/** Blank P2/P7a/P7b become FAIL when the ingredients match a flag; decisions already made are kept. */
+/**
+ * A current finding beats a stored decision: P2/P7a/P7b become FAIL when the ingredients match a
+ * flag, even over an older PASS, unless a clinician (or, for brand preferences, an admin) has
+ * recorded an "accept" resolution for that exact finding on these exact ingredients.
+ */
 export function withScreeningFails(
   checks: Record<string, string>,
   ingredients: string | null | undefined,
   watchlist: WatchlistRow[] = [],
+  resolutions: Resolution[] = [],
 ): Record<string, string> {
+  const open = unresolved(screenIngredients(ingredients, watchlist), ingredients, resolutions);
   const out = { ...checks };
-  for (const k of Object.keys(suggestedFails(screenIngredients(ingredients, watchlist))) as (keyof ReturnType<typeof suggestedFails>)[])
-    if (!(out[k] ?? "").trim()) out[k] = "FAIL";
+  for (const k of Object.keys(suggestedFails(open)) as (keyof ReturnType<typeof suggestedFails>)[]) out[k] = "FAIL";
   return out;
+}
+
+/** A recorded decision on one finding, bound to the ingredient text it was made on. */
+export type Resolution = { finding_key: string; ingredients_hash: string; decision: "accept" | "confirm_fail" };
+
+/** Deterministic hash of the normalized ingredient list (FNV-1a, 32-bit, hex). Any edit voids a resolution. */
+export function ingredientsHash(text: string | null | undefined): string {
+  const t = (text ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+  let h = 0x811c9dc5;
+  for (let i = 0; i < t.length; i++) {
+    h ^= t.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, "0");
+}
+
+/** Findings without a valid "accept" resolution. Dyes can never be accepted (Keniya standard). */
+export function unresolved(findings: Finding[], ingredients: string | null | undefined, resolutions: Resolution[] = []): Finding[] {
+  const hash = ingredientsHash(ingredients);
+  return findings.filter(
+    (f) => f.code === "synthetic_dye" || !resolutions.some((r) => r.finding_key === f.key && r.ingredients_hash === hash && r.decision === "accept"),
+  );
 }

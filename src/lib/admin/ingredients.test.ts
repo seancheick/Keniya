@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveCaffeine } from "./caffeine";
-import { screenIngredients, suggestedFails, syntheticDye, withScreeningFails } from "./ingredients";
+import { ingredientsHash, screenIngredients, suggestedFails, syntheticDye, unresolved, withScreeningFails } from "./ingredients";
 
 // Real labels photographed in store (2026-10-17).
 const GUMMIES =
@@ -81,8 +81,23 @@ describe("caffeine resolution", () => {
 });
 
 describe("withScreeningFails", () => {
-  it("fills blank checks with FAIL and keeps decisions already made", () => {
-    expect(withScreeningFails({ P2: "", P7a: "PASS" }, "sugar, maltitol, licorice root, rum")).toEqual({ P2: "FAIL", P7a: "PASS", P7b: "FAIL" });
+  it("a current finding overrides an older PASS; clean ingredients keep decisions", () => {
+    expect(withScreeningFails({ P2: "", P7a: "PASS" }, "sugar, maltitol, licorice root, rum")).toEqual({ P2: "FAIL", P7a: "FAIL", P7b: "FAIL" });
     expect(withScreeningFails({ P1: "PASS" }, "oats, honey")).toEqual({ P1: "PASS" });
+  });
+  it("an accepted resolution on the same ingredients keeps the PASS; an edit voids it", () => {
+    const ing = "oats, licorice root";
+    const r = [{ finding_key: "watchlist:licorice root", ingredients_hash: ingredientsHash(ing), decision: "accept" as const }];
+    expect(withScreeningFails({ P7a: "PASS" }, ing, [], r)).toEqual({ P7a: "PASS" });
+    expect(withScreeningFails({ P7a: "PASS" }, `${ing}, sugar`, [], r)).toEqual({ P7a: "FAIL" });
+  });
+});
+
+describe("finding kinds", () => {
+  it("dyes and sugar alcohols are brand standards; dyes can't be accepted", () => {
+    const f = screenIngredients("sugar, maltitol, Red 40, licorice root");
+    expect(f.map((x) => [x.code, x.kind])).toEqual([["synthetic_dye", "brand"], ["watchlist", "safety"], ["sugar_alcohol", "brand"]]);
+    const all = f.map((x) => ({ finding_key: x.key, ingredients_hash: ingredientsHash("sugar, maltitol, Red 40, licorice root"), decision: "accept" as const }));
+    expect(unresolved(f, "sugar, maltitol, Red 40, licorice root", all).map((x) => x.code)).toEqual(["synthetic_dye"]);
   });
 });

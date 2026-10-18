@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteProductPhoto } from "@/actions/admin/products";
-import { PhotoUpload, PriceSightingForm, StatusControls } from "@/components/admin/product-widgets";
+import { FindingResolver, PhotoUpload, PriceSightingForm, StatusControls } from "@/components/admin/product-widgets";
 import { Badge, Card, FitBadges, FitReasons, PageHeader, StatusBadge, Table, TextLink, expiryTone } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { fmt$ } from "@/lib/admin/costing";
@@ -15,6 +15,7 @@ import {
   loadVendors,
   must,
   signedUrls,
+  loadScreening,
   toSnack,
   type LotRow,
   type ProductRow,
@@ -24,7 +25,7 @@ import {
 } from "@/lib/admin/db";
 import { daysUntil } from "@/lib/admin/optimizer";
 import { caffeineDisplay } from "@/lib/admin/caffeine";
-import { screenIngredients } from "@/lib/admin/ingredients";
+import { ingredientsHash } from "@/lib/admin/ingredients";
 import { derivedPregnancyChecks, eligibleBoxes, shipsUnderPolicy } from "@/lib/admin/rules";
 import { BOX_LABEL, NUTRIENT_KEYS, PREGNANCY_CHECK_KEYS, ROLE_KEYS, ROLE_LABEL, type BoxSlug } from "@/lib/admin/types";
 
@@ -75,6 +76,9 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   const shippedUnits = (must(shippedRes, "shipped") as { qty: number }[]).reduce((s, r) => s + r.qty, 0);
   const current = versions.find((v) => v.is_current);
   const snack = toSnack(p, current, lots, prices[0]?.unit_cost_cents ?? null, packs);
+  const screening = await loadScreening(current?.id, current?.ingredients);
+  snack.findings = screening.findings;
+  snack.resolutions = screening.resolutions;
   const fits = eligibleBoxes(snack, rules, settings.policy, p.reject_reason);
   const ships = shipsUnderPolicy(snack, settings.policy);
   const urls = await signedUrls(photos.map((x) => x.path));
@@ -188,12 +192,20 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
               <div>
                 <dt className="text-xs text-muted-foreground">Ingredients</dt>
                 <dd className="whitespace-pre-wrap">{current?.ingredients ?? "—"}</dd>
-                {screenIngredients(current?.ingredients).map((f) => (
-                  <dd key={`${f.code}:${f.evidence}`} className={f.severity === "info" ? "text-xs text-muted-foreground" : "text-xs text-amber-800"}>
-                    {f.check ? `${f.check}: ` : ""}
-                    {f.label} ({f.evidence})
-                  </dd>
-                ))}
+                {screening.findings.map((f) => {
+                  const r = screening.resolutions.find((x) => x.finding_key === f.key && x.ingredients_hash === ingredientsHash(current?.ingredients));
+                  return (
+                    <dd key={f.key} className={f.severity === "info" ? "text-xs text-muted-foreground" : "space-y-1 text-xs text-amber-800"}>
+                      <span>
+                        {f.check ? `${f.check}: ` : ""}
+                        {f.label} ({f.evidence}){f.kind === "brand" ? " · brand standard" : ""}
+                        {r ? ` · ${r.decision === "accept" ? "accepted" : "confirmed fail"} by ${r.resolved_by}: ${r.reason}` : ""}
+                      </span>
+                      {!r && f.kind === "brand" && f.code !== "synthetic_dye" && <FindingResolver id={p.id} findingKey={f.key} label="Record a brand exception" />}
+                      {!r && f.kind === "safety" && f.severity !== "info" && <span className="block text-muted-foreground">PharmaGuide Team decides this on the Review page.</span>}
+                    </dd>
+                  );
+                })}
               </div>
             </dl>
             {versions.length > 1 && (

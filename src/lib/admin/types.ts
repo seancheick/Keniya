@@ -1,3 +1,4 @@
+import type { Finding, Resolution } from "./ingredients";
 // Shared admin domain types and defaults. Pure (no server imports) so rules, costing and
 // the optimizer run the same in server components, client forms and tests.
 import { z } from "zod";
@@ -112,6 +113,10 @@ export type RuleInput = Nutrition & {
   ingredients?: string | null;
   /** Label allergen statement; its presence satisfies the data check P6. */
   allergens?: string | null;
+  /** Ingredient findings incl. the database watchlist (computed at load); built-in rules when absent. */
+  findings?: Finding[];
+  /** Recorded decisions on findings for this version (clinician for safety, admin for brand). */
+  resolutions?: Resolution[];
 };
 
 /** A product as the builder, optimizer and dashboards see it. */

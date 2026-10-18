@@ -13,7 +13,7 @@ import {
   type Snack,
 } from "./types";
 import { effectiveCaffeine } from "./caffeine";
-import { hasFinding, screenIngredients, syntheticDye } from "./ingredients";
+import { hasFinding, screenIngredients, syntheticDye, unresolved, type Finding } from "./ingredients";
 
 const num = (v: number | null | undefined): v is number => typeof v === "number" && Number.isFinite(v);
 
@@ -104,17 +104,47 @@ export function derivedPregnancyChecks(p: RuleInput): Partial<Record<"P3" | "P4"
   return out;
 }
 
-/** Stored decisions with the data checks filled in where blank. A stored FAIL always wins. */
+/** Current ingredient findings (database watchlist included when loaded) without a valid resolution. */
+export function openFindings(p: RuleInput): Finding[] {
+  return unresolved(p.findings ?? screenIngredients(p.ingredients), p.ingredients, p.resolutions);
+}
+
+/**
+ * Pregnancy-family safety holds from the current ingredients: a matched no-go/watchlist/brand
+ * finding fails its check, and an unresolved review finding (botanical, cured meat, a caffeine
+ * source without a label value) waits for a clinician. Evaluated every time, so an older PASS
+ * can never outlive a new ingredient.
+ */
+export function pregnancyFindingReasons(p: RuleInput): string[] {
+  const stored = p.pregnancy_checks ?? {};
+  const out: string[] = [];
+  for (const f of openFindings(p)) {
+    if (f.severity === "pregnancy_fail" && f.check) {
+      const stale = (stored[f.check] ?? "").toUpperCase() === "PASS" ? `; the stored ${f.check} PASS is out of date, reassess` : "";
+      out.push(`Current ingredients: ${f.evidence} (${f.check}${stale})`);
+    } else if (f.severity === "review" && f.kind === "safety" && !(f.code === "caffeine_source" && num(p.caffeine_mg))) {
+      out.push(`Needs clinician decision: ${f.label} (${f.evidence})`);
+    }
+  }
+  return out;
+}
+
+/**
+ * Stored decisions with the data checks filled in where blank. A stored FAIL always wins, and a
+ * current ingredient finding turns its check into FAIL whatever was stored.
+ */
 export function effectivePregnancyChecks(p: RuleInput): Record<string, string | undefined> {
   const stored = p.pregnancy_checks ?? {};
   const out: Record<string, string | undefined> = { ...stored };
   for (const [k, v] of Object.entries(derivedPregnancyChecks(p))) if (!(stored[k] ?? "").trim()) out[k] = v;
+  for (const f of openFindings(p)) if (f.severity === "pregnancy_fail" && f.check) out[f.check] = "FAIL";
   return out;
 }
 
 export function pregnancyFit(p: RuleInput, rejectReason?: string | null): BoxFit {
   const reasons = base(p, rejectReason);
   if (!num(effectiveCaffeine(p))) reasons.push("Caffeine value missing");
+  reasons.push(...pregnancyFindingReasons(p));
   const checks = effectivePregnancyChecks(p);
   const notPass = PREGNANCY_BLOCKING.filter((k) => (checks[k] ?? "").toUpperCase() !== "PASS");
   if (notPass.length) {
