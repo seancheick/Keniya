@@ -15,26 +15,22 @@ import { packetInput } from "@/lib/admin/packet-data";
 import { clinicianReviewRows } from "@/lib/admin/clinical-packet";
 import { reviewTeamText } from "@/lib/admin/review-wording";
 import { STATUSES } from "@/lib/admin/types";
-import { ingredientsHash, screenIngredients, withScreeningFails, type Resolution, type WatchlistRow } from "@/lib/admin/ingredients";
+import { ingredientsHash, screenIngredients, type WatchlistRow } from "@/lib/admin/ingredients";
 
 export type FormState = { error?: string; ok?: boolean; id?: string };
 
 const refresh = () => revalidatePath("/admin", "layout");
 
-async function parse(fd: FormData, productId?: string) {
+async function parse(fd: FormData) {
   const { product, version } = readProductForm(fd);
   const p = productSchema.safeParse(product);
   if (!p.success) return { error: p.error.issues[0].message } as const;
   const v = versionSchema.safeParse(version);
   if (!v.success) return { error: v.error.issues[0].message } as const;
-  // Ingredient flags pre-set blank P2/P7a/P7b to FAIL (never PASS: a person confirms those).
-  const wl = await db().from("watchlist").select("ingredient, category");
-  // Resolutions only survive an in-place save of the same ingredient text (the hash checks it).
-  const current = productId ? await db().from("product_versions").select("id").eq("product_id", productId).eq("is_current", true).maybeSingle() : null;
-  const res = current?.data ? await db().from("screening_resolutions").select("finding_key, ingredients_hash, decision").eq("product_version_id", current.data.id) : null;
-  const resolutions = fd.get("new_version") === "on" ? [] : ((res?.data ?? []) as Resolution[]);
-  const pregnancy_checks = withScreeningFails(v.data.pregnancy_checks, v.data.ingredients, (wl.data ?? []) as WatchlistRow[], resolutions);
-  return { product: p.data, version: { ...v.data, pregnancy_checks } } as const;
+  // Ingredient findings are not written into pregnancy_checks: eligibility applies them every
+  // time (rules.ts effectivePregnancyChecks), so a later clinician decision takes effect and a
+  // stored PASS can never outlive a new ingredient.
+  return { product: p.data, version: v.data } as const;
 }
 
 const dupUpc = (msg: string) => /products_(upc|gtin14)_key|barcode_identities|duplicate key.*upc/i.test(msg);
@@ -70,7 +66,7 @@ export async function createProduct(_prev: FormState, fd: FormData): Promise<For
  */
 export async function updateProduct(id: string, _prev: FormState, fd: FormData): Promise<FormState> {
   const admin = await requireAdmin();
-  const parsed = await parse(fd, id);
+  const parsed = await parse(fd);
   if ("error" in parsed) return { error: parsed.error };
   const previous = await db().from("products").select("updated_at").eq("id", id).single();
   if (previous.error) return { error: previous.error.message };

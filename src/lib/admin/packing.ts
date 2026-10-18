@@ -1,4 +1,4 @@
-import { allergenConflict, isAllergen, type Allergen } from "./allergens";
+import { allergenConflict, isAllergen, parseAvoid, type Allergen } from "./allergens";
 import { avoidConflict } from "./avoid";
 import { blockingFailures, checkLineup, eligibleFor, extrasCheck, packBlockers, type AlsoMeet, type Pick } from "./rules";
 import { BOX_LABEL, isBoxSlug, type BoxRules, type BoxSlug, type Settings, type Snack } from "./types";
@@ -85,10 +85,15 @@ export type ShipmentNeedsRow = {
   substitution_confirmed_by: string | null;
 };
 
-/** packingProblems inputs from a shipment row: allergen exclusions, other boxes, unconfirmed swaps. */
-export function shipmentNeeds(ship: ShipmentNeedsRow, slug: BoxSlug, rules: Record<BoxSlug, BoxRules>) {
+/**
+ * packingProblems inputs from a shipment row: allergen exclusions, other boxes, unconfirmed swaps.
+ * Allergens named in the free-text avoid answers (shipment and preorder) always count too, so
+ * shipments planned before structured exclusions existed get the same fail-closed check.
+ */
+export function shipmentNeeds(ship: ShipmentNeedsRow, slug: BoxSlug, rules: Record<BoxSlug, BoxRules>, avoidAnswers: (string | null | undefined)[] = []) {
+  const parsed = avoidAnswers.flatMap((a) => parseAvoid(a));
   return {
-    avoidAllergens: (ship.avoid_allergens ?? []).filter(isAllergen),
+    avoidAllergens: [...new Set([...(ship.avoid_allergens ?? []).filter(isAllergen), ...parsed])],
     alsoMeet: (ship.also_meet ?? []).filter(isBoxSlug).filter((b) => b !== slug).map((b) => ({ slug: b, rules: rules[b] })),
     unconfirmedSubstitutions: Boolean(ship.substitution_review) && !ship.substitution_confirmed_by,
   };

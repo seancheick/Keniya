@@ -69,7 +69,8 @@ async function planItems(slug: BoxSlug, needs: Needs) {
       settings: ctx.settings,
       snacks: ctx.catalog.snacks.filter(isClinicianApproved),
       objective: "balanced",
-      packagingOz: ctx.packOz,
+      // Fixed extras ship in the same box, so they count toward the weight limit.
+      packagingOz: ctx.packOz + box.extras.reduce((t, e) => t + (e.unit_wt_oz ?? 0), 0),
       excludeIds: conflicts.map((c) => c.s.id),
       alsoMeet: also,
     });
@@ -263,7 +264,7 @@ async function preparePack(id: string, replacement?: string[], requireStock = tr
     ingredients: ctx.catalog.versions.get(snack.id)?.ingredients,
   }]));
   if (!slug) problems.push("Unknown box");
-  else problems.push(...packingProblems({ slug, ids, products, rules: ctx.rules[slug], settings: ctx.settings, packagingOz: packOz, extraCount, avoid: preorder?.avoid ?? ship.avoid ?? null, ...shipmentNeeds(ship, slug, ctx.rules) }));
+  else problems.push(...packingProblems({ slug, ids, products, rules: ctx.rules[slug], settings: ctx.settings, packagingOz: packOz, extraCount, avoid: preorder?.avoid ?? ship.avoid ?? null, ...shipmentNeeds(ship, slug, ctx.rules, [preorder?.avoid, ship.avoid]) }));
   const stock = stockPickList(ids, ctx.catalog.lots, ctx.catalog.versions);
   if (requireStock) for (const row of stock) if (row.short) problems.push(`${ctx.catalog.byId.get(row.productId)?.name ?? row.productId}: short ${row.short} packable unit(s)`);
   return { ship, ctx, pkg, ids, packOz, problems, stock };
@@ -288,13 +289,21 @@ export async function packShipment(_prev: OrderState, fd: FormData): Promise<Ord
   const overhead = ctx.settings.overheads.reduce((s, o) => s + o.cents, 0);
   const history = must(await db().from("shipments").select("packed_weight_oz, label_cost_cents, package_profile_id, zone").not("label_cost_cents", "is", null).order("shipped_at", { ascending: false }).limit(500), "history");
   const est = estimatePostage({ settings: ctx.settings, slug: ship.box_slug, weightOz: weight, packageProfileId: pkg?.id, zone: ship.zone, history });
-  const res = await db().rpc("pack_shipment_checked", {
+  // The needs preparePack validated; the database refuses to pack if they changed since.
+  const expectedNeeds = {
+    also_meet: ship.also_meet ?? [],
+    avoid_allergens: ship.avoid_allergens ?? [],
+    substitutions_confirmed: !ship.substitution_review || Boolean(ship.substitution_confirmed_by),
+  };
+  const res = await db().rpc("pack_shipment_needs_checked", {
+    p_expected_needs: expectedNeeds,
     p_shipment: id, p_expected_items: ids, p_expected_lots: stockSnapshot(stock), p_expected_package: ship.package_profile_id, p_actor: admin.name,
     p_packaging_cents: packaging, p_overhead_cents: overhead,
     p_weight_oz: Math.round(weight * 10) / 10, p_est_postage_cents: est.cents,
   });
   if (res.error) {
     if (res.error.message === "SHORTAGE") return { error: "Not enough packable stock. Refresh the pick list to see the shortage." };
+    if (res.error.message === "NEEDS_CHANGED") return { error: "Customer needs changed. Refresh and check the pick list before packing." };
     return { error: res.error.message };
   }
   refresh();

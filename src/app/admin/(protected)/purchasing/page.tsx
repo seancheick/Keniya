@@ -47,6 +47,14 @@ export default async function PurchasingPage({ searchParams }: { searchParams: P
   const toBuy = plan.rows.filter((r) => r.toBuy > 0 && ready(r.product.id));
   const notReady = plan.rows.filter((r) => r.toBuy > 0 && !ready(r.product.id));
   const spendCents = toBuy.reduce((s, r) => s + (r.estSpendCents ?? 0), 0);
+  const listed = plan.rows.filter((r) => r.toBuy === 0 || ready(r.product.id));
+  const byVendor = [...toBuy.reduce((m, r) => {
+    if (!r.vendor) return m;
+    const v = m.get(r.vendor.vendorName) ?? { vendor: r.vendor.vendorName, spendCents: 0, lines: 0 };
+    v.spendCents += r.estSpendCents ?? 0;
+    v.lines += 1;
+    return m.set(v.vendor, v);
+  }, new Map<string, { vendor: string; spendCents: number; lines: number }>()).values()].sort((a, b) => b.spendCents - a.spendCents);
 
   return (
     <>
@@ -70,9 +78,9 @@ export default async function PurchasingPage({ searchParams }: { searchParams: P
           <Stat label="Estimated spend" value={fmt$(spendCents)} />
           <Stat label="No price yet" value={toBuy.filter((r) => !r.vendor).length} tone={toBuy.some((r) => !r.vendor) ? "warn" : undefined} />
         </div>
-        {plan.byVendor.length > 0 && (
+        {byVendor.length > 0 && (
           <p className="mt-3 text-sm text-muted-foreground">
-            By vendor: {plan.byVendor.map((v) => `${v.vendor} ${fmt$(v.spendCents)} (${v.lines})`).join(" · ")}
+            By vendor: {byVendor.map((v) => `${v.vendor} ${fmt$(v.spendCents)} (${v.lines})`).join(" · ")}
           </p>
         )}
       </Card>
@@ -109,7 +117,7 @@ export default async function PurchasingPage({ searchParams }: { searchParams: P
               </tr>
             </thead>
             <tbody>
-              {plan.rows.map((r) => (
+              {listed.map((r) => (
                 <tr key={r.product.id} className={r.toBuy === 0 ? "text-muted-foreground" : ""}>
                   <td>
                     <Link href={`/admin/products/${r.product.id}`} className="font-medium hover:underline">

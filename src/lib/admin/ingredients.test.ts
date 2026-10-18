@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveCaffeine } from "./caffeine";
-import { ingredientsHash, screenIngredients, suggestedFails, syntheticDye, unresolved, withScreeningFails } from "./ingredients";
+import { ingredientsHash, screenIngredients, suggestedFails, syntheticDye, unresolved } from "./ingredients";
 
 // Real labels photographed in store (2026-10-17).
 const GUMMIES =
@@ -77,19 +77,6 @@ describe("caffeine resolution", () => {
     expect(resolveCaffeine({ labelMg: null, ingredients: "black tea, ginger", unitOz: 0.1 }).mg).toBeNull();
     expect(resolveCaffeine({ labelMg: null, ingredients: "", unitOz: 1 }).mg).toBeNull();
     expect(resolveCaffeine({ labelMg: null, ingredients: UNREAL_COCONUT, unitOz: null }).mg).toBeNull();
-  });
-});
-
-describe("withScreeningFails", () => {
-  it("a current finding overrides an older PASS; clean ingredients keep decisions", () => {
-    expect(withScreeningFails({ P2: "", P7a: "PASS" }, "sugar, maltitol, licorice root, rum")).toEqual({ P2: "FAIL", P7a: "FAIL", P7b: "FAIL" });
-    expect(withScreeningFails({ P1: "PASS" }, "oats, honey")).toEqual({ P1: "PASS" });
-  });
-  it("an accepted resolution on the same ingredients keeps the PASS; an edit voids it", () => {
-    const ing = "oats, licorice root";
-    const r = [{ finding_key: "watchlist:licorice root", ingredients_hash: ingredientsHash(ing), decision: "accept" as const }];
-    expect(withScreeningFails({ P7a: "PASS" }, ing, [], r)).toEqual({ P7a: "PASS" });
-    expect(withScreeningFails({ P7a: "PASS" }, `${ing}, sugar`, [], r)).toEqual({ P7a: "FAIL" });
   });
 });
 

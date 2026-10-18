@@ -64,17 +64,20 @@ function classify(slug: BoxSlug, s: Snack, rules: BoxRules, settings: Settings):
   const extra: string[] = [];
   const n = netCarbs(s);
   if (n.issue === "INVALID_NUTRITION") extra.push(n.note);
-  const allergen = productAllergens(s);
-  extra.push(...allergen.issues);
+  // Without ingredient text the dye, watchlist, no-go, caffeine-source and allergen screens
+  // can't run, so the product can't count as preliminarily eligible.
+  if (!s.ingredients?.trim()) extra.push("Ingredients not on file: ingredient screening not done");
+  else extra.push(...productAllergens(s).issues);
   if (e.fits && !extra.length) return { bucket: "eligible", codes, reasons: [] };
-  if (highFiberReview(slug, s, rules, settings.policy, s.rejectReason)) return { bucket: "high_fiber", codes, reasons: e.reasons };
+  if (highFiberReview(slug, s, rules, settings.policy, s.rejectReason)) return { bucket: "high_fiber", codes, reasons: [...e.reasons, ...extra] };
   if (codes.some((c) => EXCLUDE.includes(c))) return { bucket: "excluded", codes, reasons: e.reasons };
   if (codes.some((c) => EVIDENCE.includes(c)) || extra.length) return { bucket: "evidence", codes, reasons: [...e.reasons, ...extra] };
   if (codes.some((c) => CLINICAL.includes(c))) return { bucket: "clinical", codes, reasons: e.reasons };
   return { bucket: "excluded", codes, reasons: e.reasons };
 }
 
-const stage = (s: Snack) => (isReadyToPack(s) ? "Package and lot verified" : isClinicianApproved(s) ? "Clinical and sourcing approved" : "Preliminary");
+// isReadyToPack covers clinical approval and the package check; lots are checked at packing.
+const stage = (s: Snack) => (isReadyToPack(s) ? "Package verified" : isClinicianApproved(s) ? "Clinical and sourcing approved" : "Preliminary");
 
 async function main() {
   const args = process.argv.slice(2);
@@ -86,10 +89,13 @@ async function main() {
   const md: string[] = [];
   md.push(`# Pre-purchase catalog report`, "", `Source: ${source}, ${live.length} products, generated ${new Date().toISOString().slice(0, 10)}.`, "");
   md.push(
-    "Preliminary eligibility means the software rules pass. It is **not** purchase readiness: bulk buying waits for clinical and sourcing approval (stage 2), and packing for the package and lot check (stage 3).",
+    "Preliminary eligibility means the software rules pass. It is **not** purchase readiness: bulk buying waits for clinical and sourcing approval (stage 2), and packing for the package check (stage 3) and a lot with at least 90 days left.",
     "",
   );
-  const stages = ["Preliminary", "Clinical and sourcing approved", "Package and lot verified"];
+  const noIngredients = live.filter((s) => !s.ingredients?.trim()).length;
+  if (noIngredients)
+    md.push(`**${noIngredients} of ${live.length} products have no ingredient text in this source**, so ingredient screening (dyes, watchlist, no-gos, caffeine sources, allergens) hasn't run on them. They're counted under "needs label or package evidence", never as eligible.`, "");
+  const stages = ["Preliminary", "Clinical and sourcing approved", "Package verified"];
   md.push("| Stage | Products | Bulk buying? |", "|---|---:|---|");
   for (const st of stages) md.push(`| ${st} | ${live.filter((s) => stage(s) === st).length} | ${st === "Preliminary" ? "No (samples only)" : "Yes, after sourcing checks"} |`);
   md.push("");
@@ -127,8 +133,15 @@ async function main() {
     summary.push(`${BOX_LABEL[slug].padEnd(22)} eligible ${by("eligible").length}, clinical ${by("clinical").length}, evidence ${by("evidence").length}, high-fiber ${by("high_fiber").length}, excluded ${by("excluded").length}`);
   }
   const both = live.filter((s) => eligibleFor("postpartum", s, rules.postpartum, settings.policy, s.rejectReason).fits && eligibleFor("blood_sugar", s, rules.blood_sugar, settings.policy, s.rejectReason).fits);
-  md.push("## Combined: Postpartum + Blood Sugar", "", `${both.length} products pass both screens (for a mother managing diabetes postpartum; nutritional compatibility only).`, "");
-  summary.push(`Postpartum + Blood Sugar  ${both.length}`);
+  const bothScreened = both.filter((s) => s.ingredients?.trim());
+  md.push(
+    "## Combined: Postpartum + Blood Sugar",
+    "",
+    `${bothScreened.length} products pass both screens (for a mother managing diabetes postpartum; nutritional compatibility only).` +
+      (both.length > bothScreened.length ? ` ${both.length - bothScreened.length} more pass on nutrition alone but have no ingredient text yet.` : ""),
+    "",
+  );
+  summary.push(`Postpartum + Blood Sugar  ${bothScreened.length} screened (${both.length} on nutrition alone)`);
   console.log(summary.join("\n"));
   if (out) {
     writeFileSync(out, md.join("\n"));

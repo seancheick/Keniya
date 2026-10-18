@@ -528,16 +528,28 @@ const INHERITED_CAPS = [
   "sodiumMax", "satFatMax", "satFatNutMax", "caffeineMax", "boxCaffeineMax", "chocolateMax",
 ] as const satisfies readonly (keyof BoxRules)[];
 
+/** Exception allowances: null means "no exception" (the stricter base limit applies). */
+const NULL_IS_STRICT = new Set<keyof BoxRules>(["treatAddedSugarMax", "satFatNutMax"]);
+
 /**
  * Gestational Diabetes must never be looser than the standards it combines: for every ceiling,
  * the effective GDM value is the strictest of its own, Blood Sugar's and Pregnancy Comfort's
- * live values (null means no limit, so it never loosens one). Applied wherever live rules are
- * loaded, so an edit to either parent flows through and a GDM edit can't undercut them.
+ * live values. For ordinary ceilings null means "no limit", so it never loosens one. For the
+ * exception allowances (treat added sugar, nut/seed saturated fat) null means "no exception":
+ * if GDM or Blood Sugar has none, GDM has none. Applied wherever live rules are loaded, so an
+ * edit to either parent flows through and a GDM edit can't undercut them.
  */
 export function inheritParentRules(rules: Record<BoxSlug, BoxRules>): Record<BoxSlug, BoxRules> {
   const gdm = { ...rules.gestational_diabetes };
   for (const k of INHERITED_CAPS) {
-    const vals = [rules.gestational_diabetes[k], rules.blood_sugar[k], rules.pregnancy_comfort[k]].filter((v): v is number => typeof v === "number");
+    const strictNull = NULL_IS_STRICT.has(k);
+    // Pregnancy has no treat or nut exceptions of its own; it only adds ordinary ceilings.
+    const raw = strictNull ? [rules.gestational_diabetes[k], rules.blood_sugar[k]] : [rules.gestational_diabetes[k], rules.blood_sugar[k], rules.pregnancy_comfort[k]];
+    if (strictNull && raw.some((v) => v === null)) {
+      (gdm as Record<string, unknown>)[k] = null;
+      continue;
+    }
+    const vals = raw.filter((v): v is number => typeof v === "number");
     (gdm as Record<string, unknown>)[k] = vals.length ? Math.min(...vals) : null;
   }
   return { ...rules, gestational_diabetes: gdm };

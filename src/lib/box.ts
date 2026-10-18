@@ -106,12 +106,12 @@ const raw: Omit<Box, "founding">[] = [
     shortName: "Blood Sugar",
     forWho: "For type 1, type 2 and prediabetes, and anyone keeping carbs in check.",
     caution: "Pregnant? Choose the Gestational Diabetes box. Not for treating a low blood sugar.",
-    why: "Every snack pack at or below {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar.",
+    why: "Every snack pack at or below {{blood_sugar.carbsMax}} g total carbs; {{blood_sugar.addedSugarMax}} g added sugar on core picks, up to {{blood_sugar.treatAddedSugarMax}} g on a few portioned treats.",
     tagline: "Crunchy, satisfying snacks with the carbs already checked.",
     composition: {
       Savory: { name: "Savory crunch", note: "picks such as chickpeas, seeds, popcorn and crackers, each within the carb limit" },
       Protein: { name: "Protein", note: "picks such as nut butters, nuts, jerky and bars that lead with protein" },
-      Sweet: { name: "Smarter sweets", note: "fruit and portioned treats, each with no more than {{blood_sugar.addedSugarMax}} g added sugar" },
+      Sweet: { name: "Smarter sweets", note: "fruit and portioned treats, each with no more than {{blood_sugar.treatAddedSugarMax}} g added sugar" },
       Hydration: { name: "Sips", note: "Hydration picks: {{blood_sugar.beverageCarbsMax}} g total carbs or less per stick. 0 g added sugar options preferred." },
       Comfort: { name: "Comfort", note: "gentle, easy picks" },
     },
@@ -143,7 +143,7 @@ const raw: Omit<Box, "founding">[] = [
     shortName: "Gestational",
     forWho: "For gestational diabetes: pregnancy screening and the Blood Sugar standard, both.",
     caution: "Not for treating a low blood sugar: use fast-acting glucose as your care team advises.",
-    why: "Every snack passes our Pregnancy checks and stays at or below {{gestational_diabetes.carbsMax}} g carbs and {{gestational_diabetes.addedSugarMax}} g added sugar.",
+    why: "Every snack passes our Pregnancy checks and stays at or below {{gestational_diabetes.carbsMax}} g carbs; {{gestational_diabetes.addedSugarMax}} g added sugar on core picks, up to {{gestational_diabetes.treatAddedSugarMax}} g on a few portioned treats.",
     tagline: "Pregnancy-screened snacks with the carbs already counted.",
     composition: {
       Protein: { name: "Protein & staying power", note: "picks such as nuts, seeds and nut butters that lead with protein" },

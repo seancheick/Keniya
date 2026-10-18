@@ -176,9 +176,24 @@ const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
  * Screen an ingredient list. `watchlist` adds the database rows: "contraindicated"/"avoid"
  * become P7a fails, "monitor" becomes a review flag (caffeine is handled separately).
  */
+// Eligibility screens the same label text many times per optimizer run; results are pure, so
+// cache them (bounded) by text + watchlist. Cached arrays and findings are frozen.
+const screenCache = new Map<string, readonly Finding[]>();
+const SCREEN_CACHE_MAX = 5000;
+
 export function screenIngredients(text: string | null | undefined, watchlist: WatchlistRow[] = []): Finding[] {
   const hay = (text ?? "").replace(/\s+/g, " ");
   if (!hay.trim()) return [];
+  const cacheKey = `${watchlist.map((w) => `${w.ingredient}|${w.category ?? ""}`).join("\u0001")}\u0002${hay}`;
+  const hit = screenCache.get(cacheKey);
+  if (hit) return hit as Finding[];
+  const out = screen(hay, watchlist);
+  if (screenCache.size >= SCREEN_CACHE_MAX) screenCache.clear();
+  screenCache.set(cacheKey, Object.freeze(out.map((f) => Object.freeze(f))));
+  return screenCache.get(cacheKey) as Finding[];
+}
+
+function screen(hay: string, watchlist: WatchlistRow[]): Finding[] {
   const out: Finding[] = [];
   const seen = new Set<string>();
   const add = (f: Finding) => {
@@ -220,23 +235,6 @@ export function suggestedFails(findings: Finding[]): Partial<Record<"P2" | "P7a"
     const k = f.check as "P2" | "P7a" | "P7b";
     out[k] = out[k] ? `${out[k]}; ${f.evidence}` : f.evidence;
   }
-  return out;
-}
-
-/**
- * A current finding beats a stored decision: P2/P7a/P7b become FAIL when the ingredients match a
- * flag, even over an older PASS, unless a clinician (or, for brand preferences, an admin) has
- * recorded an "accept" resolution for that exact finding on these exact ingredients.
- */
-export function withScreeningFails(
-  checks: Record<string, string>,
-  ingredients: string | null | undefined,
-  watchlist: WatchlistRow[] = [],
-  resolutions: Resolution[] = [],
-): Record<string, string> {
-  const open = unresolved(screenIngredients(ingredients, watchlist), ingredients, resolutions);
-  const out = { ...checks };
-  for (const k of Object.keys(suggestedFails(open)) as (keyof ReturnType<typeof suggestedFails>)[]) out[k] = "FAIL";
   return out;
 }
 

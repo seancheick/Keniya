@@ -3,7 +3,7 @@ import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, Empty, PageHeader } from "@/components/admin/ui";
 import { FindingResolver, StatusControls } from "@/components/admin/product-widgets";
-import { openFindings } from "@/lib/admin/rules";
+import { isDecided, openFindings } from "@/lib/admin/rules";
 import type { Snack } from "@/lib/admin/types";
 import { requireAdmin } from "@/lib/admin/auth";
 import { clinicianReviewRows } from "@/lib/admin/clinical-packet";
@@ -38,7 +38,7 @@ export default async function ReviewPage() {
 function ScreeningQueue({ snacks, clinician }: { snacks: Snack[]; clinician: boolean }) {
   const waiting = snacks
     .filter((s) => s.status !== "Retired" && s.status !== "Rejected")
-    .map((s) => ({ s, open: openFindings(s).filter((f) => f.kind === "safety" && f.severity !== "info" && !(f.code === "caffeine_source" && typeof s.caffeine_mg === "number")) }))
+    .map((s) => ({ s, open: openFindings(s).filter((f) => f.kind === "safety" && f.severity !== "info" && !isDecided(s, f) && !(f.code === "caffeine_source" && typeof s.caffeine_mg === "number")) }))
     .filter((x) => x.open.length);
   if (!waiting.length) return null;
   return (

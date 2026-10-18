@@ -14,7 +14,7 @@ import {
 } from "./types";
 import { effectiveCaffeine, resolveCaffeine } from "./caffeine";
 import { netCarbs } from "./carbs";
-import { hasFinding, screenIngredients, syntheticDye, unresolved, type Finding } from "./ingredients";
+import { hasFinding, ingredientsHash, screenIngredients, syntheticDye, unresolved, type Finding } from "./ingredients";
 
 const num = (v: number | null | undefined): v is number => typeof v === "number" && Number.isFinite(v);
 
@@ -73,7 +73,7 @@ const TROPICAL_OIL = /\b(palm|palm[- ]kernel|coconut)\s+oil\b|partially\s+hydrog
 export const hasAddedTropicalOil = (p: RuleInput) => TROPICAL_OIL.test(p.ingredients ?? "");
 /** Any other added saturated-fat source: chocolate, cocoa butter, dairy fat, coconut, palm, shortening, lard. */
 const ADDED_SAT_FAT =
-  /\b(chocolate|cocoa butter|cacao butter|milk fat|butter(?!milk)|butteroil|cream|whole milk powder|milk powder|cheese|ghee|coconut|palm|shortening|lard|tallow|hydrogenated)\b/i;
+  /\b(chocolate|cocoa butter|cacao butter|milk fat|butter(?!milk)(?<!(?:peanut|almond|cashew|nut|seed|sunflower|sunflower seed|pumpkin seed|sesame|hazelnut|pecan|walnut|pistachio|macadamia|cocoa|cacao) butter)|butteroil|cream|whole milk powder|milk powder|cheese|ghee|coconut|palm|shortening|lard|tallow|hydrogenated)\b/i;
 const NUT_OR_SEED =
   /^(organic\s+|dry[- ]roasted\s+|roasted\s+|raw\s+|blanched\s+|sprouted\s+)*(almonds?|cashews?|pecans?|walnuts?|pistachios?|hazelnuts?|macadamias?|brazil nuts?|peanuts?|mixed nuts|pumpkin seeds?|pepitas|sunflower seeds?|sesame seeds?|chia seeds?|flax ?seeds?|hemp seeds?|nuts?|seeds?)\b/i;
 /** First ingredient, before any parenthetical or comma. */
@@ -168,6 +168,12 @@ export function derivedPregnancyChecks(p: RuleInput): Partial<Record<"P3" | "P4"
   return out;
 }
 
+/** A decision (accept or confirm_fail) is recorded for this finding on the current ingredient text. */
+export const isDecided = (p: RuleInput, f: Finding) => {
+  const hash = ingredientsHash(p.ingredients);
+  return (p.resolutions ?? []).some((r) => r.finding_key === f.key && r.ingredients_hash === hash);
+};
+
 /** Current ingredient findings (database watchlist included when loaded) without a valid resolution. */
 export function openFindings(p: RuleInput): Finding[] {
   return unresolved(p.findings ?? screenIngredients(p.ingredients), p.ingredients, p.resolutions);
@@ -186,6 +192,8 @@ export function pregnancyFindingReasons(p: RuleInput): string[] {
     if (f.severity === "pregnancy_fail" && f.check) {
       const stale = (stored[f.check] ?? "").toUpperCase() === "PASS" ? `; the stored ${f.check} PASS is out of date, reassess` : "";
       out.push(`Current ingredients: ${f.evidence} (${f.check}${stale})`);
+    } else if (f.severity === "review" && f.kind === "safety" && isDecided(p, f)) {
+      out.push(`Current ingredients: ${f.evidence} (confirmed fail by the PharmaGuide Team)`);
     } else if (f.severity === "review" && f.kind === "safety" && !(f.code === "caffeine_source" && num(p.caffeine_mg))) {
       out.push(`Needs clinician decision: ${f.label} (${f.evidence})`);
     }

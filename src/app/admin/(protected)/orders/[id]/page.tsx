@@ -47,7 +47,7 @@ export default async function ShipmentPage({ params }: { params: Promise<{ id: s
   const stock = stockPickList(s.planned_items, catalog.lots, catalog.versions);
   const unitPulls = new Map(stock.map((p) => [p.productId, p.pulls.flatMap((pull) => Array.from({ length: pull.qty }, () => ({ ...pull, qty: 1 }))) ]));
   const slotPulls: LotPull[][] = (s.planned_items as string[]).map((pid) => { const unit = unitPulls.get(pid)?.shift(); return unit ? [unit] : []; });
-  const needs = slug ? shipmentNeeds(s, slug, rules) : null;
+  const needs = slug ? shipmentNeeds(s, slug, rules, [pre?.avoid, s.avoid]) : null;
   const blockers = slug ? packingProblems({ slug, ids: s.planned_items, products: packingProducts, rules: rules[slug], settings, packagingOz, extraCount: must(extrasRes, "extras").length, avoid: pre?.avoid ?? s.avoid ?? null, ...needs! }) : ["Unknown box"];
   if (pre && pre.status !== "paid") blockers.push("Order is no longer paid — check its payment before packing");
   if (!pkg) blockers.push("No active package profile selected. Configure a default package in Settings.");
