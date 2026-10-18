@@ -92,7 +92,7 @@ async function main() {
   );
   const noIngredients = live.filter((s) => !s.ingredients?.trim()).length;
   if (noIngredients)
-    md.push(`**${noIngredients} of ${live.length} products have no ingredient text in this source**, so ingredient screening (dyes, watchlist, no-gos, caffeine sources, allergens) hasn't run on them. They're counted under "needs label or package evidence", never as eligible.`, "");
+    md.push(`**${noIngredients} of ${live.length} products have no ingredient text in this source**, so ingredient screening (dyes, watchlist, no-gos, caffeine sources, allergens) hasn't run on them. They're never counted as preliminarily eligible; a product already excluded by another rule stays under "excluded".`, "");
   const stages = ["Preliminary", "Clinical and sourcing approved", "Package verified"];
   md.push("| Stage | Products | Bulk buying? |", "|---|---:|---|");
   for (const st of stages) md.push(`| ${st} | ${live.filter((s) => stage(s) === st).length} | ${st === "Preliminary" ? "No (samples only)" : "Yes, after sourcing checks"} |`);

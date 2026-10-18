@@ -49,8 +49,8 @@ You can write directly in this file, or reply with numbers ("Q1 agree, product 5
 - *Our proposal:* fine for every box, including pregnancy. We only flag high-dose vitamin and mineral fortification.
 - ☐ Agree ☐ Disagree: ________
 
-**Q3. Nuts and seeds (not raw).** US-grown almonds must be pasteurized by law (USDA, 2007). Roasted nuts and seeds are cooked.
-- *Our proposal:* pasteurized or roasted nuts and seeds pass the pregnancy "cooked or pasteurized" check. Anything sold as "raw" or "sprouted" gets a case-by-case review.
+**Q3. Nuts and seeds (not raw).** California-grown almonds must be pasteurized under a USDA marketing order (2007); that rule doesn't cover almonds grown elsewhere. Roasted nuts and seeds are cooked.
+- *Our proposal:* roasted nuts and seeds pass the pregnancy "cooked or pasteurized" check. Plain (unroasted) almonds pass only with product-specific evidence: California origin or the maker's statement that they are pasteurized. Anything sold as "raw" or "sprouted" gets a case-by-case review.
 - ☐ Agree ☐ Disagree: ________
 
 **Q4. Baked cheese crackers** (Goldfish, Annie's Cheddar Bunnies).
@@ -132,7 +132,7 @@ Values are per sealed pack.
 - **Per pack (0.63 oz):** 103 cal · 3.9 g protein · 1.9 g fiber · 3.9 g carbs · 0 g added sugar · 0 mg sodium · 0.6 g sat fat · caffeine 0 mg
 - **Ingredients:** ALMONDS.
 - **Allergens (label):** almonds, may contain peanuts, milk, soy, egg, wheat, sesame, other tree nuts (facility)
-- **Look at:** Plain "natural" almonds (US almonds are pasteurized by law). See question 3.
+- **Look at:** Plain "natural" almonds. We will confirm with the maker that they are pasteurized. See question 3.
 - **Calculated, not yet checked on the pack:** Calories 103, Protein 3.9 g, Fiber 1.9 g, Total carbs 3.9 g, Saturated fat 0.6 g. A printed label can't show these exact numbers; we will replace them with the package's values before buying.
 - **Your decision:** ☐ Approve  ☐ Not approved  ☐ Question: ________
 
@@ -275,7 +275,7 @@ Values are per sealed pack.
 - **Per pack (1 oz):** 110 cal · 3 g protein · 1 g fiber · 22 g carbs · 0 g added sugar · 390 mg sodium · 0 g sat fat · caffeine 0 mg
 - **Ingredients:** Choice blended wheat flour, vegetable shortening (corn, canola, cottonseed, sunflower and/or soybean oil), malt syrup, corn syrup, yeast, salt and soda.
 - **Allergens (label):** Contains wheat; shared equipment may contain milk, sesame, soy.
-- **Look at:** 390 mg sodium, the saltiest pick. See question 7.
+- **Look at:** 390 mg sodium, the saltiest pick. Pregnancy and Postpartum have no sodium limit (Keniya policy). If that is too much for these boxes, decline it here.
 - **Your decision:** ☐ Approve  ☐ Not approved  ☐ Question: ________
 
 ### 23. Tree Top No Sugar Added Applesauce Pouch
@@ -413,7 +413,6 @@ Each box has 14 snacks, with at most 2 of the same type. A product can be in mor
 14. Harvest Snaps Lightly Salted Green Pea Crisps 1.75 oz (savory)
 
 ☐ Approve this box  ☐ Changes needed: ________
-
 ## 5. What we're still collecting
 
 We will send these separately. Nothing below is in the boxes until it is complete and you have reviewed it.

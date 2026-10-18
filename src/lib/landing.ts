@@ -214,7 +214,7 @@ export const landings: BoxLanding[] = [
       { title: "Very-low-carb hydration picks", body: "Hydration picks: {{gestational_diabetes.beverageCarbsMax}} g total carbs or less per stick, plus full Pregnancy screening. 0 g added sugar options are preferred when available." },
       {
         title: "Keniya Pregnancy Screening first",
-        body: "Fully cooked or pasteurized, no pregnancy no-gos, caffeine known and limited, herbs and botanicals left out when safety is uncertain.",
+        body: "Fully cooked or pasteurized, no pregnancy no-gos, caffeine checked and limited, herbs and botanicals left out when safety is uncertain.",
       },
       {
         title: "Then the Blood Sugar standard",
@@ -303,7 +303,7 @@ export const landings: BoxLanding[] = [
       "14 snacks for the fourth trimester: the same food-safety checks as our Pregnancy box, caffeine limited, at least {{postpartum.cat.Hydration.min}} sips, everything one-handed. $47, free shipping.",
     h1: "The fourth trimester, fed one-handed.",
     intro:
-      "Someone in your house is eating at 3 a.m. with one hand. Every snack here passes the same food-safety checks as our Pregnancy box, keeps caffeine known and limited, and every box carries at least {{postpartum.cat.Protein.min}} protein picks and {{postpartum.cat.Hydration.min}} sips because nursing is hungry, thirsty work.",
+      "Someone in your house is eating at 3 a.m. with one hand. Every snack here passes the same food-safety checks as our Pregnancy box, keeps caffeine checked and limited, and every box carries at least {{postpartum.cat.Protein.min}} protein picks and {{postpartum.cat.Hydration.min}} sips because nursing is hungry, thirsty work.",
     forWho: [
       "Anyone in the first months after birth, nursing or not",
       "Partners, parents and friends bringing food to a new parent",
