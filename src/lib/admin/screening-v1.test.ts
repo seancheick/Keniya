@@ -55,3 +55,17 @@ describe("pregnancy-family policies", () => {
     expect(screen("pregnancy_comfort", { ...bar, caffeine_mg: 60 }).result).toBe("FAIL");
   });
 });
+
+describe("variety", () => {
+  it("at most 5 nut / seed picks in any box; Heart still needs at least 4", async () => {
+    const { checkLineup } = await import("./rules");
+    const nuts = (n: number) => Array.from({ length: 14 }, (_, i) => ({ snack: snack({ categories: ["Savory"], roles: i < n ? { NS: true } : { WHOLE_FOOD: true } }), category: "Savory" }));
+    for (const slug of ["blood_sugar", "heart", "gestational_diabetes"] as const) {
+      expect(rules[slug].nutSeedMax).toBe(5);
+      const r = { ...rules[slug], categories: [] };
+      expect(checkLineup(slug, r, nuts(6), DEFAULT_SETTINGS, 6).find((c) => c.key === "nutseed")).toMatchObject({ pass: false, level: "block" });
+      expect(checkLineup(slug, r, nuts(5), DEFAULT_SETTINGS, 6).find((c) => c.key === "nutseed")!.pass).toBe(true);
+    }
+    expect(checkLineup("heart", { ...rules.heart, categories: [] }, nuts(3), DEFAULT_SETTINGS, 6).find((c) => c.key === "nutseed")!.pass).toBe(false);
+  });
+});

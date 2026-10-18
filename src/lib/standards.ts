@@ -63,24 +63,25 @@ export function publicStandards(slug: BoxSlug, rules: PublicRules): string[] {
   const carbs = r.carbsMax !== null ? `No more than ${r.carbsMax} g total carbohydrate per ${pack} (total carbs, never "net carbs")` : null;
   const sugar = r.addedSugarMax !== null ? `No more than ${r.addedSugarMax} g added sugar per ${pack}` : null;
   const beverage = r.beverageCarbsMax !== null ? `Hydration picks: ${r.beverageCarbsMax} g total carbs or less per stick.` : r.beverageAddedSugarMax === null ? null : r.beverageAddedSugarMax === 0 ? "Beverages must have 0 g added sugar" : `Beverages have at most ${r.beverageAddedSugarMax} g added sugar`;
+  const sodium = r.sodiumMax !== null ? `No more than ${r.sodiumMax} mg sodium per pack` : null;
   const catMin = (name: string) => r.categories.find((c) => c.name === name)?.min ?? 0;
   // Keniya standard in every box (owner decision 2026-10-17), enforced by the ingredient screen.
   const dyes = "No synthetic dyes (no Red 40, Yellow 5, Blue 1 and the like)";
   const treatSugar = r.treatAddedSugarMax !== null && r.treatMax !== null ? `A portioned treat may have up to ${r.treatAddedSugarMax} g added sugar` : null;
   const lines: Record<BoxSlug, (string | null)[]> = {
-    pregnancy_comfort: [checks, caffeine, "Concentrated herbs and botanicals left out when pregnancy safety is uncertain", `Every package we pack has at least ${MIN_DAYS_TO_EXPIRY} days before its date`, dyes],
+    pregnancy_comfort: [checks, caffeine, sodium, "Concentrated herbs and botanicals left out when pregnancy safety is uncertain", `Every package we pack has at least ${MIN_DAYS_TO_EXPIRY} days before its date`, dyes],
     blood_sugar: [carbs, sugar, beverage, "0 g added sugar hydration options are preferred when available.", "Qualifies through protein, fiber, whole-food fats, or a small portioned treat", treatSugar, r.treatMax !== null ? `At most ${r.treatMax} treat-only picks in the box` : null, dyes],
     heart: [
-      r.sodiumMax !== null ? `No more than ${r.sodiumMax} mg sodium per pack` : null,
+      sodium,
       r.satFatMax !== null ? `No more than ${r.satFatMax} g saturated fat (${r.satFatNutMax ?? r.satFatMax} g when it comes from the nuts and seeds themselves, never from added palm or coconut oil)` : null,
       r.treatAddedSugarMax !== null && sugar ? `${sugar} on core picks, ${r.treatAddedSugarMax} g on a portioned treat${r.treatMax !== null ? ` (at most ${r.treatMax} per box)` : ""}` : sugar,
       "Nuts, seeds, whole grains, fruit and fiber are the backbone",
       beverage,
       dyes,
     ],
-    gestational_diabetes: ["Passes both our Pregnancy screening and our Blood Sugar standard", carbs, sugar, caffeine, beverage, "0 g added sugar hydration options are preferred when available.", treatSugar, dyes],
+    gestational_diabetes: ["Passes both our Pregnancy screening and our Blood Sugar standard", carbs, sugar, caffeine, sodium, beverage, "0 g added sugar hydration options are preferred when available.", treatSugar, dyes],
     glp1: [r.proteinOrFiberMin !== null ? `At least ${r.proteinOrFiberMin} picks lead with protein or fiber` : null, carbs, sugar, beverage, "Small portions and hydration", dyes],
-    postpartum: ["The same food-safety checks as the Pregnancy box", caffeine, catMin("Protein") && catMin("Hydration") ? `At least ${catMin("Protein")} protein picks and ${catMin("Hydration")} sips in every box` : null, "One-handed, no-prep snacks", dyes],
+    postpartum: ["The same food-safety checks as the Pregnancy box", caffeine, sodium, catMin("Protein") && catMin("Hydration") ? `At least ${catMin("Protein")} protein picks and ${catMin("Hydration")} sips in every box` : null, "One-handed, no-prep snacks", dyes],
   };
   return lines[slug].filter((l): l is string => Boolean(l));
 }

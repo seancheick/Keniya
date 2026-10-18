@@ -703,8 +703,8 @@ export function checkLineup(
     );
   if (rules.wholeFoodMin !== null)
     checks.push(check("wholefood", "Whole-food fat/protein picks", count(ccWholeFood), { min: rules.wholeFoodMin }));
-  if (rules.nutSeedMin !== null)
-    checks.push(check("nutseed", "Nut / seed / unsaturated-fat picks", count(heartNutSeed), { min: rules.nutSeedMin }));
+  if (rules.nutSeedMin !== null || rules.nutSeedMax !== null)
+    checks.push(check("nutseed", "Nut / seed / unsaturated-fat picks", count(heartNutSeed), { min: rules.nutSeedMin ?? undefined, max: rules.nutSeedMax ?? undefined }));
   if (rules.fiberMin !== null)
     checks.push(check("fiber", "Fiber-forward picks (≥3 g)", count(heartFiberForward), { min: rules.fiberMin }));
   // Boxes built on the carb pathways count "treat-only" picks; Heart counts the judged treat role.

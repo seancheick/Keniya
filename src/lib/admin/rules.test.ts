@@ -152,10 +152,11 @@ describe("box recipes are satisfiable on paper", () => {
     for (const slug of BOX_SLUGS) {
       const r = DEFAULT_BOX_RULES[slug];
       const pool: Snack[] = r.categories.flatMap((c) =>
-        Array.from({ length: c.max }, () =>
+        Array.from({ length: c.max }, (_, j) =>
           c.name === "Hydration"
             ? snack({ type: "Beverage", form: "Powder", calories: 0, protein_g: 0, fiber_g: 0, carbs_g: 0, added_sugar_g: 0, sodium_mg: 50, sat_fat_g: 0, unit_wt_oz: 0.2, categories: ["Hydration"] })
-            : snack({ roles: { NS: true, WG: true, MF: true, WHOLE_FOOD: true }, protein_g: 6, fiber_g: 3, carbs_g: 10, added_sugar_g: 1, sodium_mg: 90, sat_fat_g: 1, categories: [c.name] }),
+            // Half nut/seed, half not: a box needs some nuts (Heart ≥4) but at most 5 of them.
+            : snack({ roles: { NS: j % 2 === 0, WG: true, MF: true, WHOLE_FOOD: true }, protein_g: 6, fiber_g: 3, carbs_g: 10, added_sugar_g: 1, sodium_mg: 90, sat_fat_g: 1, categories: [c.name] }),
         ),
       );
       const res = optimize({ slug, rules: r, settings, snacks: pool, objective: "balanced", packagingOz: 6, requireStock: false });

@@ -20,6 +20,7 @@ const HEALTH: [key: keyof BoxRules, label: string, hint: string][] = [
   ["proteinOrFiberMin", "Protein or fiber snacks: at least", "5 g+ protein with ≤25 g carbs, or 3 g+ fiber with ≤5 g added sugar plus 3 g+ protein or nut/seed fat"],
   ["wholeFoodMin", "Whole-food snacks: at least", "Nuts, seeds, cheese, jerky and similar"],
   ["nutSeedMin", "Nut, seed or healthy-fat snacks: at least", "Marked nut/seed or unsaturated fat"],
+  ["nutSeedMax", "Nut, seed or healthy-fat snacks: at most", "Variety: so the box isn't mostly nuts"],
   ["fiberMin", "Fiber snacks (3 g+): at least", "3 g or more fiber"],
   ["treatMax", "Treats: at most", "Heart: products marked as a controlled treat. Blood Sugar: picks that qualify only as a portioned treat"],
 ];
