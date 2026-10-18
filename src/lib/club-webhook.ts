@@ -31,7 +31,7 @@ export async function handleClubEvent(event: Stripe.Event, stripe: Stripe, db: S
       if (sub.pause_collection) return true;
       const slug = sub.metadata.box_slug;
       const { sales } = await loadCommerceState();
-      if (slug && sales[slug as keyof typeof sales]?.clinicianApproved) return true;
+      if (slug && sales[slug as keyof typeof sales]?.saleReady) return true;
       await holdRenewal(stripe, inv.id);
       const email = inv.customer_email;
       if (email) await sendClubEmailRequired(email, inv.id, { kind: "held", boxName: boxName(slug) });

@@ -73,6 +73,9 @@ require(f"""insert into product_versions(product_id,nutrition_source,ingredients
 values('{sale_product}','Label','Almonds','Tree nuts',1,100,5,3,10,0,0,0,0,0,'{{"P1":"PASS","P2":"PASS","P3":"PASS","P4":"PASS","P5":"PASS","P6":"PASS","P7a":"PASS","P7b":"PASS","P8":"PASS"}}');
 select set_product_review('{sale_product}','Pre-approved',null,'Sean','admin');
 select set_product_review('{sale_product}','Approved',null,'Laurie Pham','clinician');
+update products set upc='036000291452' where id='{sale_product}';
+update products set barcode_status='verified' where id='{sale_product}';
+update product_versions set verified_at=now(),verified_by='Tester' where product_id='{sale_product}' and is_current;
 insert into box_rules(box_slug,rules) values('{slug}','{{}}');
 update admin_settings set data=jsonb_build_object('runSize',jsonb_build_object('{slug}',3),'prices',jsonb_build_object('{slug}',4700)) where id=1;""")
 sale_lineup = require(f"insert into box_lineups(box_slug,version,status) values('{slug}',1,'active') returning id")

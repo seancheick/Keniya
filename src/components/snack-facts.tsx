@@ -19,7 +19,7 @@ export function SnackFacts({
   className?: string;
   headingLevel?: "h2" | "h3";
 }) {
-  const approval = "Every lineup is reviewed by a clinician before it ships";
+  const approval = "Standards reviewed by a pharmacist, and every pack's label checked in hand before it ships";
   return (
     <div
       data-colorway={box.colorway}

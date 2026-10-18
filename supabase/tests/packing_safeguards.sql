@@ -50,11 +50,12 @@ begin
   exception when others then assert sqlerrm = 'SHORTAGE', 'held lots cannot fill shortage'; end;
   assert (select qty_remaining from public.purchase_lots where id=fresh)=1, 'shortage rolls back stock';
   assert (select count(*) from public.shipment_items where shipment_id=ship)=0, 'shortage rolls back items';
-  update public.products set reviewed_by=null where id=p;
+  -- Screening Standard v1.0: no clinical approval is required, but a retired product never packs.
+  update public.products set reviewed_by=null, status='Retired' where id=p;
   begin
     perform public.pack_shipment(ship, 'test', 0, 0, 0, 0);
-    raise exception 'expected approval error';
-  exception when others then assert sqlerrm like 'Products must be%', 'requires named approval'; end;
+    raise exception 'expected retired-product error';
+  exception when others then assert sqlerrm like 'Products must have%', 'retired product cannot pack'; end;
   perform public.set_lot_expiry(held, current_date + 180, 'Corrected from physical package', 'test');
   assert (select expires_on from public.purchase_lots where id=held)=current_date+180, 'expiry correction';
   assert (select qty_remaining from public.purchase_lots where id=held)=10, 'expiry correction never receives stock';

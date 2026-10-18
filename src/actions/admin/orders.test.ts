@@ -6,7 +6,7 @@ const m = vi.hoisted(() => ({ context: vi.fn(), insert: vi.fn(), select: vi.fn()
 vi.mock("@/lib/admin/summary", () => ({ loadAdminContext: m.context }));
 vi.mock("@/lib/admin/db", () => ({ db: () => ({ from: () => ({ insert: m.insert, select: m.select }) }), must: (value: { data: unknown }) => value.data }));
 import { createShipmentForPreorder } from "./orders";
-const approved = { id: "p", status: "Approved", clinicianApprovedBy: "Laurie Pham", clinicalDecision: "approved", approvalRole: "clinician", diligenceComplete: true };
+const approved = { id: "p", status: "Candidate", packageVerified: true };
 beforeEach(() => {
   vi.clearAllMocks();
   const q = { eq: () => q, single: async () => ({ data: { id: "8f153db8-c8f8-4594-8d5c-b859464822be", status: "paid", box_slug: "heart", avoid: null, stripe_fee_cents: 100, amount_total: 4700 } }) };
@@ -20,9 +20,9 @@ describe("order planning uses current readiness", () => {
     await expect(createShipmentForPreorder(form())).rejects.toThrow("fails current rules");
     expect(m.insert).not.toHaveBeenCalled();
   });
-  it("rejects provisional extras even when the recipe is ready", async () => {
-    m.context.mockResolvedValue({ boxes: { heart: { lineup: { id: "lineup" }, ready: true, picks: [{ snack: approved }], extras: [{ ...approved, clinicalDecision: "pending" }] } } });
-    await expect(createShipmentForPreorder(form())).rejects.toThrow("needs PharmaGuide Team approval");
+  it("rejects unverified extras even when the recipe is ready", async () => {
+    m.context.mockResolvedValue({ boxes: { heart: { lineup: { id: "lineup" }, ready: true, picks: [{ snack: approved }], extras: [{ ...approved, packageVerified: false }] } } });
+    await expect(createShipmentForPreorder(form())).rejects.toThrow("needs its package verified");
     expect(m.insert).not.toHaveBeenCalled();
   });
 });

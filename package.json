@@ -11,6 +11,8 @@
     "import:workbook": "NODE_OPTIONS=--conditions=react-server tsx scripts/import-workbook.ts",
     "db:migrate": "tsx scripts/migrate-admin.ts",
     "db:test": "python3 scripts/db-integration.py",
+    "screen": "NODE_OPTIONS=--conditions=react-server tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/screen.ts",
+    "products:delete": "NODE_OPTIONS=--conditions=react-server tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/delete-products.ts",
     "catalog:report": "NODE_OPTIONS=--conditions=react-server tsx scripts/catalog-report.ts",
     "box:feasibility": "NODE_OPTIONS=--conditions=react-server tsx scripts/box-feasibility.ts",
     "smoke:prod": "tsx scripts/smoke-prod.ts",

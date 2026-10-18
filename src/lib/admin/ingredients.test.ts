@@ -44,7 +44,7 @@ describe("ingredient screening (real labels)", () => {
     expect(suggestedFails(screenIngredients("raw milk cheese, salt"))).toEqual({ P2: "raw milk" });
     expect(suggestedFails(screenIngredients("sugar, licorice root extract"))).toEqual({ P7a: "licorice root" });
     expect(suggestedFails(screenIngredients("almonds, maltitol"))).toEqual({ P7b: "maltitol" });
-    expect(screenIngredients("beef, salt, celery powder, beef jerky seasoning").map((f) => [f.code, f.severity])).toEqual([["cured_meat", "review"]]);
+    expect(screenIngredients("beef, salt, celery powder, beef jerky seasoning").map((f) => [f.code, f.severity])).toEqual([["cured_meat", "pregnancy_fail"]]);
     expect(codes("chocolate, rum, sugar")).toContain("alcohol");
     expect(codes("organic black tea, ginger")).toEqual(["caffeine_source"]);
   });

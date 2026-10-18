@@ -5,7 +5,7 @@ import { fmt$, fmtPct, shipmentProfit } from "@/lib/admin/costing";
 import { db, allRows } from "@/lib/admin/db";
 import { lotHold } from "@/lib/admin/stock";
 import { daysUntil } from "@/lib/admin/optimizer";
-import { blockingFailures, eligibleFor, isClinicianApproved, lineupStage, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
+import { blockingFailures, eligibleFor, isReadyToPack, lineupStage, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
 import { loadAdminContext } from "@/lib/admin/summary";
 import { BOX_LABEL, BOX_SLUGS, type BoxSlug } from "@/lib/admin/types";
 
@@ -73,11 +73,8 @@ export default async function Dashboard() {
     ["Missing nutrition", catalog.snacks.filter((s) => !nutritionComplete(s)).length, "/admin/products?issue=nutrition"],
     ["No cost yet", catalog.snacks.filter((s) => s.unitCostCents === null).length, "/admin/products?issue=cost"],
     ["Don't ship (policy)", catalog.snacks.filter((s) => !shipsUnderPolicy(s, settings.policy).ok).length, "/admin/products?issue=ships"],
-    ["PharmaGuide Team-approved", catalog.snacks.filter((s) => isClinicianApproved(s)).length, "/admin/products?status=Approved"],
-    ["Legacy approvals (re-attest)", catalog.snacks.filter((s) => s.status === "Approved" && !isClinicianApproved(s)).length, "/admin/products?status=Legacy"],
-    ["Pre-approved (awaiting PharmaGuide Team)", catalog.snacks.filter((s) => s.status === "Pre-approved").length, "/admin/products?status=Pre-approved"],
-    ["Candidates", catalog.snacks.filter((s) => s.status === "Candidate").length, "/admin/products?status=Candidate"],
-    ["Eligible for all three boxes", catalog.snacks.filter((s) => BOX_SLUGS.every((b) => eligible(b, s))).length, "/admin/products"],
+    ["Package verified (ready to pack)", catalog.snacks.filter(isReadyToPack).length, "/admin/verify"],
+    ["Eligible for every box", catalog.snacks.filter((s) => BOX_SLUGS.every((b) => eligible(b, s))).length, "/admin/products"],
   ] as const;
 
   return (

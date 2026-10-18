@@ -104,7 +104,7 @@ export async function startCheckout(input: CheckoutInput): Promise<CheckoutResul
     await reconcileCheckoutHolds(db, stripe, box.slug);
     const { sales, settings } = await loadCommerceState();
     const sale = sales[box.slug];
-    if (!sale.clinicianApproved || sale.priceCents !== site.preorderPriceUSD * 100) return { ok: false, needsEmail: true, code: "unavailable", message: "This box isn't open for orders yet. Join the list and we'll email you." };
+    if (!sale.saleReady || sale.priceCents !== site.preorderPriceUSD * 100) return { ok: false, needsEmail: true, code: "unavailable", message: "This box isn't open for orders yet. Join the list and we'll email you." };
     const club = settings.offers.subscription;
     if (monthly && (!club.enabled || club.priceCents <= 0)) return { ok: false, code: "no_subscription", message: "The Snack Club isn't open yet. You can still order one box." };
     if (priceId && !monthly) {

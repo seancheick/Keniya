@@ -18,7 +18,6 @@ export type VerifyItem = {
   name: string;
   brand: string | null;
   status: string;
-  clinicianApproved: boolean;
   upc: string | null;
   /** Registered outer boxes this product comes in (scanning one identifies the product). */
   packs: { gtin: string; units: number }[];
@@ -129,9 +128,6 @@ export function VerifyFlow({ items, minDays, minDate }: { items: VerifyItem[]; m
                       {i.inBoxes.map((b) => (
                         <Badge key={b} tone="info">{b}</Badge>
                       ))}
-                      <Badge tone={i.clinicianApproved ? "good" : "warn"}>
-                        {i.clinicianApproved ? "PharmaGuide Team-approved" : i.status === "Approved" ? "Needs PharmaGuide Team review" : i.status}
-                      </Badge>
                       <Badge tone={isVerified(i) ? "good" : "muted"}>{isVerified(i) ? "Package verified" : i.upc ? "Barcode on file" : "No barcode yet"}</Badge>
                     </button>
                   </li>
@@ -355,9 +351,6 @@ function VerifyPanel({
         <Button type="submit" className="w-full" disabled={pending || !upc || mismatch || (unknownCode && !barcodeOn)}>
           {pending ? "Saving…" : "Verify package"}
         </Button>
-        {!item.clinicianApproved && (
-          <p className="text-xs text-muted-foreground">Still needs PharmaGuide Team approval before it can be packed.</p>
-        )}
       </form>
     </div>
   );

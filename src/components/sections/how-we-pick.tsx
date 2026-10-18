@@ -14,7 +14,7 @@ const steps = [
   },
   {
     title: "We pick the good stuff.",
-    body: "We read every label against your box's standards, and a pharmacist reviews each box's criteria and lineup.",
+    body: "We read every label against your box's standards, and a pharmacist reviewed each box's criteria.",
     color: "var(--butter)",
   },
   {

@@ -112,7 +112,20 @@ export type BoxFit = {
   reasons: string[];
   /** One structured code per reason (set by eligibleFor), for reports and review lists. */
   codes?: ReasonCode[];
+  /** PASS, FAIL (a confirmed rule is broken) or HOLD (data missing or uncertain); set by eligibleFor. */
+  result?: ScreenResult;
 };
+
+export type ScreenResult = "PASS" | "FAIL" | "HOLD";
+// Missing, estimated or unresolved information: never guessed into a pass or a fail. Anything
+// unrecognized (OTHER) holds too. Every other code is a confirmed violation of a rule.
+const HOLD_CODES = new Set<ReasonCode>([
+  "NUTRITION_MISSING", "INGREDIENTS_MISSING", "SAT_FAT_MISSING", "CAFFEINE_UNKNOWN", "CAFFEINE_ESTIMATE_HOLD",
+  "PREGNANCY_CHECK_BLANK", "SINGLE_SERVE_UNCONFIRMED", "CLINICIAN_DECISION", "OTHER",
+]);
+/** A confirmed violation fails even when other data is missing; otherwise missing data holds. */
+export const screenResult = (codes: ReasonCode[]): ScreenResult =>
+  !codes.length ? "PASS" : codes.some((c) => !HOLD_CODES.has(c)) ? "FAIL" : "HOLD";
 
 export type ReasonCode =
   | "REJECTED" | "RETIRED" | "NUTRITION_MISSING" | "INGREDIENTS_MISSING" | "SHIPPING_POLICY" | "MULTI_SERVE" | "SINGLE_SERVE_UNCONFIRMED"
@@ -160,10 +173,19 @@ function base(p: RuleInput, rejectReason?: string | null): string[] {
 /**
  * P3–P6 only ask whether the data is on the label: caffeine (P3: label value, or inferred as 0
  * or a cocoa screening estimate), added sugar (P4), sodium (P5) and an allergen statement (P6).
- * They PASS by themselves when it is there. P1, P2, P7a, P7b and P8 always need a person.
+ * They PASS by themselves when it is there. P1, P2, P7a and P7b come from the ingredient screen
+ * (Screening Standard v1.0, owner 2026-10-18): with ingredients on file and no open finding for
+ * the check they PASS; a matching finding fails them (effectivePregnancyChecks). Packaged,
+ * sealed, shelf-stable snacks are processed foods, so P1 passes unless a raw/unpasteurized or
+ * sprout finding fails P2. P8 (one pack = one serving) is read from the label, not derived.
  */
-export function derivedPregnancyChecks(p: RuleInput): Partial<Record<"P3" | "P4" | "P5" | "P6", "PASS">> {
-  const out: Partial<Record<"P3" | "P4" | "P5" | "P6", "PASS">> = {};
+type DerivedCheck = "P1" | "P2" | "P3" | "P4" | "P5" | "P6" | "P7a" | "P7b";
+export function derivedPregnancyChecks(p: RuleInput): Partial<Record<DerivedCheck, "PASS">> {
+  const out: Partial<Record<DerivedCheck, "PASS">> = {};
+  if (p.ingredients?.trim()) {
+    const open = openFindings(p).filter((f) => f.severity !== "info");
+    for (const k of ["P1", "P2", "P7a", "P7b"] as const) if (!open.some((f) => f.check === k || (k === "P1" && f.check === "P2"))) out[k] = "PASS";
+  }
   if (num(effectiveCaffeine(p))) out.P3 = "PASS";
   if (num(p.added_sugar_g)) out.P4 = "PASS";
   if (num(p.sodium_mg)) out.P5 = "PASS";
@@ -380,11 +402,11 @@ export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, polic
     (rules.carbsMax !== null ? nutritionComplete(p) && ccTreatOnly(p) : heartTreat(p));
   if (!diabetesDrink) over(p.added_sugar_g, treat ? rules.treatAddedSugarMax : rules.addedSugarMax, treat ? "added sugar (treat)" : "added sugar", "g");
   over(p.sodium_mg, rules.sodiumMax, "sodium", "mg");
-  over(effectiveCaffeine(p), rules.caffeineMax, "caffeine", "mg");
-  // An estimate is a screening value, not a measurement: one that uses more than half the
-  // per-pack limit is clinically material uncertainty, so it waits for the manufacturer's value.
+  // An estimate is a worst-case screening value, not a measurement: one that uses more than half
+  // the per-pack limit (or exceeds it) is material uncertainty, so it holds for the maker's value.
   const caf = resolveCaffeine({ labelMg: p.caffeine_mg, ingredients: p.ingredients, unitOz: p.unit_wt_oz });
-  if (rules.caffeineMax !== null && caf.source === "estimate_max" && caf.mg! > rules.caffeineMax / 2 && caf.mg! <= rules.caffeineMax)
+  if (caf.source !== "estimate_max") over(effectiveCaffeine(p), rules.caffeineMax, "caffeine", "mg");
+  if (rules.caffeineMax !== null && caf.source === "estimate_max" && caf.mg! > rules.caffeineMax / 2)
     out.push(`Estimated caffeine ${caf.mg} mg is over half the ${rules.caffeineMax} mg limit: get the manufacturer's caffeine value`);
   if (slug === "heart" && PHO.test(p.ingredients ?? "")) out.push("Partially hydrogenated oil (trans fat): not in the Heart box");
   if (rules.satFatMax !== null) {
@@ -406,7 +428,8 @@ export function eligibleFor(slug: BoxSlug, p: RuleInput, rules: BoxRules, policy
   const q = fitFor(slug, p, rejectReason, rules);
   const gates = gateFailures(slug, p, rules, policy);
   const reasons = [...q.reasons, ...gates];
-  return { box: slug, fits: q.fits && gates.length === 0, via: q.via, reasons, codes: reasons.map(reasonCode) };
+  const codes = reasons.map(reasonCode);
+  return { box: slug, fits: q.fits && gates.length === 0, via: q.via, reasons, codes, result: screenResult(codes) };
 }
 
 /**
@@ -439,6 +462,7 @@ export function eligibleForAll(boxes: AlsoMeet[], p: RuleInput, policy: Settings
     via: results.every((r) => r.fits) ? results.flatMap((r) => r.via) : [],
     reasons,
     codes: results.flatMap((r) => r.codes ?? []),
+    result: screenResult(results.flatMap((r) => r.codes ?? [])),
   };
 }
 
@@ -451,26 +475,29 @@ export function eligibleBoxes(
   return Object.fromEntries(BOX_SLUGS.map((b) => [b, eligibleFor(b, p, rules[b], policy, rejectReason)])) as Record<BoxSlug, BoxFit>;
 }
 
-/** Approved by a named clinician (legacy workbook approvals don't count until re-attested). */
+/**
+ * Approved by a named clinician. A record only since Screening Standard v1.0 (owner 2026-10-18):
+ * the clinician approves the rules, not each product, so this gates nothing.
+ */
 export const isClinicianApproved = (s: { status: Snack["status"]; clinicianApprovedBy?: string | null; clinicalDecision?: Snack["clinicalDecision"]; approvalRole?: string | null; diligenceComplete?: boolean }) => s.status === "Approved" && s.clinicianApprovedBy === "Laurie Pham" && s.clinicalDecision === "approved" && s.approvalRole === "clinician" && s.diligenceComplete === true;
-/** Clinician-approved and package-verified: the last step before a pick can be packed. */
-export const isReadyToPack = (s: Snack) => isClinicianApproved(s) && s.packageVerified === true;
+/**
+ * Ready to pack (and sell): in use and its package verified in hand (UPC + label). Whether it
+ * passes a given box is the engine's answer (eligibleFor), checked wherever a box is known.
+ */
+export const isReadyToPack = (s: { status: Snack["status"]; packageVerified?: boolean }) =>
+  s.status !== "Rejected" && s.status !== "Retired" && s.packageVerified === true;
 
-/** Lineup ladder: FIX → READY · PROVISIONAL (Keniya pre-approved, awaiting the clinician) → READY · CLINICIAN APPROVED → CLEARED TO PACK. */
+/** Lineup ladder: FIX (a pick fails a box rule) → READY (packages still to verify) → CLEARED TO PACK. */
 export function lineupStage(picks: { snack: Snack }[], ready: boolean): { label: string; tone: "good" | "warn" | "bad"; detail: string } {
   if (!ready) return { label: "FIX", tone: "bad", detail: "Fails a box rule" };
-  const needApproval = picks.filter((p) => !isClinicianApproved(p.snack)).length;
-  const needPackage = picks.filter((p) => p.snack.packageVerified !== true).length;
-  if (!needApproval && !needPackage) return { label: "CLEARED TO PACK", tone: "good", detail: "Every pick is PharmaGuide Team-approved and package-verified" };
-  // Keniya's diligence is done and the clinician has signed every pick; only the package-in-hand checks remain.
-  if (!needApproval) return { label: "READY · PharmaGuide Team APPROVED", tone: "good", detail: `${needPackage} need a package check; packing is blocked until done` };
-  const parts = [`${needApproval} await the PharmaGuide Team`, needPackage && `${needPackage} need a package check`].filter(Boolean);
-  return { label: "READY · PROVISIONAL", tone: "warn", detail: `Pre-approved by Keniya; ${parts.join(", ")}; packing is blocked until done` };
+  const needPackage = picks.filter((p) => !isReadyToPack(p.snack)).length;
+  if (!needPackage) return { label: "CLEARED TO PACK", tone: "good", detail: "Every pick passes the box rules and its package is verified" };
+  return { label: "READY", tone: "warn", detail: `${needPackage} need a package check; packing is blocked until done` };
 }
 
 /**
- * Launch gate before anything is packed: each pick must be eligible, clinician-approved and
- * package-verified (UPC on file and the label checked with the package in hand).
+ * Launch gate before anything is packed: each pick must pass the box and be package-verified
+ * (UPC on file and the label checked with the package in hand).
  */
 export function packBlockers(
   slug: BoxSlug,
@@ -482,8 +509,6 @@ export function packBlockers(
     const why: string[] = [];
     const e = eligibleFor(slug, snack, rules, policy, snack.rejectReason);
     if (!e.fits) why.push(`not eligible (${e.reasons[0]})`);
-    if (snack.status !== "Approved") why.push(`${snack.status}, not PharmaGuide Team-approved`);
-    else if (!isClinicianApproved(snack)) why.push("legacy approval, needs PharmaGuide Team re-attestation");
     if (!upc) why.push("no UPC");
     if (!verifiedAt) why.push("package not verified");
     return why.length ? [`${snack.code} ${snack.name}: ${why.join(", ")}`] : [];
@@ -629,9 +654,6 @@ export function checkLineup(
   checks.push(
     check("fit", `Picks not eligible for ${BOX_LABEL[slug]}`, count((x) => !eligibleFor(slug, x, rules, settings.policy).fits), { max: 0 }),
   );
-  // Candidates haven't passed the pre-screen: they can't be in a lineup at all.
-  checks.push(check("candidate", "Unreviewed picks (Candidate)", count((x) => x.status === "Candidate"), { max: 0 }));
-  checks.push(check("approved", "Picks not yet PharmaGuide Team-approved (incl. legacy approvals)", count((x) => !isClinicianApproved(x)), { max: 0 }, "warn"));
   checks.push(check("verified", "Picks without a verified package (UPC + label in hand)", count((x) => x.packageVerified !== true), { max: 0 }, "warn"));
   checks.push(
     check("stock", "Picks out of stock", count((x) => x.onHand <= 0), { max: 0 }, "warn"),

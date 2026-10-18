@@ -8,6 +8,11 @@ begin
  values(product,'Label','Almonds','Tree nuts',1,150,6,3,12,0,0,0,1,0,'{"P1":"PASS","P2":"PASS","P3":"PASS","P4":"PASS","P5":"PASS","P6":"PASS","P7a":"PASS","P7b":"PASS","P8":"PASS"}');
  perform public.set_product_review(product,'Pre-approved',null,'Sean','admin');
  perform public.set_product_review(product,'Approved',null,'Laurie Pham','clinician');
+ -- Screening Standard v1.0: selling needs a verified package (barcode + label in hand), not approval.
+ update public.products set upc='012345678905' where id=product;
+ update public.products set barcode_status='verified' where id=product; -- a UPC change resets it, so verify after
+ update public.product_versions set verified_at=now(),verified_by='Tester' where product_id=product and is_current;
+ if not public.product_package_verified(product) then raise exception 'fixture package not verified'; end if;
  insert into public.box_rules(box_slug,rules) values(slug,'{}');
  insert into public.box_lineups(box_slug,version,status) values(slug,1,'active') returning id into lineup;
  insert into public.lineup_items(lineup_id,position,product_id) values(lineup,1,product);

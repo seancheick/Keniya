@@ -2,8 +2,8 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 /**
- * Precise on purpose: Dr. Pham reviews Keniya's box criteria and seasonal lineups against
- * our screening standards. She does not review individual customers or give medical advice.
+ * Precise on purpose: Dr. Pham reviewed Keniya's box criteria (the screening standards every
+ * snack is checked against). She does not review individual customers or give medical advice.
  */
 export function ReviewerCard({ className }: { className?: string }) {
   return (
@@ -23,8 +23,8 @@ export function ReviewerCard({ className }: { className?: string }) {
       />
       <p className="text-sm leading-relaxed text-ink-soft">
         <strong className="text-ink">Reviewed by Laurie Pham, PharmD.</strong>{" "}
-        A Doctor of Pharmacy with 15+ years in drug safety reviews our box criteria and each
-        season&rsquo;s lineup against Keniya&rsquo;s screening standards. It&rsquo;s a review of
+        A Doctor of Pharmacy with 15+ years in drug safety reviewed the screening standards every
+        snack in our boxes is checked against. It&rsquo;s a review of
         the box, not of you, and not personal medical advice.
       </p>
     </div>

@@ -17,9 +17,14 @@ begin
   pregnancy_checks='{"P1":"PASS","P2":"PASS","P3":"PASS","P4":"PASS","P5":"PASS","P6":"PASS","P7a":"PASS","P7b":"PASS","P8":"PASS"}' where id=v;
  update public.product_versions set sugar_alcohols_g=null where id=v;
  assert public.product_diligence_complete(p), 'Optional sugar-alcohol disclosure must not block completed ingredient/P7b screening';
+ -- Screening Standard v1.0: P1/P2/P7a/P7b come from the ingredient screen; P8 is read from the label.
  update public.product_versions set pregnancy_checks=pregnancy_checks-'P7b' where id=v;
- assert not public.product_diligence_complete(p), 'Ingredient screening stays mandatory';
- update public.product_versions set pregnancy_checks=pregnancy_checks||'{"P7b":"PASS"}'::jsonb where id=v;
+ assert public.product_diligence_complete(p), 'Ingredient-derived checks need not be stored';
+ update public.product_versions set pregnancy_checks=pregnancy_checks||'{"P7b":"maybe"}'::jsonb where id=v;
+ assert not public.product_diligence_complete(p), 'A stored ingredient check must still be PASS or FAIL';
+ update public.product_versions set pregnancy_checks=(pregnancy_checks||'{"P7b":"PASS"}'::jsonb)-'P8' where id=v;
+ assert not public.product_diligence_complete(p), 'Single-serve (P8) stays mandatory';
+ update public.product_versions set pregnancy_checks=pregnancy_checks||'{"P8":"PASS"}'::jsonb where id=v;
  perform public.set_product_review(p,'Pre-approved',null,'Sean','admin');
  assert (select reviewed_by is null and clinical_decision='pending' and diligence_status='complete' from public.products where id=p);
  perform public.set_product_review(p,'Approved',null,'Laurie Pham','clinician');
@@ -39,13 +44,19 @@ begin
  assert (select clinical_decision='approved' from public.products where id=p);
  update public.product_versions set ingredients='Almonds, coconut oil' where id=v;
  assert (select clinical_decision='pending' and reviewed_by is null and diligence_status='candidate' from public.products where id=p);
- -- A forged display name cannot pass the durable shipment gate.
- update public.products set status='Approved',reviewed_by='Laurie Pham' where id=p;
+ -- No clinical approval is needed to pack, but a retired product or an unverified package is refused.
+ update public.products set status='Candidate' where id=p;
  insert into public.shipments(box_slug,planned_items) values('heart',array[p]) returning id into ship;
  begin
   update public.shipments set status='packed' where id=ship;
-  raise exception 'Expected clinical packing failure';
- exception when others then assert sqlerrm='Authenticated clinical approval and diligence required'; end;
+  raise exception 'Expected package identity failure';
+ exception when others then assert sqlerrm='Verified package identity and current label required'; end;
+ update public.products set status='Retired' where id=p;
+ begin
+  update public.shipments set status='packed' where id=ship;
+  raise exception 'Expected retired-product failure';
+ exception when others then assert sqlerrm='Product must be in use with complete label data'; end;
+ delete from public.shipments where id=ship;
  insert into public.box_rules(box_slug,rules) values('heart','{"addedSugarMax":5}') on conflict(box_slug) do nothing;
  insert into public.box_lineups(box_slug,version,status) values('heart',900,'active') returning id into lineup;
  update public.box_rules set rules=jsonb_set(rules,'{addedSugarMax}','4'::jsonb) where box_slug='heart';

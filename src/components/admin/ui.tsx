@@ -98,43 +98,57 @@ export function StatusBadge({ status }: { status: Status }) {
 
 
 /** "Fits 2 boxes" + one chip per box; hover a chip for the reason. */
+// PASS (meets every rule), FAIL (a confirmed rule is broken), HOLD (information missing or uncertain).
+const RESULT = {
+  PASS: { icon: "✓", tone: "good", text: "text-emerald-700" },
+  HOLD: { icon: "?", tone: "warn", text: "text-amber-700" },
+  FAIL: { icon: "✕", tone: "muted", text: "text-muted-foreground" },
+} as const;
+const resultOf = (f: BoxFit) => f.result ?? (f.fits ? "PASS" : "FAIL");
+
 export function FitBadges({ fits, compact }: { fits: Record<BoxSlug, BoxFit>; compact?: boolean }) {
   const count = BOX_SLUGS.filter((s) => fits[s].fits).length;
   return (
     <div className="flex flex-wrap items-center gap-1">
       {!compact && (
-        <Badge tone={count === 0 ? "bad" : count === 3 ? "good" : "info"}>
+        <Badge tone={count === 0 ? "bad" : count === BOX_SLUGS.length ? "good" : "info"}>
           {count === 0 ? "Fits no box" : `Fits ${count} box${count > 1 ? "es" : ""}`}
         </Badge>
       )}
-      {BOX_SLUGS.map((s) => (
-        <Badge
-          key={s}
-          tone={fits[s].fits ? "good" : "muted"}
-          title={`${BOX_LABEL[s]}: ${fits[s].fits ? `✓ ${fits[s].via.join(", ")}` : fits[s].reasons.join("; ")}`}
-          className={fits[s].fits ? "" : "line-through decoration-1"}
-        >
-          {fits[s].fits ? "✓" : "✕"} {BOX_SHORT[s]}
-        </Badge>
-      ))}
+      {BOX_SLUGS.map((s) => {
+        const r = resultOf(fits[s]);
+        return (
+          <Badge
+            key={s}
+            tone={RESULT[r].tone}
+            title={`${BOX_LABEL[s]}: ${r}${r === "PASS" ? ` · ${fits[s].via.join(", ")}` : ` · ${fits[s].reasons.join("; ")}`}`}
+            className={r === "FAIL" ? "line-through decoration-1" : ""}
+          >
+            {RESULT[r].icon} {BOX_SHORT[s]}
+          </Badge>
+        );
+      })}
     </div>
   );
 }
 
-/** Reasons a product doesn't fit, one line per box (for detail pages and the purchase form). */
+/** One line per box: PASS with the pathway, FAIL with the broken rule, HOLD with what's missing. */
 export function FitReasons({ fits }: { fits: Record<BoxSlug, BoxFit> }) {
   return (
     <ul className="space-y-1 text-sm">
-      {BOX_SLUGS.map((s) => (
-        <li key={s} className="flex gap-2">
-          <span className={cn("w-28 shrink-0 font-medium", fits[s].fits ? "text-emerald-700" : "text-muted-foreground")}>
-            {fits[s].fits ? "✓" : "✕"} {BOX_LABEL[s]}
-          </span>
-          <span className="text-muted-foreground">
-            {fits[s].fits ? fits[s].via.join(" · ") : `Not recommended: ${fits[s].reasons.join("; ")}`}
-          </span>
-        </li>
-      ))}
+      {BOX_SLUGS.map((s) => {
+        const r = resultOf(fits[s]);
+        return (
+          <li key={s} className="flex gap-2">
+            <span className={cn("w-36 shrink-0 font-medium", RESULT[r].text)}>
+              {RESULT[r].icon} {BOX_LABEL[s]}
+            </span>
+            <span className="text-muted-foreground">
+              {r === "PASS" ? fits[s].via.join(" · ") : `${r === "HOLD" ? "Hold" : "Fails"}: ${fits[s].reasons.join("; ")}`}
+            </span>
+          </li>
+        );
+      })}
     </ul>
   );
 }

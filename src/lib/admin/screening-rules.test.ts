@@ -7,10 +7,20 @@ const policy = DEFAULT_SETTINGS.policy;
 const all = { P1: "PASS", P2: "PASS", P7a: "PASS", P7b: "PASS", P8: "PASS" };
 
 describe("data checks P3–P6 fill themselves", () => {
-  it("PASS when the data is on the label; person-only checks stay blank", () => {
-    const s = snack({ caffeine_mg: null, ingredients: "almonds, sea salt", allergens: "Contains almonds", pregnancy_checks: all });
-    expect(derivedPregnancyChecks(s)).toEqual({ P3: "PASS", P4: "PASS", P5: "PASS", P6: "PASS" });
-    expect(fitsBoxes(s).pregnancy_comfort.fits).toBe(true);
+  it("PASS when the data is on the label; ingredient checks come from the ingredient screen", () => {
+    const s = snack({ caffeine_mg: null, ingredients: "almonds, sea salt", allergens: "Contains almonds", pregnancy_checks: {} });
+    expect(derivedPregnancyChecks(s)).toEqual({ P1: "PASS", P2: "PASS", P7a: "PASS", P7b: "PASS", P3: "PASS", P4: "PASS", P5: "PASS", P6: "PASS" });
+    // P8 (one pack = one serving) is read from the label, never derived.
+    expect(fitsBoxes(s).pregnancy_comfort.reasons).toEqual(["Not yet checked: P8"]);
+    expect(fitsBoxes({ ...s, pregnancy_checks: { P8: "PASS" } }).pregnancy_comfort.fits).toBe(true);
+  });
+  it("no ingredient-derived PASS without ingredients, or for a check with a finding", () => {
+    expect(derivedPregnancyChecks(snack({ ingredients: null, pregnancy_checks: {} }))).not.toHaveProperty("P2");
+    const raw = derivedPregnancyChecks(snack({ ingredients: "raw milk cheese, salt", pregnancy_checks: {} }));
+    expect(raw).not.toHaveProperty("P1");
+    expect(raw).not.toHaveProperty("P2");
+    expect(raw.P7a).toBe("PASS");
+    expect(derivedPregnancyChecks(snack({ ingredients: "almonds, maltitol", pregnancy_checks: {} }))).not.toHaveProperty("P7b");
   });
   it("a stored FAIL always wins over the derived PASS", () => {
     const s = snack({ ingredients: "almonds", allergens: "Contains almonds", pregnancy_checks: { ...all, P6: "FAIL" } });

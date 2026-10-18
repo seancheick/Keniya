@@ -387,6 +387,9 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     // Not an ACOG number: ACOG sets a daily total, Keniya chooses 50 mg per pack so one snack
     // never spends a large share of the day. Chocolate (≤20 mg) passes.
     caffeineMax: 50,
+    // Owner 2026-10-18 (Screening Standard v1.0): ≤360 mg sodium per pack. Keniya policy, not a
+    // clinical or FDA limit (FDA's 2024 "healthy" claim allows 230 mg for an individual food).
+    sodiumMax: 360,
     // Founder-set 2026-10-17, pending clinician: the whole box ≤100 mg (half of ACOG's daily
     // 200 mg, spread over 14 snacks), and at most 4 chocolate picks (Consumer Reports found
     // lead/cadmium in dark chocolate; pregnancy is the most sensitive group).
@@ -513,6 +516,8 @@ export const DEFAULT_BOX_RULES: Record<BoxSlug, BoxRules> = {
     beverageMax: 3,
     proteinOrFiberMin: 5,
     caffeineMax: 100,
+    // Same per-pack sodium policy as Pregnancy (owner 2026-10-18).
+    sodiumMax: 360,
     boxCaffeineMax: 150,
     chocolateMax: 4,
   },

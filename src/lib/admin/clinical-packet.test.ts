@@ -100,6 +100,6 @@ describe("PharmaGuide Team packet", () => {
     expect(String(wb.getWorksheet("Start here")!.getRow(1).getCell(2).value)).toContain("1 lineups missing or failing checks");
   });
   it("describes a box with no per-pack limits honestly", () => {
-    expect(limitsLine({ ...DEFAULT_BOX_RULES.pregnancy_comfort, caffeineMax: null })).toMatch(/no per-pack limits/);
+    expect(limitsLine({ ...DEFAULT_BOX_RULES.pregnancy_comfort, caffeineMax: null, sodiumMax: null })).toMatch(/no per-pack limits/);
   });
 });

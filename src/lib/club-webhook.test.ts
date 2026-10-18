@@ -42,7 +42,7 @@ const ev = (type: string, object: unknown) => ({ id: "evt_1", type, data: { obje
 
 beforeEach(() => {
   vi.clearAllMocks();
-  m.state.mockResolvedValue({ sales: { heart: { clinicianApproved: true } } });
+  m.state.mockResolvedValue({ sales: { heart: { saleReady: true } } });
   m.mail.mockResolvedValue({ ok: true });
 });
 
@@ -54,7 +54,7 @@ describe("Snack Club renewals", () => {
     expect(m.mail).not.toHaveBeenCalled();
   });
   it("holds a renewal it can't fill: finalized without collection, voided, subscriber told", async () => {
-    m.state.mockResolvedValue({ sales: { heart: { clinicianApproved: false } } });
+    m.state.mockResolvedValue({ sales: { heart: { saleReady: false } } });
     const f = fakes();
     await handleClubEvent(ev("invoice.created", invoice()), f.stripe, f.db);
     expect(f.raw.invoices.update).toHaveBeenCalledWith("in_1", { auto_advance: false });
@@ -63,14 +63,14 @@ describe("Snack Club renewals", () => {
     expect(m.mail).toHaveBeenCalledWith("club@example.com", "in_1", expect.objectContaining({ kind: "held" }));
   });
   it("is retry-safe once the held invoice is already void", async () => {
-    m.state.mockResolvedValue({ sales: { heart: { clinicianApproved: false } } });
+    m.state.mockResolvedValue({ sales: { heart: { saleReady: false } } });
     const f = fakes({ invoiceStatuses: ["void"] });
     await handleClubEvent(ev("invoice.created", invoice()), f.stripe, f.db);
     expect(f.raw.invoices.finalizeInvoice).not.toHaveBeenCalled();
     expect(f.raw.invoices.voidInvoice).not.toHaveBeenCalled();
   });
   it("leaves a skipped or paused month to Stripe's pause", async () => {
-    m.state.mockResolvedValue({ sales: { heart: { clinicianApproved: false } } });
+    m.state.mockResolvedValue({ sales: { heart: { saleReady: false } } });
     const f = fakes({ sub: sub({ pause_collection: { behavior: "void", resumes_at: null } as Stripe.Subscription.PauseCollection }) });
     await handleClubEvent(ev("invoice.created", invoice()), f.stripe, f.db);
     expect(f.raw.invoices.finalizeInvoice).not.toHaveBeenCalled();

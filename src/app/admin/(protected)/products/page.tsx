@@ -8,7 +8,7 @@ import { Badge, Card, Empty, FitBadges, PageHeader, PillTabs, StatusBadge, Table
 import { cn } from "@/lib/utils";
 import { fmt$ } from "@/lib/admin/costing";
 import { loadBoxRules, loadCatalog, loadSettings } from "@/lib/admin/db";
-import { eligibleBoxes, isClinicianApproved, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
+import { eligibleBoxes, nutritionComplete, shipsUnderPolicy } from "@/lib/admin/rules";
 import { BOX_LABEL, BOX_SHORT, BOX_SLUGS, CATEGORIES, isBoxSlug, type BoxSlug } from "@/lib/admin/types";
 
 export const metadata: Metadata = { title: "Products" };
@@ -16,13 +16,12 @@ export const metadata: Metadata = { title: "Products" };
 type SP = { q?: string; status?: string; box?: string; cat?: string; issue?: string };
 
 
-/** Review stages in the order a product moves through them. "Legacy" = approved in the old workbook, no named clinician. */
+/** Status tabs. Box fit is the engine's answer (✓ pass, ? hold, ✕ fail), not a review stage. */
 const TABS = [
   { key: "", label: "All" },
-  { key: "Candidate", label: "Candidate", hint: "Not reviewed yet" },
-  { key: "Pre-approved", label: "Pre-approved", hint: "Waiting for the PharmaGuide Team" },
-  { key: "Approved", label: "Approved", hint: "Approved by PharmaGuide Team" },
-  { key: "Legacy", label: "Needs PharmaGuide Team review", hint: "Imported status is not a PharmaGuide Team approval" },
+  { key: "Candidate", label: "Candidate", hint: "On file" },
+  { key: "Pre-approved", label: "Pre-approved", hint: "Older review status" },
+  { key: "Approved", label: "Approved", hint: "Older review status" },
   { key: "Rejected", label: "Rejected" },
   { key: "Retired", label: "Retired" },
 ] as const;
@@ -33,7 +32,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
   const [{ snacks, products }, settings, rules] = await Promise.all([loadCatalog(), loadSettings(), loadBoxRules()]);
   const productBy = new Map(products.map((p) => [p.id, p]));
   const q = sp.q?.trim().toLowerCase() ?? "";
-  const stage = (s: (typeof snacks)[number]) => (s.status === "Approved" && !isClinicianApproved(s) ? "Legacy" : s.status);
+  const stage = (s: (typeof snacks)[number]) => s.status;
 
   // Everything except the status tab, so each tab can show how many products it would hold.
   const base = snacks
@@ -62,7 +61,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
     <>
       <PageHeader
         title="Products"
-        description={`${snacks.length} snacks. A ✓ box means eligible: nutrition rules, hard limits, shipping policy and status all pass. Tap or hover it for the reason.`}
+        description={`${snacks.length} snacks. ✓ passes every rule for that box, ? is on hold for missing or uncertain information, ✕ breaks a rule. Tap or hover it for the reason.`}
         actions={
           <>
             <Button asChild title="The finished lineups only: each product with its label values, the rule applied, the pass rationale, source and decision fields. This is what the PharmaGuide Team signs.">
@@ -86,7 +85,7 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
 
       <PillTabs
         label="Review stage"
-        tabs={TABS.filter((t) => !["Rejected", "Retired", "Legacy"].includes(t.key) || count(t.key) > 0 || t.key === activeTab).map((t) => ({
+        tabs={TABS.filter((t) => !["Rejected", "Retired"].includes(t.key) || count(t.key) > 0 || t.key === activeTab).map((t) => ({
           key: t.key,
           label: t.label,
           href: tabHref(t.key),
@@ -172,7 +171,6 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                       <Badge key={b} tone="good">{`✓ ${BOX_SHORT[b]}`}</Badge>
                     ))}
                     {eligibleChips(fits).length === 0 && <Badge tone="muted">No box</Badge>}
-                    {stage(s) === "Legacy" && <Badge tone="warn">Needs PharmaGuide Team review</Badge>}
                     {!nutritionComplete(s) && <Badge tone="bad">no nutrition</Badge>}
                     {!shipsUnderPolicy(s, settings.policy).ok && <Badge tone="warn">doesn&apos;t ship</Badge>}
                     <span className="ml-auto text-muted-foreground tabular-nums">
@@ -226,7 +224,6 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
                     </td>
                     <td>
                       <StatusBadge status={s.status} />
-                      {stage(s) === "Legacy" && <div className="mt-1 text-xs text-amber-700">needs re-attestation</div>}
                     </td>
                     <td className="text-xs text-muted-foreground">{s.categories.join(", ") || "—"}</td>
                     <td className="num">{s.onHand || "—"}</td>

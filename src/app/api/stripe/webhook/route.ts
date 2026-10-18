@@ -153,7 +153,7 @@ export async function POST(req: Request) {
       await sendOrderEmails(
         email,
         {
-          box: { ...emailBox, founding: sale.founding, sale: { available: sale.available, clinicianApproved: sale.clinicianApproved, priceCents: sale.priceCents, remaining: sale.remaining, state: sale.available ? "preorder" : "waitlist" } },
+          box: { ...emailBox, founding: sale.founding, sale: { available: sale.available, saleReady: sale.saleReady, priceCents: sale.priceCents, remaining: sale.remaining, state: sale.available ? "preorder" : "waitlist" } },
           firstName: (session.customer_details?.name ?? "").split(" ")[0] || undefined,
           ...(subscription && { club: { priceCents: subscription.items.data[0]?.price.unit_amount ?? session.amount_total ?? 0 } }),
           amountCents: session.amount_total ?? 0,

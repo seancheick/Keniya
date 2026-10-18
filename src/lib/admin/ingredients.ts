@@ -106,12 +106,13 @@ const RULES: Rule[] = [
     // "red wine vinegar" and "natural rum flavor" contain no alcohol, so they don't count.
     re: /\b(rum|bourbon|whiskey|whisky|brandy|liqueur|wine|beer|vodka|sake)\b(?!\s+(vinegar|flavou?r|flavou?ring|extract))|(?<!sugar\s)\balcohol\b(?!s?\s*\()/i,
   },
-  // Clinician decision: shelf-stable cooked/dried meats sit between deli meat and cooked food.
+  // Keniya policy (Screening Standard v1.0, 2026-10-18): shelf-stable cured/dried meats are left
+  // out of the pregnancy family as a conservative choice, not because every one is unsafe.
   {
     code: "cured_meat",
-    severity: "review",
+    severity: "pregnancy_fail",
     check: "P2",
-    label: "Cured or dried meat (jerky, meat stick, salami): clinician decision for pregnancy",
+    label: "Cured or dried meat (jerky, meat stick, salami): not in pregnancy boxes (Keniya policy)",
     re: /\b(salami|pepperoni|prosciutto|dry sausage|summer sausage|chorizo|jerky|meat stick|beef stick|biltong)\b/i,
   },
   // P7a: established pregnancy concern (the DB watchlist adds to these at runtime).
