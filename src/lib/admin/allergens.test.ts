@@ -9,6 +9,22 @@ describe("product allergens (FDA 9)", () => {
     expect(productAllergens(POCKY)).toMatchObject({ contains: ["milk", "wheat", "soy"], mayContain: [], verifiable: true });
     expect(productAllergens(BAR)).toMatchObject({ contains: ["tree_nuts"], mayContain: ["milk", "peanuts", "sesame"], verifiable: true });
   });
+  it("splits Contains from cross-contact inside one sentence (live label formats)", () => {
+    expect(productAllergens({ allergens: "almonds, may contain peanuts, milk, soy, egg, wheat, sesame, other tree nuts (facility)", ingredients: "ALMONDS." }))
+      .toMatchObject({ contains: ["tree_nuts"], mayContain: ["milk", "egg", "peanuts", "wheat", "soy", "sesame"], verifiable: true });
+    expect(productAllergens({ allergens: "almonds, peanuts, soy, may contain sesame/other tree nuts", ingredients: "ALMONDS, PEANUTS, SOY LECITHIN" }))
+      .toMatchObject({ contains: ["tree_nuts", "peanuts", "soy"], mayContain: ["sesame"], verifiable: true });
+    expect(productAllergens({ allergens: "Contains wheat; shared equipment may contain milk, sesame, soy.", ingredients: "wheat flour, soy flour, salt" }).issues)
+      .toEqual(["Ingredients list soy but the Contains statement doesn't"]);
+  });
+  it("refined soybean oil is FALCPA-exempt; soy lecithin is not", () => {
+    expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, vegetable shortening (corn, canola and/or soybean oil), salt" }).issues).toEqual([]);
+    expect(productAllergens({ allergens: "wheat, milk", ingredients: "wheat flour, cheddar cheese, vegetable oils (canola, sunflower and/or soybean), salt" }).issues).toEqual([]);
+    expect(productAllergens({ allergens: "Contains wheat.", ingredients: "wheat flour, shortening (palm oil, soy lecithin)" }).issues)
+      .toEqual(["Ingredients list soy but the Contains statement doesn't"]);
+    expect(productAllergens({ allergens: "oats, may contain soy", ingredients: "oats, chocolate (sugar, soy lecithin), canola oil" }).issues)
+      .toEqual(["Ingredients list soy but the Contains statement doesn't"]);
+  });
   it("plant milks and nut butters aren't dairy", () => {
     expect(productAllergens({ allergens: "Contains: almonds, peanuts.", ingredients: "oat milk, peanut butter, almond butter, cocoa butter" }).issues).toEqual([]);
   });

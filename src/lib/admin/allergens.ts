@@ -45,6 +45,11 @@ const CROSS_CONTACT = /(may contain|may also contain|made (in|on) (a )?(facility
 
 const has = (text: string, a: Allergen, words = WORDS) => words[a].test(text);
 
+// FALCPA exempts highly refined oils, so labels don't declare soy for "soybean oil" or
+// "vegetable oils (canola and/or soybean)". Lecithin, flour, protein etc. still count.
+const withoutRefinedSoyOil = (text: string) =>
+  text.replace(/\bsoy(bean)?\s+oils?\b/gi, "").replace(/\b(oils?|shortening)\s*\(([^)]*)\)/gi, (m) => m.replace(/\bsoy(bean)?\b(?!\s+(lecithin|flour|protein|sauce|milk))/gi, ""));
+
 export type ProductAllergens = {
   contains: Allergen[];
   mayContain: Allergen[];
@@ -62,15 +67,20 @@ export function productAllergens(p: { allergens?: string | null; ingredients?: s
   const ingredients = (p.ingredients ?? "").trim();
   const issues: string[] = [];
   if (!statement) issues.push("No allergen statement on file: allergens can't be verified");
-  const sentences = statement.split(/(?<=[.;])\s+|\n/);
-  const cross = sentences.filter((x) => CROSS_CONTACT.test(x)).join(" ");
-  const direct = sentences.filter((x) => !CROSS_CONTACT.test(x)).join(" ");
+  // Labels often run both parts together ("almonds, may contain peanuts"), so each sentence is
+  // split at its cross-contact phrase: before it is "Contains", from it on is cross-contact.
+  const parts = statement.split(/(?<=[.;])\s+|\n/).map((x) => {
+    const at = x.search(CROSS_CONTACT);
+    return at < 0 ? { direct: x, cross: "" } : { direct: x.slice(0, at), cross: x.slice(at) };
+  });
+  const direct = parts.map((x) => x.direct).join(" ");
+  const cross = parts.map((x) => x.cross).join(" ");
   const contains = ALLERGENS.filter((a) => has(direct, a));
   const mayContain = ALLERGENS.filter((a) => has(cross, a) && !contains.includes(a));
   const saysNone = /^(contains:?\s*)?(none|no (major )?allergens)\b/i.test(direct.trim());
   if (statement && ingredients)
     for (const a of ALLERGENS)
-      if (has(ingredients, a, INGREDIENT_WORDS) && !contains.includes(a))
+      if (has(a === "soy" ? withoutRefinedSoyOil(ingredients) : ingredients, a, INGREDIENT_WORDS) && !contains.includes(a))
         issues.push(`Ingredients list ${ALLERGEN_LABEL[a].toLowerCase()} but the ${saysNone ? "statement says none" : "Contains statement doesn't"}`);
   return { contains, mayContain, verifiable: issues.length === 0, issues };
 }
