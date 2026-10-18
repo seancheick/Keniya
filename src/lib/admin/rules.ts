@@ -115,7 +115,7 @@ export type BoxFit = {
 };
 
 export type ReasonCode =
-  | "REJECTED" | "RETIRED" | "NUTRITION_MISSING" | "SHIPPING_POLICY" | "MULTI_SERVE" | "SINGLE_SERVE_UNCONFIRMED"
+  | "REJECTED" | "RETIRED" | "NUTRITION_MISSING" | "INGREDIENTS_MISSING" | "SHIPPING_POLICY" | "MULTI_SERVE" | "SINGLE_SERVE_UNCONFIRMED"
   | "DYE" | "SAFETY_FINDING" | "CLINICIAN_DECISION" | "PREGNANCY_CHECK_FAILED" | "PREGNANCY_CHECK_BLANK"
   | "CAFFEINE_UNKNOWN" | "CAFFEINE_OVER" | "CAFFEINE_ESTIMATE_HOLD" | "CARBS_OVER" | "ADDED_SUGAR_OVER"
   | "SODIUM_OVER" | "SAT_FAT_OVER" | "SAT_FAT_MISSING" | "PHO" | "NO_PATHWAY" | "OTHER";
@@ -125,6 +125,7 @@ const REASON_CODES: [RegExp, ReasonCode][] = [
   [/^Rejected/, "REJECTED"],
   [/^Retired$/, "RETIRED"],
   [/^Missing nutrition|not recorded$/, "NUTRITION_MISSING"],
+  [/^Ingredients not on file/, "INGREDIENTS_MISSING"],
   [/^Synthetic dye/, "DYE"],
   [/^Partially hydrogenated/, "PHO"],
   [/^Current ingredients:/, "SAFETY_FINDING"],
@@ -151,6 +152,8 @@ function base(p: RuleInput, rejectReason?: string | null): string[] {
   if (p.status === "Rejected") reasons.push(`Rejected${rejectReason ? `: ${rejectReason}` : ""}`);
   const missing = missingNutrients(p);
   if (missing.length) reasons.push(`Missing nutrition: ${missing.join(", ")}`);
+  // Every box screens ingredients (dyes in all, no-gos and allergens where they apply).
+  if (!p.ingredients?.trim()) reasons.push("Ingredients not on file: ingredient screening not done");
   return reasons;
 }
 
@@ -697,6 +700,15 @@ export function checkLineup(
     ...(brands.count ? { value: `${brands.count} repeat${brands.count > 1 ? "s" : ""}: ${brands.which.join(", ")}` } : {}),
   });
   const kinds = repeats(s.map((x) => productKind(x.name)));
+  if (rules.kindMax !== null) {
+    const per = new Map<string, number>();
+    for (const x of s) { const k = productKind(x.name); if (k) per.set(k, (per.get(k) ?? 0) + 1); }
+    const over = [...per].filter(([, n]) => n > rules.kindMax!);
+    checks.push({
+      ...check("kindmax", `At most ${rules.kindMax} of one snack type`, over.reduce((t, [, n]) => t + n - rules.kindMax!, 0), { max: 0 }),
+      ...(over.length ? { value: over.map(([k, n]) => `${k} ×${n}`).join(", ") } : {}),
+    });
+  }
   checks.push({
     ...check("kind", "Repeated snack types (one of each kind)", kinds.count, { max: 0 }, "warn"),
     ...(kinds.count ? { value: `${kinds.count} repeat${kinds.count > 1 ? "s" : ""}: ${kinds.which.join(", ")}` } : {}),

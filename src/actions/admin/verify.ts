@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { expireInvalidCheckoutSessions } from "@/lib/commerce-reconcile";
 import { z } from "zod";
-import { BOX_SLUGS } from "@/lib/admin/types";
+import { BOX_SLUGS, type Nutrition } from "@/lib/admin/types";
+import { derivedNutritionNote, labelRoundingIssues } from "@/lib/admin/label-rounding";
 import { requireAdmin } from "@/lib/admin/auth";
 import { db, must } from "@/lib/admin/db";
 import { gtin14 } from "@/lib/admin/barcode";
@@ -57,7 +58,7 @@ export async function verifyPackage(_prev: VerifyState, fd: FormData): Promise<V
   const version = must(
     await db().from("product_versions").select("*").eq("product_id", product.id).eq("is_current", true).single(),
     "version",
-  ) as { id: string; pregnancy_checks: Record<string, string> | null };
+  ) as { id: string; pregnancy_checks: Record<string, string> | null } & Partial<Nutrition>;
 
   const problems = verifyProblems({
     scannedUpc: upc,
@@ -72,6 +73,8 @@ export async function verifyPackage(_prev: VerifyState, fd: FormData): Promise<V
   if (pack && !viaPack) problems.unshift(`That barcode is the outer box of another product: scan this product's own pack or its box.`);
   if (!viaPack && !pack && !product.upc && !f.barcode_on) problems.unshift("Say whether this barcode is on the single pack or on the outer box it came in.");
   if (newBox && !f.units_per_box) problems.unshift("How many single packs are in that box?");
+  const derived = labelRoundingIssues(version);
+  if (f.nutrition_ok === "yes" && derived.length) problems.push(derivedNutritionNote(derived));
 
   if (f.nutrition_ok === "no" || f.ingredients_ok === "no" || f.single_serve === "no") {
     const reasons = [

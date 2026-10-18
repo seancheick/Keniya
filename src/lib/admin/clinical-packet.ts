@@ -5,6 +5,7 @@ import { reviewTeamRow } from "./review-wording";
 // validation result. The full catalog workbook (clinical-xlsx.ts) stays an internal audit tool.
 import ExcelJS from "exceljs";
 import { caffeineDisplay } from "./caffeine";
+import { labelRoundingIssues } from "./label-rounding";
 import { reviewRecommendation, reviewWorkRemaining, splitNotes, type ClinicalExtra } from "./clinical";
 import { derivedPregnancyChecks, eligibleFor, isClinicianApproved, isReady, lineupStage, nutFatException, type Check, type Pick } from "./rules";
 import { BOX_LABEL, BOX_SLUGS, PREGNANCY_CHECK_KEYS, ROLE_KEYS, ROLE_LABEL, type BoxRules, type BoxSlug, type Settings, type Snack } from "./types";
@@ -126,6 +127,7 @@ export function packetProductRows(input: PacketInput): Record<string, unknown>[]
       "Added sugar (g)": s.added_sugar_g,
       "Sodium (mg)": s.sodium_mg,
       "Saturated fat (g)": s.sat_fat_g,
+      "Calculated values (verify on pack)": labelRoundingIssues(s).join(", ") || null,
       "Caffeine (mg)": caffeineDisplay({ ...s, ingredients: x?.ingredients ?? s.ingredients }),
       "Sugar alcohols (g)": s.sugar_alcohols_g,
       "Pregnancy checks": PREGNANCY_CHECK_KEYS.map((k) => `${k}=${s.pregnancy_checks[k] ?? (derived[k as keyof typeof derived] ? "PASS (auto)" : "—")}`).join(" "),

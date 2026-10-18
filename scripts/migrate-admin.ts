@@ -81,6 +81,7 @@ const MIGRATIONS: { file: string; applied: string }[] = [
   { file: "supabase/migrations/20261018010000_screening_resolutions.sql", applied: "select to_regclass('public.screening_resolutions') is not null and to_regprocedure('public.resolve_screening_finding(uuid,text,text,text,text,text,text,text,text)') is not null as ok" },
   { file: "supabase/migrations/20261018020000_shipment_needs.sql", applied: "select exists (select 1 from information_schema.columns where table_schema='public' and table_name='shipments' and column_name='also_meet') and exists (select 1 from information_schema.columns where table_schema='public' and table_name='preorders' and column_name='avoid_allergens') as ok" },
   { file: "supabase/migrations/20261018030000_pack_needs_guard.sql", applied: "select to_regprocedure('public.pack_shipment_needs_checked(jsonb,uuid,uuid[],jsonb,uuid,text,integer,integer,numeric,integer)') is not null as ok" },
+  { file: "supabase/migrations/20261019010000_blood_sugar_protein_fiber.sql", applied: "select coalesce((select (rules->>'proteinOrFiberMin')::int <> 5 from public.box_rules where box_slug='blood_sugar'), true) as ok" },
 ];
 
 const TABLES = [

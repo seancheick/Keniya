@@ -41,8 +41,8 @@ export const landings: BoxLanding[] = [
         body: "No raw dairy, eggs or fish, deli meat, high-mercury fish, raw sprouts, alcohol or liver.",
       },
       {
-        title: "Caffeine known and limited on every snack",
-        body: "We choose caffeine-free wherever we can; the small amount in chocolate is allowed, energy products never are. A snack with unknown caffeine doesn't qualify.",
+        title: "Caffeine checked and limited on every snack",
+        body: "We choose caffeine-free wherever we can; the small amount in chocolate is allowed, energy products never are. We use the label's caffeine value; for a small chocolate snack without one, a conservative estimate, and anything near the limit waits for the maker's number. A snack whose caffeine we can't check doesn't qualify.",
       },
       {
         title: "Added sugar, sodium and allergens checked",
@@ -226,7 +226,7 @@ export const landings: BoxLanding[] = [
       },
       {
         title: "A screened snack assortment, not a diet",
-        body: "Nutrition for gestational diabetes is individualized, with a daily carbohydrate floor. This box fits around your care team's plan; it doesn't replace it.",
+        body: "Nutrition for gestational diabetes is individualized, with a daily carbohydrate floor. Our {{gestational_diabetes.carbsMax}} g limit is how Keniya selects snacks, not a medical target or a prescription. This box fits around your care team's plan; it doesn't replace it.",
       },
     ],
     faqs: [
@@ -312,11 +312,11 @@ export const landings: BoxLanding[] = [
     screening: [
       {
         title: "The Pregnancy food-safety checks, kept",
-        body: "Fully cooked or pasteurized, no raw or unpasteurized ingredients, allergens identified.",
+        body: "Fully cooked or pasteurized, no raw or unpasteurized ingredients, allergens identified. Breastfeeding guidance doesn't require all of these; we keep them as Keniya's conservative choice for recovery and a home with a newborn.",
       },
       {
-        title: "Caffeine known and limited",
-        body: "Nursing allows more caffeine than pregnancy, so the limit is looser: every pack's caffeine is known and no more than {{postpartum.caffeineMax}} mg.",
+        title: "Caffeine checked and limited",
+        body: "Nursing allows more caffeine than pregnancy, so the limit is looser: every pack's caffeine is checked and no more than {{postpartum.caffeineMax}} mg.",
       },
       {
         title: "Protein and sips in every box",
@@ -334,7 +334,7 @@ export const landings: BoxLanding[] = [
       },
       {
         q: "How does caffeine work for nursing?",
-        a: "Guidance from ACOG and the CDC puts moderate caffeine while nursing around 200 to 300 mg a day. Our per-pack limit of {{postpartum.caffeineMax}} mg stays well under that and every pack's caffeine is known. Ask your pediatrician if your baby was born early.",
+        a: "Guidance from ACOG and the CDC puts moderate caffeine while nursing around 200 to 300 mg a day. Our per-pack limit of {{postpartum.caffeineMax}} mg stays well under that and every pack's caffeine is checked. Ask your pediatrician if your baby was born early.",
       },
       {
         q: "How is it different from the Pregnancy box?",

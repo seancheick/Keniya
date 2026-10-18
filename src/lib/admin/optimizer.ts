@@ -7,7 +7,7 @@
 //   3. greedy: fill up to the total within category maximums
 //   4. repair: single swaps that most reduce the total check deficit
 //   5. improve: single swaps that raise the score without breaking anything
-import { checkLineup, eligibleFor, type AlsoMeet, type Check, type Pick } from "./rules";
+import { checkLineup, eligibleFor, productKind, type AlsoMeet, type Check, type Pick } from "./rules";
 import type { BoxRules, BoxSlug, Objective, Settings, Snack } from "./types";
 
 export type OptimizeInput = {
@@ -105,7 +105,8 @@ export function optimize(input: OptimizeInput): OptimizeResult {
   const typeCount = (t: Snack["type"]) => picks.filter((p) => p.snack.type === t).length;
   const typeOk = (s: Snack) =>
     !(s.type === "Mini" && rules.miniMax !== null && typeCount("Mini") >= rules.miniMax) &&
-    !(s.type === "Beverage" && rules.beverageMax !== null && typeCount("Beverage") >= rules.beverageMax);
+    !(s.type === "Beverage" && rules.beverageMax !== null && typeCount("Beverage") >= rules.beverageMax) &&
+    !(rules.kindMax !== null && productKind(s.name) !== null && picks.filter((p) => productKind(p.snack.name) === productKind(s.name)).length >= rules.kindMax);
   const catsOf = (s: Snack) => (catNames.length ? s.categories.filter((c) => catNames.includes(c)) : [null]);
 
   // 2. category minimums, scarcest category first

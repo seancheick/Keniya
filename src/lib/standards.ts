@@ -58,7 +58,7 @@ export function publicComposition(slug: BoxSlug, rules: PublicRules, copy: Parti
 export function publicStandards(slug: BoxSlug, rules: PublicRules): string[] {
   const r = rules[slug];
   const checks = `${PREGNANCY_BLOCKING.length} pregnancy screening checks: fully cooked or pasteurized, no pregnancy no-gos, allergens identified`;
-  const caffeine = r.caffeineMax !== null ? `Caffeine known on every pack and no more than ${r.caffeineMax} mg` : null;
+  const caffeine = r.caffeineMax !== null ? `Caffeine checked on every pack (the label value, or a conservative estimate for a small chocolate snack) and no more than ${r.caffeineMax} mg` : null;
   const pack = slug === "blood_sugar" || slug === "gestational_diabetes" ? "snack pack" : "pack";
   const carbs = r.carbsMax !== null ? `No more than ${r.carbsMax} g total carbohydrate per ${pack} (total carbs, never "net carbs")` : null;
   const sugar = r.addedSugarMax !== null ? `No more than ${r.addedSugarMax} g added sugar per ${pack}` : null;
