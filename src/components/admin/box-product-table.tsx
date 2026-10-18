@@ -9,7 +9,7 @@ import { caffeineDisplay } from "@/lib/admin/caffeine";
 import { netCarbs } from "@/lib/admin/carbs";
 import { fmt$ } from "@/lib/admin/costing";
 import { daysUntil } from "@/lib/admin/optimizer";
-import { eligibleFor, isClinicianApproved, type BoxFit } from "@/lib/admin/rules";
+import { eligibleFor, giTolerabilityFlags, isClinicianApproved, type BoxFit } from "@/lib/admin/rules";
 import { BOX_LABEL, BOX_SHORT, BOX_SLUGS, type BoxRules, type BoxSlug, type Settings, type Snack } from "@/lib/admin/types";
 import { cn } from "@/lib/utils";
 
@@ -214,6 +214,7 @@ function Evidence({ s, fits, blocked, finding }: { s: Snack; fits: Record<BoxSlu
         ))}
         <p className="text-xs text-muted-foreground">{n.map(([k, v, u]) => `${k} ${v ?? "—"}${v !== null && u ? ` ${u}` : ""}`).join(" · ")}</p>
         {s.allergens && <p className="text-xs">Allergens: {s.allergens}</p>}
+        {giTolerabilityFlags(s).length > 0 && <p className="text-xs text-amber-800">GLP-1 tolerability review: {giTolerabilityFlags(s).join(", ")}</p>}
       </div>
       <div className="space-y-2">
         {finding && (

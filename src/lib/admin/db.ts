@@ -7,6 +7,7 @@ import { effectiveUnitCost } from "./costing";
 import type { PostageSample } from "./postage";
 import {
   BOX_SLUGS,
+  inheritParentRules,
   resolveBoxRules,
   resolveSettings,
   type BoxRules,
@@ -200,7 +201,7 @@ export async function loadBoxRules(): Promise<Record<BoxSlug, BoxRules>> {
     if (!row || !row.rules || typeof row.rules !== "object") throw new Error(`Missing live rules for ${slug}`);
     out[slug] = resolveBoxRules(slug, row.rules);
   }
-  return out;
+  return inheritParentRules(out);
 }
 
 export async function loadVendors(): Promise<VendorRow[]> {

@@ -516,6 +516,27 @@ export function resolveBoxRules(slug: BoxSlug, stored: unknown): BoxRules {
   return parsed.data;
 }
 
+/** Per-pick and per-box ceilings a child box inherits from its parents (the stricter value wins). */
+const INHERITED_CAPS = [
+  "carbsMax", "beverageCarbsMax", "beverageAddedSugarMax", "addedSugarMax", "treatAddedSugarMax", "treatMax",
+  "sodiumMax", "satFatMax", "satFatNutMax", "caffeineMax", "boxCaffeineMax", "chocolateMax",
+] as const satisfies readonly (keyof BoxRules)[];
+
+/**
+ * Gestational Diabetes must never be looser than the standards it combines: for every ceiling,
+ * the effective GDM value is the strictest of its own, Blood Sugar's and Pregnancy Comfort's
+ * live values (null means no limit, so it never loosens one). Applied wherever live rules are
+ * loaded, so an edit to either parent flows through and a GDM edit can't undercut them.
+ */
+export function inheritParentRules(rules: Record<BoxSlug, BoxRules>): Record<BoxSlug, BoxRules> {
+  const gdm = { ...rules.gestational_diabetes };
+  for (const k of INHERITED_CAPS) {
+    const vals = [rules.gestational_diabetes[k], rules.blood_sugar[k], rules.pregnancy_comfort[k]].filter((v): v is number => typeof v === "number");
+    (gdm as Record<string, unknown>)[k] = vals.length ? Math.min(...vals) : null;
+  }
+  return { ...rules, gestational_diabetes: gdm };
+}
+
 export const OBJECTIVES = ["balanced", "margin", "expiring", "overstock", "favorites"] as const;
 export type Objective = (typeof OBJECTIVES)[number];
 export const OBJECTIVE_LABEL: Record<Objective, string> = {

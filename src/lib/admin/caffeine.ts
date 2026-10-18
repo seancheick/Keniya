@@ -2,9 +2,11 @@
 // 2026-10-17, pending clinician confirmation:
 //   - label value always wins;
 //   - no caffeine-bearing ingredient → 0;
-//   - cocoa/chocolate → worst-case upper bound: the whole pack counted as dark chocolate
+//   - cocoa/chocolate → a screening estimate: the whole pack counted as dark chocolate
 //     (USDA SR Legacy 170273: ~80 mg/100 g) or as cocoa powder (~230 mg/100 g) when cocoa
-//     powder is listed. A 15 g chocolate bar can't exceed ~12 mg, far under the 50 mg cap;
+//     powder is listed. Conservative for most snacks, but not a guaranteed maximum (cacao
+//     content varies), so it is never shown as a label value and an estimate using more than
+//     half the per-pack limit waits for the manufacturer's number (rules.ts gateFailures);
 //   - coffee, tea leaf, matcha, guarana… with no label value stays unknown (a person must find it).
 import { hasFinding, screenIngredients } from "./ingredients";
 
@@ -39,7 +41,7 @@ export function resolveCaffeine(input: {
   return {
     mg: Math.ceil(grams * rate),
     source: "estimate_max",
-    note: `Estimated upper bound: ${Math.round(grams)} g × ${rate} mg/g (${powder ? "cocoa powder" : "dark chocolate"}, USDA); real value is lower`,
+    note: `Screening estimate, not a label value: whole ${Math.round(grams)} g pack counted as ${powder ? "cocoa powder" : "dark chocolate"} (${rate} mg/g, USDA)`,
   };
 }
 
@@ -47,9 +49,9 @@ export function resolveCaffeine(input: {
 export const effectiveCaffeine = (p: { caffeine_mg: number | null; ingredients?: string | null; unit_wt_oz: number | null }) =>
   resolveCaffeine({ labelMg: p.caffeine_mg, ingredients: p.ingredients, unitOz: p.unit_wt_oz }).mg;
 
-/** Caffeine for display: "12" from the label, "0 (no source)", "≤12 (est.)", or null when unknown. */
+/** Caffeine for display: "12" from the label, "0 (no source)", "~12 (screening est.)", or null when unknown. */
 export function caffeineDisplay(p: { caffeine_mg: number | null; ingredients?: string | null; unit_wt_oz: number | null }): string | null {
   const r = resolveCaffeine({ labelMg: p.caffeine_mg, ingredients: p.ingredients, unitOz: p.unit_wt_oz });
   if (r.mg === null) return null;
-  return r.source === "estimate_max" ? `≤${r.mg} (est.)` : r.source === "none_present" ? `0 (no source)` : String(r.mg);
+  return r.source === "estimate_max" ? `~${r.mg} (screening est.)` : r.source === "none_present" ? `0 (no source)` : String(r.mg);
 }

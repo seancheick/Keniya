@@ -135,6 +135,10 @@ export const landings: BoxLanding[] = [
         q: "Are there artificial sweeteners?",
         a: "Some may. Every snack ships sealed in its original packaging, so the full ingredient list is right on it.",
       },
+      {
+        q: "Can I use these snacks to treat a low blood sugar?",
+        a: "No. These are everyday snacks, and their protein, fiber and fat slow how fast the carbs act. To treat a low, use fast-acting glucose, like glucose tablets or juice, the way your care team has told you.",
+      },
     ],
   },
   {
@@ -237,6 +241,10 @@ export const landings: BoxLanding[] = [
       {
         q: "Will these keep my glucose in range?",
         a: "We can't promise that, and we don't. Everyone responds differently. We list the numbers on every label so you can decide what fits.",
+      },
+      {
+        q: "Can I use these snacks to treat a low blood sugar?",
+        a: "No. These are everyday snacks, not a treatment for a low. Use fast-acting glucose, like glucose tablets or juice, the way your care team has told you.",
       },
     ],
   },

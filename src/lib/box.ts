@@ -105,7 +105,7 @@ const raw: Omit<Box, "founding">[] = [
     name: "Blood Sugar Box",
     shortName: "Blood Sugar",
     forWho: "For type 1, type 2 and prediabetes, and anyone keeping carbs in check.",
-    caution: "Pregnant? Choose the Gestational Diabetes box.",
+    caution: "Pregnant? Choose the Gestational Diabetes box. Not for treating a low blood sugar.",
     why: "Every snack pack at or below {{blood_sugar.carbsMax}} g total carbs and {{blood_sugar.addedSugarMax}} g added sugar.",
     tagline: "Crunchy, satisfying snacks with the carbs already checked.",
     composition: {
@@ -142,6 +142,7 @@ const raw: Omit<Box, "founding">[] = [
     name: "Gestational Diabetes Box",
     shortName: "Gestational",
     forWho: "For gestational diabetes: pregnancy screening and the Blood Sugar standard, both.",
+    caution: "Not for treating a low blood sugar: use fast-acting glucose as your care team advises.",
     why: "Every snack passes our Pregnancy checks and stays at or below {{gestational_diabetes.carbsMax}} g carbs and {{gestational_diabetes.addedSugarMax}} g added sugar.",
     tagline: "Pregnancy-screened snacks with the carbs already counted.",
     composition: {

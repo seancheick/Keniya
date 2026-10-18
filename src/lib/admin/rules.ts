@@ -12,7 +12,7 @@ import {
   type Settings,
   type Snack,
 } from "./types";
-import { effectiveCaffeine } from "./caffeine";
+import { effectiveCaffeine, resolveCaffeine } from "./caffeine";
 import { netCarbs } from "./carbs";
 import { hasFinding, screenIngredients, syntheticDye, unresolved, type Finding } from "./ingredients";
 
@@ -71,8 +71,37 @@ export const heartTreat = (p: RuleInput) => p.roles.CT === true;
 /** Added fats AHA sets apart from liquid plant oils; they void the nut/seed saturated-fat exception. */
 const TROPICAL_OIL = /\b(palm|palm[- ]kernel|coconut)\s+oil\b|partially\s+hydrogenated/i;
 export const hasAddedTropicalOil = (p: RuleInput) => TROPICAL_OIL.test(p.ingredients ?? "");
-/** The ≤4 g sat-fat allowance is for fat intrinsic to nuts/seeds (AHA Heart-Check), not added oils. */
-export const nutFatException = (p: RuleInput) => p.roles.NS === true && Boolean(p.ingredients?.trim()) && !hasAddedTropicalOil(p);
+/** Any other added saturated-fat source: chocolate, cocoa butter, dairy fat, coconut, palm, shortening, lard. */
+const ADDED_SAT_FAT =
+  /\b(chocolate|cocoa butter|cacao butter|milk fat|butter(?!milk)|butteroil|cream|whole milk powder|milk powder|cheese|ghee|coconut|palm|shortening|lard|tallow|hydrogenated)\b/i;
+const NUT_OR_SEED =
+  /^(organic\s+|dry[- ]roasted\s+|roasted\s+|raw\s+|blanched\s+|sprouted\s+)*(almonds?|cashews?|pecans?|walnuts?|pistachios?|hazelnuts?|macadamias?|brazil nuts?|peanuts?|mixed nuts|pumpkin seeds?|pepitas|sunflower seeds?|sesame seeds?|chia seeds?|flax ?seeds?|hemp seeds?|nuts?|seeds?)\b/i;
+/** First ingredient, before any parenthetical or comma. */
+const firstIngredient = (ingredients: string | null | undefined) => (ingredients ?? "").replace(/^\s*ingredients:\s*/i, "").split(/[,(]/)[0].trim();
+/** Evidence the saturated fat comes from the nuts/seeds themselves (owner amendment 2026-10-18). */
+export const intrinsicNutFat = (p: RuleInput) => NUT_OR_SEED.test(firstIngredient(p.ingredients)) && !ADDED_SAT_FAT.test(p.ingredients ?? "");
+/**
+ * The ≤4 g sat-fat allowance is only for fat intrinsic to nuts/seeds: the nut/seed role, a nut or
+ * seed as the first ingredient, and no other added saturated-fat source. Otherwise the ordinary
+ * limit applies. Keniya's screening threshold, not AHA Heart-Check certification.
+ */
+export const nutFatException = (p: RuleInput) => p.roles.NS === true && Boolean(p.ingredients?.trim()) && !hasAddedTropicalOil(p) && intrinsicNutFat(p);
+
+const PHO = /\bpartially[- ]hydrogenated\b/i;
+/**
+ * GLP-1 tolerability review (2025 multisociety GLP-1 nutrition advisory: high-fat or high-fiber
+ * foods can aggravate GI symptoms at start or dose escalation). Review flags, never a ban.
+ */
+const CONCENTRATED_FIBER = /\b(inulin|chicory root|isomalto-?oligosaccharides?|imo|polydextrose|soluble corn fiber|tapioca fib(er|re)|resistant dextrin|oat fib(er|re))\b/i;
+export function giTolerabilityFlags(p: RuleInput): string[] {
+  const out: string[] = [];
+  if (num(p.fiber_g) && p.fiber_g >= 8) out.push(`${p.fiber_g} g fiber`);
+  else if (num(p.fiber_g) && p.fiber_g >= 5 && CONCENTRATED_FIBER.test(p.ingredients ?? "")) out.push(`${p.fiber_g} g fiber incl. added fiber (${(p.ingredients ?? "").match(CONCENTRATED_FIBER)![0]})`);
+  const sa = hasFinding(screenIngredients(p.ingredients), "sugar_alcohol");
+  if (sa || (num(p.sugar_alcohols_g) && p.sugar_alcohols_g > 0)) out.push("sugar alcohol");
+  if (num(p.sat_fat_g) && p.sat_fat_g >= 4) out.push(`${p.sat_fat_g} g saturated fat`);
+  return out;
+}
 
 export type BoxFit = {
   box: BoxSlug;
@@ -127,7 +156,7 @@ function base(p: RuleInput, rejectReason?: string | null): string[] {
 
 /**
  * P3–P6 only ask whether the data is on the label: caffeine (P3: label value, or inferred as 0
- * or a worst-case cocoa estimate), added sugar (P4), sodium (P5) and an allergen statement (P6).
+ * or a cocoa screening estimate), added sugar (P4), sodium (P5) and an allergen statement (P6).
  * They PASS by themselves when it is there. P1, P2, P7a, P7b and P8 always need a person.
  */
 export function derivedPregnancyChecks(p: RuleInput): Partial<Record<"P3" | "P4" | "P5" | "P6", "PASS">> {
@@ -341,13 +370,21 @@ export function gateFailures(slug: BoxSlug, p: RuleInput, rules: BoxRules, polic
   if (!diabetesDrink) over(p.added_sugar_g, treat ? rules.treatAddedSugarMax : rules.addedSugarMax, treat ? "added sugar (treat)" : "added sugar", "g");
   over(p.sodium_mg, rules.sodiumMax, "sodium", "mg");
   over(effectiveCaffeine(p), rules.caffeineMax, "caffeine", "mg");
+  // An estimate is a screening value, not a measurement: one that uses more than half the
+  // per-pack limit is clinically material uncertainty, so it waits for the manufacturer's value.
+  const caf = resolveCaffeine({ labelMg: p.caffeine_mg, ingredients: p.ingredients, unitOz: p.unit_wt_oz });
+  if (rules.caffeineMax !== null && caf.source === "estimate_max" && caf.mg! > rules.caffeineMax / 2 && caf.mg! <= rules.caffeineMax)
+    out.push(`Estimated caffeine ${caf.mg} mg is over half the ${rules.caffeineMax} mg limit: get the manufacturer's caffeine value`);
+  if (slug === "heart" && PHO.test(p.ingredients ?? "")) out.push("Partially hydrogenated oil (trans fat): not in the Heart box");
   if (rules.satFatMax !== null) {
     const nutFat = nutFatException(p) && rules.satFatNutMax !== null;
     const max = nutFat ? rules.satFatNutMax! : rules.satFatMax;
     if (!num(p.sat_fat_g)) out.push("Saturated fat not recorded");
     else if (p.sat_fat_g > max)
       out.push(
-        `${p.sat_fat_g} g saturated fat (max ${max} g${nutFat ? " for nuts/seeds" : p.roles.NS && hasAddedTropicalOil(p) ? "; added tropical oil voids the nut/seed allowance" : ""})`,
+        `${p.sat_fat_g} g saturated fat (max ${max} g${
+          nutFat ? " for nuts/seeds" : p.roles.NS && hasAddedTropicalOil(p) ? "; added tropical oil voids the nut/seed allowance" : p.roles.NS ? "; nut/seed allowance needs a nut or seed first and no other added saturated fat" : ""
+        })`,
       );
   }
   return out;
@@ -589,16 +626,20 @@ export function checkLineup(
     checks.push(check("beverage", "Beverage / tea", count((x) => x.type === "Beverage"), { max: rules.beverageMax }));
 
   // Any box with a caffeine limit needs the number on every pick (label value, or inferred:
-  // 0 with no caffeine-bearing ingredient, a worst-case estimate for cocoa).
+  // 0 with no caffeine-bearing ingredient, a screening estimate for cocoa).
   if (rules.caffeineMax !== null) {
     checks.push(check("caffeine", "Picks without caffeine disclosed", count((x) => !num(effectiveCaffeine(x))), { max: 0 }));
   }
   if (rules.boxCaffeineMax !== null) {
     const total = s.reduce((t, x) => t + (effectiveCaffeine(x) ?? 0), 0);
-    checks.push(check("boxcaffeine", "Total caffeine across the box (estimates count at their maximum)", Math.round(total), { max: rules.boxCaffeineMax }, "warn", " mg"));
+    checks.push(check("boxcaffeine", "Total caffeine across the box (screening estimates included)", Math.round(total), { max: rules.boxCaffeineMax }, "warn", " mg"));
   }
   if (rules.chocolateMax !== null)
     checks.push(check("chocolate", "Chocolate / cocoa picks", count((x) => hasFinding(screenIngredients(x.ingredients), "cocoa")), { max: rules.chocolateMax }, "warn"));
+  if (slug === "glp1") {
+    const flagged = s.filter((x) => giTolerabilityFlags(x).length);
+    checks.push(info("gi", "GI-tolerability review (high or added fiber, sugar alcohol, ≥4 g sat fat)", flagged.length ? `${flagged.length}: ${flagged.map((x) => x.name).join(", ")}` : "none"));
+  }
 
   const ok = (x: Snack) => nutritionComplete(x);
   if (rules.proteinOrFiberMin !== null)

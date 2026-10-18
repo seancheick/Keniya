@@ -67,7 +67,7 @@ describe("caffeine resolution", () => {
   it("no caffeine-bearing ingredient → 0", () => {
     expect(resolveCaffeine({ labelMg: null, ingredients: MADEGOOD, unitOz: 1.06 })).toMatchObject({ mg: 0, source: "none_present" });
   });
-  it("chocolate → worst-case estimate far under the 50 mg pregnancy cap", () => {
+  it("chocolate → a screening estimate from pack weight", () => {
     // Unreal coconut bar 15 g: 15 × 0.8 = 12 mg max.
     expect(resolveCaffeine({ labelMg: null, ingredients: UNREAL_COCONUT, unitOz: 15 / 28.3495 })).toMatchObject({ mg: 12, source: "estimate_max" });
     // Pocky pack ~14.5 g with cocoa powder: 14.5 × 2.3 → 34 mg max.

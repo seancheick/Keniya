@@ -31,7 +31,9 @@ export type FindingCode =
   | "cured_meat"
   | "sugar_alcohol"
   | "sweetener"
-  | "botanical";
+  | "botanical"
+  | "partially_hydrogenated"
+  | "potassium_chloride";
 
 export type Finding = {
   code: FindingCode;
@@ -142,6 +144,20 @@ const RULES: Rule[] = [
     severity: "review",
     label: "Concentrated herb, fortification or live culture: case-by-case review",
     re: /\b(ginger (extract|powder|root extract)|lion'?s mane|ashwagandha|turmeric extract|ginseng|kava|valerian|st\.? john'?s wort|retinol|retinyl|vitamin a (acetate|palmitate)|probiotic|lactobacillus|bifidobacterium|bacillus coagulans)\b/i,
+  },
+  // Heart: trans-fat source (rejected in Heart by the gate; information elsewhere).
+  {
+    code: "partially_hydrogenated",
+    severity: "info",
+    label: "Partially hydrogenated oil (trans fat): rejected in the Heart box",
+    re: /\bpartially[- ]hydrogenated\b/i,
+  },
+  // Heart: salt substitute; matters with potassium-sparing medicines and kidney disease.
+  {
+    code: "potassium_chloride",
+    severity: "info",
+    label: "Potassium chloride (salt substitute): Heart review, relevant with some blood-pressure medicines",
+    re: /\bpotassium chloride\b/i,
   },
 ];
 

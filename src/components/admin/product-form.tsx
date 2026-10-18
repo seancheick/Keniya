@@ -216,7 +216,7 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
           </datalist>
         </Section>
 
-        <Section title="Nutrition (per serving / unit)" hint="Calories, protein, fiber, carbs, added sugar and sodium are required for any box. Caffeine: leave blank unless printed; it is filled from the ingredients (0 with no source, an upper-bound estimate for chocolate).">
+        <Section title="Nutrition (per serving / unit)" hint="Calories, protein, fiber, carbs, added sugar and sodium are required for any box. Caffeine: leave blank unless printed; it is filled from the ingredients (0 with no source, a screening estimate for chocolate; get the manufacturer's value when it matters).">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {NUTRIENTS.map(([k, label, unit]) => (
               <Field key={k} label={`${label}${unit ? ` (${unit})` : ""}`}>
@@ -311,7 +311,7 @@ export function ProductForm({ action, product: p, version: ver, vendorName, vend
                 <b>Net carbs:</b> {preview.net.net === null ? "unknown" : `${preview.net.net} g`} · {preview.net.note} (total carbs is what the boxes judge)
               </p>
               <p className="text-xs text-muted-foreground">
-                <b>Caffeine:</b> {preview.caffeine.mg === null ? "unknown" : preview.caffeine.source === "estimate_max" ? `≤${preview.caffeine.mg} mg` : `${preview.caffeine.mg} mg`} · {preview.caffeine.note}
+                <b>Caffeine:</b> {preview.caffeine.mg === null ? "unknown" : preview.caffeine.source === "estimate_max" ? `~${preview.caffeine.mg} mg (estimate)` : `${preview.caffeine.mg} mg`} · {preview.caffeine.note}
               </p>
               {preview.findings.length > 0 && (
                 <ul className="space-y-1 text-xs">
