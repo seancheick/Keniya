@@ -34,10 +34,10 @@ type Ship = {
 
 const STATUS_TONE: Record<string, Tone> = { planned: "info", packed: "warn", shipped: "good", delivered: "muted", issue: "bad" };
 const TABS = [
-  ["todo", "To plan"],
-  ["planned", "To pack"],
-  ["packed", "To ship"],
-  ["shipped", "Shipped"],
+  ["todo", "1 · To plan"],
+  ["planned", "2 · Fix & pack"],
+  ["packed", "3 · Label & ship"],
+  ["shipped", "4 · Shipped"],
   ["done", "Delivered / issues"],
 ] as const;
 
@@ -69,7 +69,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
     <>
       <PageHeader
         title="Orders"
-        description="Paid Stripe preorders → planned shipment → packed (stock deducted, earliest expiry first) → label from Pirate Ship → shipped."
+        description="Work left to right: 1. plan each paid order (it gets the box's live lineup), 2. open it, fix any ✕ with a swap and pack, 3. buy the label in Pirate Ship and enter tracking, 4. it ships. Each order says what to do next."
         actions={<PlanAllButton />}
       />
       <PillTabs
